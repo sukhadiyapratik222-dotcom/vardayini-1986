@@ -10,30 +10,36 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
-    const form = new FormData(event.currentTarget);
-    const payload: Record<string, string> = {
-      email: String(form.get("email") || ""),
-      password: String(form.get("password") || ""),
-    };
-    if (mode === "register") {
-      payload.name = String(form.get("name") || "");
-      payload.phone = String(form.get("phone") || "");
+    try {
+      const form = new FormData(event.currentTarget);
+      const payload: Record<string, string> = {
+        email: String(form.get("email") || ""),
+        password: String(form.get("password") || ""),
+      };
+      if (mode === "register") {
+        payload.name = String(form.get("name") || "");
+        payload.phone = String(form.get("phone") || "");
+      }
+      const res = await fetch(mode === "login" ? "/api/auth/login" : "/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+      router.push(data.user?.role === "admin" ? "/admin" : "/account");
+      router.refresh();
+    } catch {
+      setError("An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
-    const res = await fetch(mode === "login" ? "/api/auth/login" : "/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error || "Something went wrong");
-      return;
-    }
-    router.push(data.user?.role === "admin" ? "/admin" : "/account");
-    router.refresh();
   }
 
   return (

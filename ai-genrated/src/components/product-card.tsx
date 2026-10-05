@@ -37,12 +37,12 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const currentCompare = currentVariant?.discountedPrice ? currentVariant.price : null;
 
   return (
-    <article className="mithai-card group flex flex-col justify-between overflow-hidden bg-white p-4">
+    <article className="mithai-card group flex flex-col justify-between overflow-hidden bg-white p-3 rounded-2xl">
       {/* Product Image & Badges */}
       <div>
         <Link
           href={`/shop/${product.slug}`}
-          className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#faf7f0]"
+          className="relative block aspect-[16/10] w-full overflow-hidden rounded-xl bg-[#faf7f0]"
         >
           {product.imageUrl ? (
             <Image
@@ -53,50 +53,50 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[#f4f7fe] text-4xl">
+            <div className="flex h-full w-full items-center justify-center bg-[#f4f7fe] text-3xl">
               🍬
             </div>
           )}
-          <div className="absolute left-3 top-3 flex flex-wrap gap-1">
+          <div className="absolute left-2 top-2 flex flex-wrap gap-1">
             {tags.slice(0, 1).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#0b2f8a] shadow-sm backdrop-blur-sm"
+                className="rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#0b2f8a] shadow-sm backdrop-blur-sm"
               >
                 {tag.replace("_", " ")}
               </span>
             ))}
           </div>
-          <div className="absolute right-3 top-3 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-[#b89130] shadow-sm backdrop-blur-sm">
+          <div className="absolute right-2 top-2 rounded-full bg-white/95 px-1.5 py-0.5 text-[10px] font-bold text-[#b89130] shadow-sm backdrop-blur-sm">
             ★ 4.9
           </div>
         </Link>
 
         {/* Title & Description */}
-        <div className="mt-3.5 space-y-1">
+        <div className="mt-2 space-y-0.5">
           <Link href={`/shop/${product.slug}`}>
-            <h3 className="font-[family-name:var(--font-display)] text-xl font-bold tracking-tight text-[#182230] group-hover:text-[#0b2f8a] transition">
+            <h3 className="font-[family-name:var(--font-display)] text-sm sm:text-[15px] font-bold tracking-tight text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-1">
               {product.name}
             </h3>
           </Link>
-          <p className="text-xs text-[#5e6d82] line-clamp-1">
+          <p className="text-[11px] text-[#5e6d82] line-clamp-1">
             Freshly prepared with 100% Shuddh Desi Ghee
           </p>
         </div>
       </div>
 
       {/* Weight Selector Tabs & Price */}
-      <div className="mt-4 space-y-3 pt-3 border-t border-[#0b2f8a]/6">
+      <div className="mt-2.5 space-y-2 pt-2 border-t border-[#0b2f8a]/6">
         {variants.length > 1 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {variants.map((v, i) => (
               <button
                 key={v.id}
                 type="button"
                 onClick={() => setSelectedIdx(i)}
-                className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
                   selectedIdx === i
-                    ? "bg-[#0b2f8a] text-white shadow-sm"
+                    ? "bg-[#0b2f8a] text-white shadow-2xs"
                     : "bg-[#f4f7fe] text-[#5e6d82] hover:bg-[#e8eeff] hover:text-[#0b2f8a]"
                 }`}
               >
@@ -107,17 +107,17 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         )}
 
         <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-[#182230]">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base sm:text-lg font-bold text-[#182230]">
               {formatInr(currentPrice)}
             </span>
             {currentCompare && (
-              <span className="text-xs text-[#5e6d82] line-through">
+              <span className="text-[11px] text-[#5e6d82] line-through">
                 {formatInr(currentCompare)}
               </span>
             )}
           </div>
-          <span className="text-[11px] font-medium text-[#0b2f8a]/80">
+          <span className="text-[10px] font-medium text-[#0b2f8a]/80">
             {currentVariant?.weight || "Per Pack"}
           </span>
         </div>
@@ -127,6 +127,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <AddToCartButton
             variantId={currentVariant.id}
             label="Add to Cart"
+            className="btn-primary w-full rounded-full px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-[0.98]"
           />
         ) : null}
       </div>

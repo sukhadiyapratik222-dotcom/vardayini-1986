@@ -2,34 +2,35 @@ import Link from "next/link";
 
 export function SiteFooter() {
   const sweetsMenu = [
-    { label: "Kaju Sweets", href: "/shop?search=kaju" },
-    { label: "Mawa Sweets", href: "/shop?search=mawa" },
+    { label: "Kaju Sweets", href: "/shop?category=kaju-sweets" },
+    { label: "Mawa Sweets", href: "/shop?category=mawa-sweets" },
     { label: "Penda", href: "/shop?search=penda" },
-    { label: "Sugarless Sweets", href: "/shop?search=sugarless" },
-    { label: "Premium Packed Sweets", href: "/shop?category=gift-hampers" },
-    { label: "Indian Ghee Sweets", href: "/shop?search=ghee" },
+    { label: "Sugarless Sweets", href: "/shop?category=sugarless-sweets" },
+    { label: "Gift Hampers", href: "/shop?category=gift-hampers" },
+    { label: "Indian Ghee Sweets", href: "/shop?category=indian-ghee-sweets" },
   ];
 
   const namkeenMenu = [
-    { label: "Millet", href: "/shop?search=millet" },
-    { label: "Farali", href: "/shop?search=farali" },
-    { label: "Gujarati", href: "/shop?category=farsan" },
-    { label: "Khakhra", href: "/shop?search=khakhra" },
-    { label: "Roasted", href: "/shop?search=roasted" },
-    { label: "Mixture", href: "/shop?search=mixture" },
-    { label: "Indian", href: "/shop?search=indian" },
-    { label: "Daal/Lentil", href: "/shop?search=daal" },
-    { label: "Sev", href: "/shop?search=sev" },
-    { label: "Chips and Puris", href: "/shop?search=puri" },
+    { label: "Gujarati Farsan", href: "/shop?category=namkeen-farsan" },
+    { label: "Millet", href: "/shop?category=millet" },
+    { label: "Farali", href: "/shop?category=farali" },
+    { label: "Khakhra", href: "/shop?category=khakhra" },
+    { label: "Roasted", href: "/shop?category=roasted" },
+    { label: "Mixture", href: "/shop?category=mixture" },
+    { label: "Indian", href: "/shop?category=indian" },
+    { label: "Daal/Lentil", href: "/shop?category=daal-lentil" },
+    { label: "Sev", href: "/shop?category=sev" },
+    { label: "Chips and Puris", href: "/shop?category=chips-and-puris" },
   ];
 
   const bakeryMenu = [
-    { label: "Biscuits and Cookies", href: "/shop?search=cookies" },
-    { label: "Toast and Khari", href: "/shop?search=khari" },
+    { label: "Biscuits and Cookies", href: "/shop?category=biscuits-and-cookies" },
+    { label: "Toast and Khari", href: "/shop?category=toast-and-khari" },
   ];
 
   const policiesMenu = [
     { label: "Terms & Conditions", href: "/policies?tab=terms" },
+    { label: "Shipping Policy (Free > ₹799)", href: "/policies?tab=shipping" },
     { label: "Privacy Policy", href: "/policies?tab=privacy" },
     { label: "Cancellation Policy", href: "/policies?tab=cancellation" },
     { label: "Returns Policy", href: "/policies?tab=returns" },
@@ -85,7 +86,7 @@ export function SiteFooter() {
                 <p className="text-xs text-white/60">RC Dutt Road, Alkapuri, Vadodara</p>
               </div>
               <p className="text-xs text-[#dfb755] font-medium pt-1">
-                Open 8:00 AM – 10:30 PM Daily
+                Open 8:00 AM – 10:30 PM Daily · Support: +91 98250 19760
               </p>
             </div>
           </div>

@@ -5,19 +5,25 @@ import { users } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
 import { mergeGuestCart } from "@/lib/cart";
 import { setAuthCookie } from "@/lib/auth";
+import { readJsonSafe } from "@/lib/validation";
 
 export async function POST(request: Request) {
   await ensureSeeded();
-  const body = (await request.json()) as {
+  const body = await readJsonSafe<{
     name?: string;
     email?: string;
     phone?: string;
     password?: string;
-  };
-  const name = body.name?.trim() || "";
-  const email = body.email?.trim().toLowerCase() || "";
-  const phone = body.phone?.trim() || "";
-  const password = body.password || "";
+  }>(request);
+
+  if (!body) {
+    return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
+
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
   if (name.length < 2) return Response.json({ error: "Please enter your name." }, { status: 400 });
   if (!email.includes("@")) return Response.json({ error: "Enter a valid email." }, { status: 400 });
   if (phone.length < 10) return Response.json({ error: "Enter a valid phone number." }, { status: 400 });

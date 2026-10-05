@@ -6,6 +6,7 @@ export function middleware(request: NextRequest) {
     response.cookies.set("vs_cart", crypto.randomUUID().replace(/-/g, ""), {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
@@ -14,5 +15,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|images/).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images/).*)"],
 };

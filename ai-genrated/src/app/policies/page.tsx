@@ -18,8 +18,26 @@ const POLICIES = {
         text: "Orders placed on our website or WhatsApp are subject to acceptance and stock availability. Same-day morning dispatch applies to orders placed before 1:00 PM across Gujarat.",
       },
       {
-        heading: "3. Pricing & Taxes",
-        text: "All prices quoted are in Indian Rupees (INR) and are inclusive of applicable GST. Delivery charges, if any, are clearly calculated at checkout based on delivery location.",
+        heading: "3. Pricing, Coupons & Delivery",
+        text: "All prices quoted are in Indian Rupees (INR) and are inclusive of applicable GST. Free delivery is automatically applied on orders above ₹799. Customers can use promotional code FESTIVE15 for 15% off orders above ₹999.",
+      },
+    ],
+  },
+  shipping: {
+    title: "Shipping & Delivery",
+    badge: "Delivery Information",
+    content: [
+      {
+        heading: "1. Free Delivery Threshold",
+        text: "We offer Free Delivery across Gujarat on all orders above ₹799. Orders below ₹799 incur a standard delivery charge of ₹49.",
+      },
+      {
+        heading: "2. Same-Day Dispatch",
+        text: "Orders placed before 1:00 PM are dispatched the same morning directly from our Vadodara flagship counters to guarantee optimal freshness.",
+      },
+      {
+        heading: "3. Freshness Guarantee",
+        text: "All mithai and farsan are hermetically packed in food-grade, tamper-proof boxes ensuring pure shuddh desi ghee taste and crisp texture.",
       },
     ],
   },
@@ -86,15 +104,15 @@ const POLICIES = {
 };
 
 type PolicyKey = keyof typeof POLICIES;
+const VALID_TABS = Object.keys(POLICIES) as PolicyKey[];
 
 function PoliciesContent() {
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as PolicyKey) || "terms";
-  const [activeKey, setActiveKey] = useState<PolicyKey>(
-    POLICIES[initialTab] ? initialTab : "terms"
-  );
+  const tabParam = searchParams.get("tab") as PolicyKey | null;
+  const initialKey = tabParam && VALID_TABS.includes(tabParam) ? tabParam : VALID_TABS[0];
+  const [activeKey, setActiveKey] = useState<PolicyKey>(initialKey);
 
-  const activePolicy = POLICIES[activeKey];
+  const activePolicy = POLICIES[activeKey] || POLICIES[VALID_TABS[0]];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">

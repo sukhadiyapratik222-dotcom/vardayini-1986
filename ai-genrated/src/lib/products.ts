@@ -1,8 +1,47 @@
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { categories, products, productVariants, reviews } from "@/db/schema";
 import { unitPrice } from "@/lib/money";
 import { ensureSeeded } from "@/db/seed";
+
+export const CATEGORY_GROUPS: Record<
+  string,
+  { label: string; description: string; slugs: string[] }
+> = {
+  sweets: {
+    label: "Sweets",
+    description: "Royal Kaju, pure mawa pedas & fragrant desi ghee mithai",
+    slugs: [
+      "kaju-sweets",
+      "mawa-sweets",
+      "penda",
+      "sugarless-sweets",
+      "premium-packed-sweets",
+      "indian-ghee-sweets",
+    ],
+  },
+  namkeen: {
+    label: "Namkeen",
+    description: "Crunchy sev, traditional khakhra, farali & Gujarati farsan",
+    slugs: [
+      "millet",
+      "farali",
+      "gujarati",
+      "khakhra",
+      "roasted",
+      "mixture",
+      "indian",
+      "daal-lentil",
+      "sev",
+      "chips-and-puris",
+    ],
+  },
+  bakery: {
+    label: "Bakery",
+    description: "Crispy maska khari, buttery biscuits & fresh cookies",
+    slugs: ["biscuits-and-cookies", "toast-and-khari"],
+  },
+};
 
 export async function listCategories() {
   await ensureSeeded();
@@ -11,18 +50,49 @@ export async function listCategories() {
 
 export async function listProducts(opts: {
   category?: string;
+  group?: string;
   search?: string;
   sort?: string;
   tag?: string;
   featured?: boolean;
   limit?: number;
+  ids?: number[];
 }) {
   await ensureSeeded();
   const conditions = [];
-  if (opts.category) conditions.push(eq(categories.slug, opts.category));
+  if (opts.ids && opts.ids.length > 0) {
+    conditions.push(inArray(products.id, opts.ids));
+  }
+  if (opts.category) {
+    if (opts.category === "namkeen-farsan" || opts.category === "farsan") {
+      conditions.push(inArray(categories.slug, CATEGORY_GROUPS.namkeen.slugs));
+    } else if (opts.category === "gift-hampers" || opts.category === "hampers") {
+      conditions.push(eq(categories.slug, "premium-packed-sweets"));
+    } else {
+      conditions.push(eq(categories.slug, opts.category));
+    }
+  } else if (opts.group && CATEGORY_GROUPS[opts.group.toLowerCase()]) {
+    conditions.push(
+      inArray(categories.slug, CATEGORY_GROUPS[opts.group.toLowerCase()].slugs)
+    );
+  }
   if (opts.search) {
-    const q = `%${opts.search}%`;
-    conditions.push(or(ilike(products.name, q), ilike(products.description, q), ilike(products.tags, q)));
+    const raw = opts.search.trim();
+    const q = `%${raw}%`;
+    const searchTerms = [q];
+    if (/penda/i.test(raw)) {
+      searchTerms.push(`%${raw.replace(/penda/gi, "peda")}%`);
+    } else if (/peda/i.test(raw)) {
+      searchTerms.push(`%${raw.replace(/peda/gi, "penda")}%`);
+    }
+    const searchConditions = searchTerms.flatMap((term) => [
+      ilike(products.name, term),
+      ilike(products.description, term),
+      ilike(products.tags, term),
+      ilike(categories.name, term),
+      ilike(categories.slug, term),
+    ]);
+    conditions.push(or(...searchConditions));
   }
   if (opts.tag) conditions.push(ilike(products.tags, `%${opts.tag}%`));
   if (opts.featured) conditions.push(eq(products.isFeatured, true));
@@ -65,6 +135,10 @@ export async function listProducts(opts: {
 
   if (opts.sort === "price_asc") result = result.sort((a, b) => a.fromPrice - b.fromPrice);
   if (opts.sort === "price_desc") result = result.sort((a, b) => b.fromPrice - a.fromPrice);
+  if (opts.ids && opts.ids.length > 0 && !opts.sort) {
+    const idOrder = new Map(opts.ids.map((id, index) => [id, index]));
+    result.sort((a, b) => (idOrder.get(a.id) ?? 9999) - (idOrder.get(b.id) ?? 9999));
+  }
   if (opts.limit) result = result.slice(0, opts.limit);
   return result;
 }

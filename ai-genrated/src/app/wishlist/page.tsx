@@ -5,10 +5,12 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { products, wishlistItems } from "@/db/schema";
 import { getAuthUser } from "@/lib/auth";
+import { ensureSeeded } from "@/db/seed";
 
 export const dynamic = "force-dynamic";
 
 export default async function WishlistPage() {
+  await ensureSeeded();
   const user = await getAuthUser();
   if (!user) redirect("/login");
   const items = await db

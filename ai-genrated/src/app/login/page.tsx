@@ -10,11 +10,6 @@ export default function LoginPage() {
       <p className="mt-4 text-sm text-[#2a1a12]/70">
         New here? <Link href="/register" className="text-[#c45c26]">Create an account</Link>
       </p>
-      <p className="mt-6 text-xs leading-6 text-[#2a1a12]/50">
-        Demo customer: aanya@vardayini.com / sweet123
-        <br />
-        Demo admin: admin@vardayini.com / admin123
-      </p>
     </main>
   );
 }

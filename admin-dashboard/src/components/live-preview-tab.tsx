@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/lib/toast";
 
 export function LivePreviewTab() {
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const [key, setKey] = useState(Date.now());
+  const [key, setKey] = useState(0);
+  const storeUrl = process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449";
 
   const handleReload = () => {
-    setKey(Date.now());
+    setKey((prev) => prev + 1);
+    toast.info("Storefront live preview refreshed");
   };
 
   const getDeviceWidth = () => {
@@ -24,45 +27,46 @@ export function LivePreviewTab() {
   return (
     <div className="space-y-6">
       {/* Control bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl glass-panel border border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#0b2f8a]/10 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a] flex items-center gap-2">
             <span>👁️ Live Customer Storefront Preview</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time live view of your customer website running on <span className="text-[#dfb755] font-mono">http://localhost:3000</span>
+          <p className="text-xs text-[#5e6d82] mt-1">
+            Real-time interactive view of your customer website running on{" "}
+            <span className="text-[#0b2f8a] font-mono font-bold">{storeUrl}</span>
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Device Toggles */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-700">
+          <div className="flex items-center p-1 rounded-xl bg-[#0b2f8a]/5 border border-[#0b2f8a]/15">
             <button
               onClick={() => setDevice("desktop")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                 device === "desktop"
-                  ? "bg-[#dfb755] text-slate-950 font-bold"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-[#0b2f8a] text-white shadow-sm"
+                  : "text-[#5e6d82] hover:text-[#0b2f8a]"
               }`}
             >
               🖥️ Desktop
             </button>
             <button
               onClick={() => setDevice("tablet")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                 device === "tablet"
-                  ? "bg-[#dfb755] text-slate-950 font-bold"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-[#0b2f8a] text-white shadow-sm"
+                  : "text-[#5e6d82] hover:text-[#0b2f8a]"
               }`}
             >
               📱 Tablet
             </button>
             <button
               onClick={() => setDevice("mobile")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                 device === "mobile"
-                  ? "bg-[#dfb755] text-slate-950 font-bold"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-[#0b2f8a] text-white shadow-sm"
+                  : "text-[#5e6d82] hover:text-[#0b2f8a]"
               }`}
             >
               📲 Mobile
@@ -71,17 +75,17 @@ export function LivePreviewTab() {
 
           <button
             onClick={handleReload}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+            className="p-2.5 rounded-xl bg-white hover:bg-[#0b2f8a]/5 text-[#0b2f8a] border border-[#0b2f8a]/15 shadow-sm transition"
             title="Reload Preview"
           >
             🔄
           </button>
 
           <a
-            href="http://localhost:3000"
+            href={storeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#0b2f8a] hover:bg-[#1a44b5] text-white transition flex items-center gap-1.5 shadow"
+            className="px-4 py-2 rounded-xl text-xs font-bold btn-primary shadow-sm flex items-center gap-1.5"
           >
             <span>Open in Tab ↗</span>
           </a>
@@ -89,13 +93,13 @@ export function LivePreviewTab() {
       </div>
 
       {/* Frame Container */}
-      <div className="flex justify-center p-4 rounded-3xl glass-card border border-white/10 bg-slate-950/60 min-h-[750px]">
+      <div className="flex justify-center p-4 rounded-3xl bg-[#0b2f8a]/5 border border-[#0b2f8a]/10 min-h-[750px]">
         <div
-          className={`transition-all duration-300 w-full ${getDeviceWidth()} h-[750px] rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-white`}
+          className={`transition-all duration-300 w-full ${getDeviceWidth()} h-[750px] rounded-2xl overflow-hidden border-4 border-slate-200 shadow-2xl bg-white`}
         >
           <iframe
             key={key}
-            src="http://localhost:3000"
+            src={storeUrl}
             className="w-full h-full border-0"
             title="Customer Storefront Live Preview"
           />

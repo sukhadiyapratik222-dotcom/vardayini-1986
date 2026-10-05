@@ -39,6 +39,22 @@
       "category": "Festive",
       "active": true,
       "order": 5
+    },
+    {
+      "id": "slide-1791027909259",
+      "name": "Special Bhel",
+      "category": "Farsan",
+      "image": "/images/special-bhel-showcase.jpg",
+      "active": true,
+      "order": 6
+    },
+    {
+      "id": "slide-1791029573421",
+      "name": "Ratlami Sev",
+      "category": "Farsan",
+      "image": "/uploads/1791029531387-c8e0da1d-527e-48b8-be9a-a5500eca62e3.jpg",
+      "active": true,
+      "order": 7
     }
   ],
   "heroSettings": {
@@ -46,27 +62,85 @@
     "intervalSeconds": 4
   },
   "announcement": {
-    "enabled": false,
-    "badge": "DIWALI PRE-ORDERS OPEN",
-    "text": "Get 15% off pure ghee festive gift boxes with code FESTIVE15 • Same-day dispatch across Gujarat",
+    "enabled": true,
+    "badge": "FESTIVE SPECIAL",
+    "text": "Free delivery on orders above ₹799 • Use code FESTIVE15 for 15% off orders above ₹999",
     "linkText": "Order Hampers →",
-    "linkUrl": "/shop?category=hampers"
+    "linkUrl": "/shop?category=gift-hampers"
   },
   "storeInfo": {
     "name": "Vardayini Sweet Mart",
     "tagline": "Pure Ghee Gujarati Mithai & Live Morning Farsan",
     "established": "1976",
-    "phone": "+91 98250 12345",
-    "whatsapp": "+91 98250 12345",
+    "phone": "+91 98250 19760",
+    "whatsapp": "+91 98250 19760",
     "email": "orders@vardayini.com",
-    "address": "Opp. Swaminarayan Temple, Station Road, Anand, Gujarat 388001",
-    "city": "Anand, Gujarat",
+    "address": "Mandvi Main Counter & Alkapuri Flagship, Vadodara, Gujarat 390001",
+    "city": "Vadodara, Gujarat",
     "hours": "7:00 AM – 10:30 PM (All 7 Days)"
   },
   "promotions": {
     "couponCode": "FESTIVE15",
     "discountPercent": 15,
-    "description": "Flat 15% discount on all orders above ₹999",
-    "isActive": false
+    "minOrder": 999,
+    "freeDeliveryThreshold": 799,
+    "description": "Flat 15% discount on all orders above ₹999 with code FESTIVE15",
+    "isActive": true
+  },
+  "logo": {
+    "type": "image",
+    "crestLetter": "વ",
+    "crestBgColor": "#0b2f8a",
+    "crestBorderColor": "#dfb755",
+    "crestTextColor": "#dfb755",
+    "imageUrl": "/images/brand-logo.png",
+    "brandName": "VARDAYINI",
+    "brandSubtitle": "Sweet Mart · 1986"
+  },
+  "heroContent": {
+    "badgeEst": "EST. 1976",
+    "badgeText": "AUTHENTIC GUJARATI MITHAI & FARSAN",
+    "titlePrefix": "Handcrafted",
+    "titleHighlight1": "Mithai",
+    "titleMiddle": "& Fresh Daily",
+    "titleHighlight2": "Farsan",
+    "description": "Pure ghee sweets & savoury farsan delivered fresh across Gujarat. From silver-foiled Kaju Katli to morning-steamed Nylon Khaman Dhokla, crafted the authentic way since 1976.",
+    "button1Text": "Order Fresh Mithai →",
+    "button1Link": "/shop",
+    "button2Text": "Festive Hampers",
+    "button2Link": "/shop?category=gift-hampers",
+    "stat1Value": "48+ Yrs",
+    "stat1Label": "Serving Gujarat",
+    "stat2Value": "100%",
+    "stat2Label": "Shuddh Desi Ghee",
+    "stat3Value": "4.9 ★",
+    "stat3Label": "Over 12k Reviews"
+  },
+  "heritageBanner": {
+    "enabled": true,
+    "topBadgeGujarati": "સ્વીટ માર્ટ",
+    "topBadgeEnglish": "Since 1976",
+    "titleLine1": "Tradition Preserved Since 1976 —",
+    "titleLine2": "Pure Desi Ghee, Zero Compromise",
+    "showTextOverlay": true,
+    "button1Text": "Explore Heritage Menu",
+    "button1Link": "/shop",
+    "button2Text": "Gift Hampers",
+    "button2Link": "/shop?category=gift-hampers",
+    "bannerImage": "/images/mithai-platter-showcase.jpg"
+  },
+  "specialItems": {
+    "enabled": true,
+    "badge": "Karigars' Special Selection",
+    "title": "Our Special Items",
+    "subtitle": "Updated from test script",
+    "productIds": [
+      1,
+      2,
+      4,
+      6
+    ],
+    "linkText": "See all 24+ items →",
+    "linkUrl": "/shop"
   }
 }

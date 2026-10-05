@@ -1,5 +1,6 @@
 import { addToCart, loadCartLines } from "@/lib/cart";
 import { ensureSeeded } from "@/db/seed";
+import { readJsonSafe, parsePositiveInt } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,29 @@ export async function GET() {
 
 export async function POST(request: Request) {
   await ensureSeeded();
-  const body = (await request.json()) as { productVariantId?: number; variantId?: number; quantity?: number };
-  const variantId = body.productVariantId ?? body.variantId;
-  const quantity = body.quantity ?? 1;
-  if (!variantId) return Response.json({ error: "productVariantId is required" }, { status: 400 });
+  const body = await readJsonSafe<{
+    productVariantId?: unknown;
+    variantId?: unknown;
+    quantity?: unknown;
+  }>(request);
+
+  if (!body) {
+    return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
+
+  const rawVariantId = body.productVariantId ?? body.variantId;
+  const variantId = parsePositiveInt(rawVariantId);
+  if (!variantId) {
+    return Response.json({ error: "A valid productVariantId is required" }, { status: 400 });
+  }
+
+  const quantity = body.quantity === undefined ? 1 : parsePositiveInt(body.quantity);
+  if (quantity === null) {
+    return Response.json({ error: "Quantity must be a positive integer" }, { status: 400 });
+  }
+
   try {
-    await addToCart(Number(variantId), Number(quantity));
+    await addToCart(variantId, quantity);
     const cart = await loadCartLines();
     return Response.json({
       ok: true,
@@ -31,6 +49,9 @@ export async function POST(request: Request) {
       count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
     });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : "Could not add to cart" }, { status: 400 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Could not add to cart" },
+      { status: 400 }
+    );
   }
 }

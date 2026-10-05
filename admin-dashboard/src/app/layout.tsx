@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const display = Cormorant_Garamond({
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sans = Outfit({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: "Vardayini Sweets | Karigar UI Admin Desk",
-  description: "Dedicated management dashboard for Vardayini Sweet Mart user interface, scrolling hero photos, banners, and catalog.",
+  title: "Vardayini Sweet Mart | Karigar UI Admin Desk",
+  description:
+    "Dedicated management dashboard for Vardayini Sweet Mart user interface, scrolling hero photos, banners, and catalog.",
 };
 
 export default function RootLayout({
@@ -23,11 +26,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-    >
-      <body className="min-h-screen bg-[#090d16] text-slate-100">{children}</body>
+    <html lang="en">
+      <body
+        className={`${display.variable} ${sans.variable} font-[family-name:var(--font-sans)] min-h-screen bg-[var(--canvas)] text-[var(--text-main)] antialiased`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

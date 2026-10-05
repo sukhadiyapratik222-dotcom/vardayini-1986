@@ -1,8 +1,9 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { cartItems, coupons, productVariants, products } from "@/db/schema";
-import { getAuthUser, getCartSessionId, getCouponCode } from "@/lib/auth";
+import { getAuthUser, getCartSessionId, getCouponCode, setCouponCode } from "@/lib/auth";
 import { calcTotals, unitPrice } from "@/lib/money";
+import { ensureSeeded } from "@/db/seed";
 
 export type CartLine = {
   id: number;
@@ -27,6 +28,7 @@ export async function getCartIdentity() {
 }
 
 export async function loadCartLines() {
+  await ensureSeeded();
   const { user, sessionId } = await getCartIdentity();
   const rows = await db
     .select({
@@ -61,18 +63,27 @@ export async function loadCartLines() {
   });
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-  const couponCode = await getCouponCode();
+  let couponCode = await getCouponCode();
   let discount = 0;
   let freeDelivery = false;
   let couponLabel: string | null = null;
 
   if (couponCode) {
-    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, couponCode)).limit(1);
+    const [coupon] = await db
+      .select()
+      .from(coupons)
+      .where(eq(coupons.code, couponCode.toUpperCase()))
+      .limit(1);
+
     if (coupon && coupon.active && subtotal >= coupon.minOrder) {
       couponLabel = coupon.description;
       if (coupon.type === "percent") discount = Math.round((subtotal * coupon.value) / 100);
       if (coupon.type === "flat") discount = coupon.value;
       if (coupon.type === "free_delivery") freeDelivery = true;
+    } else {
+      // Subtotal dropped below minOrder or coupon became invalid -> drop coupon!
+      await setCouponCode(null);
+      couponCode = null;
     }
   }
 
@@ -83,33 +94,53 @@ export async function loadCartLines() {
 export async function mergeGuestCart(userId: number) {
   const sessionId = await getCartSessionId();
   const guestRows = await db.select().from(cartItems).where(eq(cartItems.sessionId, sessionId));
+
   for (const row of guestRows) {
+    const [variant] = await db
+      .select({ stock: productVariants.stock })
+      .from(productVariants)
+      .where(eq(productVariants.id, row.variantId))
+      .limit(1);
+
+    const availableStock = variant ? variant.stock : row.quantity;
+
     const [existing] = await db
       .select()
       .from(cartItems)
       .where(and(eq(cartItems.userId, userId), eq(cartItems.variantId, row.variantId)))
       .limit(1);
+
     if (existing) {
+      // Clamp merged quantity to available stock
+      const targetQty = Math.min(existing.quantity + row.quantity, availableStock);
       await db
         .update(cartItems)
-        .set({ quantity: existing.quantity + row.quantity })
+        .set({ quantity: targetQty })
         .where(eq(cartItems.id, existing.id));
       await db.delete(cartItems).where(eq(cartItems.id, row.id));
     } else {
-      await db.update(cartItems).set({ userId, sessionId: null }).where(eq(cartItems.id, row.id));
+      const targetQty = Math.min(row.quantity, availableStock);
+      await db
+        .update(cartItems)
+        .set({ userId, sessionId: null, quantity: targetQty })
+        .where(eq(cartItems.id, row.id));
     }
   }
 }
 
 export async function addToCart(variantId: number, quantity: number) {
+  if (!Number.isInteger(quantity) || quantity < 1 || !Number.isSafeInteger(quantity)) {
+    throw new Error("Quantity must be a positive integer");
+  }
+
   const { user, sessionId } = await getCartIdentity();
   const [variant] = await db
     .select()
     .from(productVariants)
     .where(eq(productVariants.id, variantId))
     .limit(1);
+
   if (!variant) throw new Error("Variant not found");
-  if (quantity < 1) throw new Error("Quantity must be at least 1");
   if (variant.stock < quantity) throw new Error("Not enough stock");
 
   const match = user
@@ -145,21 +176,41 @@ export async function clearCartForIdentity() {
   }
 }
 
-export async function decrementStock(items: { variantId: number; quantity: number }[]) {
-  const ids = items.map((item) => item.variantId);
-  const variants = await db.select().from(productVariants).where(inArray(productVariants.id, ids));
-  const byId = new Map(variants.map((row) => [row.id, row]));
+export async function decrementStock(
+  items: { variantId: number; quantity: number }[],
+  txInstance?: any
+) {
+  // Aggregate quantities by variantId so duplicate cart lines are deducted cumulatively
+  const aggregated = new Map<number, number>();
   for (const item of items) {
-    const variant = byId.get(item.variantId);
-    if (!variant || variant.stock < item.quantity) {
-      throw new Error("One or more items are out of stock");
-    }
+    aggregated.set(item.variantId, (aggregated.get(item.variantId) || 0) + item.quantity);
   }
-  for (const item of items) {
-    const variant = byId.get(item.variantId)!;
-    await db
-      .update(productVariants)
-      .set({ stock: variant.stock - item.quantity })
-      .where(eq(productVariants.id, item.variantId));
+
+  const runDecrement = async (tx: any) => {
+    for (const [variantId, totalQty] of aggregated.entries()) {
+      // Atomic conditional update: update stock only if stock >= totalQty
+      const [updated] = await tx
+        .update(productVariants)
+        .set({ stock: sql`${productVariants.stock} - ${totalQty}` })
+        .where(
+          and(
+            eq(productVariants.id, variantId),
+            sql`${productVariants.stock} >= ${totalQty}`
+          )
+        )
+        .returning();
+
+      if (!updated) {
+        throw new Error(`Insufficient stock for variant ID ${variantId}`);
+      }
+    }
+  };
+
+  if (txInstance) {
+    await runDecrement(txInstance);
+  } else {
+    await db.transaction(async (tx) => {
+      await runDecrement(tx);
+    });
   }
 }

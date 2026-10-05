@@ -42,6 +42,7 @@ CREATE TABLE "coupons" (
 CREATE TABLE "order_items" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"order_id" integer NOT NULL,
+	"variant_id" integer,
 	"product_name" varchar(160) NOT NULL,
 	"variant_weight" varchar(40) NOT NULL,
 	"unit_price" integer NOT NULL,
@@ -55,6 +56,7 @@ CREATE TABLE "orders" (
 	"user_id" integer,
 	"guest_name" varchar(120),
 	"guest_phone" varchar(20),
+	"session_id" varchar(120),
 	"status" varchar(30) DEFAULT 'pending' NOT NULL,
 	"subtotal" integer NOT NULL,
 	"discount" integer DEFAULT 0 NOT NULL,

@@ -8,6 +8,20 @@
       "when": 1790444490068,
       "tag": "0000_slimy_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790444490069,
+      "tag": "0001_add_session_and_variant_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790444490070,
+      "tag": "0002_add_guest_token_hash",
+      "breakpoints": true
     }
   ]
 }

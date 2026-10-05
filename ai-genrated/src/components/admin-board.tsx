@@ -36,7 +36,21 @@ export function AdminBoard() {
   }
 
   useEffect(() => {
-    load();
+    let ignore = false;
+    async function init() {
+      const [orderRes, invRes] = await Promise.all([fetch("/api/orders"), fetch("/api/admin/inventory")]);
+      const orderData = await orderRes.json();
+      const invData = await invRes.json();
+      if (!ignore) {
+        setOrders(orderData.orders || []);
+        setVariants(invData.variants || []);
+        setLowStock(invData.lowStock || []);
+      }
+    }
+    init();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function setStatus(orderNumber: string, status: string) {

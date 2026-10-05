@@ -1,8 +1,9 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { reviews, users } from "@/db/schema";
 import { getAuthUser } from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
+import { readJsonSafe, parsePositiveInt } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +30,40 @@ export async function POST(request: Request) {
   await ensureSeeded();
   const user = await getAuthUser();
   if (!user) return Response.json({ error: "Please log in to review." }, { status: 401 });
-  const body = (await request.json()) as { productId?: number; rating?: number; comment?: string };
-  const rating = Number(body.rating);
-  const comment = body.comment?.trim() || "";
-  if (!body.productId || rating < 1 || rating > 5 || comment.length < 4) {
-    return Response.json({ error: "Please add a rating and a short review." }, { status: 400 });
+
+  const body = await readJsonSafe<{ productId?: unknown; rating?: unknown; comment?: unknown }>(request);
+  if (!body) {
+    return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
+
+  const productId = parsePositiveInt(body.productId);
+  const rating =
+    typeof body.rating === "number" &&
+    Number.isInteger(body.rating) &&
+    body.rating >= 1 &&
+    body.rating <= 5
+      ? body.rating
+      : null;
+  const comment = typeof body.comment === "string" ? body.comment.trim() : "";
+
+  if (!productId || rating === null || comment.length < 4) {
+    return Response.json({ error: "Please add a rating (1-5) and a short review." }, { status: 400 });
+  }
+
+  // Reject second review by same user for same product
+  const [existing] = await db
+    .select({ id: reviews.id })
+    .from(reviews)
+    .where(and(eq(reviews.productId, productId), eq(reviews.userId, user.id)))
+    .limit(1);
+
+  if (existing) {
+    return Response.json({ error: "You have already reviewed this product." }, { status: 409 });
+  }
+
   const [created] = await db
     .insert(reviews)
-    .values({ productId: body.productId, userId: user.id, rating, comment })
+    .values({ productId, userId: user.id, rating, comment })
     .returning();
   return Response.json({ review: created });
 }

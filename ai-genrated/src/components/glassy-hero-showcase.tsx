@@ -35,6 +35,16 @@ const PRODUCTS: ProductPhoto[] = [
     name: "Shahi Platter",
     image: "/images/mithai-platter-showcase.jpg",
   },
+  {
+    id: "special-bhel",
+    name: "Special Bhel",
+    image: "/images/special-bhel-showcase.jpg",
+  },
+  {
+    id: "ratlami-sev",
+    name: "Ratlami Sev",
+    image: "/uploads/1791029531387-c8e0da1d-527e-48b8-be9a-a5500eca62e3.jpg",
+  },
 ];
 
 export function GlassyHeroShowcase() {
@@ -44,6 +54,8 @@ export function GlassyHeroShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isProgrammaticScroll = useRef(false);
 
   useEffect(() => {
@@ -68,6 +80,16 @@ export function GlassyHeroShowcase() {
         }
       })
       .catch(() => {});
+  }, []);
+
+  const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const pauseBriefly = useCallback(() => {
+    setIsPaused(true);
+    if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+    pauseTimerRef.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 4000);
   }, []);
 
   // Scroll to a specific slide index smoothly
@@ -98,6 +120,17 @@ export function GlassyHeroShowcase() {
     scrollToSlide(prevIndex);
   }, [activeIndex, products.length, scrollToSlide]);
 
+  const scrollThumbnails = (direction: "left" | "right") => {
+    pauseBriefly();
+    const container = thumbnailContainerRef.current;
+    if (!container) return;
+    const scrollAmount = Math.max(160, container.clientWidth * 0.6);
+    container.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
   // Sync activeIndex when user scrolls/swipes manually
   const handleScroll = () => {
     if (isProgrammaticScroll.current) return;
@@ -109,7 +142,7 @@ export function GlassyHeroShowcase() {
     }
   };
 
-  // Smooth auto-scroll, pauses on hover or manual interaction
+  // Smooth auto-scroll loop
   useEffect(() => {
     if (isPaused || !autoScrollEnabled || products.length <= 1) return;
     const timer = setInterval(() => {
@@ -118,13 +151,26 @@ export function GlassyHeroShowcase() {
     return () => clearInterval(timer);
   }, [isPaused, autoScrollEnabled, products.length, intervalMs, handleNext]);
 
+  // Keep active thumbnail centered and smoothly visible in strip
+  useEffect(() => {
+    const container = thumbnailContainerRef.current;
+    const activeThumb = thumbnailRefs.current[activeIndex];
+    if (container && activeThumb) {
+      const containerWidth = container.clientWidth;
+      const thumbLeft = activeThumb.offsetLeft;
+      const thumbWidth = activeThumb.clientWidth;
+      const targetScroll = thumbLeft - containerWidth / 2 + thumbWidth / 2;
+      container.scrollTo({
+        left: Math.max(0, targetScroll),
+        behavior: "smooth",
+      });
+    }
+  }, [activeIndex]);
+
   return (
     <div
       className="relative w-full max-w-xl mx-auto select-none"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
+      onTouchStart={pauseBriefly}
     >
       {/* Ambient background glow orbs for glass refraction */}
       <div className="absolute -top-10 -right-10 h-72 w-72 rounded-full bg-gradient-to-br from-[#dfb755]/25 via-[#b89130]/15 to-transparent blur-3xl pointer-events-none" />
@@ -216,50 +262,91 @@ export function GlassyHeroShowcase() {
 
         {/* Glassy Product Photo Thumbnail Strip — Scroll & Click to Switch */}
         <div className="mt-3 sm:mt-4 pt-1">
-          <div className="flex items-center justify-between pb-1.5 px-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#0b2f8a]/75">
-              Swipe or tap photo to scroll
+          <div className="flex items-center justify-between pb-2 px-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#0b2f8a]/80 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#dfb755]" />
+              Tap to view Mithai &amp; Farsan
             </span>
-            <span className="text-[11px] font-semibold text-[#5e6d82]">
-              {products.length > 0 ? activeIndex + 1 : 0} / {products.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Auto Scrolling
+              </span>
+              <span className="text-[11px] font-bold text-[#0b2f8a] bg-[#0b2f8a]/10 px-2 py-0.5 rounded-full">
+                {products.length > 0 ? activeIndex + 1 : 0} / {products.length}
+              </span>
+            </div>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {products.map((item, idx) => {
-              const isSelected = idx === activeIndex;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSlide(idx)}
-                  className={`group relative flex-1 min-w-[70px] max-w-[120px] flex flex-col items-center rounded-2xl p-1.5 transition-all duration-300 ${
-                    isSelected
-                      ? "backdrop-blur-xl bg-white/95 border-2 border-[#0b2f8a] shadow-md -translate-y-1 scale-105"
-                      : "backdrop-blur-md bg-white/50 border border-white/80 hover:bg-white/80 hover:-translate-y-0.5"
-                  }`}
-                >
-                  <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-amber-50">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      sizes="100px"
-                    />
-                    {isSelected && (
-                      <div className="absolute inset-0 ring-2 ring-inset ring-[#0b2f8a] rounded-xl" />
-                    )}
-                  </div>
-                  <span
-                    className={`mt-1.5 block text-center text-[11px] font-medium leading-tight truncate w-full px-0.5 ${
-                      isSelected ? "text-[#0b2f8a] font-bold" : "text-[#5e6d82]"
+          <div className="relative group/strip">
+            {/* Scroll Left Button */}
+            <button
+              type="button"
+              onClick={() => scrollThumbnails("left")}
+              aria-label="Scroll thumbnails left"
+              className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-[#0b2f8a] hover:bg-white hover:scale-110 active:scale-95 transition-all opacity-80 sm:opacity-0 sm:group-hover/strip:opacity-100"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Scrollable Thumbnails Container */}
+            <div
+              ref={thumbnailContainerRef}
+              className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 px-1 scroll-smooth"
+            >
+              {products.map((item, idx) => {
+                const isSelected = idx === activeIndex;
+                return (
+                  <button
+                    key={item.id}
+                    ref={(el) => {
+                      thumbnailRefs.current[idx] = el;
+                    }}
+                    onClick={() => {
+                      pauseBriefly();
+                      scrollToSlide(idx);
+                    }}
+                    className={`group relative flex-1 min-w-[70px] sm:min-w-0 max-w-[95px] flex flex-col items-center rounded-xl sm:rounded-2xl p-1 sm:p-1.5 transition-all duration-300 text-center cursor-pointer shrink-0 sm:shrink ${
+                      isSelected
+                        ? "bg-white border-2 border-[#0b2f8a] shadow-lg shadow-[#0b2f8a]/15 ring-2 ring-[#dfb755]/40 scale-[1.02]"
+                        : "bg-white/70 border border-slate-200/80 hover:bg-white hover:border-[#0b2f8a]/40 shadow-sm"
                     }`}
                   >
-                    {item.name.split(" ")[0]}
-                  </span>
-                </button>
-              );
-            })}
+                    <div className="relative aspect-square w-full overflow-hidden rounded-lg sm:rounded-xl bg-amber-50/60 shadow-inner">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 640px) 70px, 95px"
+                      />
+                    </div>
+                    <span
+                      className={`mt-1 sm:mt-1.5 block text-center text-[10px] sm:text-[11px] leading-tight w-full px-0.5 line-clamp-2 ${
+                        isSelected ? "text-[#0b2f8a] font-bold" : "text-slate-600 font-medium"
+                      }`}
+                      title={item.name}
+                    >
+                      {item.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Scroll Right Button */}
+            <button
+              type="button"
+              onClick={() => scrollThumbnails("right")}
+              aria-label="Scroll thumbnails right"
+              className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-[#0b2f8a] hover:bg-white hover:scale-110 active:scale-95 transition-all opacity-80 sm:opacity-0 sm:group-hover/strip:opacity-100"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>

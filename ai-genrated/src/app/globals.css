@@ -16,10 +16,16 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   color: var(--text-main);
   background-color: var(--canvas);
   background-image: 
@@ -30,6 +36,9 @@ body {
 .site-shell {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .gold-line {
@@ -132,3 +141,142 @@ input:focus, select:focus, textarea:focus {
   border-color: #0b2f8a;
   box-shadow: 0 0 0 3px rgba(11, 47, 138, 0.12);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOTION PRIMITIVES UTILITIES & KEYFRAMES
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes text-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(184, 145, 48, 0.4) 0%,
+    #dfb755 25%,
+    #ffffff 50%,
+    #dfb755 75%,
+    rgba(184, 145, 48, 0.4) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes border-glow-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.border-trail-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.border-trail-glow::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    rgba(223, 183, 85, 0.1) 15%,
+    rgba(223, 183, 85, 0.8) 25%,
+    rgba(255, 255, 255, 0.95) 28%,
+    rgba(223, 183, 85, 0.8) 31%,
+    rgba(223, 183, 85, 0.1) 40%,
+    transparent 50%
+  );
+  animation: border-glow-spin 5s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.border-trail-glow-inner {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  border-radius: inherit;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WARM CREAM & DEEP PURPLE REDESIGN THEME
+   ═══════════════════════════════════════════════════════════════ */
+
+.btn-purple {
+  background: #3b1e54;
+  color: #ffffff;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-purple:hover {
+  background: #4e286d;
+  box-shadow: 0 8px 24px -4px rgba(59, 30, 84, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-purple:active {
+  transform: scale(0.98);
+}
+
+.btn-saffron {
+  background: #d97706;
+  color: #ffffff;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.btn-saffron:hover {
+  background: #b45309;
+  box-shadow: 0 8px 20px -4px rgba(217, 119, 6, 0.35);
+  transform: translateY(-1px);
+}
+
+.cream-card {
+  background: #ffffff;
+  border: 1px solid rgba(59, 30, 84, 0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px -5px rgba(59, 30, 84, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cream-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(217, 119, 6, 0.35);
+  box-shadow: 0 20px 35px -5px rgba(59, 30, 84, 0.09), 0 4px 8px -2px rgba(217, 119, 6, 0.08);
+}
+
+
