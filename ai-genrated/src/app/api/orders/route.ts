@@ -6,6 +6,7 @@ import { getAuthUser, getCartSessionId, getCouponCode, setCouponCode, requireAdm
 import { calcTotals, unitPrice } from "@/lib/money";
 import { ensureSeeded } from "@/db/seed";
 import { readJsonSafe, isValidPhone, isValidPincode, AddressSchema } from "@/lib/validation";
+import { recordAdminNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -391,6 +392,26 @@ export async function POST(request: Request) {
   }
 
   await setCouponCode(null);
+
+  // Record Admin Notification
+  try {
+    await recordAdminNotification({
+      type: "order_created",
+      title: `New Order #${createdOrder.orderNumber}! 🛍️`,
+      message: `${name} placed an order of ₹${createdOrder.total} (${deliverySlot}, ${paymentMethod.toUpperCase()}).`,
+      data: {
+        orderId: createdOrder.id,
+        orderNumber: createdOrder.orderNumber,
+        customerName: name,
+        customerPhone: phone,
+        total: createdOrder.total,
+        deliverySlot,
+        paymentMethod,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to notify admin of new order:", err);
+  }
 
   const { guestTokenHash: _discardHash, ...orderWithoutHash } = createdOrder;
   return Response.json({

@@ -204,8 +204,7 @@ describe("Session-Based Admin Authorization & Guest Order Security", () => {
 
   describe("UI Configuration Security & Validation", () => {
     it("public GET /api/ui-config succeeds without authentication", async () => {
-      const req = buildRequest({ method: "GET", url: "/api/ui-config" });
-      const res = await getUiConfig(req);
+      const res = await getUiConfig();
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data).toHaveProperty("heroPhotos");
@@ -260,7 +259,7 @@ describe("Session-Based Admin Authorization & Guest Order Security", () => {
       const origSecret = process.env.SESSION_SECRET;
 
       try {
-        process.env.NODE_ENV = "production";
+        (process.env as any).NODE_ENV = "production";
         delete process.env.SESSION_SECRET;
 
         expect(() => secret()).toThrow(/SESSION_SECRET must be set and secure in production/);
@@ -271,7 +270,7 @@ describe("Session-Based Admin Authorization & Guest Order Security", () => {
         process.env.SESSION_SECRET = "my-secure-production-secret-1234567890123456";
         expect(secret()).toBe("my-secure-production-secret-1234567890123456");
       } finally {
-        process.env.NODE_ENV = origEnv;
+        (process.env as any).NODE_ENV = origEnv;
         if (origSecret !== undefined) {
           process.env.SESSION_SECRET = origSecret;
         } else {

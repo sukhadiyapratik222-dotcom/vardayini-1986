@@ -135,9 +135,9 @@
     "title": "Our Special Items",
     "subtitle": "Updated from test script",
     "productIds": [
+      4,
       1,
       2,
-      4,
       6
     ],
     "linkText": "See all 24+ items →",

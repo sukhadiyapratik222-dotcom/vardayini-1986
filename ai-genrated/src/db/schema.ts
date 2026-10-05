@@ -241,3 +241,14 @@ export const stores = pgTable("stores", {
   lat: numeric("lat", { precision: 10, scale: 6 }).notNull(),
   lng: numeric("lng", { precision: 10, scale: 6 }).notNull(),
 });
+
+export const adminNotifications = pgTable("admin_notifications", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 40 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  data: text("data"),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+

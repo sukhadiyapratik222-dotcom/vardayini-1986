@@ -11,6 +11,7 @@ import {
   globalAccountLockoutManager,
   globalLoginRateLimiter,
 } from "@/lib/security";
+import { recordAdminNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +123,24 @@ export async function POST(request: Request) {
   // Set secure HttpOnly session cookie and merge guest cart
   await setAuthCookie(user.id);
   await mergeGuestCart(user.id);
+
+  // Notify admin when a customer or user logs in
+  try {
+    const isCustomer = user.role !== "admin";
+    await recordAdminNotification({
+      type: "user_login",
+      title: `${isCustomer ? "Customer" : "Admin"} Logged In 👤`,
+      message: `${user.name} (${user.email}) just logged in${isCustomer ? " to store" : " to dashboard"}.`,
+      data: {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to notify admin of user login:", err);
+  }
 
   return Response.json({
     success: true,

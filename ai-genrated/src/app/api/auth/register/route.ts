@@ -6,6 +6,7 @@ import { ensureSeeded } from "@/db/seed";
 import { mergeGuestCart } from "@/lib/cart";
 import { setAuthCookie } from "@/lib/auth";
 import { readJsonSafe } from "@/lib/validation";
+import { recordAdminNotification } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   await ensureSeeded();
@@ -39,6 +40,25 @@ export async function POST(request: Request) {
     .returning();
   await setAuthCookie(user.id);
   await mergeGuestCart(user.id);
+
+  // Notify admin when a new user registers
+  try {
+    await recordAdminNotification({
+      type: "user_registered",
+      title: "New Customer Registered! 🌟",
+      message: `${user.name} (${user.email}) just created an account. Phone: ${user.phone}`,
+      data: {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to notify admin of new user registration:", err);
+  }
+
   return Response.json({
     user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role },
   });

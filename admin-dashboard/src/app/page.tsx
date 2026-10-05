@@ -24,6 +24,7 @@ import { CustomersTab } from "@/components/customers-tab";
 import { LivePreviewTab } from "@/components/live-preview-tab";
 import { ToastPopup, ToastData } from "@/components/toast-popup";
 import { toast } from "@/lib/toast";
+import { NotificationCenter } from "@/components/notification-center";
 
 import { ReportsTab, ReportType } from "@/components/reports-tab";
 import { SmsWalletTab } from "@/components/sms-wallet-tab";
@@ -75,6 +76,7 @@ export default function AdminDashboardPage() {
   const [isStoreOnline, setIsStoreOnline] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [reportsOpen, setReportsOpen] = useState(true);
 
   // Authentication State
@@ -258,7 +260,12 @@ export default function AdminDashboardPage() {
   }, []);
 
   const navItems: { id: TabId; label: string; icon: string; badge?: string | number }[] = [
-    { id: "overview", label: "Dashboard Overview", icon: "🌟" },
+    {
+      id: "overview",
+      label: "Dashboard Overview",
+      icon: "🌟",
+      badge: unreadNotificationCount > 0 ? `🔔 ${unreadNotificationCount}` : undefined,
+    },
     { id: "branding", label: "Change Logo & Identity", icon: "✨" },
     {
       id: "hero",
@@ -681,22 +688,32 @@ export default function AdminDashboardPage() {
                   </>
                 )}
               </div>
-              <h1 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#0b2f8a] tracking-tight flex items-center gap-2.5 mt-1">
-                <span>
-                  {activeTab.startsWith("report-")
-                    ? "📊"
-                    : activeTab === "sms-wallet"
-                    ? "💬"
-                    : navItems.find((n) => n.id === activeTab)?.icon}
-                </span>
-                <span>
-                  {activeTab.startsWith("report-")
-                    ? reportMenuItems.find((m) => m.id === activeTab)?.label
-                    : activeTab === "sms-wallet"
-                    ? "SMS Wallet & Credits"
-                    : navItems.find((n) => n.id === activeTab)?.label}
-                </span>
-              </h1>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <h1 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#0b2f8a] tracking-tight flex items-center gap-2.5">
+                  <span>
+                    {activeTab.startsWith("report-")
+                      ? "📊"
+                      : activeTab === "sms-wallet"
+                      ? "💬"
+                      : navItems.find((n) => n.id === activeTab)?.icon}
+                  </span>
+                  <span>
+                    {activeTab.startsWith("report-")
+                      ? reportMenuItems.find((m) => m.id === activeTab)?.label
+                      : activeTab === "sms-wallet"
+                      ? "SMS Wallet & Credits"
+                      : navItems.find((n) => n.id === activeTab)?.label}
+                  </span>
+                </h1>
+
+                {/* Notification Bell Icon right next to Dashboard Overview */}
+                <NotificationCenter
+                  onUnreadChange={setUnreadNotificationCount}
+                  onNavigateTab={(tab) => {
+                    setActiveTab(tab);
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-3">

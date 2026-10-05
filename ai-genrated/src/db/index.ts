@@ -177,6 +177,20 @@ export async function ensureDbMigrations() {
         `);
       } catch {}
 
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS "admin_notifications" (
+            "id" serial PRIMARY KEY,
+            "type" varchar(40) NOT NULL,
+            "title" varchar(200) NOT NULL,
+            "message" text NOT NULL,
+            "data" text,
+            "is_read" boolean NOT NULL DEFAULT false,
+            "created_at" timestamp with time zone NOT NULL DEFAULT now()
+          );
+        `);
+      } catch {}
+
       globalForDb.__isMigrated = true;
     })();
   }

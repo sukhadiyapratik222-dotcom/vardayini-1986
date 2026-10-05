@@ -447,7 +447,43 @@ export const api = {
     });
     return handleResponse<{ success: boolean; message: string }>(res, "Failed to delete customer");
   },
+
+  // Admin Notifications
+  async getNotifications(limit: number = 50): Promise<{ notifications: AdminNotification[]; unreadCount: number }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/notifications?limit=${limit}`, {
+      cache: "no-store",
+    });
+    return handleResponse<{ notifications: AdminNotification[]; unreadCount: number }>(res, "Failed to load notifications");
+  },
+
+  async markNotificationRead(id?: number, all?: boolean): Promise<{ success: boolean }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/notifications`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, all }),
+    });
+    return handleResponse<{ success: boolean }>(res, "Failed to update notification");
+  },
+
+  async deleteNotification(id?: number, all?: boolean): Promise<{ success: boolean }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/notifications`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, all }),
+    });
+    return handleResponse<{ success: boolean }>(res, "Failed to delete notification");
+  },
 };
+
+export interface AdminNotification {
+  id: number;
+  type: "order_created" | "user_login" | "user_registered" | "system";
+  title: string;
+  message: string;
+  data?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
 
 export interface CustomerAddress {
   id: number;
@@ -471,4 +507,5 @@ export interface CustomerItem {
   totalSpent: number;
   lastOrder?: string | null;
 }
+
 
