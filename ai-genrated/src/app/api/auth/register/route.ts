@@ -7,6 +7,7 @@ import { mergeGuestCart } from "@/lib/cart";
 import { setAuthCookie } from "@/lib/auth";
 import { readJsonSafe } from "@/lib/validation";
 import { recordAdminNotification } from "@/lib/notifications";
+import { syncUserToMysql } from "@/lib/mysql";
 
 export async function POST(request: Request) {
   await ensureSeeded();
@@ -40,6 +41,16 @@ export async function POST(request: Request) {
     .returning();
   await setAuthCookie(user.id);
   await mergeGuestCart(user.id);
+
+  // Synchronize new user to MySQL (phpMyAdmin)
+  await syncUserToMysql({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    passwordHash: user.passwordHash,
+    role: user.role,
+  });
 
   // Notify admin when a new user registers
   try {

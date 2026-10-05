@@ -7,6 +7,7 @@ import { calcTotals, unitPrice } from "@/lib/money";
 import { ensureSeeded } from "@/db/seed";
 import { readJsonSafe, isValidPhone, isValidPincode, AddressSchema } from "@/lib/validation";
 import { recordAdminNotification } from "@/lib/notifications";
+import { syncOrderToMysql } from "@/lib/mysql";
 
 export const dynamic = "force-dynamic";
 
@@ -411,6 +412,29 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Failed to notify admin of new order:", err);
+  }
+
+  // Synchronize order to MySQL (phpMyAdmin)
+  try {
+    await syncOrderToMysql({
+      orderNumber: createdOrder.orderNumber,
+      userId: createdOrder.userId,
+      guestName: createdOrder.guestName,
+      guestPhone: createdOrder.guestPhone,
+      status: createdOrder.status,
+      subtotal: createdOrder.subtotal,
+      discount: createdOrder.discount,
+      deliveryFee: createdOrder.deliveryFee,
+      tax: createdOrder.tax,
+      total: createdOrder.total,
+      couponCode: createdOrder.couponCode,
+      addressSnapshot: createdOrder.addressSnapshot,
+      deliverySlot: createdOrder.deliverySlot,
+      paymentMethod: createdOrder.paymentMethod,
+      paymentStatus: createdOrder.paymentStatus,
+    });
+  } catch (err) {
+    console.warn("MySQL order sync error:", err);
   }
 
   const { guestTokenHash: _discardHash, ...orderWithoutHash } = createdOrder;

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { adminNotifications } from "@/db/schema";
+import { syncNotificationToMysql } from "@/lib/mysql";
 
 let tableEnsured = false;
 
@@ -44,4 +45,9 @@ export async function recordAdminNotification(payload: NotificationPayload) {
   } catch (err) {
     console.error("Failed to record admin notification:", err);
   }
+
+  // Also sync to MySQL
+  try {
+    await syncNotificationToMysql(payload);
+  } catch {}
 }

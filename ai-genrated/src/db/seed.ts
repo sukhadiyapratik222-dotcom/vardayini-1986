@@ -155,6 +155,22 @@ async function seedInternal() {
       .where(eq(users.id, existingAdmin.id));
   }
 
+  // Ensure all seeded users are synced to MySQL
+  try {
+    const { syncUserToMysql } = await import("@/lib/mysql");
+    const allUsers = await db.select().from(users);
+    for (const u of allUsers) {
+      await syncUserToMysql({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        passwordHash: u.passwordHash,
+        role: u.role,
+      });
+    }
+  } catch {}
+
   // Insert 18 Categories across Sweets, Namkeen & Bakery
   const categoryRows = await db
     .insert(categories)
