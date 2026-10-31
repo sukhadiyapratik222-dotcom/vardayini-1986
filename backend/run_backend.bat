@@ -6,17 +6,18 @@ echo =====================================================================
 echo.
 cd /d "%~dp0"
 
-IF EXIST ".venv\Scripts\activate.bat" (
-    echo Activating dedicated virtual environment (.venv)...
-    call .venv\Scripts\activate.bat
-) ELSE (
-    echo Virtual environment not found, falling back to system python...
-)
-
 echo Starting Uvicorn server on http://localhost:8000...
 echo Swagger UI documentation: http://localhost:8000/docs
 echo ReDoc documentation:      http://localhost:8000/redoc
 echo.
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+IF EXIST ".venv\Scripts\python.exe" (
+    echo [OK] Using dedicated virtual environment (.venv)...
+    ".venv\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+) ELSE (
+    echo [NOTICE] Using system Python...
+    python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+)
 
 pause
+
