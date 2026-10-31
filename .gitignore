@@ -40,6 +40,8 @@ stitch_fake_account_detection_ui*
 # Python & Virtual Environments
 backend/.env
 backend/.venv/
+backend/cloudflared.exe
+*.exe
 .venv/
 venv/
 __pycache__/
