@@ -1,4 +1,4 @@
 @echo off
-title Vardayini Sweet Mart — ngrok Public Tunnel
+setlocal
 cd /d "%~dp0backend"
 call start_ngrok.bat

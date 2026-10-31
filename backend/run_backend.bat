@@ -1,23 +1,25 @@
 @echo off
-title Vardayini Sweet Mart — FastAPI Backend
-echo =====================================================================
-echo  VARDAYINI SWEET MART — PYTHON FASTAPI BACKEND (PORT 8000)
-echo =====================================================================
-echo.
+setlocal
 cd /d "%~dp0"
 
-echo Starting Uvicorn server on http://localhost:8000...
-echo Swagger UI documentation: http://localhost:8000/docs
-echo ReDoc documentation:      http://localhost:8000/redoc
-echo.
+title Vardayini Sweet Mart Backend
 
-IF EXIST ".venv\Scripts\python.exe" (
-    echo [OK] Using dedicated virtual environment (.venv)...
-    ".venv\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-) ELSE (
-    echo [NOTICE] Using system Python...
-    python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-)
+echo ===================================================
+echo Starting Vardayini Sweet Mart Backend on Port 8000
+echo ===================================================
 
+if exist ".venv\Scripts\python.exe" goto USE_VENV
+goto USE_SYSTEM
+
+:USE_VENV
+echo [OK] Using dedicated Python environment (.venv)
+".venv\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+goto END
+
+:USE_SYSTEM
+echo [OK] Using system Python
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+goto END
+
+:END
 pause
-

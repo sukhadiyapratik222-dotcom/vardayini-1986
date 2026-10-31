@@ -1,4 +1,4 @@
 @echo off
-title Vardayini Sweet Mart — FastAPI Backend
+setlocal
 cd /d "%~dp0backend"
 call run_backend.bat
