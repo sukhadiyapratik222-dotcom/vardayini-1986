@@ -615,12 +615,17 @@ export default function AdminDashboardPage() {
             // Do NOT add to errors array to avoid displaying ugly 403 banners
             return;
           }
+          // 403 = this role is read-only for that module. Hide the panel quietly
+          // instead of showing a scary error banner on every poll.
+          if (err instanceof ApiError && err.status === 403) return;
           errors.push(`${label}: ${err instanceof Error ? err.message : String(err)}`);
         };
 
+        const canManageProducts = canManageModule("products");
+        const canManageCategories = canManageModule("categories") || canManageProducts;
+
         const canOrders = isModulePermitted("orders");
         const canProducts = isModulePermitted("products");
-        const canCategories = isModulePermitted("categories") || isModulePermitted("products");
         const canCustomers = isModulePermitted("customers");
         const canSettings =
           isModulePermitted("branding") ||
@@ -654,7 +659,7 @@ export default function AdminDashboardPage() {
                 return [];
               })
             : Promise.resolve([]),
-          canProducts
+          canManageProducts
             ? api.getInventory().catch((err) => {
                 recordErr(err, "Inventory");
                 return { variants: [], lowStock: [] };
@@ -666,7 +671,7 @@ export default function AdminDashboardPage() {
                 return null;
               })
             : Promise.resolve(null),
-          canCategories
+          canManageCategories
             ? api.getCategories().catch((err) => {
                 recordErr(err, "Categories");
                 return [];
@@ -740,7 +745,7 @@ export default function AdminDashboardPage() {
       );
     }
     setIsLoading(false);
-  }, [isModulePermitted]);
+  }, [isModulePermitted, canManageModule]);
 
   useEffect(() => {
     if (!isAuthenticated) return;

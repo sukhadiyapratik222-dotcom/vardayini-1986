@@ -334,13 +334,23 @@ export function HeroScrollerTab({ config, onRefresh }: HeroScrollerTabProps) {
             <div className="lg:col-span-6 relative flex flex-col items-center">
               <div className="w-full max-w-lg bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-2xl space-y-4">
                 {/* Main Active Image Showcase with Arrows & Dots */}
-                <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-slate-100 group shadow-inner">
+                <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#fffdf7] via-[#fefaf0] to-[#fcf4e4] group shadow-inner flex items-center justify-center">
                   {currentPreviewSlide ? (
-                    <img
-                      src={currentPreviewSlide.image}
-                      alt={currentPreviewSlide.name}
-                      className="w-full h-full object-cover scale-[1.24] hover:scale-[1.38] transition-transform duration-700 ease-out"
-                    />
+                    <>
+                      {/* Ambient blur backdrop */}
+                      <img
+                        src={currentPreviewSlide.image}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-35 scale-110 pointer-events-none select-none"
+                      />
+                      {/* Main photo: zoomed out, full view */}
+                      <img
+                        src={currentPreviewSlide.image}
+                        alt={currentPreviewSlide.name}
+                        className="relative z-10 w-full h-full object-contain p-2.5 scale-100 hover:scale-[1.02] transition-transform duration-500 ease-out drop-shadow-sm select-none"
+                      />
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
                       No Active Slides

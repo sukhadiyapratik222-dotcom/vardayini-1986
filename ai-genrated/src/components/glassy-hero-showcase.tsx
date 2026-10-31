@@ -205,22 +205,35 @@ export function GlassyHeroShowcase() {
               <div
                 key={prod.id}
                 onClick={() => setFullscreenImage(prod)}
-                className="relative aspect-[16/11] sm:aspect-[16/11] md:aspect-[4/3] lg:aspect-[16/11] xl:aspect-[4/3] w-full shrink-0 snap-center overflow-hidden cursor-zoom-in"
+                className="relative aspect-[16/11] sm:aspect-[16/11] md:aspect-[4/3] lg:aspect-[16/11] xl:aspect-[4/3] w-full shrink-0 snap-center overflow-hidden cursor-zoom-in bg-gradient-to-br from-[#fffdf7] via-[#fefaf0] to-[#fcf4e4] flex items-center justify-center select-none"
                 title="Click to view full photo"
               >
+                {/* Ambient soft glow backdrop: smoothly diffuses the image colors around letterbox edges */}
                 <Image
                   src={prod.image}
-                  alt={prod.name}
+                  alt=""
+                  aria-hidden="true"
                   fill
-                  priority={idx === 0}
-                  className={`object-cover transition-transform duration-700 ease-out ${
-                    isSuperZoom
-                      ? "scale-[1.55] sm:scale-[1.6] hover:scale-[1.7]"
-                      : "scale-[1.24] sm:scale-[1.28] md:scale-[1.3] hover:scale-[1.38]"
-                  }`}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 580px, 660px"
-                  draggable={false}
+                  className="object-cover blur-2xl opacity-40 scale-110 pointer-events-none select-none"
+                  sizes="120px"
                 />
+
+                {/* Main product photo: zoomed out to natural framing, fully visible without cropping */}
+                <div className="relative w-full h-full p-2 sm:p-3 flex items-center justify-center">
+                  <Image
+                    src={prod.image}
+                    alt={prod.name}
+                    fill
+                    priority={idx === 0}
+                    className={`object-contain transition-transform duration-500 ease-out drop-shadow-[0_4px_16px_rgba(0,0,0,0.08)] ${
+                      isSuperZoom
+                        ? "scale-[1.28] sm:scale-[1.3] hover:scale-[1.32]"
+                        : "scale-100 hover:scale-[1.02]"
+                    }`}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 580px, 660px"
+                    draggable={false}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -235,7 +248,7 @@ export function GlassyHeroShowcase() {
             }}
             aria-label={isSuperZoom ? "Zoom out to normal view" : "Zoom in closer"}
             className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-white/90 hover:bg-white text-[#0b2f8a] border border-white/80 shadow-[0_4px_14px_rgba(0,0,0,0.12)] text-[10px] sm:text-[11px] font-bold tracking-wide transition-all duration-300 hover:scale-105 active:scale-95"
-            title={isSuperZoom ? "Reset zoom" : "Zoom in close"}
+            title={isSuperZoom ? "Reset zoom to full view" : "Zoom in close"}
           >
             <svg
               className="w-3.5 h-3.5"
@@ -255,7 +268,7 @@ export function GlassyHeroShowcase() {
                 </>
               )}
             </svg>
-            <span>{isSuperZoom ? "1.6x Zoom" : "Zoom In"}</span>
+            <span>{isSuperZoom ? "Zoom Out" : "Zoom In"}</span>
           </button>
 
           {/* Glassy Floating Left & Right Scroll Navigation Arrows */}
@@ -379,7 +392,7 @@ export function GlassyHeroShowcase() {
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-cover scale-110 group-hover:scale-125 transition-transform duration-500"
+                        className="object-cover scale-100 group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 640px) 60px, 80px"
                       />
                     </div>
@@ -444,7 +457,7 @@ export function GlassyHeroShowcase() {
                 src={fullscreenImage.image}
                 alt={fullscreenImage.name}
                 fill
-                className="object-cover scale-110 hover:scale-125 transition-transform duration-700 ease-out"
+                className="object-contain transition-transform duration-500 ease-out"
                 sizes="(max-width: 768px) 100vw, 800px"
               />
             </div>

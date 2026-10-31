@@ -594,6 +594,12 @@ export const api = {
     const res = await fetch("/api/auth/me", {
       cache: "no-store",
     });
+    // A 401 here just means "not signed in yet" during the mount probe.
+    // Do NOT route it through handleResponse, which broadcasts an auth-revoked
+    // event and races with a login the user is submitting at the same moment.
+    if (res.status === 401) {
+      return { user: null };
+    }
     return handleResponse<{ user: any }>(res, "Session verification failed");
   },
   // Operational Metrics Stats

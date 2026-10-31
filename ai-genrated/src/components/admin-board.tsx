@@ -28,18 +28,26 @@ export function AdminBoard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [lowStock, setLowStock] = useState<Variant[]>([]);
+  const [permissionNotice, setPermissionNotice] = useState("");
 
   function checkAuthRevoked(res: Response, data: any) {
-    if (
-      res.status === 401 ||
-      res.status === 403 ||
-      (data && typeof data.error === "string" && data.error.toLowerCase().includes("deactivated"))
-    ) {
+    const message = typeof data?.error === "string" ? data.error.toLowerCase() : "";
+    const explicitlyDeactivated = message.includes("deactivated");
+
+    // Only an expired/invalid session (401) or a deactivated account should end the session.
+    if (res.status === 401 || explicitlyDeactivated) {
       fetch("/api/auth/logout", { method: "POST" }).finally(() => {
         window.location.href = "/login?error=deactivated";
       });
       return true;
     }
+
+    // A 403 means "this panel is not allowed for your role" — it must NOT log the user out.
+    if (res.status === 403) {
+      setPermissionNotice(data?.error || "You do not have permission to manage this section.");
+      return false;
+    }
+
     return false;
   }
 
@@ -153,6 +161,16 @@ export function AdminBoard() {
           View All Panels
         </button>
       </div>
+
+      {/* Permission notice (403 from a panel your role cannot access) */}
+      {permissionNotice ? (
+        <div
+          role="alert"
+          className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900"
+        >
+          🔒 {permissionNotice} Ask a Super Admin to grant write access for this section.
+        </div>
+      ) : null}
 
       {/* Outlets Manager Section */}
       {(activeTab === "outlets" || activeTab === "all") && (
