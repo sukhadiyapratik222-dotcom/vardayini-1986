@@ -37,6 +37,16 @@ qa-screenshots/
 *.zip
 stitch_fake_account_detection_ui*
 
+# Python & Virtual Environments
+backend/.env
+backend/.venv/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
 # Accidental nested directories
 ai-genrated/admin-dashboard/
 ai-genrated/ai-genrated/

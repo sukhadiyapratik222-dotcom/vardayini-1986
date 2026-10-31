@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { INDIAN_STATES } from "@/lib/validation-constants";
 import { AddressSchema, formatZodErrors } from "@/lib/validation";
+import { buildApiUrl, getApiHeaders } from "@/lib/api-config";
 
 const DELIVERY_SLOTS = [
   "Today, 5:00–7:00 PM",
@@ -403,9 +404,9 @@ export function CheckoutForm({
               otp: cleanOtp,
             };
 
-      const res = await fetch("/api/orders", {
+      const res = await fetch(buildApiUrl("/api/orders"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getApiHeaders(),
         body: JSON.stringify(payload),
       });
 

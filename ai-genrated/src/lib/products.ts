@@ -72,6 +72,37 @@ export async function listProducts(opts: {
   limit?: number;
   ids?: number[];
 }) {
+  // If external FastAPI backend (e.g. ngrok tunnel) is configured, fetch live catalog from FastAPI
+  const fastApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (fastApiUrl) {
+    try {
+      const cleanBase = fastApiUrl.replace(/\/+$/, "");
+      const params = new URLSearchParams();
+      if (opts.category) params.set("category", opts.category);
+      if (opts.search) params.set("search", opts.search);
+      if (opts.tag) params.set("tag", opts.tag);
+      if (opts.featured !== undefined) params.set("featured", opts.featured ? "true" : "false");
+      if (opts.limit) params.set("limit", String(opts.limit));
+
+      const res = await fetch(`${cleanBase}/api/products?${params.toString()}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        cache: "no-store",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.products) && data.products.length > 0) {
+          return data.products;
+        }
+      }
+    } catch {
+      // Graceful fallback to local DB if FastAPI/ngrok is temporarily offline
+    }
+  }
+
   await ensureSeeded();
   const conditions = [];
   if (opts.ids && opts.ids.length > 0) {
