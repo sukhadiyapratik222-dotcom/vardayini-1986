@@ -11,13 +11,16 @@ import {
 
 export const dynamic = "force-dynamic";
 
-async function requireFestivalAdmin(request: Request) {
-  const authFestivals = await requireAdmin(request, "festivals:manage");
+async function requireFestivalAdmin(
+  request: Request,
+  action: "view" | "manage" = "manage"
+) {
+  const authFestivals = await requireAdmin(request, `festivals:${action}`);
   if (!authFestivals.error) return authFestivals;
-  // Fallbacks: allow products:manage or settings:manage
-  const authProducts = await requireAdmin(request, "products:manage");
+  // Fallbacks: allow products or settings permission at the same level
+  const authProducts = await requireAdmin(request, `products:${action}`);
   if (!authProducts.error) return authProducts;
-  const authSettings = await requireAdmin(request, "settings:manage");
+  const authSettings = await requireAdmin(request, `settings:${action}`);
   if (!authSettings.error) return authSettings;
   return authFestivals;
 }
@@ -25,7 +28,7 @@ async function requireFestivalAdmin(request: Request) {
 export async function GET(request: Request) {
   try {
     await ensureSeeded();
-    const auth = await requireFestivalAdmin(request);
+    const auth = await requireFestivalAdmin(request, "view");
     if (auth.error) return auth.error;
 
     const items = await getFestivalProductsWithVariants();

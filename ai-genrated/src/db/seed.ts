@@ -59,6 +59,62 @@ export async function forceReseed() {
   globalForSeed.__isSeeded = true;
 }
 
+const DEFAULT_COUPONS = [
+  {
+    code: "WELCOME10",
+    description: "Flat 10% off on your first order",
+    type: "percent",
+    value: 10,
+    minOrder: 0,
+  },
+  {
+    code: "FESTIVE10",
+    description: "10% off on orders above ₹499",
+    type: "percent",
+    value: 10,
+    minOrder: 499,
+  },
+  {
+    code: "FESTIVE15",
+    description: "15% off on festive orders above ₹999",
+    type: "percent",
+    value: 15,
+    minOrder: 999,
+  },
+  {
+    code: "MITHAI50",
+    description: "₹50 off on orders above ₹499",
+    type: "flat",
+    value: 50,
+    minOrder: 499,
+  },
+  {
+    code: "FREEDEL",
+    description: "Free delivery on any order",
+    type: "free_delivery",
+    value: 0,
+    minOrder: 0,
+  },
+];
+
+/**
+ * Inserts any missing default coupon codes without touching existing ones.
+ * Safe to run on every boot, including databases that were seeded earlier.
+ */
+async function ensureDefaultCoupons() {
+  const existingCouponRows = await db.select({ code: coupons.code }).from(coupons);
+  const existingCouponCodes = new Set(
+    existingCouponRows.map((row) => row.code.trim().toUpperCase())
+  );
+  const missingCoupons = DEFAULT_COUPONS.filter(
+    (coupon) => !existingCouponCodes.has(coupon.code.toUpperCase())
+  );
+
+  if (missingCoupons.length > 0) {
+    await db.insert(coupons).values(missingCoupons);
+  }
+}
+
 async function seedInternal() {
   await ensureDbMigrations();
 
@@ -78,6 +134,7 @@ async function seedInternal() {
 
   if (checkNew.length > 0 && checkOrders.length > 0) {
     await ensureEssentialCategories();
+    await ensureDefaultCoupons();
     return;
   }
 
@@ -1197,47 +1254,8 @@ async function seedInternal() {
     );
   }
 
-  // Ensure coupons exist
-  const existingCoupons = await db.select({ id: coupons.id }).from(coupons).limit(1);
-  if (existingCoupons.length === 0) {
-    await db.insert(coupons).values([
-      {
-        code: "WELCOME10",
-        description: "Flat 10% off on your first order",
-        type: "percent",
-        value: 10,
-        minOrder: 0,
-      },
-      {
-        code: "FESTIVE10",
-        description: "10% off on orders above ₹499",
-        type: "percent",
-        value: 10,
-        minOrder: 499,
-      },
-      {
-        code: "FESTIVE15",
-        description: "15% off on festive orders above ₹999",
-        type: "percent",
-        value: 15,
-        minOrder: 999,
-      },
-      {
-        code: "MITHAI50",
-        description: "₹50 off on orders above ₹499",
-        type: "flat",
-        value: 50,
-        minOrder: 499,
-      },
-      {
-        code: "FREEDEL",
-        description: "Free delivery on any order",
-        type: "free_delivery",
-        value: 0,
-        minOrder: 0,
-      },
-    ]);
-  }
+  // Ensure coupons exist (insert only the missing codes, never wipe custom ones)
+  await ensureDefaultCoupons();
 
   // Ensure stores exist
   const existingStores = await db.select({ id: stores.id }).from(stores).limit(1);

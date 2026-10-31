@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Dict, Any, List
 
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -176,10 +176,158 @@ async def health_check() -> Dict[str, Any]:
 
 
 # ------------------------------------------------------------------------------
-# ROOT LANDING ENDPOINT
+# ROOT LANDING ENDPOINT (HTML for browser, JSON for API clients)
 # ------------------------------------------------------------------------------
 @app.get("/", tags=["Root"])
-async def root_index() -> Dict[str, Any]:
+async def root_index(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        db_name = get_active_db_name()
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vardayini Sweet Mart — FastAPI Backend</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+        }}
+        .card {{
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            max-width: 620px;
+            width: 100%;
+            padding: 36px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }}
+        .badge {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }}
+        .badge-dot {{
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+        }}
+        h1 {{
+            font-size: 24px;
+            margin: 0 0 6px 0;
+            color: #f59e0b;
+        }}
+        p.subtitle {{
+            color: #94a3b8;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+        }}
+        .info-box {{
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.7;
+        }}
+        .info-box strong {{
+            color: #38bdf8;
+        }}
+        .links {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }}
+        .btn {{
+            display: block;
+            text-align: center;
+            padding: 12px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }}
+        .btn-primary {{
+            background: #f59e0b;
+            color: #0f172a;
+        }}
+        .btn-primary:hover {{
+            background: #d97706;
+        }}
+        .btn-secondary {{
+            background: #334155;
+            color: #f8fafc;
+        }}
+        .btn-secondary:hover {{
+            background: #475569;
+        }}
+        .tip {{
+            font-size: 13px;
+            color: #94a3b8;
+            border-top: 1px solid #334155;
+            padding-top: 16px;
+            line-height: 1.5;
+        }}
+        code {{
+            background: #020617;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #fcd34d;
+            font-family: monospace;
+        }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            FastAPI Backend is Online
+        </div>
+        <h1>Vardayini Sweet Mart — Backend API</h1>
+        <p class="subtitle">Pure Ghee Gujarati Mithai & Live Morning Farsan REST API</p>
+
+        <div class="info-box">
+            <div><strong>Database:</strong> Connected to local MongoDB (<code>{db_name}</code>)</div>
+            <div><strong>Port:</strong> 8000 &bull; <strong>Environment:</strong> <code>{ENVIRONMENT}</code></div>
+            <div><strong>Note:</strong> This tunnel URL is your <em>Backend API</em>. Your store website is hosted on <strong>Vercel</strong>.</div>
+        </div>
+
+        <div class="links">
+            <a href="/docs" class="btn btn-primary" target="_blank">📖 Open Swagger API Docs</a>
+            <a href="/api/health" class="btn btn-secondary" target="_blank">🩺 Health Check</a>
+            <a href="/api/products" class="btn btn-secondary" target="_blank">🍬 Products Catalog</a>
+            <a href="/api/orders" class="btn btn-secondary" target="_blank">📦 Orders API</a>
+        </div>
+
+        <div class="tip">
+            💡 <strong>Next Step:</strong> Paste this URL as <code>NEXT_PUBLIC_API_URL</code> in your Vercel Project Settings to link your website to this backend!
+        </div>
+    </div>
+</body>
+</html>"""
+        return HTMLResponse(content=html)
+
     return {
         "title": "Vardayini Sweet Mart — Python FastAPI Backend",
         "description": "Pure Ghee Gujarati Mithai & Live Morning Farsan API",

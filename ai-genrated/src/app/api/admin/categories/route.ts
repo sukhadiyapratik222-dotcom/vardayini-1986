@@ -16,7 +16,13 @@ export async function GET(request: Request) {
   }
   if (auth.user.role === "admin" && auth.user.accessType === "custom") {
     const perms = auth.user.permissions || [];
-    if (!perms.includes("categories:manage") && !perms.includes("products:manage") && !perms.includes("*")) {
+    if (
+      !perms.includes("categories:manage") &&
+      !perms.includes("categories:view") &&
+      !perms.includes("products:manage") &&
+      !perms.includes("products:view") &&
+      !perms.includes("*")
+    ) {
       return NextResponse.json({ error: "Forbidden: Categories access required" }, { status: 403 });
     }
   }

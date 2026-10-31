@@ -18,6 +18,10 @@ import {
 /**
  * Atomically generates a sequential, non-skipping, non-repeating GST invoice number
  * Format: INV-YYYY-00001 (e.g., INV-2026-00001)
+ *
+ * Implemented with an atomic counter increment + insert-if-missing so the same
+ * code path works on MySQL and on the embedded SQLite fallback (which does not
+ * understand MySQL's `ON DUPLICATE KEY UPDATE` syntax).
  */
 export async function generateSequentialInvoiceNumber(
   customDb: AppDatabase = db,
@@ -25,58 +29,50 @@ export async function generateSequentialInvoiceNumber(
 ): Promise<string> {
   const year = date.getFullYear();
 
-  try {
-    // Attempt upsert with increment
-    await customDb
-      .insert(invoiceSequences)
-      .values({ year, lastNumber: 1 })
-      .onDuplicateKeyUpdate({
-        set: { lastNumber: sql`${invoiceSequences.lastNumber} + 1` },
-      });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const [updateResult] = await customDb
+      .update(invoiceSequences)
+      .set({ lastNumber: sql`${invoiceSequences.lastNumber} + 1` })
+      .where(eq(invoiceSequences.year, year));
 
-    const [row] = await customDb
-      .select()
-      .from(invoiceSequences)
-      .where(eq(invoiceSequences.year, year))
-      .limit(1);
+    if (Number((updateResult as any)?.affectedRows ?? 0) > 0) {
+      return readFormattedInvoiceNumber(customDb, year);
+    }
 
-    const seq = row?.lastNumber ?? 1;
-    return `INV-${year}-${String(seq).padStart(5, "0")}`;
-  } catch (err) {
-    // Fallback if upsert syntax varies in SQLite/PGlite
-    const existing = await customDb
-      .select()
-      .from(invoiceSequences)
-      .where(eq(invoiceSequences.year, year))
-      .limit(1);
-
-    if (existing.length === 0) {
-      try {
-        await customDb.insert(invoiceSequences).values({ year, lastNumber: 1 });
-        return `INV-${year}-00001`;
-      } catch {
-        // Retry select if race condition occurred
-        const retry = await customDb
-          .select()
-          .from(invoiceSequences)
-          .where(eq(invoiceSequences.year, year))
-          .limit(1);
-        const nextNum = (retry[0]?.lastNumber || 0) + 1;
-        await customDb
-          .update(invoiceSequences)
-          .set({ lastNumber: nextNum })
-          .where(eq(invoiceSequences.year, year));
-        return `INV-${year}-${String(nextNum).padStart(5, "0")}`;
-      }
-    } else {
-      const nextNum = existing[0].lastNumber + 1;
-      await customDb
-        .update(invoiceSequences)
-        .set({ lastNumber: nextNum })
-        .where(eq(invoiceSequences.year, year));
-      return `INV-${year}-${String(nextNum).padStart(5, "0")}`;
+    // No counter row for this year yet: create it. A concurrent request may
+    // have created it between the update and insert, so swallow that conflict
+    // and loop to increment the row that now exists.
+    try {
+      await customDb.insert(invoiceSequences).values({ year, lastNumber: 1 });
+      return formatInvoiceNumber(year, 1);
+    } catch {
+      // Counter created concurrently; retry the atomic increment.
     }
   }
+
+  return readFormattedInvoiceNumber(customDb, year);
+}
+
+function formatInvoiceNumber(year: number, sequence: number): string {
+  return `INV-${year}-${String(sequence).padStart(5, "0")}`;
+}
+
+async function readFormattedInvoiceNumber(
+  customDb: AppDatabase,
+  year: number
+): Promise<string> {
+  const [row] = await customDb
+    .select()
+    .from(invoiceSequences)
+    .where(eq(invoiceSequences.year, year))
+    .limit(1);
+
+  const sequence = row?.lastNumber ?? 0;
+  if (sequence <= 0) {
+    throw new Error(`Invoice sequence for ${year} could not be initialized`);
+  }
+
+  return formatInvoiceNumber(year, sequence);
 }
 
 /**

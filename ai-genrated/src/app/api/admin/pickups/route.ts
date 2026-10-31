@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   await ensureSeeded();
-  const auth = await requireAdmin(request, "orders:manage");
+  const auth = await requireAdmin(request, "orders:view");
   if (auth.error) {
     return auth.error;
   }

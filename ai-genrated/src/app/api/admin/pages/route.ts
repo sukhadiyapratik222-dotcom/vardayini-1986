@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * Protected: Admin or Super Admin with pages permission.
  */
 export async function GET(req: Request) {
-  const auth = await requireAdmin(req, "pages:manage");
+  const auth = await requireAdmin(req, "pages:view");
   if (auth.error) return auth.error;
 
   try {
