@@ -23,10 +23,18 @@ export const PHOTO_GALLERY = [
   { name: "Crispy Gujarati Namkeen", url: "/images/namkeen.jpg", category: "Farsan" },
 
   // Festive & Hampers
+  { name: "Diwali Sweets & Diyas Background", url: "/images/diwali-bg.jpg", category: "Festive" },
+  { name: "Navratri & Dussehra Jalebi Celebration", url: "/images/dussehra-jalebi.jpg", category: "Festive" },
+  { name: "Raksha Bandhan Royal Hamper", url: "/images/festive-hamper.jpg", category: "Festive" },
+  { name: "Ganesh Chaturthi Modak Bhog", url: "/images/modak-bhog.jpg", category: "Festive" },
+  { name: "Holi Mawa Gujiya Delicacy", url: "/images/holi-gujiya.jpg", category: "Festive" },
+  { name: "Uttarayan Royal Chikki Assortment", url: "/images/uttarayan-chikki.jpg", category: "Festive" },
   { name: "Shahi Festive Platter", url: "/images/mithai-platter-showcase.jpg", category: "Festive" },
   { name: "Luxury Gift Hamper Box", url: "/images/hamper.jpg", category: "Festive" },
+  { name: "Dry Fruit Bites Platter", url: "/images/dry-fruit-bite.jpg", category: "Festive" },
 
   // Banners & Panoramas
+  { name: "Diwali Sweets & Diyas Background Banner", url: "/images/diwali-bg.jpg", category: "Banner" },
   { name: "Heritage Karigar Panorama Banner", url: "/images/heritage-hero-banner.png", category: "Banner" },
   { name: "Luxury Mithai Row Wide Banner", url: "/images/mithai-row-banner.png", category: "Banner" },
   { name: "Modern Mithai Showcase Banner", url: "/images/modern-hero.jpg", category: "Banner" },

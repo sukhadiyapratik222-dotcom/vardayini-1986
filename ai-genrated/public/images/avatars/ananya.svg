@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#87b5d9" />
+      <stop offset="60%" stop-color="#cbe0f0" />
+      <stop offset="100%" stop-color="#e8f1f5" />
+    </linearGradient>
+    <linearGradient id="distMountain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a5f78" />
+      <stop offset="100%" stop-color="#738da8" />
+    </linearGradient>
+    <linearGradient id="midMountain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b5240" />
+      <stop offset="100%" stop-color="#557552" />
+    </linearGradient>
+    <linearGradient id="hill1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5a8235" />
+      <stop offset="100%" stop-color="#3f6122" />
+    </linearGradient>
+    <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7da83d" />
+      <stop offset="100%" stop-color="#4c6e26" />
+    </linearGradient>
+    <clipPath id="circleClip">
+      <circle cx="100" cy="100" r="100" />
+    </clipPath>
+  </defs>
+  
+  <g clip-path="url(#circleClip)">
+    <!-- Sky -->
+    <rect width="200" height="200" fill="url(#sky)" />
+    
+    <!-- Clouds -->
+    <path d="M20,65 Q35,45 55,55 Q75,35 105,50 Q130,40 150,55 Q170,48 185,60 L200,80 L0,80 Z" fill="#ffffff" opacity="0.45" />
+    
+    <!-- Distant Mountains -->
+    <path d="M-10,120 L25,75 L60,105 L95,65 L135,100 L170,70 L210,115 L210,200 L-10,200 Z" fill="url(#distMountain)" />
+    
+    <!-- Mid-range Mountain Ridge -->
+    <path d="M-10,140 L30,95 L75,125 L120,85 L165,115 L210,95 L210,200 L-10,200 Z" fill="url(#midMountain)" />
+    
+    <!-- Foreground Green Hills -->
+    <path d="M-20,165 Q40,110 110,145 Q160,165 220,130 L220,200 L-20,200 Z" fill="url(#hill1)" />
+    <path d="M0,200 Q70,140 150,170 Q180,180 210,160 L210,200 Z" fill="url(#hill2)" opacity="0.9" />
+  </g>
+</svg>
+

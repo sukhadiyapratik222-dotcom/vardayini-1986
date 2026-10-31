@@ -2,24 +2,32 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { CategoryItem, ProductItem, api } from "@/lib/api";
+import { CategoryItem, ProductItem, UiConfig, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
 import { TablePagination } from "./table-pagination";
+import { CategoryShowcaseTab } from "./category-showcase-tab";
 
 interface CategoriesTabProps {
   categories: CategoryItem[];
   products: ProductItem[];
+  config?: UiConfig | null;
   onRefresh: () => void;
   onSelectCategoryFilter?: (slug: string) => void;
+  initialSubTab?: "categories" | "showcase";
+  isReadOnly?: boolean;
 }
 
 export function CategoriesTab({
   categories,
   products,
+  config,
   onRefresh,
   onSelectCategoryFilter,
+  initialSubTab = "categories",
+  isReadOnly = false,
 }: CategoriesTabProps) {
+  const [subTab, setSubTab] = useState<"categories" | "showcase">(initialSubTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"order" | "name" | "products">("order");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
@@ -185,21 +193,35 @@ export function CategoriesTab({
               </span>
             </div>
             <h1 className="font-[family-name:var(--font-display)] text-3xl lg:text-4xl font-bold tracking-tight text-white">
-              Category Management
+              {subTab === "showcase" ? "Category Showcase (2x2 Grid)" : "Category Management"}
             </h1>
             <p className="mt-1 text-sm text-white/80 max-w-xl">
-              Organize pure desi ghee mithai, handcrafted farsan, seasonal dry fruits, and festive hampers into structured storefront departments.
+              {subTab === "showcase"
+                ? "Manage the high-impact 2x2 photo grid displayed on the homepage with custom titles, images, and links."
+                : "Organize pure desi ghee mithai, handcrafted farsan, seasonal dry fruits, and festive hampers into structured storefront departments."}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={handleOpenAdd}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#dfb755] to-[#b89130] text-[#0b2f8a] font-bold text-sm shadow-lg shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
-            >
-              <span className="text-lg leading-none">➕</span>
-              <span>Add New Category</span>
-            </button>
+            {subTab === "categories" ? (
+              !isReadOnly && (
+                <button
+                  onClick={handleOpenAdd}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#dfb755] to-[#b89130] text-[#0b2f8a] font-bold text-sm shadow-lg shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+                >
+                  <span className="text-lg leading-none">➕</span>
+                  <span>Add New Category</span>
+                </button>
+              )
+            ) : (
+              <button
+                onClick={() => setSubTab("categories")}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#dfb755] to-[#b89130] text-[#0b2f8a] font-bold text-sm shadow-lg shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+              >
+                <span>📁</span>
+                <span>View Store Categories</span>
+              </button>
+            )}
             <button
               onClick={onRefresh}
               className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/20 transition cursor-pointer"
@@ -211,447 +233,526 @@ export function CategoriesTab({
         </div>
       </div>
 
-      {/* KPI Stats Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Categories</p>
-            <span className="w-8 h-8 rounded-xl bg-blue-50 text-[#0b2f8a] flex items-center justify-center text-sm font-bold">
-              📁
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-[#182230]">{categories.length}</p>
-          <p className="mt-1 text-xs text-slate-500">Storefront collection pill hubs</p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Products Cataloged</p>
-            <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-bold">
-              🍬
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-[#182230]">{totalAssignedProducts || products.length}</p>
-          <p className="mt-1 text-xs text-slate-500">SKUs classified under categories</p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Top Performing</p>
-            <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-bold">
-              🏆
-            </span>
-          </div>
-          <p className="mt-2 text-lg font-bold text-[#182230] truncate">{topCategory?.name || "Kaju Sweets"}</p>
-          <p className="mt-1 text-xs text-emerald-600 font-medium">
-            {topCategory?.productCount || 0} product variants assigned
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Store Department Sync</p>
-            <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold">
-              ✨
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-emerald-600">100%</p>
-          <p className="mt-1 text-xs text-slate-500">All live on `/shop` navigation</p>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-          <input
-            type="text"
-            placeholder="Search category name, slug or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/20 focus:border-[#0b2f8a]"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as "order" | "name" | "products")}
-              className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-[#182230] focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/20 bg-white"
-            >
-              <option value="order">Display Order (Asc)</option>
-              <option value="name">Name (A-Z)</option>
-              <option value="products">Product Count (High to Low)</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl shadow-2xs">
-            <span className="text-[11px] text-slate-400 font-medium">Table Length:</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Math.min(50, Number(e.target.value)));
-                setCurrentPage(1);
-              }}
-              className="bg-transparent font-bold text-[#0b2f8a] outline-none cursor-pointer"
-            >
-              <option value={10}>10 records</option>
-              <option value={25}>25 records</option>
-              <option value={50}>50 records (Max)</option>
-            </select>
-          </div>
-
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                viewMode === "grid" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              ⊞ Grid
-            </button>
-            <button
-              onClick={() => setViewMode("table")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                viewMode === "table" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              ☰ Table
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Empty State */}
-      {filteredCategories.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <span className="text-4xl">📁</span>
-          <h3 className="mt-3 text-lg font-bold text-slate-800">No categories found</h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
-            {searchQuery ? `No category matches "${searchQuery}"` : "Get started by creating your first category."}
-          </p>
+      {/* Sub-navigation Switcher: Store Categories vs 2x2 Showcase */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
-            onClick={handleOpenAdd}
-            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0b2f8a] text-white font-semibold text-xs shadow-md hover:bg-[#082266] transition cursor-pointer"
+            type="button"
+            onClick={() => setSubTab("categories")}
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${subTab === "categories"
+              ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20"
+              : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+              }`}
           >
-            <span>➕</span>
-            <span>Add Category</span>
+            <span>📁</span>
+            <span>Store Categories</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${subTab === "categories"
+                ? "bg-white/25 text-white"
+                : "bg-slate-200 text-slate-700"
+                }`}
+            >
+              {categories.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSubTab("showcase")}
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${subTab === "showcase"
+              ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20"
+              : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+              }`}
+          >
+            <span>🏷️</span>
+            <span>Category Showcase (2x2)</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${subTab === "showcase"
+                ? "bg-[#dfb755] text-[#0b2f8a]"
+                : "bg-amber-100 text-amber-900 border border-amber-300"
+                }`}
+            >
+              2x2 Grid
+            </span>
           </button>
         </div>
-      ) : viewMode === "grid" ? (
-        /* Grid View */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredCategories.map((cat) => (
-            <div
-              key={cat.id}
-              className="rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-md transition group flex flex-col justify-between"
+
+        <div className="flex items-center gap-2">
+          {subTab === "categories" ? (
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfb755] to-[#b89130] text-[#0b2f8a] font-bold text-xs shadow-sm transition hover:scale-[1.02] cursor-pointer"
             >
-              <div>
-                {/* Category Header Image */}
-                <div className="relative h-44 w-full bg-slate-100 overflow-hidden">
-                  <Image
-                    src={cat.imageUrl || "/images/kaju-katli.jpg"}
-                    alt={cat.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover group-hover:scale-105 transition duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  
-                  {/* Sort Order Badge */}
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/50 text-[#dfb755] backdrop-blur-md border border-[#dfb755]/30">
-                    Order #{cat.sortOrder ?? 0}
-                  </span>
+              <span>➕</span>
+              <span>Add Category</span>
+            </button>
+          ) : (
+            <span className="text-xs text-slate-500 font-medium">
+              Manage the 4-card 2x2 section on customer homepage
+            </span>
+          )}
+        </div>
+      </div>
 
-                  {/* Product Count Pill */}
-                  <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0b2f8a] text-white shadow-md">
-                    {cat.productCount ?? 0} {cat.productCount === 1 ? "Item" : "Items"}
-                  </span>
+      {subTab === "showcase" ? (
+        <CategoryShowcaseTab config={config || null} onRefresh={onRefresh} />
+      ) : (
+        <>
 
-                  {/* Title on image overlay */}
-                  <div className="absolute bottom-3 left-4 right-4">
-                    <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-white drop-shadow-sm">
-                      {cat.name}
-                    </h3>
-                    <code className="text-[11px] text-[#dfb755] font-mono tracking-tight">
-                      /{cat.slug}
-                    </code>
-                  </div>
-                </div>
+          {/* KPI Stats Bar */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Categories</p>
+                <span className="w-8 h-8 rounded-xl bg-blue-50 text-[#0b2f8a] flex items-center justify-center text-sm font-bold">
+                  📁
+                </span>
+              </div>
+              <p className="mt-2 text-2xl font-bold text-[#182230]">{categories.length}</p>
+              <p className="mt-1 text-xs text-slate-500">Storefront collection pill hubs</p>
+            </div>
 
-                {/* Body Details */}
-                <div className="p-4 space-y-2">
-                  <p className="text-xs text-slate-600 line-clamp-2 min-h-[32px]">
-                    {cat.description || "Fresh and authentic sweets crafted with pure ingredients."}
-                  </p>
-                </div>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Products Cataloged</p>
+                <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-bold">
+                  🍬
+                </span>
+              </div>
+              <p className="mt-2 text-2xl font-bold text-[#182230]">{totalAssignedProducts || products.length}</p>
+              <p className="mt-1 text-xs text-slate-500">SKUs classified under categories</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Top Performing</p>
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-bold">
+                  🏆
+                </span>
+              </div>
+              <p className="mt-2 text-lg font-bold text-[#182230] truncate">{topCategory?.name || "Kaju Sweets"}</p>
+              <p className="mt-1 text-xs text-emerald-600 font-medium">
+                {topCategory?.productCount || 0} product variants assigned
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Store Department Sync</p>
+                <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold">
+                  ✨
+                </span>
+              </div>
+              <p className="mt-2 text-2xl font-bold text-emerald-600">100%</p>
+              <p className="mt-1 text-xs text-slate-500">All live on `/shop` navigation</p>
+            </div>
+          </div>
+
+          {/* Filter and Search Bar */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+              <input
+                type="text"
+                placeholder="Search category name, slug or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/20 focus:border-[#0b2f8a]"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "order" | "name" | "products")}
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-[#182230] focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/20 bg-white"
+                >
+                  <option value="order">Display Order (Asc)</option>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="products">Product Count (High to Low)</option>
+                </select>
               </div>
 
-              {/* Action Buttons */}
-              <div className="p-4 pt-0 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
-                <button
-                  onClick={() => onSelectCategoryFilter?.(cat.slug)}
-                  className="text-xs font-semibold text-[#0b2f8a] hover:underline flex items-center gap-1 cursor-pointer"
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl shadow-2xs">
+                <span className="text-[11px] text-slate-400 font-medium">Table Length:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Math.min(50, Number(e.target.value)));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-transparent font-bold text-[#0b2f8a] outline-none cursor-pointer"
                 >
-                  <span>View Products</span>
-                  <span>→</span>
-                </button>
+                  <option value={10}>10 records</option>
+                  <option value={25}>25 records</option>
+                  <option value={50}>50 records (Max)</option>
+                </select>
+              </div>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleOpenEdit(cat)}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setCategoryToDelete(cat)}
-                    className="px-3 py-1.5 rounded-lg border border-rose-200 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </div>
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${viewMode === "grid" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  ⊞ Grid
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${viewMode === "table" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  ☰ Table
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        /* Table View */
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3.5 px-4">Order</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">Slug</th>
-                  <th className="py-3.5 px-4">Description</th>
-                  <th className="py-3.5 px-4">Products</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-[#182230]">
-                {paginatedCategories.map((cat) => (
-                  <tr key={cat.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-4 font-mono font-bold text-slate-500 text-xs">
-                      #{cat.sortOrder ?? 0}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                          <Image
-                            src={cat.imageUrl || "/images/kaju-katli.jpg"}
-                            alt={cat.name}
-                            fill
-                            sizes="40px"
-                            className="object-cover"
-                          />
-                        </div>
-                        <span className="font-bold text-[#0b2f8a]">{cat.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <code className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-mono">
-                        {cat.slug}
-                      </code>
-                    </td>
-                    <td className="py-3 px-4 text-xs text-slate-600 max-w-xs truncate">
-                      {cat.description || "—"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#dfb755]/15 text-[#8d6715] border border-[#dfb755]/30">
-                        {cat.productCount ?? 0} Products
+          </div>
+
+          {/* Empty State */}
+          {filteredCategories.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <span className="text-4xl">📁</span>
+              <h3 className="mt-3 text-lg font-bold text-slate-800">No categories found</h3>
+              <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
+                {searchQuery ? `No category matches "${searchQuery}"` : "Get started by creating your first category."}
+              </p>
+              <button
+                onClick={handleOpenAdd}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0b2f8a] text-white font-semibold text-xs shadow-md hover:bg-[#082266] transition cursor-pointer"
+              >
+                <span>➕</span>
+                <span>Add Category</span>
+              </button>
+            </div>
+          ) : viewMode === "grid" ? (
+            /* Grid View */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredCategories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-md transition group flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Category Header Image */}
+                    <div className="relative h-44 w-full bg-slate-100 overflow-hidden">
+                      <Image
+                        src={cat.imageUrl || "/images/kaju-katli.jpg"}
+                        alt={cat.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                      {/* Sort Order Badge */}
+                      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/50 text-[#dfb755] backdrop-blur-md border border-[#dfb755]/30">
+                        Order #{cat.sortOrder ?? 0}
                       </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+
+                      {/* Product Count Pill */}
+                      <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0b2f8a] text-white shadow-md">
+                        {cat.productCount ?? 0} {cat.productCount === 1 ? "Item" : "Items"}
+                      </span>
+
+                      {/* Title on image overlay */}
+                      <div className="absolute bottom-3 left-4 right-4">
+                        <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-white drop-shadow-sm">
+                          {cat.name}
+                        </h3>
+                        <code className="text-[11px] text-[#dfb755] font-mono tracking-tight">
+                          /{cat.slug}
+                        </code>
+                      </div>
+                    </div>
+
+                    {/* Body Details */}
+                    <div className="p-4 space-y-2">
+                      <p className="text-xs text-slate-600 line-clamp-2 min-h-[32px]">
+                        {cat.description || "Fresh and authentic sweets crafted with pure ingredients."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="p-4 pt-0 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
+                    <button
+                      onClick={() => onSelectCategoryFilter?.(cat.slug)}
+                      className="text-xs font-semibold text-[#0b2f8a] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View Products</span>
+                      <span>→</span>
+                    </button>
+
+                    {!isReadOnly ? (
+                      <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleOpenEdit(cat)}
-                          className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setCategoryToDelete(cat)}
-                          className="px-3 py-1 rounded-lg border border-rose-200 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg border border-rose-200 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                         >
                           Delete
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Table Length & Pagination Footer */}
-          <TablePagination
-            totalItems={filteredCategories.length}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            pageSizeOptions={[10, 25, 50]}
-            itemName="categories"
-          />
-        </div>
-      )}
-
-      {/* Add / Edit Category Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#b89130]">
-                  {editingCategory ? "Edit Category Details" : "New Collection"}
-                </span>
-                <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a]">
-                  {editingCategory ? `Update "${editingCategory.name}"` : "Create Category"}
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold cursor-pointer"
-              >
-                ✕
-              </button>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                        👁️ View Only
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-
-            <form onSubmit={handleSave} className="mt-5 space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[#182230] font-semibold mb-1">
-                    Category Name <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Kaju Sweets, Namkeen"
-                    value={name}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[#182230] font-semibold mb-1">
-                    URL Slug <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. kaju-sweets"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
-                  />
-                  <p className="mt-1 text-[10px] text-slate-400">Used in URLs: `/shop?category={slug || "slug"}`</p>
-                </div>
+          ) : (
+            /* Table View */
+            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3.5 px-4">Order</th>
+                      <th className="py-3.5 px-4">Category</th>
+                      <th className="py-3.5 px-4">Slug</th>
+                      <th className="py-3.5 px-4">Description</th>
+                      <th className="py-3.5 px-4">Products</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-[#182230]">
+                    {paginatedCategories.map((cat) => (
+                      <tr key={cat.id} className="hover:bg-slate-50/80 transition">
+                        <td className="py-3 px-4 font-mono font-bold text-slate-500 text-xs">
+                          #{cat.sortOrder ?? 0}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                              <Image
+                                src={cat.imageUrl || "/images/kaju-katli.jpg"}
+                                alt={cat.name}
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                              />
+                            </div>
+                            <span className="font-bold text-[#0b2f8a]">{cat.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <code className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-mono">
+                            {cat.slug}
+                          </code>
+                        </td>
+                        <td className="py-3 px-4 text-xs text-slate-600 max-w-xs truncate">
+                          {cat.description || "—"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#dfb755]/15 text-[#8d6715] border border-[#dfb755]/30">
+                            {cat.productCount ?? 0} Products
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {!isReadOnly ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleOpenEdit(cat)}
+                                className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setCategoryToDelete(cat)}
+                                className="px-3 py-1 rounded-lg border border-rose-200 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                              👁️ View Only
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              <div>
-                <label className="block text-[#182230] font-semibold mb-1">Sort Order / Priority</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(Number(e.target.value))}
-                  className="w-full sm:w-40 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
-                />
-                <p className="mt-1 text-[10px] text-slate-400">Controls order of tabs on the home & shop pages (lower numbers appear first).</p>
-              </div>
-
-              <div>
-                <label className="block text-[#182230] font-semibold mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Royal cashew diamond sweets handcrafted with pure shuddh ghee."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
-                />
-              </div>
-
-              {/* Image Picker Field Integration */}
-              <ImagePickerField
-                label="Category Showcase Photo"
-                value={imageUrl}
-                onChange={(newUrl) => setImageUrl(newUrl)}
-                helperText="Select from gallery presets, upload a fresh image, or enter an image URL."
+              {/* Table Length & Pagination Footer */}
+              <TablePagination
+                totalItems={filteredCategories.length}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[10, 25, 50]}
+                itemName="categories"
               />
+            </div>
+          )}
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
-                </button>
+          {/* Add / Edit Category Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+              <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#b89130]">
+                      {editingCategory ? "Edit Category Details" : "New Collection"}
+                    </span>
+                    <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a]">
+                      {editingCategory ? `Update "${editingCategory.name}"` : "Create Category"}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSave} className="mt-5 space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[#182230] font-semibold mb-1">
+                        Category Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Kaju Sweets, Namkeen"
+                        value={name}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#182230] font-semibold mb-1">
+                        URL Slug <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. kaju-sweets"
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
+                      />
+                      <p className="mt-1 text-[10px] text-slate-400">Used in URLs: `/shop?category={slug || "slug"}`</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#182230] font-semibold mb-1">Sort Order / Priority</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(Number(e.target.value))}
+                      className="w-full sm:w-40 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
+                    />
+                    <p className="mt-1 text-[10px] text-slate-400">Controls order of tabs on the home & shop pages (lower numbers appear first).</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#182230] font-semibold mb-1">Description</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Royal cashew diamond sweets handcrafted with pure shuddh ghee."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#0b2f8a]/20 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Image Picker Field Integration */}
+                  <ImagePickerField
+                    label="Category Showcase Photo"
+                    value={imageUrl}
+                    onChange={(newUrl) => setImageUrl(newUrl)}
+                    helperText="Select from gallery presets, upload a fresh image, or enter an image URL."
+                  />
+
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {categoryToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold mx-auto mb-3">
-              ⚠️
             </div>
-            <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-center text-[#182230]">
-              Delete &quot;{categoryToDelete.name}&quot;?
-            </h3>
-            <p className="mt-2 text-xs text-slate-500 text-center">
-              Are you sure you want to remove this category from the storefront?
-              {(categoryToDelete.productCount ?? 0) > 0 && (
-                <span className="block mt-2 font-bold text-rose-600">
-                  ⚠️ Note: {categoryToDelete.productCount} products are currently classified under this category.
-                  They must be reassigned before this category can be removed.
-                </span>
-              )}
-            </p>
+          )}
 
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setCategoryToDelete(null)}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={handleDelete}
-                className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition cursor-pointer disabled:opacity-50"
-              >
-                {isDeleting ? "Deleting..." : "Confirm Delete"}
-              </button>
+          {/* Delete Confirmation Modal */}
+          {categoryToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold mx-auto mb-3">
+                  ⚠️
+                </div>
+                <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-center text-[#182230]">
+                  Delete &quot;{categoryToDelete.name}&quot;?
+                </h3>
+                <p className="mt-2 text-xs text-slate-500 text-center">
+                  Are you sure you want to remove this category from the storefront?
+                  {(categoryToDelete.productCount ?? 0) > 0 && (
+                    <span className="block mt-2 font-bold text-rose-600">
+                      ⚠️ Note: {categoryToDelete.productCount} products are currently classified under this category.
+                      They must be reassigned before this category can be removed.
+                    </span>
+                  )}
+                </p>
+
+                <div className="mt-6 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCategoryToDelete(null)}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={handleDelete}
+                    className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isDeleting ? "Deleting..." : "Confirm Delete"}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

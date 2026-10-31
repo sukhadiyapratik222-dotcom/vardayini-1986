@@ -6,14 +6,14 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const connTest = await testConnection();
 
-  if (!connTest.success) {
+  if (!connTest.mysql.success) {
     return NextResponse.json(
       {
         ok: false,
         database: process.env.MYSQL_DATABASE || "vardayini_sweets",
         host: process.env.MYSQL_HOST || "localhost",
         port: Number(process.env.MYSQL_PORT) || 3306,
-        error: connTest.error,
+        error: connTest.mysql.error || "Failed to connect to MySQL database",
         message: "Failed to connect to MySQL database. Ensure XAMPP MySQL is running.",
       },
       { status: 500 }
@@ -52,3 +52,20 @@ export async function GET() {
     );
   }
 }
+
+export async function POST() {
+  try {
+    const { syncEntireDatabaseToMysql } = await import("@/db/seed");
+    await syncEntireDatabaseToMysql();
+    return GET();
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Sync error",
+      },
+      { status: 500 }
+    );
+  }
+}
+

@@ -15,7 +15,7 @@ export default function DesignPreviewPage() {
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-[#dfb755]/15 text-[#dfb755] border border-[#dfb755]/30">
-              🎨 UI Design Showcase & Visual Preview
+              UI Design Showcase & Visual Preview
             </div>
             <h1 className="text-xl sm:text-2xl font-bold mt-1 text-white font-[family-name:var(--font-display)]">
               Vardayini Homepage Hero UI Design

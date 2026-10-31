@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const currentCompare = currentVariant?.discountedPrice ? currentVariant.price : null;
 
   return (
-    <article className="mithai-card group flex flex-col justify-between overflow-hidden bg-white p-3 rounded-2xl">
+    <article className="mithai-card group flex flex-col justify-between overflow-hidden bg-white p-3 rounded-2xl h-full shadow-sm hover:shadow-md transition-shadow border border-slate-100/90">
       {/* Product Image & Badges */}
       <div>
         <Link
@@ -73,9 +73,12 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </Link>
 
         {/* Title & Description */}
-        <div className="mt-2 space-y-0.5">
+        <div className="mt-2.5 space-y-0.5">
           <Link href={`/shop/${product.slug}`}>
-            <h3 className="font-[family-name:var(--font-display)] text-sm sm:text-[15px] font-bold tracking-tight text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-1">
+            <h3
+              className="font-[family-name:var(--font-display)] text-sm sm:text-[15px] font-bold tracking-tight text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-1"
+              title={product.name}
+            >
               {product.name}
             </h3>
           </Link>
@@ -86,25 +89,32 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       </div>
 
       {/* Weight Selector Tabs & Price */}
-      <div className="mt-2.5 space-y-2 pt-2 border-t border-[#0b2f8a]/6">
-        {variants.length > 1 && (
-          <div className="flex flex-wrap gap-1">
-            {variants.map((v, i) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => setSelectedIdx(i)}
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
-                  selectedIdx === i
-                    ? "bg-[#0b2f8a] text-white shadow-2xs"
-                    : "bg-[#f4f7fe] text-[#5e6d82] hover:bg-[#e8eeff] hover:text-[#0b2f8a]"
-                }`}
-              >
-                {v.weight}
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="mt-3 space-y-2 pt-2 border-t border-[#0b2f8a]/6">
+        {/* Uniform Variant Container: keeps all card heights identical */}
+        <div className="min-h-[26px] flex items-center">
+          {variants.length > 1 ? (
+            <div className="flex flex-wrap gap-1">
+              {variants.map((v, i) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setSelectedIdx(i)}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                    selectedIdx === i
+                      ? "bg-[#0b2f8a] text-white shadow-2xs"
+                      : "bg-[#f4f7fe] text-[#5e6d82] hover:bg-[#e8eeff] hover:text-[#0b2f8a]"
+                  }`}
+                >
+                  {v.weight}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="text-[10px] font-medium text-slate-500 bg-slate-50 border border-slate-200/70 rounded-full px-2 py-0.5">
+              Standard Pack • {currentVariant?.weight || "Per Pack"}
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
@@ -127,7 +137,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <AddToCartButton
             variantId={currentVariant.id}
             label="Add to Cart"
-            className="btn-primary w-full rounded-full px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-[0.98]"
+            className="btn-primary w-full rounded-full px-3 py-2 text-xs font-semibold shadow-2xs transition active:scale-[0.98]"
           />
         ) : null}
       </div>

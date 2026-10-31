@@ -221,11 +221,11 @@ describe("Checkout Lifecycle, Concurrency & Order State Transitions", () => {
           deliverySlot: "Morning",
           paymentMethod: "cod",
           paymentStatus: "pending",
-        })
-        .returning();
+        });
+      const orderId = (createdOrder as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: createdOrder.id,
+        orderId,
         productName: "Kaju Katli",
         variantWeight: "250 g",
         unitPrice: 250,
@@ -252,7 +252,7 @@ describe("Checkout Lifecycle, Concurrency & Order State Transitions", () => {
         .where(eq(productVariants.id, variantId));
       expect(restockedVariant.stock).toBe(initialStock);
 
-      // 3. Second cancellation attempt: Must be rejected and NOT restock again
+      // 3. A repeated cancellation is acknowledged as already complete and must NOT restock again
       const req2 = buildRequest({
         method: "POST",
         url: `/api/orders/${testOrderNumber}`,
@@ -261,7 +261,9 @@ describe("Checkout Lifecycle, Concurrency & Order State Transitions", () => {
       const res2 = await cancelOrderRoute(req2, {
         params: Promise.resolve({ orderNumber: testOrderNumber }),
       });
-      expect(res2.status).toBe(400);
+      expect(res2.status).toBe(200);
+      const repeatedCancellation = await res2.json();
+      expect(repeatedCancellation.isAlreadyCancelled).toBe(true);
 
       const [finalVariant] = await db
         .select()

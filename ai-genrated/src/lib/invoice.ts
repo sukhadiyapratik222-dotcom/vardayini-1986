@@ -27,14 +27,18 @@ export async function generateSequentialInvoiceNumber(
 
   try {
     // Attempt upsert with increment
-    const [row] = await customDb
+    await customDb
       .insert(invoiceSequences)
       .values({ year, lastNumber: 1 })
-      .onConflictDoUpdate({
-        target: invoiceSequences.year,
+      .onDuplicateKeyUpdate({
         set: { lastNumber: sql`${invoiceSequences.lastNumber} + 1` },
-      })
-      .returning();
+      });
+
+    const [row] = await customDb
+      .select()
+      .from(invoiceSequences)
+      .where(eq(invoiceSequences.year, year))
+      .limit(1);
 
     const seq = row?.lastNumber ?? 1;
     return `INV-${year}-${String(seq).padStart(5, "0")}`;
@@ -83,7 +87,7 @@ export async function logOrderStatusHistory(
   status: string,
   note?: string,
   location?: string,
-  changedBy: "customer" | "admin" | "system" = "system",
+  changedBy: "customer" | "admin" | "system" | "super_admin" = "system",
   customDb: AppDatabase = db
 ) {
   try {
@@ -188,7 +192,7 @@ export async function getOrCreateInvoice(orderId: number, customDb: AppDatabase 
   const invoiceNumber = await generateSequentialInvoiceNumber(customDb, order.createdAt);
 
   // 6. Insert new immutable invoice record
-  const [createdInvoice] = await customDb
+  await customDb
     .insert(invoices)
     .values({
       invoiceNumber,
@@ -210,8 +214,13 @@ export async function getOrCreateInvoice(orderId: number, customDb: AppDatabase 
       totalInWords: gstResult.totalInWords,
       status: order.status === "cancelled" ? "cancelled" : "issued",
       pdfUrl: `/api/orders/${order.orderNumber}/invoice.pdf`,
-    })
-    .returning();
+    });
+
+  const [createdInvoice] = await customDb
+    .select()
+    .from(invoices)
+    .where(eq(invoices.orderId, order.id))
+    .limit(1);
 
   return {
     invoice: createdInvoice,

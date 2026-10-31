@@ -339,7 +339,7 @@ export function HeroScrollerTab({ config, onRefresh }: HeroScrollerTabProps) {
                     <img
                       src={currentPreviewSlide.image}
                       alt={currentPreviewSlide.name}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      className="w-full h-full object-cover scale-[1.24] hover:scale-[1.38] transition-transform duration-700 ease-out"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">

@@ -66,7 +66,7 @@ export async function POST(request: Request) {
   const data = validation.data;
 
   try {
-    const [newAddress] = await db
+    const [insertRes] = await db
       .insert(addresses)
       .values({
         userId: user.id,
@@ -76,9 +76,9 @@ export async function POST(request: Request) {
         state: data.state,
         pincode: data.pincode,
         phone: data.phone,
-      })
-      .returning();
+      });
 
+    const [newAddress] = await db.select().from(addresses).where(eq(addresses.id, insertRes.insertId)).limit(1);
     return Response.json({ success: true, address: newAddress });
   } catch (err) {
     return Response.json(
@@ -111,6 +111,74 @@ export async function DELETE(request: Request) {
   } catch (err) {
     return Response.json(
       { error: "Failed to delete address", message: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  const user = await getAuthUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rawBody = await readJsonSafe<any>(request);
+  if (!rawBody || !rawBody.id) {
+    return Response.json({ error: "Invalid payload or missing address ID" }, { status: 400 });
+  }
+
+  const payloadToValidate = {
+    fullName: rawBody.fullName || rawBody.name || user.name || "Valued Patron",
+    phone: rawBody.phone || user.phone || "",
+    line1: rawBody.line1 || "",
+    line2: rawBody.line2 || "",
+    city: rawBody.city || "",
+    state: rawBody.state || "Gujarat",
+    pincode: rawBody.pincode || "",
+    country: rawBody.country || "India",
+    label: rawBody.label || "Home",
+  };
+
+  const validation = AddressSchema.safeParse(payloadToValidate);
+  if (!validation.success) {
+    return Response.json(
+      {
+        error: "Address validation failed.",
+        details: formatZodErrors(validation.error),
+      },
+      { status: 400 }
+    );
+  }
+
+  const data = validation.data;
+
+  try {
+    await db
+      .update(addresses)
+      .set({
+        label: data.label || "Home",
+        line1: data.line2 ? `${data.line1}, ${data.line2}` : data.line1,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
+        phone: data.phone,
+      })
+      .where(and(eq(addresses.id, rawBody.id), eq(addresses.userId, user.id)));
+
+    const [updatedAddress] = await db
+      .select()
+      .from(addresses)
+      .where(and(eq(addresses.id, rawBody.id), eq(addresses.userId, user.id)))
+      .limit(1);
+
+    if (!updatedAddress) {
+      return Response.json({ error: "Address not found or unauthorized" }, { status: 404 });
+    }
+
+    return Response.json({ success: true, address: updatedAddress });
+  } catch (err) {
+    return Response.json(
+      { error: "Failed to update address", message: err instanceof Error ? err.message : String(err) },
       { status: 500 }
     );
   }

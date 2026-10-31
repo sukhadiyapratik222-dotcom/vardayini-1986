@@ -6,13 +6,25 @@
  * - 'delivered' and 'cancelled' are strictly terminal states (transitions out are rejected).
  */
 
-export type OrderStatus = "pending" | "confirmed" | "packed" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "preparing"
+  | "ready_for_pickup"
+  | "picked_up"
+  | "packed"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "cancelled"],
-  confirmed: ["packed", "cancelled"],
-  packed: ["shipped", "cancelled"],
+  confirmed: ["preparing", "packed", "ready_for_pickup", "cancelled"],
+  preparing: ["ready_for_pickup", "packed", "cancelled"],
+  packed: ["shipped", "ready_for_pickup", "cancelled"],
+  ready_for_pickup: ["picked_up", "cancelled"],
   shipped: ["delivered"],
+  picked_up: [],
   delivered: [],
   cancelled: [],
 };
@@ -25,7 +37,12 @@ export function canTransitionOrder(currentStatus: string, targetStatus: string):
 }
 
 export function canCancelOrder(currentStatus: string): boolean {
-  return currentStatus === "pending" || currentStatus === "confirmed" || currentStatus === "packed";
+  return (
+    currentStatus === "pending" ||
+    currentStatus === "confirmed" ||
+    currentStatus === "preparing" ||
+    currentStatus === "packed"
+  );
 }
 
 export const canCustomerCancel = canCancelOrder;

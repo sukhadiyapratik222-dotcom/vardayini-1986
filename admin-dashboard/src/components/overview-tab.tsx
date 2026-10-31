@@ -266,7 +266,7 @@ export function OverviewTab({
       topBorder: "bg-[#ec4899]",
       iconBg: "bg-[#fce7f3]",
       iconColor: "text-[#db2777]",
-      onClick: () => { },
+      onClick: () => onNavigateTab("reviews"),
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -294,7 +294,7 @@ export function OverviewTab({
       topBorder: "bg-[#06b6d4]",
       iconBg: "bg-[#cffafe]",
       iconColor: "text-[#0891b2]",
-      onClick: () => onNavigateTab("products"),
+      onClick: () => onNavigateTab("out_of_stock"),
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

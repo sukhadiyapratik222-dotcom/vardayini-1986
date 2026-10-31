@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { OrderItem, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { TablePagination } from "./table-pagination";
+import { OrderDetailModal } from "./order-detail-modal";
 
 interface OrdersTabProps {
   orders: OrderItem[];
@@ -25,12 +26,38 @@ const ALL_STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", 
 function parseAddress(raw: string | null | undefined): string {
   if (!raw) return "";
   try {
-    const p = JSON.parse(raw);
+    const p = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (p && typeof p === "object") {
       return [p.line1, p.city, p.state, p.pincode].filter(Boolean).join(", ");
     }
   } catch { /* not JSON */ }
   return raw;
+}
+
+export function getOrderCustomerName(o: OrderItem): string {
+  if (o.customerName && o.customerName !== "Guest Customer") return o.customerName;
+  if (o.userName) return o.userName;
+  if (o.guestName && o.guestName !== "Guest Customer") return o.guestName;
+  if (o.addressSnapshot) {
+    try {
+      const parsed = typeof o.addressSnapshot === "string" ? JSON.parse(o.addressSnapshot) : o.addressSnapshot;
+      if (parsed?.name || parsed?.fullName) return parsed.name || parsed.fullName;
+    } catch {}
+  }
+  return o.guestName || "Guest Customer";
+}
+
+export function getOrderCustomerPhone(o: OrderItem): string {
+  if (o.customerPhone && o.customerPhone !== "-") return o.customerPhone;
+  if (o.userPhone) return o.userPhone;
+  if (o.guestPhone && o.guestPhone !== "-") return o.guestPhone;
+  if (o.addressSnapshot) {
+    try {
+      const parsed = typeof o.addressSnapshot === "string" ? JSON.parse(o.addressSnapshot) : o.addressSnapshot;
+      if (parsed?.phone) return parsed.phone;
+    } catch {}
+  }
+  return "-";
 }
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
@@ -41,20 +68,20 @@ interface EditOrderModalProps {
 }
 
 function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
+  const customerName = getOrderCustomerName(order);
+  const customerPhone = getOrderCustomerPhone(order) === "-" ? "" : getOrderCustomerPhone(order);
+
   const [form, setForm] = useState({
-    guestName: order.guestName || "",
-    guestPhone: order.guestPhone || "",
     deliverySlot: order.deliverySlot || "",
     paymentMethod: order.paymentMethod || "",
     paymentStatus: order.paymentStatus || "",
-    total: String(order.total || ""),
     status: order.status || "pending",
   });
   const [saving, setSaving] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const deliverySlotRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    nameInputRef.current?.focus();
+    deliverySlotRef.current?.focus();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !saving) {
         e.preventDefault();
@@ -75,12 +102,9 @@ function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
     setSaving(true);
     try {
       await api.updateOrder(order.orderNumber, {
-        guestName: form.guestName || undefined,
-        guestPhone: form.guestPhone || undefined,
         deliverySlot: form.deliverySlot || undefined,
         paymentMethod: form.paymentMethod || undefined,
         paymentStatus: form.paymentStatus || undefined,
-        total: form.total ? Number(form.total) : undefined,
         status: form.status,
       });
       toast.success(`Order ${order.orderNumber} updated`);
@@ -109,29 +133,39 @@ function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <label className="block">
-              <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Customer Name</span>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Customer Name</span>
+                <span className="text-[10px] font-semibold text-[#5e6d82]/70 uppercase tracking-wider">Read-only</span>
+              </div>
               <input
-                ref={nameInputRef}
-                value={form.guestName}
-                onChange={(e) => set("guestName", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#0b2f8a]/15 px-3 py-2 text-sm outline-none focus:border-[#0b2f8a] text-[#182230]"
-                placeholder="Customer name"
+                type="text"
+                disabled
+                readOnly
+                tabIndex={-1}
+                value={customerName || "—"}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-100/80 px-3 py-2 text-sm text-gray-500 cursor-not-allowed select-none outline-none"
               />
-            </label>
-            <label className="block">
-              <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Phone</span>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Phone</span>
+                <span className="text-[10px] font-semibold text-[#5e6d82]/70 uppercase tracking-wider">Read-only</span>
+              </div>
               <input
-                value={form.guestPhone}
-                onChange={(e) => set("guestPhone", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#0b2f8a]/15 px-3 py-2 text-sm outline-none focus:border-[#0b2f8a] text-[#182230]"
-                placeholder="+91 98250 0000"
+                type="text"
+                disabled
+                readOnly
+                tabIndex={-1}
+                value={customerPhone || "—"}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-100/80 px-3 py-2 text-sm text-gray-500 cursor-not-allowed select-none outline-none"
               />
-            </label>
+            </div>
           </div>
           <label className="block">
             <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Delivery Slot</span>
             <input
+              ref={deliverySlotRef}
               value={form.deliverySlot}
               onChange={(e) => set("deliverySlot", e.target.value)}
               className="mt-1 w-full rounded-xl border border-[#0b2f8a]/15 px-3 py-2 text-sm outline-none focus:border-[#0b2f8a] text-[#182230]"
@@ -179,17 +213,20 @@ function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
                 ))}
               </select>
             </label>
-            <label className="block">
-              <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Total Amount (₹)</span>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#5e6d82] uppercase tracking-wider">Total Amount (₹)</span>
+                <span className="text-[10px] font-semibold text-[#5e6d82]/70 uppercase tracking-wider">Read-only</span>
+              </div>
               <input
-                type="number"
-                min={0}
-                value={form.total}
-                onChange={(e) => set("total", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#0b2f8a]/15 px-3 py-2 text-sm outline-none focus:border-[#0b2f8a] text-[#182230]"
-                placeholder="0"
+                type="text"
+                disabled
+                readOnly
+                tabIndex={-1}
+                value={`₹${Number(order.total || 0).toLocaleString("en-IN")}`}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-100/80 px-3 py-2 text-sm text-gray-500 cursor-not-allowed select-none outline-none font-semibold"
               />
-            </label>
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#0b2f8a]/8 bg-[#f8faff]">
@@ -307,6 +344,7 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<OrderItem | null>(null);
   const [deleteOrderNumber, setDeleteOrderNumber] = useState<string | null>(null);
+  const [viewOrderNumber, setViewOrderNumber] = useState<string | null>(null);
 
   const handleStatusChange = async (orderNumber: string, newStatus: string) => {
     setUpdatingId(orderNumber);
@@ -340,6 +378,14 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
           orderNumber={deleteOrderNumber}
           onClose={() => setDeleteOrderNumber(null)}
           onDeleted={onRefresh}
+        />
+      )}
+      {viewOrderNumber && (
+        <OrderDetailModal
+          orderNumber={viewOrderNumber}
+          initialOrder={orders.find((o) => o.orderNumber === viewOrderNumber) || null}
+          onClose={() => setViewOrderNumber(null)}
+          onUpdated={onRefresh}
         />
       )}
 
@@ -403,17 +449,41 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
                   return (
                     <tr key={order.id} className="hover:bg-[#0b2f8a]/[0.02] transition">
                       <td className="py-3.5 px-4">
-                        <span className="font-mono font-bold text-[#0b2f8a] text-xs">{order.orderNumber}</span>
+                        <button
+                          type="button"
+                          onClick={() => setViewOrderNumber(order.orderNumber)}
+                          className="font-mono font-bold text-[#0b2f8a] text-xs hover:underline hover:text-[#1a47b8] transition-colors cursor-pointer text-left"
+                          title="View full order details & tracking"
+                        >
+                          {order.orderNumber}
+                        </button>
+                        {(order.fulfillmentType === "pickup" || order.pickupStoreId) ? (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                              🏪 Store Pickup
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                              🚚 Home Delivery
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
                         <p className="font-semibold text-[#182230]">
                           {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                         </p>
-                        <p className="text-[10px] text-[#5e6d82]">{order.deliverySlot}</p>
+                        <p className="text-[10px] text-[#5e6d82]">
+                          {(order.fulfillmentType === "pickup" || order.pickupStoreId)
+                            ? (order.pickupSlot ? `${order.pickupDate || ""} • ${order.pickupSlot}` : (order.deliverySlot || "Pickup"))
+                            : (order.deliverySlot || "Standard Delivery")}
+                        </p>
                       </td>
                       <td className="py-3.5 px-4 max-w-xs">
-                        <p className="font-bold text-[#182230]">{order.guestName || "Guest Customer"}</p>
-                        <p className="text-[10px] text-[#5e6d82] font-mono">{order.guestPhone || "-"}</p>
+                        <p className="font-bold text-[#182230]">{getOrderCustomerName(order)}</p>
+                        <p className="text-[10px] text-[#5e6d82] font-mono">{getOrderCustomerPhone(order)}</p>
                         {order.addressSnapshot && (
                           <p className="text-[10px] text-slate-600 mt-1 flex items-start gap-1 leading-snug">
                             <span className="text-amber-600 shrink-0">📍</span>
@@ -447,6 +517,13 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            title="View order details & tracking"
+                            onClick={() => setViewOrderNumber(order.orderNumber)}
+                            className="rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white px-2.5 py-1.5 text-[11px] font-bold transition flex items-center gap-1"
+                          >
+                            👁️ View
+                          </button>
                           <button
                             title="Edit order"
                             onClick={() => setEditOrder(order)}

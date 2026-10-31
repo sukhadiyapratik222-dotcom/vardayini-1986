@@ -8,6 +8,7 @@ import {
   getTestFixtures,
 } from "./helpers";
 import { getAuthUser, getCartSessionId } from "@/lib/auth";
+import { getSqliteDb } from "@/db";
 import { cookies } from "next/headers";
 
 describe("Vitest Isolated Test Environment", () => {
@@ -15,6 +16,15 @@ describe("Vitest Isolated Test Environment", () => {
     expect(process.env.DATABASE_URL).toBeUndefined();
     expect(process.env.SESSION_SECRET).toBeDefined();
     expect(process.env.SESSION_SECRET).not.toBe("");
+  });
+
+  it("uses an in-memory SQLite database during tests", () => {
+    const mainDatabase = getSqliteDb()
+      .prepare("PRAGMA database_list")
+      .all()
+      .find((database) => database.name === "main");
+
+    expect(mainDatabase?.file).toBe("");
   });
 
   describe("In-Memory Cookie Store & next/headers mock", () => {

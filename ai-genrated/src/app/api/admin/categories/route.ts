@@ -1,17 +1,24 @@
-import { eq, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { categories, products } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
-import { isAuthorizedAdmin } from "@/lib/admin-auth";
+import { isAuthorizedAdmin, requireAdmin } from "@/lib/admin-auth";
 import { readJsonSafe, parsePositiveInt, parseNonNegativeInt } from "@/lib/validation";
 import { NextResponse } from "next/server";
+import { syncCategoryToMysql, deleteCategoryFromMysql } from "@/lib/mysql";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  await ensureSeeded();
-  if (!(await isAuthorizedAdmin(request))) {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  const auth = await requireAdmin(request);
+  if (auth.error) {
+    return auth.error;
+  }
+  if (auth.user.role === "admin" && auth.user.accessType === "custom") {
+    const perms = auth.user.permissions || [];
+    if (!perms.includes("categories:manage") && !perms.includes("products:manage") && !perms.includes("*")) {
+      return NextResponse.json({ error: "Forbidden: Categories access required" }, { status: 403 });
+    }
   }
 
   const allCategories = await db.select().from(categories).orderBy(categories.sortOrder);
@@ -21,7 +28,7 @@ export async function GET(request: Request) {
     const productCounts = await db
       .select({
         categoryId: products.categoryId,
-        count: sql<number>`count(*)::int`,
+        count: count(),
       })
       .from(products)
       .groupBy(products.categoryId);
@@ -38,8 +45,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   await ensureSeeded();
-  if (!(await isAuthorizedAdmin(request))) {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  if (!(await isAuthorizedAdmin(request, "categories:manage"))) {
+    return NextResponse.json({ error: "Forbidden: Categories management access required" }, { status: 403 });
   }
 
   const body = await readJsonSafe<{
@@ -80,7 +87,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Category slug '${slug}' already exists` }, { status: 409 });
   }
 
-  const [newCat] = await db
+  const [insertRes] = await db
     .insert(categories)
     .values({
       name,
@@ -88,16 +95,23 @@ export async function POST(request: Request) {
       description,
       imageUrl,
       sortOrder,
-    })
-    .returning();
+    });
+  const [newCat] = await db.select().from(categories).where(eq(categories.id, insertRes.insertId)).limit(1);
+
+  // Synchronize category creation to MySQL
+  try {
+    await syncCategoryToMysql(newCat);
+  } catch (mysqlErr) {
+    console.warn("MySQL category create sync notice:", mysqlErr);
+  }
 
   return NextResponse.json({ category: newCat }, { status: 201 });
 }
 
 export async function PUT(request: Request) {
   await ensureSeeded();
-  if (!(await isAuthorizedAdmin(request))) {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  if (!(await isAuthorizedAdmin(request, "categories:manage"))) {
+    return NextResponse.json({ error: "Forbidden: Categories management access required" }, { status: 403 });
   }
 
   const body = await readJsonSafe<{
@@ -164,19 +178,27 @@ export async function PUT(request: Request) {
     }
   }
 
-  const [updated] = await db
+  await db
     .update(categories)
     .set(updateData)
-    .where(eq(categories.id, catId))
-    .returning();
+    .where(eq(categories.id, catId));
+
+  const [updated] = await db.select().from(categories).where(eq(categories.id, catId)).limit(1);
+
+  // Synchronize category update to MySQL
+  try {
+    await syncCategoryToMysql(updated);
+  } catch (mysqlErr) {
+    console.warn("MySQL category update sync notice:", mysqlErr);
+  }
 
   return NextResponse.json({ category: updated });
 }
 
 export async function DELETE(request: Request) {
   await ensureSeeded();
-  if (!(await isAuthorizedAdmin(request))) {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  if (!(await isAuthorizedAdmin(request, "categories:manage"))) {
+    return NextResponse.json({ error: "Forbidden: Categories management access required" }, { status: 403 });
   }
 
   const url = new URL(request.url);
@@ -209,6 +231,13 @@ export async function DELETE(request: Request) {
   }
 
   await db.delete(categories).where(eq(categories.id, catId));
+
+  // Synchronize category deletion to MySQL
+  try {
+    await deleteCategoryFromMysql(catId);
+  } catch (mysqlErr) {
+    console.warn("MySQL category delete sync notice:", mysqlErr);
+  }
 
   return NextResponse.json({ success: true, deletedId: catId });
 }

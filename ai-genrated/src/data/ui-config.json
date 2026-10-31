@@ -33,33 +33,25 @@
       "order": 4
     },
     {
-      "id": "festive-platter",
-      "name": "Shahi Platter",
-      "image": "/images/mithai-platter-showcase.jpg",
-      "category": "Festive",
-      "active": true,
-      "order": 5
-    },
-    {
       "id": "slide-1791027909259",
       "name": "Special Bhel",
-      "category": "Farsan",
       "image": "/images/special-bhel-showcase.jpg",
+      "category": "Farsan",
       "active": true,
       "order": 6
     },
     {
       "id": "slide-1791029573421",
       "name": "Ratlami Sev",
-      "category": "Farsan",
       "image": "/uploads/1791029531387-c8e0da1d-527e-48b8-be9a-a5500eca62e3.jpg",
+      "category": "Farsan",
       "active": true,
       "order": 7
     }
   ],
   "heroSettings": {
     "autoScroll": true,
-    "intervalSeconds": 4
+    "intervalSeconds": 5
   },
   "announcement": {
     "enabled": true,
@@ -72,12 +64,12 @@
     "name": "Vardayini Sweet Mart",
     "tagline": "Pure Ghee Gujarati Mithai & Live Morning Farsan",
     "established": "1976",
-    "phone": "+91 98250 19760",
-    "whatsapp": "+91 98250 19760",
+    "phone": "6353119329",
+    "whatsapp": "+91 6352119329",
     "email": "orders@vardayini.com",
-    "address": "Mandvi Main Counter & Alkapuri Flagship, Vadodara, Gujarat 390001",
-    "city": "Vadodara, Gujarat",
-    "hours": "7:00 AM – 10:30 PM (All 7 Days)"
+    "address": "6A ,navjivan shopping center,kalol,382721",
+    "city": "kalol, Gujarat",
+    "hours": "8:00 AM – 8:30 PM "
   },
   "promotions": {
     "couponCode": "FESTIVE15",
@@ -127,20 +119,939 @@
     "button1Link": "/shop",
     "button2Text": "Gift Hampers",
     "button2Link": "/shop?category=gift-hampers",
-    "bannerImage": "/images/mithai-platter-showcase.jpg"
+    "bannerImage": "/images/mithai-row-banner.png"
   },
   "specialItems": {
     "enabled": true,
-    "badge": "Karigars' Special Selection",
+    "badge": "Customers' Special Selection",
     "title": "Our Special Items",
-    "subtitle": "Updated from test script",
+    "subtitle": "Prepared fresh every morning with 100% Shuddh Desi Ghee. Handcrafted Gujarati delicacies.",
     "productIds": [
-      4,
       1,
       2,
-      6
+      4,
+      6,
+      3,
+      5,
+      7,
+      8,
+      10,
+      9,
+      13,
+      14,
+      15,
+      16
     ],
-    "linkText": "See all 24+ items →",
+    "linkText": "See all items →",
     "linkUrl": "/shop"
+  },
+  "festivalPage": {
+    "hero": {
+      "badgeText": "🪔 SPECIAL FESTIVE COLLECTION",
+      "phone": "+91 6352119329",
+      "titlePrefix": "Celebrate Indian Festivals with",
+      "titleHighlight": "Shuddh Mithai",
+      "subtitle": "Diwali gift hampers, Dussehra Jalebi-Fafda, Rakhi sweets boxes, and Ganesh Chaturthi 21-modak prasad handcrafted with 100% pure desi ghee.",
+      "button1Text": "Shop Festival Mithai 🪔",
+      "button1Link": "#festive-catalog",
+      "button2Text": "Corporate Gifting 🎁",
+      "button2Link": "#corporate-gifting",
+      "trustPills": [
+        {
+          "icon": "🧈",
+          "text": "100% Shuddh Desi Ghee"
+        },
+        {
+          "icon": "🥈",
+          "text": "99.9% Pure Silver Vark"
+        },
+        {
+          "icon": "🚚",
+          "text": "Same-Day Gujarat Dispatch"
+        },
+        {
+          "icon": "🎁",
+          "text": "Custom Corporate Branding"
+        }
+      ],
+      "couponPromo": {
+        "enabled": true,
+        "text": "Festive Offer: Flat 15% OFF on ₹999+",
+        "code": "FESTIVE15"
+      },
+      "backgroundImage": "/uploads/1792834131468-A_Glowing_Diwali_Celebration.png"
+    },
+    "sections": [
+      {
+        "id": "diwali",
+        "tabLabel": "Diwali & New Year",
+        "tabIcon": "🪔",
+        "tabGujarati": "દિવાળી",
+        "categoryTag": "DIWALI SPECIAL",
+        "title": "Diwali Royal Hamper Specials",
+        "subtitle": "Celebrate the Festival of Lights with our finest pure desi ghee hampers & silver vark sweets",
+        "viewAllText": "View All Diwali Products",
+        "festivalIds": [
+          "diwali"
+        ],
+        "backgroundImage": "/images/diwali-bg.jpg",
+        "enabled": true,
+        "order": 1
+      },
+      {
+        "id": "dussehra",
+        "tabLabel": "Navratri & Dussehra",
+        "tabIcon": "💃",
+        "tabGujarati": "નવરાત્રી & દશેરા",
+        "categoryTag": "NAVRATRI & DUSSEHRA",
+        "title": "Navratri & Dussehra Specials",
+        "subtitle": "Celebrate Vijayadashami with fresh crispy jalebi-fafda and 100% pure fasting sweets",
+        "viewAllText": "View All Navratri",
+        "festivalIds": [
+          "dussehra"
+        ],
+        "enabled": true,
+        "order": 2
+      },
+      {
+        "id": "rakhi",
+        "tabLabel": "Raksha Bandhan",
+        "tabIcon": "🧵",
+        "tabGujarati": "રક્ષાબંધન",
+        "categoryTag": "RAKSHA BANDHAN SPECIAL",
+        "title": "Raksha Bandhan Specials",
+        "subtitle": "Celebrate the eternal bond of brotherhood with handcrafted sweets & designer rakhis",
+        "viewAllText": "View All Rakhi Specials",
+        "festivalIds": [
+          "rakhi"
+        ],
+        "enabled": true,
+        "order": 3
+      },
+      {
+        "id": "ganesh",
+        "tabLabel": "Ganesh Chaturthi",
+        "tabIcon": "🐘",
+        "tabGujarati": "ગણેશોત્સવ",
+        "categoryTag": "GANESH CHATURTHI SPECIAL",
+        "title": "Ganesh Chaturthi Specials",
+        "subtitle": "Devotional 21-modak bhog prasad and handcrafted mawa modaks for Lord Ganesha",
+        "viewAllText": "View All Modak Bhog",
+        "festivalIds": [
+          "ganesh"
+        ],
+        "enabled": true,
+        "order": 4
+      },
+      {
+        "id": "holi-uttarayan",
+        "tabLabel": "Holi & Uttarayan",
+        "tabIcon": "🪁",
+        "tabGujarati": "હોળી & ઉત્તરાયણ",
+        "categoryTag": "HOLI & UTTARAYAN",
+        "title": "Holi & Uttarayan Festival Specials",
+        "subtitle": "Festive sweets for colorful Holi and crispy chikki for kite-flying celebrations",
+        "viewAllText": "View All Chikki & Gujiya",
+        "festivalIds": [
+          "holi",
+          "uttarayan"
+        ],
+        "enabled": true,
+        "order": 5
+      },
+      {
+        "id": "nagpanchami",
+        "tabLabel": "Nagpanchami",
+        "tabIcon": "🕉️",
+        "tabGujarati": "Nagpanchmi",
+        "categoryTag": "N SPECIAL",
+        "title": "N Specials",
+        "subtitle": "Celebrate Nagpanchami with pure desi ghee sweets and festive hampers.",
+        "viewAllText": "View All Nagpanchami",
+        "festivalIds": [
+          "nagpanchami"
+        ],
+        "backgroundImage": "/uploads/1793033911510-width_1600.webp",
+        "enabled": true,
+        "order": 6
+      }
+    ],
+    "trustPerks": [
+      {
+        "icon": "📦",
+        "title": "Premium Packaging",
+        "description": "Gift-ready packaging with individual airtight vacuum sealing."
+      },
+      {
+        "icon": "🧈",
+        "title": "100% Shuddh Desi Ghee",
+        "description": "Handcrafted in traditional copper kadhais with Gir cow ghee."
+      },
+      {
+        "icon": "👑",
+        "title": "Customers' Favorite Recipes",
+        "description": "Authentic heritage recipes preserved across four generations since 1976."
+      },
+      {
+        "icon": "🚚",
+        "title": "Express All-India Delivery",
+        "description": "Same-day dispatch for Gujarat, 2-3 days delivery across India with freshness lock."
+      }
+    ],
+    "corporateGifting": {
+      "enabled": true,
+      "badge": "Corporate & Family Bulk Orders",
+      "title": "Festive Corporate Hampers with Your Brand Logo",
+      "description": "Custom tin boxes, dry fruit platters, and silver-foiled mithai boxes packed with your company's custom greeting cards and ribbon branding. Special wholesale discounts for orders above 25 boxes.",
+      "whatsappNumber": "6352119329",
+      "whatsappText": "WhatsApp Bulk Inquiry",
+      "phoneNumber": "+91 6352119329"
+    },
+    "customProducts": [
+      {
+        "legacyId": 901,
+        "sku": "FEST-901",
+        "slug": "shahi-diwali-royal-sweets-hamper",
+        "festivalId": "diwali",
+        "festivalName": "Diwali Special",
+        "gujaratiName": "શાહી દિવાળી ગિફ્ટ હેમ્પર",
+        "name": "Shahi Diwali Royal Sweets Hamper",
+        "badge": "Bestseller Hamper",
+        "description": "Ornate royal festive box filled with premium Kaju Katli, Kesar Peda, Anjeer Roll, and Dry Fruit Bites.",
+        "imageUrl": "/images/hamper.jpg",
+        "price": 1450,
+        "comparePrice": 1750,
+        "weight": "1 kg",
+        "stock": 100,
+        "tags": [
+          "Diwali",
+          "Gift Box",
+          "Pure Ghee",
+          "festival",
+          "diwali"
+        ]
+      },
+      {
+        "legacyId": 902,
+        "sku": "FEST-902",
+        "slug": "silver-leaf-kaju-katli-festive-box",
+        "festivalId": "diwali",
+        "festivalName": "Diwali Special",
+        "gujaratiName": "સિલ્વર કાજુ કતરી બોક્સ",
+        "name": "Silver Leaf Kaju Katli Festive Box",
+        "badge": "Traditional Purity",
+        "description": "Authentic diamond-cut cashew fudge made with 100% Goan cashews and 99.9% pure silver foil (chandi vark).",
+        "imageUrl": "/images/kaju-katli-showcase.jpg",
+        "price": 950,
+        "comparePrice": 1100,
+        "weight": "1 kg",
+        "stock": 100,
+        "tags": [
+          "Diwali",
+          "Silver Vark",
+          "Cashew",
+          "festival",
+          "diwali"
+        ]
+      },
+      {
+        "legacyId": 903,
+        "sku": "FEST-903",
+        "slug": "heritage-mohanthal-surat-ghari-box",
+        "festivalId": "diwali",
+        "festivalName": "Diwali Special",
+        "gujaratiName": "શુદ્ધ ઘી મોહનથાળ & ઘારી",
+        "name": "Heritage Mohanthal & Surat Ghari Box",
+        "badge": "Gujarati Authentic",
+        "description": "Slow-roasted gram flour mohanthal in Gir cow ghee with pistachios, paired with Surati mawa ghari.",
+        "imageUrl": "/images/mithai-platter-showcase.jpg",
+        "price": 880,
+        "comparePrice": 990,
+        "weight": "800g",
+        "stock": 100,
+        "tags": [
+          "Diwali",
+          "Desi Ghee",
+          "Gujarati Heritage",
+          "festival",
+          "diwali"
+        ]
+      },
+      {
+        "legacyId": 904,
+        "sku": "FEST-904",
+        "slug": "golden-kesar-jalebi-papdi-fafda-combo",
+        "festivalId": "dussehra",
+        "festivalName": "Dussehra & Navratri",
+        "gujaratiName": "દશેરા સ્પેશ્યલ જલેબી-ફાફડા",
+        "name": "Golden Kesar Jalebi & Papdi Fafda Combo",
+        "badge": "Dussehra Tradition",
+        "description": "Crispy freshly fried saffron-infused jalebi with hot crunchy fafda, raw papaya sambharo, and green kadhi.",
+        "imageUrl": "/images/jalebi.jpg",
+        "price": 650,
+        "comparePrice": 750,
+        "weight": "500g Jalebi + 250g Fafda",
+        "stock": 100,
+        "tags": [
+          "Dussehra",
+          "Morning Live",
+          "Kesar Jalebi",
+          "festival",
+          "dussehra"
+        ]
+      },
+      {
+        "legacyId": 905,
+        "sku": "FEST-905",
+        "slug": "navratri-farali-upvas-sweet-platter",
+        "festivalId": "dussehra",
+        "festivalName": "Navratri Special",
+        "gujaratiName": "નવરાત્રી ફરાળી સ્વીટ્સ બોક્સ",
+        "name": "Navratri Farali Upvas Sweet Platter",
+        "badge": "Fasting Pure",
+        "description": "100% Upvas-friendly farali mithai made with Rajgara flour, roasted makhana, dates, and pure cow ghee.",
+        "imageUrl": "/images/gujarati-mithai-showcase.jpg",
+        "price": 720,
+        "comparePrice": 850,
+        "weight": "600g",
+        "stock": 100,
+        "tags": [
+          "Navratri",
+          "Farali",
+          "Upvas Special",
+          "festival",
+          "navratri"
+        ]
+      },
+      {
+        "legacyId": 906,
+        "sku": "FEST-906",
+        "slug": "rakhi-prem-sweets-box-with-designer-rakhi",
+        "festivalId": "rakhi",
+        "festivalName": "Raksha Bandhan",
+        "gujaratiName": "રક્ષાબંધન સ્પેશ્યલ ભાઈ-બહેન બોક્સ",
+        "name": "Rakhi Prem Sweets Box with Designer Rakhi",
+        "badge": "Sister's Choice",
+        "description": "Handcrafted Motichoor Ladoo, Kaju Katli, and Roli-Chawal paired with an eco-friendly designer rakhi.",
+        "imageUrl": "/images/motichoor-showcase.jpg",
+        "price": 850,
+        "comparePrice": 990,
+        "weight": "750g",
+        "stock": 100,
+        "tags": [
+          "Rakhi",
+          "Motichoor",
+          "Free Rakhi",
+          "festival",
+          "rakhi"
+        ]
+      },
+      {
+        "legacyId": 907,
+        "sku": "FEST-907",
+        "slug": "sugar-free-anjeer-dry-fruit-roll",
+        "festivalId": "rakhi",
+        "festivalName": "Raksha Bandhan",
+        "gujaratiName": "ડ્રાયફ્રૂટ્સ અંજીર-ખજૂર રોલ",
+        "name": "Sugar-Free Anjeer & Dry Fruit Roll",
+        "badge": "Healthy Gifting",
+        "description": "Naturally sweetened with premium Afghan figs, dates, almonds, and pistachios. No refined sugar.",
+        "imageUrl": "/images/kaju-katli.jpg",
+        "price": 1100,
+        "comparePrice": 1250,
+        "weight": "500g",
+        "stock": 100,
+        "tags": [
+          "Rakhi",
+          "Sugar Free",
+          "Dry Fruits",
+          "festival",
+          "rakhi"
+        ]
+      },
+      {
+        "legacyId": 908,
+        "sku": "FEST-908",
+        "slug": "shuddh-desi-ghee-modak-bhog-21-pieces",
+        "festivalId": "ganesh",
+        "festivalName": "Ganesh Chaturthi",
+        "gujaratiName": "શુદ્ધ ઘી મોદક પ્રસાદ બોક્સ",
+        "name": "Shuddh Desi Ghee Modak Bhog (21 Pieces)",
+        "badge": "Bapano Bhog",
+        "description": "Sacred 21-modak assortment: Kesar Mawa Modak, Kaju Modak, Coconut Jaggery Modak, and Malai Peda Modak.",
+        "imageUrl": "/images/peda.jpg",
+        "price": 780,
+        "comparePrice": 890,
+        "weight": "21 Pcs (800g)",
+        "stock": 100,
+        "tags": [
+          "Ganesh Utsav",
+          "21 Modak",
+          "Prasad",
+          "festival",
+          "ganesh"
+        ]
+      },
+      {
+        "legacyId": 909,
+        "sku": "FEST-909",
+        "slug": "khoya-dry-fruit-gujiya-thandai-peda",
+        "festivalId": "holi",
+        "festivalName": "Holi & Dhuleti",
+        "gujaratiName": "હોળી સ્પેશ્યલ માવા ગુજિયા & ઠંડાઈ પેંડા",
+        "name": "Khoya Dry Fruit Gujiya & Thandai Peda",
+        "badge": "Holi Celebration",
+        "description": "Crispy ghee-fried gujiya stuffed with mawa, cardamom, and roasted nuts, accompanied by saffron thandai peda.",
+        "imageUrl": "/images/rasmalai.jpg",
+        "price": 820,
+        "comparePrice": 950,
+        "weight": "700g",
+        "stock": 100,
+        "tags": [
+          "Holi",
+          "Gujiya",
+          "Thandai",
+          "festival",
+          "holi"
+        ]
+      },
+      {
+        "legacyId": 910,
+        "sku": "FEST-910",
+        "slug": "uttarayan-royal-chikki-tal-ladoo-hamper",
+        "festivalId": "uttarayan",
+        "festivalName": "Makar Sankranti",
+        "gujaratiName": "ઉત્તરાયણ સ્પેશ્યલ તલ-સીંગ ચીકી હેમ્પર",
+        "name": "Uttarayan Royal Chikki & Tal Ladoo Hamper",
+        "badge": "Kite Festival",
+        "description": "Crunchy Til Chikki, Sing Chikki, Mamra Ladoo, and Organic Jaggery Tal Sankali made in Anand workshop.",
+        "imageUrl": "/images/namkeen.jpg",
+        "price": 580,
+        "comparePrice": 680,
+        "weight": "1 kg Assortment",
+        "stock": 100,
+        "tags": [
+          "Uttarayan",
+          "Chikki",
+          "Jaggery & Sesame",
+          "festival",
+          "uttarayan"
+        ]
+      },
+      {
+        "name": "Tikha khaja",
+        "gujaratiName": "tikha khaja",
+        "festivalId": "nagpanchami",
+        "festivalName": "Nagpanchami",
+        "badge": "Festive Special",
+        "description": "Handcrafted festive sweet delicacy prepared with 100% pure desi ghee.",
+        "imageUrl": "/uploads/1793034208102-Canva_AI_Image_Oct_24__2026__12_41_20_AM.png",
+        "price": 120,
+        "comparePrice": 200,
+        "weight": "250 grams",
+        "stock": 10,
+        "tags": [
+          "nagpanchami",
+          "festival",
+          "Festive Special"
+        ],
+        "id": 919,
+        "legacyId": 919,
+        "dbProductId": 23,
+        "dbVariantId": 919
+      }
+    ],
+    "festivalPages": {
+      "diwali": {
+        "hero": {
+          "badgeText": "🪔 SHUBH DIWALI & NUTAN VARSHABHINANDAN",
+          "phone": "+91 6352119329",
+          "titlePrefix": "Celebrate Shubh Deepavali & New Year with",
+          "titleHighlight": "Royal Desi Ghee Mithai",
+          "subtitle": "Handcrafted Diwali gift hampers, silver vark Kaju Katli, slow-roasted Mohanthal, and authentic Surati Ghari crafted with 100% pure Gir cow ghee.",
+          "button1Text": "Shop Diwali Hampers 🪔",
+          "button1Link": "#festive-catalog",
+          "button2Text": "Corporate Gifting 🎁",
+          "button2Link": "#corporate-gifting",
+          "backgroundImage": "/uploads/1793029722230-A_Glowing_Diwali_Celebration.png"
+        },
+        "couponPromo": {
+          "enabled": true,
+          "text": "Shubh Diwali Offer: Flat 15% OFF on ₹999+",
+          "code": "DIWALI15"
+        },
+        "trustPills": [
+          {
+            "icon": "🪔",
+            "text": "100% Shuddh Desi Ghee"
+          },
+          {
+            "icon": "🥈",
+            "text": "99.9% Pure Silver Vark"
+          },
+          {
+            "icon": "🎁",
+            "text": "Royal Velvet Gift Boxes"
+          },
+          {
+            "icon": "🚚",
+            "text": "Same-Day Gujarat Dispatch"
+          }
+        ],
+        "corporateGifting": {
+          "enabled": true,
+          "badge": "Diwali Corporate & Family Hampers",
+          "title": "Custom Diwali Gift Hampers with Your Brand Crest",
+          "description": "Custom tin boxes, dry fruit platters, and silver-foiled mithai hampers embossed with your company logo & custom greeting message. Special wholesale pricing for 25+ boxes.",
+          "whatsappNumber": "6352119329",
+          "whatsappText": "WhatsApp Diwali Bulk Inquiry",
+          "phoneNumber": "+91 6352119329"
+        },
+        "theme": "diwali",
+        "storyTitle": "Diwali Tradition of Shuddh Mithai",
+        "storyDescription": "In Gujarati culture, sharing sweets on Diwali and Nutan Varsh marks the welcoming of Goddess Lakshmi, spreading prosperity and auspicious beginnings."
+      },
+      "dussehra": {
+        "hero": {
+          "badgeText": "💃 SHUBH NAVRATRI & VIJAYADASHAMI",
+          "phone": "+91 6352119329",
+          "titlePrefix": "Celebrate Sacred Navratri & Dussehra with",
+          "titleHighlight": "Fresh Crispy Jalebi-Fafda & Farali Sweets",
+          "subtitle": "Vijayadashami early-morning hot Jalebi-Fafda tradition with raw papaya sambharo, paired with 100% pure fasting Upvas Rajgara & makhana sweets.",
+          "button1Text": "Order Dussehra Jalebi Now 🍯",
+          "button1Link": "#festive-catalog",
+          "button2Text": "Bulk Team Boxes 🎁",
+          "button2Link": "#corporate-gifting",
+          "backgroundImage": "/images/dussehra-jalebi.jpg"
+        },
+        "couponPromo": {
+          "enabled": true,
+          "text": "Dussehra Special: Extra 10% OFF on Jalebi & Farali Combos",
+          "code": "NAVRATRI10"
+        },
+        "trustPills": [
+          {
+            "icon": "🍯",
+            "text": "Live Early-Morning Frying"
+          },
+          {
+            "icon": "🌿",
+            "text": "100% Upvas Pure Farali Ghee"
+          },
+          {
+            "icon": "🥗",
+            "text": "Crunchy Papaya Sambharo"
+          },
+          {
+            "icon": "🚚",
+            "text": "Pre-Dawn Dussehra Dispatch"
+          }
+        ],
+        "corporateGifting": {
+          "enabled": true,
+          "badge": "Dussehra Morning Corporate Treats",
+          "title": "Festive Dussehra Breakfast & Jalebi Boxes for Teams",
+          "description": "Delight your employees and partners with hot fresh Kesar Jalebi, crispy Fafda, and festive sweet platters packed in individual hygienic corporate boxes.",
+          "whatsappNumber": "6352119329",
+          "whatsappText": "WhatsApp Dussehra Order",
+          "phoneNumber": "+91 6352119329"
+        },
+        "theme": "navratri",
+        "storyTitle": "The Joyous Dussehra Jalebi-Fafda Tradition",
+        "storyDescription": "According to Gujarati heritage, celebrating the victory of Good over Evil on Vijayadashami begins at dawn with hot golden kesar jalebi and spicy crunchy fafda."
+      },
+      "rakhi": {
+        "hero": {
+          "badgeText": "🧵 RAKSHA BANDHAN CELEBRATIONS",
+          "phone": "+91 6352119329",
+          "titlePrefix": "Celebrate the Sacred Bond of Siblings with",
+          "titleHighlight": "Handcrafted Rakhi Sweets & Hampers",
+          "subtitle": "Express brother-sister love with artisan Motichoor Ladoos, Dry Fruit Anjeer Rolls, premium Kaju Katli, and free designer eco-friendly rakhis with roli-chawal.",
+          "button1Text": "Shop Rakhi Sweet Boxes 🧵",
+          "button1Link": "#festive-catalog",
+          "button2Text": "Corporate Sister Gifting 🎁",
+          "button2Link": "#corporate-gifting",
+          "backgroundImage": "/images/festive-hamper.jpg"
+        },
+        "couponPromo": {
+          "enabled": true,
+          "text": "Rakhi Prem Offer: Flat 20% OFF on Gift Hampers",
+          "code": "RAKHI20"
+        },
+        "trustPills": [
+          {
+            "icon": "🧵",
+            "text": "Free Designer Rakhi Included"
+          },
+          {
+            "icon": "🌾",
+            "text": "Sacred Roli-Akshat Chawal"
+          },
+          {
+            "icon": "📦",
+            "text": "Air-Tight Freshness Lock"
+          },
+          {
+            "icon": "💌",
+            "text": "Free Custom Sister Card"
+          }
+        ],
+        "corporateGifting": {
+          "enabled": true,
+          "badge": "Rakhi Corporate & Family Hampers",
+          "title": "Express Appreciation with Premium Raksha Bandhan Hampers",
+          "description": "Bespoke Mithai & Dryfruit boxes with custom sleeve bands, personalized notes, and courier dispatch across all major cities in India.",
+          "whatsappNumber": "6352119329",
+          "whatsappText": "WhatsApp Rakhi Hampers",
+          "phoneNumber": "+91 6352119329"
+        },
+        "theme": "rakhi",
+        "storyTitle": "The Eternal Bond of Raksha Bandhan",
+        "storyDescription": "A sister's prayer for her brother's long life sealed with a sacred thread, sweetened with authentic homemade desi ghee sweets."
+      },
+      "ganesh": {
+        "hero": {
+          "badgeText": "🐘 GANESHOTSAV 21-MODAK BHOG",
+          "phone": "+91 6352119329",
+          "titlePrefix": "Welcome Vighnaharta Lord Ganesha with",
+          "titleHighlight": "21 Shuddh Modak Bhog Prasad",
+          "subtitle": "Handcrafted sacred 21-Modak bhog assortments: Kesar Mawa Modak, Kaju Modak, Malai Peda Modak, and Coconut Jaggery Modak in pure desi cow ghee.",
+          "button1Text": "Book 21 Modak Bhog 🐘",
+          "button1Link": "#festive-catalog",
+          "button2Text": "Pandal & Mandal Bulk 🪔",
+          "button2Link": "#corporate-gifting",
+          "backgroundImage": "/images/modak-bhog.jpg"
+        },
+        "couponPromo": {
+          "enabled": true,
+          "text": "Bapa's Blessings: Flat ₹100 OFF on 21-Modak Assortment",
+          "code": "BAPABHOG"
+        },
+        "trustPills": [
+          {
+            "icon": "🐘",
+            "text": "Sacred 21-Modak Bhog Box"
+          },
+          {
+            "icon": "🧈",
+            "text": "Gir Cow Desi Ghee Purity"
+          },
+          {
+            "icon": "🥥",
+            "text": "Fresh Coconut & Organic Jaggery"
+          },
+          {
+            "icon": "🪔",
+            "text": "Daily Fresh Morning Batch"
+          }
+        ],
+        "corporateGifting": {
+          "enabled": true,
+          "badge": "Mandal & Corporate Bhog Prasad",
+          "title": "Bulk Modak Prasad Boxes for Ganesh Pandals & Offices",
+          "description": "Hygienically packed individual modak prasad boxes for office poojas, residential societies, and Ganesh mandal distributions.",
+          "whatsappNumber": "6352119329",
+          "whatsappText": "WhatsApp Modak Prasad",
+          "phoneNumber": "+91 6352119329"
+        },
+        "theme": "ganesh",
+        "storyTitle": "Devotion of 21 Modaks",
+        "storyDescription": "Modak is Lord Ganesha's most beloved sweet, symbolising divine knowledge, inner satisfaction, and supreme devotion."
+      },
+      "holi-uttarayan": {
+        "hero": {
+          "badgeText": "🪁 HOLI & UTTARAYAN CELEBRATIONS",
+          "phone": "+91 6352119329",
+          "titlePrefix": "Celebrate Vibrant Holi & Kite-Flying Uttarayan with",
+          "titleHighlight": "Royal Chikki, Gujiya & Thandai Peda",
+          "subtitle": "Crispy Gir-cow-ghee khoya gujiyas, rich saffron thandai pedas, crunchy organic jaggery til-chikki, and authentic peanut brittle crafted in our Anand workshop.",
+          "button1Text": "Shop Chikki & Gujiya 🪁",
+          "button1Link": "#festive-catalog",
+          "button2Text": "Rooftop Bulk Orders 🪁",
+          "button2Link": "#corporate-gifting",
+          "backgroundImage": "/images/holi-gujiya.jpg"
+        },
+        "couponPromo": {
+          "enabled": true,
+          "text": "Festive Crunch Offer: Flat 15% OFF on Chikki & Gujiya",
+          "code": "RANGOLI15"
+        },
+        "trustPills": [
+          {
+            "icon": "🪁",
+            "text": "Authentic Anand Workshop Chikki"
+          },
+          {
+            "icon": "🌾",
+            "text": "100% Organic Desi Gud (Jaggery)"
+          },
+          {
+            "icon": "🥛",
+            "text": "Saffron Infused Thandai Mawa"
+          },
+          {
+            "icon": "📦",
+            "text": "Crunch-Lock Airtight Tins"
+          }
+        ],
+        "corporateGifting": {
+          "enabled": true,
+          "badge": "Seasonal Festivity Gifting",
+          "title": "Corporate Chikki Hampers & Holi Celebration Boxes",
+          "description": "Crispy Til-Sing chikki gift boxes and festive Gujiya platters for client gifting, Makar Sankranti rooftop parties, and Holi gatherings.",
+          "whatsappNumber": "6352119329",
+          "whatsappText": "WhatsApp Chikki & Gujiya",
+          "phoneNumber": "+91 6352119329"
+        },
+        "theme": "holi-uttarayan",
+        "storyTitle": "Colors of Spring and Winter Crunch",
+        "storyDescription": "From sesame-jaggery winter warmers during kite-flying Makar Sankranti to saffron-scented mawa gujiyas on Holi, celebrate nature's joyful rhythm."
+      },
+      "nagpanchami": {
+        "hero": {
+          "badgeText": "🕉️ NAGPANCHAMI SPECIALS",
+          "phone": "+91 6352119329",
+          "titlePrefix": "Celebrate Nagpanchami with",
+          "titleHighlight": "Shuddh Mithai",
+          "subtitle": "Celebrate Nagpanchami with pure desi ghee sweets and festive hampers.",
+          "button1Text": "Shop Nagpanchami Mithai 🪔",
+          "button1Link": "#festive-catalog",
+          "button2Text": "Corporate Gifting 🎁",
+          "button2Link": "#corporate-gifting",
+          "backgroundImage": "/uploads/1793033911510-width_1600.webp"
+        },
+        "couponPromo": {
+          "enabled": true,
+          "text": "Nagpanchami Special: Extra 15% OFF on ₹999+",
+          "code": "NAGPANCH15"
+        },
+        "trustPills": [
+          {
+            "icon": "🧈",
+            "text": "100% Shuddh Desi Ghee"
+          },
+          {
+            "icon": "🥈",
+            "text": "99.9% Pure Silver Vark"
+          },
+          {
+            "icon": "🎁",
+            "text": "Royal Festive Packaging"
+          },
+          {
+            "icon": "🚚",
+            "text": "Same-Day Gujarat Dispatch"
+          }
+        ],
+        "corporateGifting": {
+          "enabled": true,
+          "badge": "Nagpanchami Bulk Gifting",
+          "title": "Nagpanchami Corporate Hampers with Your Brand Logo",
+          "description": "Custom tin boxes, dry fruit platters, and silver-foiled mithai boxes packed with your company's custom greeting cards and ribbon branding. Special wholesale discounts for orders above 25 boxes.",
+          "whatsappNumber": "6352119329",
+          "whatsappText": "WhatsApp Nagpanchami Bulk Inquiry",
+          "phoneNumber": "+91 6352119329"
+        },
+        "theme": "diwali",
+        "storyTitle": "Nagpanchami Sweet Celebrations",
+        "storyDescription": "Celebrate Nagpanchami with timeless heritage sweets handcrafted with devotion in Gir cow ghee."
+      }
+    }
+  },
+  "browseByCategory": {
+    "enabled": true,
+    "badge": "Authentic Traditional Categories",
+    "title": "Browse By Category",
+    "subtitle": "Select from our freshly rolled sweets and steaming hot snacks",
+    "linkText": "View Full Menu",
+    "linkUrl": "/shop",
+    "cards": [
+      {
+        "id": "ghee-sweets",
+        "title": "SIGNATURE GHEE SWEETS",
+        "itemCount": "18 Items",
+        "imageUrl": "/images/motichoor.jpg",
+        "href": "/shop?group=sweets",
+        "active": true
+      },
+      {
+        "id": "dry-fruit-specials",
+        "title": "DRY FRUIT SPECIALS",
+        "itemCount": "12 Items",
+        "imageUrl": "/images/kaju-katli.jpg",
+        "href": "/shop?category=kaju-sweets",
+        "active": true
+      },
+      {
+        "id": "festival-gift-boxes",
+        "title": "FESTIVAL GIFT BOXES",
+        "itemCount": "15 Options",
+        "imageUrl": "/images/hamper.jpg",
+        "href": "/shop?category=gift-hampers",
+        "active": true
+      },
+      {
+        "id": "namkeen-snacks",
+        "title": "NAMKEEN & SNACKS",
+        "itemCount": "24 Items",
+        "imageUrl": "/images/khaman-showcase.jpg",
+        "href": "/shop?group=namkeen",
+        "active": true
+      }
+    ]
+  },
+  "bestsellersSection": {
+    "enabled": true,
+    "autoCalculateFromSales": true,
+    "badge": "MOST LOVED",
+    "title": "CUSTOMER BESTSELLERS",
+    "viewAllText": "Explore All Vadodara Bestsellers",
+    "viewAllUrl": "/shop?tag=best_seller",
+    "items": [
+      {
+        "id": "bestseller-1",
+        "name": "ROYAL KAJU KATLI",
+        "slug": "kaju-katli",
+        "badge": "Bestseller",
+        "description": "Smooth, melt-in-your-mouth cashew fudge coated with delicate silver leaf.",
+        "price": 450,
+        "weight": "500g",
+        "imageUrl": "/images/kaju-katli.jpg",
+        "variantId": 2,
+        "active": true
+      },
+      {
+        "id": "bestseller-2",
+        "name": "DESI GHEE MOTICHOOR LADDU",
+        "slug": "motichoor-ladoo",
+        "badge": "Pure Ghee",
+        "description": "Fine gram flour pearls fried in pure ghee and infused with aromatic cardamom.",
+        "price": 380,
+        "weight": "500g",
+        "imageUrl": "/images/motichoor.jpg",
+        "variantId": 14,
+        "active": true
+      },
+      {
+        "id": "bestseller-3",
+        "name": "SAFFRON KESAR PEDA",
+        "slug": "kesar-malai-penda",
+        "badge": "Rich Flavor",
+        "description": "Traditional condensed milk sweet enriched with premium Kashmiri saffron.",
+        "price": 420,
+        "weight": "500g",
+        "imageUrl": "/images/peda.jpg",
+        "variantId": 9,
+        "active": true
+      },
+      {
+        "id": "bestseller-4",
+        "name": "SPECIAL GULAB JAMUN",
+        "slug": "gulab-jamun",
+        "badge": "Festive Favorite",
+        "description": "Soft, juicy mawa dumplings soaked in fragrant rose and cardamom syrup.",
+        "price": 320,
+        "weight": "500g",
+        "imageUrl": "/images/gulab-jamun.jpg",
+        "variantId": 5,
+        "active": true
+      }
+    ]
+  },
+  "welcomeOffer": {
+    "enabled": true,
+    "badge": "WELCOME OFFER",
+    "title": "FLAT 10% OFF ON YOUR FIRST ORDER",
+    "subtitle": "Sign up now with your email or phone number to receive your exclusive discount code instantly!",
+    "buttonText": "Get Code",
+    "couponCode": "DEWALI10",
+    "discountPercent": 10
+  },
+  "testimonialsSection": {
+    "enabled": true,
+    "autoShowRealReviews": true,
+    "badge": "TESTIMONIALS",
+    "title": "WHAT OUR CUSTOMERS SAY",
+    "subtitle": "Real feedback from our patrons across Gujarat and India",
+    "showTrustBadge": true,
+    "trustBadgeText": "Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India",
+    "reviews": [
+      {
+        "id": "rev-1",
+        "name": "Pratik Sukhadiya",
+        "location": "Kalol / Ahmedabad",
+        "rating": 5,
+        "quote": "The Kaju Katli and Nylon Khaman are unmatched in freshness. True traditional craftsmanship with pure desi ghee aroma in every box.",
+        "active": true
+      },
+      {
+        "id": "rev-2",
+        "name": "Rajeshbhai Shah",
+        "location": "Vadodara (Alkapuri)",
+        "rating": 5,
+        "quote": "Our family has been ordering Motichoor Ladoo and Mathura Penda from Vardayini for over 25 years. Never a compromise on Gir cow ghee quality.",
+        "active": true
+      },
+      {
+        "id": "rev-3",
+        "name": "Aanya Patel",
+        "location": "Mandvi, Vadodara",
+        "rating": 5,
+        "quote": "Ordered Diwali gift hampers for our hospital staff. Each box was sealed immaculately, delivered right on time, and every sweet was heavenly.",
+        "active": true
+      },
+      {
+        "id": "rev-4",
+        "name": "Kiritbhai Gandhi",
+        "location": "Surat",
+        "rating": 5,
+        "quote": "Steamed Nylon Khaman and crisp Khandvi arrive as if picked straight from the morning counter. Pure authentic taste.",
+        "active": true
+      }
+    ]
+  },
+  "newLaunchPage": {
+    "enabled": true,
+    "badge": "NEW 2026 COLLECTION",
+    "title": "Newly Launched Royal Sweets & Snacks",
+    "subtitle": "Handcrafted dawn batches celebrating modern tastes with three generations of pure desi ghee heritage.",
+    "tickerTexts": [
+      "Handcrafted with 100% Shuddh Gir Cow Desi Ghee",
+      "Adorned with Pure Edible 24K Silver Leaf & Iranian Saffron",
+      "Fresh Morning Batches Direct for Mandvi & Alkapuri Customers",
+      "Zero Artificial Essence · 100% Wholesome Authentic Purity",
+      "Vacuum Sealed & Delivered Fresh Across Gujarat & India"
+    ]
+  },
+  "culinaryPillars": {
+    "enabled": true,
+    "badge": "The Culinary Experience",
+    "title": "Elevating the Sweet Tradition",
+    "pillars": [
+      {
+        "id": "pillar-1",
+        "icon": "🧈",
+        "title": "100% Shuddh Desi Ghee",
+        "description": "Simmered in slow copper kadhais with pure Gir cow & buffalo bilona ghee."
+      },
+      {
+        "id": "pillar-2",
+        "icon": "🌅",
+        "title": "Dawn Preparation",
+        "description": "Freshly rolled at sunrise and dispatched warm every single morning."
+      },
+      {
+        "id": "pillar-3",
+        "icon": "📦",
+        "title": "Vacuum Sealed",
+        "description": "Tin and gold packaging preserving crispy layers, aroma, and moisture."
+      },
+      {
+        "id": "pillar-4",
+        "icon": "⚡",
+        "title": "Gujarat Express Network",
+        "description": "Same-day doorstep delivery in Vadodara, Kalol, Gandhinagar, and Ahmedabad."
+      }
+    ]
   }
 }

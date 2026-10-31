@@ -11,7 +11,7 @@ if (process.env.DATABASE_URL) {
 
 // 2. Set test SESSION_SECRET
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || "test-vitest-session-secret-9876543210-secure";
-Object.assign(process.env, { NODE_ENV: "test" });
+Object.assign(process.env, { NODE_ENV: "test", VARDAYINI_TEST_MODE: "true" });
 
 // 3. Register global mock for next/headers cookies()
 vi.mock("next/headers", () => {

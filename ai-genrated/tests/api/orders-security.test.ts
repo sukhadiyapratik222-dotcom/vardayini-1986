@@ -87,11 +87,11 @@ describe("Security Tests: Orders, Wishlist & Review Permissions", () => {
           deliverySlot: "Morning",
           paymentMethod: "cod",
           paymentStatus: "pending",
-        })
-        .returning();
+        });
+      const uOrderId = (uOrder as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: uOrder.id,
+        orderId: uOrderId,
         productName: "Test Sweet",
         variantWeight: "250 g",
         unitPrice: 250,
@@ -120,11 +120,11 @@ describe("Security Tests: Orders, Wishlist & Review Permissions", () => {
           deliverySlot: "Evening",
           paymentMethod: "cod",
           paymentStatus: "pending",
-        })
-        .returning();
+        });
+      const gOrderId = (gOrder as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: gOrder.id,
+        orderId: gOrderId,
         productName: "Guest Namkeen",
         variantWeight: "200 g",
         unitPrice: 150,
@@ -237,24 +237,24 @@ describe("Security Tests: Orders, Wishlist & Review Permissions", () => {
         .values({
           userId: customerAId,
           productId,
-        })
-        .returning();
+        });
+      const itemAId = (itemA as any).insertId;
 
       // Customer B attempts to delete Customer A's wishlist item
       await loginAs(customerBId);
       const req = buildRequest({
         method: "DELETE",
-        url: `/api/wishlist/${itemA.id}`,
+        url: `/api/wishlist/${itemAId}`,
       });
       await deleteWishlistItem(req, {
-        params: Promise.resolve({ id: String(itemA.id) }),
+        params: Promise.resolve({ id: String(itemAId) }),
       });
 
       // Verification: Customer A's row must STILL exist in the database
       const [stillExists] = await db
         .select()
         .from(wishlistItems)
-        .where(eq(wishlistItems.id, itemA.id))
+        .where(eq(wishlistItems.id, itemAId))
         .limit(1);
 
       expect(stillExists).toBeDefined();

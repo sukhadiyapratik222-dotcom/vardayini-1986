@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --canvas: #fdfcfa;
   --surface: #ffffff;
   --royal-blue: #0b2f8a;
@@ -12,25 +14,36 @@
   --text-main: #182230;
   --text-muted: #5e6d82;
   --border-light: rgba(11, 47, 138, 0.08);
+  --bb-basil: #0a3323;
+  --bb-paprika: #9e2a1b;
+  --bb-cream-deep: #f5eedb;
+  --bb-ink: #1b1915;
+  --bb-saffron: #f3b137;
+  --bb-space-7: 2.25rem;
+  --bb-font-display: var(--font-display, "Playfair Display", Georgia, serif);
 }
 
 html {
   scroll-behavior: smooth;
   width: 100%;
-  max-width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
   width: 100%;
-  max-width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
+  position: relative;
   color: var(--text-main);
   background-color: var(--canvas);
   background-image: 
     radial-gradient(circle at 10% 20%, rgba(223, 183, 85, 0.05) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(11, 47, 138, 0.03) 0%, transparent 40%);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .site-shell {
@@ -38,7 +51,11 @@ body {
   z-index: 1;
   width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
+}
+
+img, svg, video, iframe {
+  max-width: 100%;
 }
 
 .gold-line {
@@ -142,6 +159,32 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(11, 47, 138, 0.12);
 }
 
+/* The hero search sits on a dark glass surface and must opt out of the
+   default light form treatment above. */
+.heritage-hero-search-input,
+.heritage-hero-search-input:focus {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Welcome Offer Dark Banner Input */
+.welcome-offer-input,
+.welcome-offer-input:focus,
+.welcome-offer-input:active {
+  background-color: #3e241b !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(202, 160, 85, 0.45) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+  outline: none !important;
+  caret-color: #caa055 !important;
+}
+
+.welcome-offer-input::placeholder {
+  color: #b59f93 !important;
+  opacity: 1 !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MOTION PRIMITIVES UTILITIES & KEYFRAMES
    ═══════════════════════════════════════════════════════════════ */
@@ -187,6 +230,49 @@ input:focus, select:focus, textarea:focus {
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* User's Artisan Product List Marquee (.bb-marquee) */
+.bb-marquee {
+  --bb-marquee-duration: 32s;
+  overflow: hidden;
+  padding-block: 1.1rem;
+  background: var(--bb-basil);
+  color: #f7f4ea;
+  border-block: 1px solid rgba(255, 255, 255, 0.08);
+}
+.bb-marquee--paprika { background: var(--bb-paprika); color: #ffffff; }
+.bb-marquee--cream { background: var(--bb-cream-deep); color: var(--bb-ink); }
+.bb-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: bb-marquee var(--bb-marquee-duration) linear infinite;
+}
+.bb-marquee:hover .bb-marquee__track { animation-play-state: paused; }
+.bb-marquee__group {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-7);
+  padding-right: var(--bb-space-7);
+}
+.bb-marquee__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--bb-font-display);
+  font-size: clamp(1.1rem, 0.9rem + 0.6vw, 1.5rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bb-marquee__item i {
+  color: var(--bb-saffron);
+  font-size: 0.8em;
+  font-style: normal;
+  display: inline-flex;
+}
+@keyframes bb-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 @keyframes border-glow-spin {
@@ -278,5 +364,37 @@ input:focus, select:focus, textarea:focus {
   border-color: rgba(217, 119, 6, 0.35);
   box-shadow: 0 20px 35px -5px rgba(59, 30, 84, 0.09), 0 4px 8px -2px rgba(217, 119, 6, 0.08);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HERITAGE GLASS HERO (ROYAL PURPLE & GOLD GLASSMORPHISM)
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.vardayini-glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vardayini-glass-card:hover {
+  border-color: rgba(245, 197, 24, 0.45);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
 
 

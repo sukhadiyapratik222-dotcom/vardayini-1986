@@ -9,7 +9,7 @@ interface RouteContext {
 
 async function forwardRequest(req: NextRequest, ctx: RouteContext) {
   const { path } = await ctx.params;
-  const storeApiBase = (process.env.STORE_API_URL || "http://localhost:9449").replace(/\/$/, "");
+  const storeApiBase = (process.env.STORE_API_URL || "http://127.0.0.1:9449").replace(/\/$/, "");
 
   const subPath = path.join("/");
   const url = new URL(req.url);
@@ -32,10 +32,24 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
     headers.set("cookie", `vs_session=${sessionToken}`);
   }
 
+  // Forward admin API key for backend service authentication
+  const adminKey = process.env.ADMIN_API_KEY || process.env.STORE_ADMIN_KEY || "vsm_admin_secret_key_2026_secured";
+  if (adminKey) {
+    headers.set("x-admin-key", adminKey);
+    headers.set("authorization", `Bearer ${adminKey}`);
+  }
+
   try {
     let body: ArrayBuffer | undefined;
-    if (["POST", "PUT", "PATCH"].includes(req.method)) {
-      body = await req.arrayBuffer();
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
+      try {
+        const buf = await req.arrayBuffer();
+        if (buf && buf.byteLength > 0) {
+          body = buf;
+        }
+      } catch {
+        // Body was either empty or already consumed
+      }
     }
 
     const response = await fetch(targetUrl, {
@@ -43,6 +57,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
       headers,
       body,
       cache: "no-store",
+      signal: AbortSignal.timeout(15000),
     });
 
     const responseData = await response.arrayBuffer();
@@ -51,6 +66,21 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
     const respContentType = response.headers.get("content-type");
     if (respContentType) {
       responseHeaders.set("content-type", respContentType);
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      try {
+        const text = new TextDecoder().decode(responseData).toLowerCase();
+        if (
+          response.status === 401 ||
+          text.includes("account deactivated") ||
+          text.includes("account inactive")
+        ) {
+          cookieStore.delete("vsm_admin_session");
+        }
+      } catch {
+        // ignore decoding errors
+      }
     }
 
     return new NextResponse(responseData, {

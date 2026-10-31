@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { listProducts } from "@/lib/products";
 import { NewProductMotionShowcase } from "@/components/new-product-motion-showcase";
+import { getUiConfigSafe } from "@/lib/ui-config";
 
 export const metadata: Metadata = {
   title: "New Products 2026 Collection | Vardayini Sweet Mart",
@@ -10,10 +11,15 @@ export const metadata: Metadata = {
 
 export default async function NewProductsPage() {
   const products = await listProducts({ limit: 42 });
+  const uiConfig = getUiConfigSafe();
 
   return (
     <main className="w-full min-h-screen">
-      <NewProductMotionShowcase products={products} />
+      <NewProductMotionShowcase
+        products={products}
+        config={uiConfig?.newLaunchPage}
+        welcomeOfferConfig={uiConfig?.welcomeOffer}
+      />
     </main>
   );
 }

@@ -70,11 +70,11 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
           deliverySlot: "Morning",
           paymentMethod: "UPI",
           paymentStatus: "completed",
-        })
-        .returning();
+        });
+      const orderId1 = (newOrder as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: newOrder.id,
+        orderId: orderId1,
         variantId: sampleVariant.id,
         productName: "Kaju Katli Special",
         variantWeight: "500g",
@@ -146,11 +146,11 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
           deliverySlot: "Morning",
           paymentMethod: "UPI",
           paymentStatus: "completed",
-        })
-        .returning();
+        });
+      const orderId2 = (testOrder as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: testOrder.id,
+        orderId: orderId2,
         variantId: sampleVariant.id,
         productName: "Kaju Katli",
         variantWeight: "500g",
@@ -309,11 +309,11 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
           deliverySlot: "Evening",
           paymentMethod: "UPI",
           paymentStatus: "completed",
-        })
-        .returning();
+        });
+      const orderId3 = (order as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: order.id,
+        orderId: orderId3,
         productName: "Assorted Mithai Box",
         variantWeight: "1kg",
         unitPrice: 1000,
@@ -373,11 +373,11 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
           deliverySlot: "Morning",
           paymentMethod: "Card",
           paymentStatus: "completed",
-        })
-        .returning();
+        });
+      const orderId4 = (order as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: order.id,
+        orderId: orderId4,
         productName: "Festive Gift Hamper",
         variantWeight: "1kg",
         unitPrice: 1000,

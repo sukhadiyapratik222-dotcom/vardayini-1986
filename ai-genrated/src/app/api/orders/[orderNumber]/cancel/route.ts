@@ -1,4 +1,4 @@
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, like, or, sql } from "drizzle-orm";
 import { createHash, timingSafeEqual } from "crypto";
 import { db } from "@/db";
 import { orderItems, orders, productVariants, products } from "@/db/schema";
@@ -7,6 +7,8 @@ import { ensureSeeded } from "@/db/seed";
 import { canCancelOrder, canTransitionOrder } from "@/lib/order-transitions";
 import { readJsonSafe } from "@/lib/validation";
 import { logOrderStatusHistory } from "@/lib/invoice";
+import { recordAdminNotification } from "@/lib/notifications";
+import { syncOrderToMysql } from "@/lib/mysql";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +51,7 @@ export async function POST(
   const guestCartId = cookieStore.get("vs_cart")?.value;
 
   let isAllowed = false;
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     isAllowed = true;
   } else if (order.userId) {
     if (user?.id === order.userId) {
@@ -76,11 +78,21 @@ export async function POST(
     return Response.json({ error: "Not allowed" }, { status: 403 });
   }
 
+  if (order.status === "cancelled") {
+    const { guestTokenHash: _discardHash, ...safeOrder } = order;
+    return Response.json({
+      success: true,
+      order: safeOrder,
+      message: "This order is already cancelled.",
+      isAlreadyCancelled: true,
+    });
+  }
+
   // State machine check: can only cancel before shipping
   if (!canCancelOrder(order.status)) {
     return Response.json(
       {
-        error: `Orders in '${order.status}' status cannot be cancelled. Cancellation is only allowed before order is shipped.`,
+        error: `Orders in '${order.status}' status cannot be cancelled because your items have already been dispatched.`,
       },
       { status: 400 }
     );
@@ -91,7 +103,7 @@ export async function POST(
 
   const updatedOrder = await db.transaction(async (tx) => {
     const isPaid = order.paymentStatus === "paid" || order.paymentStatus === "completed";
-    const [updated] = await tx
+    const [updateRes] = await tx
       .update(orders)
       .set({
         status: "cancelled",
@@ -100,10 +112,10 @@ export async function POST(
         refundStatus: isPaid ? "pending" : "none",
         refundAmount: isPaid ? order.total : 0,
       })
-      .where(and(eq(orders.id, order.id), eq(orders.status, order.status)))
-      .returning();
+      .where(and(eq(orders.id, order.id), eq(orders.status, order.status)));
 
-    if (!updated) return null;
+    if (!updateRes || updateRes.affectedRows === 0) return null;
+    const [updated] = await tx.select().from(orders).where(eq(orders.id, order.id)).limit(1);
 
     // Restock items atomically in the same transaction
     const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, order.id));
@@ -122,8 +134,8 @@ export async function POST(
             and(
               or(
                 eq(products.name, item.productName),
-                ilike(products.name, `%${item.productName}%`),
-                ilike(products.slug, `%${item.productName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}%`)
+                like(products.name, `%${item.productName}%`),
+                like(products.slug, `%${item.productName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}%`)
               ),
               eq(productVariants.weight, item.variantWeight)
             )
@@ -144,7 +156,7 @@ export async function POST(
       "cancelled",
       `Order cancelled: ${reasonText}`,
       "Vadodara Fulfilment Center",
-      user?.role === "admin" ? "admin" : "customer",
+      user?.role === "super_admin" ? "super_admin" : user?.role === "admin" ? "admin" : "customer",
       tx as any
     );
 
@@ -155,11 +167,47 @@ export async function POST(
     return Response.json({ error: "Order status conflict: order was updated concurrently" }, { status: 409 });
   }
 
+  // Sync to MySQL
+  try {
+    await syncOrderToMysql({
+      orderNumber: updatedOrder.orderNumber,
+      userId: updatedOrder.userId,
+      guestName: updatedOrder.guestName,
+      guestPhone: updatedOrder.guestPhone,
+      status: "cancelled",
+      total: updatedOrder.total,
+      paymentStatus: updatedOrder.paymentStatus,
+    });
+  } catch (err) {
+    console.warn("Failed to sync cancelled order to MySQL:", err);
+  }
+
+  // Send admin notification
+  try {
+    const custName = updatedOrder.guestName || user?.name || "Customer";
+    await recordAdminNotification({
+      type: "order_cancelled",
+      title: `Order Cancelled: ${updatedOrder.orderNumber}`,
+      message: `${custName} has cancelled order ${updatedOrder.orderNumber}. Reason: "${reasonText}". Value: ₹${updatedOrder.total}`,
+      data: {
+        orderNumber: updatedOrder.orderNumber,
+        orderId: updatedOrder.id,
+        customerName: custName,
+        customerPhone: updatedOrder.guestPhone || user?.phone || "",
+        total: updatedOrder.total,
+        reason: reasonText,
+        cancelledAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("Failed to record cancellation notification:", err);
+  }
+
   const { guestTokenHash: _discardHash, ...safeUpdatedOrder } = updatedOrder;
 
   return Response.json({
     success: true,
     order: safeUpdatedOrder,
-    message: "Order cancelled successfully. Inventory has been restocked.",
+    message: "Order cancelled successfully. Inventory has been restocked and store management has been notified.",
   });
 }

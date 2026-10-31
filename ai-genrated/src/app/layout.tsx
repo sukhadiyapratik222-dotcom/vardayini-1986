@@ -1,40 +1,53 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ensureSeeded } from "@/db/seed";
+import { getUiConfigSafe } from "@/lib/ui-config";
 import "./globals.css";
 
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
-
-const sans = Outfit({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-sans",
-});
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Vardayini Sweet Mart | Fresh handmade mithai",
   description:
     "Order kaju katli, motichoor ladoo, rasmalai and festive hampers from Vardayini Sweet Mart in Vadodara and Ahmedabad.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/images/brand-logo.png",
+    apple: "/images/brand-logo.png",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0b2f8a",
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   await ensureSeeded();
+  const uiConfig = getUiConfigSafe();
+
   return (
     <html lang="en">
-      <body className={`${display.variable} ${sans.variable} font-[family-name:var(--font-sans)] antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="font-[family-name:var(--font-sans)] antialiased">
         <div className="site-shell">
-          <SiteHeader />
+          <SiteHeader initialConfig={uiConfig} />
           {children}
-          <SiteFooter />
+          <SiteFooter initialConfig={uiConfig} />
         </div>
       </body>
     </html>
   );
 }
+

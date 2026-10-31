@@ -6,9 +6,36 @@ import Link from "next/link";
 import { formatInr, unitPrice } from "@/lib/money";
 import { PincodeDeliveryChecker } from "@/components/pincode-delivery-checker";
 import { ProductOptionsModal, ModalProductData } from "@/components/product-options-modal";
+import { HeritageGlassHero } from "@/components/heritage-glass-hero";
 import { GlassyHeroShowcase } from "@/components/glassy-hero-showcase";
+import { CulinaryExperienceSection } from "@/components/culinary-experience-section";
+import { ProductListMarquee } from "@/components/product-list-marquee";
 import { ProductCard } from "@/components/product-card";
 import type { SpecialItemsConfig } from "@/components/home-page-client";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselNavigation,
+  CarouselIndicator,
+  CarouselItem,
+} from "@/components/core/carousel";
+import { Magnetic } from "@/components/core/magnetic";
+import {
+  MorphingDialog,
+  MorphingDialogTrigger,
+  MorphingDialogContent,
+  MorphingDialogTitle,
+  MorphingDialogImage,
+  MorphingDialogSubtitle,
+  MorphingDialogClose,
+  MorphingDialogContainer,
+} from "@/components/core/morphing-dialog";
+import { ScrollArea } from "@/components/website/scroll-area";
+import { OutletsSection } from "@/components/outlets-section";
+import { TestimonialsSection } from "@/components/testimonials-section";
+import { CustomerBestsellersSection } from "@/components/customer-bestsellers-section";
+import { BrowseByCategorySection } from "@/components/browse-by-category-section";
+import { WelcomeOfferBanner } from "@/components/welcome-offer-banner";
 
 interface CategoryData {
   id: number;
@@ -48,6 +75,9 @@ interface WarmCreamHomepageProps {
   bestsellers: HomepageProductData[];
   specialItemsConfig?: SpecialItemsConfig;
   specialProducts?: HomepageProductData[];
+  stores?: any[];
+  reviews?: any[];
+  uiConfig?: any;
   onToggleUiDesign?: () => void;
   currentUiDesign?: string;
 }
@@ -58,6 +88,9 @@ export function WarmCreamHomepage({
   bestsellers,
   specialItemsConfig,
   specialProducts = [],
+  stores = [],
+  reviews = [],
+  uiConfig,
   onToggleUiDesign,
   currentUiDesign = "warm-cream",
 }: WarmCreamHomepageProps) {
@@ -83,208 +116,29 @@ export function WarmCreamHomepage({
     setTimeout(() => setToastMessage(null), 3000);
   }
 
-  // 4 Main Curated Category Cards with Large Food Photography
-  const categoryShowcase = [
-    {
-      title: "Royal Sweets (Mithai)",
-      description: "Kaju Katli, slow-roasted Besan Ladoo, Mathura Peda & Mohanthal",
-      slug: "sweets",
-      href: "/shop?group=sweets",
-      image: "/images/kaju-katli-showcase.jpg",
-      badge: "Pure Gir Cow Ghee",
-    },
-    {
-      title: "Namkeen & Farsan",
-      description: "Surati Nylon Khaman, Khandvi rolls, crunchy Gathiya & Farali Chiwda",
-      slug: "namkeen",
-      href: "/shop?category=namkeen-farsan",
-      image: "/images/khaman-showcase.jpg",
-      badge: "Steamed Fresh Daily",
-    },
-    {
-      title: "Bakery Delights",
-      description: "Flaky butter maska khari, spiced teatime toasts & rich biscuits",
-      slug: "bakery",
-      href: "/shop?group=bakery",
-      image: "/images/hamper.jpg",
-      badge: "Artisanal Crunch",
-    },
-    {
-      title: "Festive Gift Hampers",
-      description: "Shahi Rajwadi celebration boxes, silver trays & custom assortments",
-      slug: "hampers",
-      href: "/shop?category=gift-hampers",
-      image: "/images/mithai-platter-showcase.jpg",
-      badge: "Diwali & Celebrations",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-[#faf6ee] text-[#24142e] selection:bg-[#d97706]/20">
-      {/* ─────────────────────────────────────────────────────────────
-          1. TOP DESIGN SWITCHER BANNER ("One option create in our website")
-         ───────────────────────────────────────────────────────────── */}
-      <aside aria-label="Design System Switcher" className="bg-[#3b1e54] text-white px-4 py-2 text-xs border-b border-[#d97706]/30">
-        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-[#d97706] animate-pulse" />
-            <span className="font-medium text-slate-200">
-              Active Design: <strong className="text-[#fef3c7]">Warm Cream, Deep-Purple &amp; Saffron</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-slate-300">Want to see the classic navy theme?</span>
-            <button
-              type="button"
-              onClick={onToggleUiDesign}
-              className="rounded-full bg-[#d97706] hover:bg-[#b45309] text-white px-3 py-1 font-bold text-[11px] shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              title="Click to toggle between Warm Cream and Classic Navy UI designs"
-            >
-              <span>🎨</span>
-              <span>Switch UI Design</span>
-            </button>
-          </div>
-        </div>
-      </aside>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. FOCUSED HERO SECTION: Warm Cream, Deep-Purple CTA & Large Food Photo
+          2. HERITAGE ROYAL PURPLE & GOLD GLASS HERO SECTION
          ───────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-8 pb-16 sm:pt-14 sm:pb-24 border-b border-[#3b1e54]/10">
-        {/* Soft Radial Ambient Saffron Light */}
-        <div className="pointer-events-none absolute top-0 right-1/4 h-96 w-96 rounded-full bg-[#d97706]/8 blur-3xl" />
+      <HeritageGlassHero />
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left: Brand Value & Direct Order Actions */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#fef3c7] border border-[#d97706]/40 px-3.5 py-1 text-xs font-bold text-[#b45309]">
-                <span>✨</span>
-                <span>Crafted Fresh in Vadodara Since 1976</span>
-              </div>
+      {/* Artisan Product List Marquee (.bb-marquee) */}
+      <ProductListMarquee variant="basil" />
 
-              <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-5xl lg:text-5xl font-bold tracking-tight text-[#24142e] leading-[1.15]">
-                Handcrafted Gujarati Mithai &amp;{" "}
-                <span className="text-[#3b1e54] italic font-normal">Pure Desi Ghee Savories.</span>
-              </h1>
-
-              <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-xl">
-                Rolled fresh every dawn in Vadodara using 100% Shuddh Desi Ghee. Melt-in-mouth Kaju Katli,
-                steaming hot Surati Khaman, and festive celebration hampers rolled by three generations of
-                master karigars.
-              </p>
-
-              {/* Delivery and Purity Badges */}
-              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#3b1e54] pt-1">
-                <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200">
-                  <span className="text-emerald-700">✓</span> 100% Shuddh Desi Ghee
-                </span>
-                <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200">
-                  <span className="text-emerald-700">✓</span> Same-Day Dispatch in Vadodara
-                </span>
-                <span className="flex items-center gap-1.5 bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200">
-                  <span className="text-emerald-700">✓</span> Zero Added Preservatives
-                </span>
-              </div>
-
-              {/* CTA Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3.5 pt-2">
-                <Link
-                  href="/shop"
-                  className="btn-purple rounded-full px-7 py-3 text-xs sm:text-sm font-bold shadow-lg shadow-[#3b1e54]/25 hover:scale-102 active:scale-98 transition flex items-center gap-2"
-                >
-                  <span>🛒</span>
-                  <span>Explore Fresh Batches</span>
-                </Link>
-                <Link
-                  href="/stores"
-                  className="rounded-full bg-white border border-[#3b1e54]/20 hover:border-[#3b1e54] px-6 py-3 text-xs sm:text-sm font-bold text-[#24142e] hover:bg-[#3b1e54]/5 transition"
-                >
-                  Visit Our Counters (Mandvi &amp; Alkapuri)
-                </Link>
-              </div>
-
-              {/* Announcement Callout */}
-              <div className="p-3.5 rounded-2xl bg-[#fef3c7]/60 border border-[#d97706]/30 text-xs text-[#78350f] flex items-center gap-2.5">
-                <span className="text-base">🎁</span>
-                <span>
-                  <strong>Festive Offer:</strong> Free delivery on all orders above ₹799 · Use code{" "}
-                  <strong className="underline">FESTIVE15</strong> for 15% off above ₹999.
-                </span>
-              </div>
-            </div>
-
-            {/* Right: Interactive Glassmorphic Product Showcase with Auto-Scrolling & Thumbnails */}
-            <div className="lg:col-span-6 relative flex items-center justify-center">
-              <GlassyHeroShowcase />
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 2.5 ELEVATING THE CULINARY EXPERIENCE PILLARS */}
+      {uiConfig?.culinaryPillars?.enabled !== false && <CulinaryExperienceSection />}
 
       {/* ─────────────────────────────────────────────────────────────
-          3. PRODUCT CATEGORIES: Large Food Photography (No Tiny Thumbnails)
+          3. BROWSE BY CATEGORY (2x2 Grid with Real Food Photography)
          ───────────────────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#d97706]">
-              Browse By Department
-            </span>
-            <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#24142e]">
-              Authentic Traditional Categories
-            </h2>
-          </div>
-          <Link
-            href="/shop"
-            className="text-xs sm:text-sm font-bold text-[#3b1e54] hover:text-[#d97706] transition flex items-center gap-1"
-          >
-            <span>View All 42 Products</span>
-            <span>→</span>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categoryShowcase.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={cat.href}
-              className="cream-card group overflow-hidden flex flex-col justify-between"
-            >
-              {/* Large Food Photography */}
-              <div className="relative aspect-[16/11] w-full overflow-hidden bg-[#faf6ee]">
-                <Image
-                  src={cat.image}
-                  alt={cat.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-108"
-                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                />
-                <div className="absolute top-3 left-3 rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#3b1e54] shadow-sm backdrop-blur-md">
-                  {cat.badge}
-                </div>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-[#24142e] group-hover:text-[#3b1e54] transition">
-                    {cat.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                    {cat.description}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#3b1e54]">
-                  <span>Explore Items</span>
-                  <span className="transition-transform group-hover:translate-x-1">→</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {uiConfig?.browseByCategory?.enabled !== false && (
+        <BrowseByCategorySection
+          config={uiConfig?.browseByCategory}
+          subcategories={categories}
+        />
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           OUR SPECIAL ITEMS: Placed directly above Fresh Daily Specials
@@ -292,66 +146,87 @@ export function WarmCreamHomepage({
       {specialItemsConfig?.enabled !== false && specialProducts && specialProducts.length > 0 && (
         <section className="py-12 sm:py-16 bg-[#faf8f4] border-t border-[#3b1e54]/10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            {/* Section Header: Title on Left, Link Button on Right */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
               <div>
-                <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#d97706] bg-[#d97706]/10 px-3 py-1 rounded-full border border-[#d97706]/20">
-                  {specialItemsConfig?.badge || "Karigars' Special Selection"}
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#b45309] bg-[#b45309]/10 px-3.5 py-1 rounded-full border border-[#b45309]/20 mb-2.5 shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#b45309] animate-pulse" />
+                  {specialItemsConfig?.badge || "Customers' Special Selection"}
                 </span>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#24142e] flex items-center gap-2">
+                <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#24142e] flex items-center gap-2 tracking-tight">
                   <span>{specialItemsConfig?.title || "Our Special Items"}</span>
-                  <span className="text-xl">✨</span>
+                  <span className="text-2xl drop-shadow-sm select-none">✨</span>
                 </h2>
                 {specialItemsConfig?.subtitle && (
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed">
                     {specialItemsConfig.subtitle}
                   </p>
                 )}
               </div>
-              <Link
-                href={specialItemsConfig?.linkUrl || "/shop"}
-                className="text-xs sm:text-sm font-bold text-[#3b1e54] hover:text-[#d97706] transition flex items-center gap-1 group"
-              >
-                <span>{specialItemsConfig?.linkText || "See all special items →"}</span>
-                <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-              </Link>
+              <div className="shrink-0 self-start sm:self-end">
+                <Link
+                  href={specialItemsConfig?.linkUrl || "/shop"}
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#3b1e54] hover:text-[#b45309] transition group bg-[#3b1e54]/5 hover:bg-[#3b1e54]/10 px-4 py-2 rounded-full border border-[#3b1e54]/10 shadow-xs"
+                >
+                  <span>{(specialItemsConfig?.linkText || "See all special items").replace(/[→\->\s]+$/, "")}</span>
+                  <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+                </Link>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {specialProducts.map((product) => (
-                <ProductCard key={product.id} product={product as any} />
-              ))}
+            <div className="relative pb-12 overflow-hidden px-2 sm:px-5 md:px-8">
+              <Carousel
+                autoplay={true}
+                autoplayInterval={3500}
+                pauseOnHover={true}
+                loop={true}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-3 sm:-ml-4 py-3 sm:py-4">
+                  {specialProducts.map((product) => (
+                    <CarouselItem
+                      key={product.id}
+                      className="pl-3 sm:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+                    >
+                      <ProductCard product={product as any} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselNavigation alwaysShow />
+                <CarouselIndicator className="-bottom-5" />
+              </Carousel>
             </div>
           </div>
         </section>
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          4. FRESH DAILY SPECIALS: 4 Columns Desktop, 2 Columns Mobile
+          4. FRESH DAILY SPECIALS: 4 Columns Desktop, 2 Columns Mobile (1 Column on Ultra-Small)
          ───────────────────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-20 bg-white border-y border-[#3b1e54]/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+      <section className="py-10 sm:py-20 bg-white border-y border-[#3b1e54]/10">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-6 sm:mb-10">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-[#d97706]">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#b45309]">
                 Fresh Dawn Batches
               </span>
-              <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#24142e]">
+              <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl sm:text-3xl lg:text-4xl font-bold text-[#24142e]">
                 Fresh Daily Specials
               </h2>
-              <p className="mt-1 text-xs sm:text-sm text-slate-500">
+              <p className="mt-1 text-xs sm:text-sm text-slate-600">
                 Prepared every morning with 100% Shuddh Desi Ghee. Select your preferred pack size below.
               </p>
             </div>
             <Link
               href="/shop"
-              className="text-xs sm:text-sm font-bold text-[#3b1e54] hover:text-[#d97706] transition"
+              className="text-xs sm:text-sm font-bold text-[#3b1e54] hover:text-[#b45309] transition"
             >
               Browse Complete Menu →
             </Link>
           </div>
 
-          {/* 4 COLUMNS DESKTOP, 2 COLUMNS MOBILE GRID */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* Responsive Product Grid */}
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
             {featuredProducts.slice(0, 8).map((product) => {
               const hasMultipleVariants = product.variants && product.variants.length > 1;
               const primaryVariant = product.variants[0];
@@ -402,7 +277,7 @@ export function WarmCreamHomepage({
                       <div className="flex items-center justify-between text-[11px] text-slate-500">
                         <span>Pack: <strong>{primaryVariant?.weight || "250 g"}</strong></span>
                         {hasMultipleVariants && (
-                          <span className="text-[#d97706] font-semibold">
+                          <span className="text-[#b45309] font-semibold">
                             +{product.variants.length - 1} sizes
                           </span>
                         )}
@@ -418,7 +293,7 @@ export function WarmCreamHomepage({
                           {formatInr(displayPrice)}
                         </span>
                         {primaryVariant?.discountedPrice && (
-                          <span className="ml-1.5 text-xs text-slate-400 line-through">
+                          <span className="ml-1.5 text-xs text-slate-500 line-through">
                             {formatInr(primaryVariant.price)}
                           </span>
                         )}
@@ -429,14 +304,16 @@ export function WarmCreamHomepage({
                     </div>
 
                     {/* Button: "Choose options" when multiple pack sizes exist */}
-                    <button
-                      type="button"
-                      onClick={() => handleOpenModal(product)}
-                      className="btn-purple w-full rounded-xl py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <span>{hasMultipleVariants ? "Choose options" : "Add to cart"}</span>
-                      <span>{hasMultipleVariants ? "▾" : "🛒"}</span>
-                    </button>
+                    <Magnetic className="w-full">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenModal(product)}
+                        className="btn-purple w-full rounded-xl py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <span>{hasMultipleVariants ? "Choose options" : "Add to cart"}</span>
+                        <span>{hasMultipleVariants ? "▾" : "🛒"}</span>
+                      </button>
+                    </Magnetic>
                   </div>
                 </article>
               );
@@ -446,35 +323,46 @@ export function WarmCreamHomepage({
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
+          4.5. CUSTOMER BESTSELLERS: Most Loved Sweets & Fast Cart Add
+         ───────────────────────────────────────────────────────────── */}
+      {uiConfig?.bestsellersSection?.enabled !== false && (
+        <CustomerBestsellersSection
+          config={uiConfig?.bestsellersSection}
+          onAddToCartSuccess={handleAddToCartSuccess}
+          onOpenModal={handleOpenModal}
+        />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
           5. FESTIVE GIFTING: Celebration Hampers & Custom Sweet Boxes
          ───────────────────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-[#3b1e54] text-white p-6 sm:p-12 lg:p-14 relative overflow-hidden shadow-2xl">
+      <section className="py-10 sm:py-20 mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-[#3b1e54] text-white p-4 sm:p-12 lg:p-14 relative overflow-hidden shadow-2xl">
           <div className="pointer-events-none absolute -right-20 -bottom-20 h-80 w-80 rounded-full bg-[#d97706]/20 blur-3xl" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-            <div className="lg:col-span-7 space-y-4">
-              <span className="inline-block rounded-full bg-[#d97706]/25 border border-[#d97706]/40 px-3.5 py-1 text-xs font-bold text-[#fef3c7] uppercase tracking-wider">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center relative z-10">
+            <div className="lg:col-span-7 space-y-3 sm:space-y-4">
+              <span className="inline-block rounded-full bg-[#d97706]/25 border border-[#d97706]/40 px-3 py-0.5 sm:px-3.5 sm:py-1 text-[11px] sm:text-xs font-bold text-[#fef3c7] uppercase tracking-wider">
                 Festive Gifting · Corporate &amp; Family
               </span>
-              <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+              <h2 className="font-[family-name:var(--font-display)] text-xl sm:text-4xl lg:text-5xl font-bold leading-tight">
                 Shahi Rajwadi Celebration Boxes &amp; Hampers.
               </h2>
-              <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl">
+              <p className="text-xs sm:text-base text-slate-200 leading-relaxed max-w-xl">
                 Elevate your wedding and festive celebrations with handpicked assortments of silver-foiled
                 Kaju Katli, saffron pedas, and vacuum-sealed Namkeen. Includes custom Shubhkamna gift cards.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
                 <Link
                   href="/shop?category=gift-hampers"
-                  className="rounded-full bg-[#d97706] hover:bg-[#b45309] text-white px-6 py-3 text-xs sm:text-sm font-bold shadow-md transition active:scale-95"
+                  className="rounded-full bg-[#d97706] hover:bg-[#b45309] text-white text-center px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold shadow-md transition active:scale-95"
                 >
                   Explore Gift Hampers
                 </Link>
                 <Link
                   href="/stores"
-                  className="rounded-full border border-white/30 hover:border-white px-6 py-3 text-xs sm:text-sm font-bold text-white transition hover:bg-white/10"
+                  className="rounded-full border border-white/30 hover:border-white text-center px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white transition hover:bg-white/10"
                 >
                   Bulk / Corporate Enquiries
                 </Link>
@@ -512,7 +400,7 @@ export function WarmCreamHomepage({
             </div>
 
             <div className="lg:col-span-6 space-y-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#d97706]">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#b45309]">
                 Three Generations of Purity
               </span>
               <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold text-[#24142e] leading-tight">
@@ -524,86 +412,25 @@ export function WarmCreamHomepage({
                 whole nuts, and fresh milk khoa cooked patiently on slow flame.
               </p>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                Today, our master karigars still roll cashew dough and fry farsan before dawn. Whether you visit
+                Today, our master craftsmen still roll cashew dough and fry farsan before dawn for our customers. Whether you visit
                 our Mandvi counter or our Alkapuri flagship on RC Dutt Road, every box carries the same
                 unbroken promise of royal taste and purity.
               </p>
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
                 <div className="bg-white p-4 rounded-2xl border border-[#3b1e54]/10">
                   <p className="font-bold text-[#24142e] text-sm">Mandvi Flagship</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Opp. Tower, Mandvi, Vadodara</p>
-                  <p className="text-[11px] text-[#d97706] font-semibold mt-1">Open 8 AM – 10:30 PM</p>
+                  <p className="text-xs text-slate-600 mt-0.5">Opp. Tower, Mandvi, Vadodara</p>
+                  <p className="text-[11px] text-[#b45309] font-semibold mt-1">Open 8 AM – 10:30 PM</p>
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-[#3b1e54]/10">
                   <p className="font-bold text-[#24142e] text-sm">Alkapuri Branch</p>
-                  <p className="text-xs text-slate-500 mt-0.5">RC Dutt Road, Alkapuri, Vadodara</p>
-                  <p className="text-[11px] text-[#d97706] font-semibold mt-1">Open 8 AM – 10:30 PM</p>
+                  <p className="text-xs text-slate-600 mt-0.5">RC Dutt Road, Alkapuri, Vadodara</p>
+                  <p className="text-[11px] text-[#b45309] font-semibold mt-1">Open 8 AM – 10:30 PM</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────
-          7. CUSTOMER FAVORITES (Bestsellers Ranking)
-         ───────────────────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#d97706]">
-            Most Loved in Vadodara
-          </span>
-          <h2 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold text-[#24142e]">
-            Customer Favorites
-          </h2>
-          <p className="mt-1.5 text-xs sm:text-sm text-slate-500">
-            Our top-ordered delicacies by families across Gujarat and India.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          {bestsellers.map((product, idx) => (
-            <div
-              key={product.id}
-              className="cream-card p-4 sm:p-5 flex items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b1e54]/10 text-sm font-bold text-[#3b1e54]">
-                  #{idx + 1}
-                </span>
-
-                <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-2xl bg-[#faf6ee]">
-                  <Image
-                    src={product.imageUrl || "/images/kaju-katli.jpg"}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <h3 className="font-[family-name:var(--font-display)] text-base sm:text-lg font-bold text-[#24142e] truncate">
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 truncate">
-                    {product.categoryName || "Royal Mithai"} · {product.variants[0]?.weight || "250 g"}
-                  </p>
-                  <p className="text-sm font-bold text-[#3b1e54] mt-0.5">
-                    {formatInr(product.fromPrice)}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleOpenModal(product)}
-                className="btn-purple shrink-0 rounded-xl px-4 py-2 text-xs font-bold shadow-xs cursor-pointer"
-              >
-                Choose options
-              </button>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -616,7 +443,7 @@ export function WarmCreamHomepage({
             {/* Left 7 Cols: 4 Quality Pillars */}
             <div className="lg:col-span-7 space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-[#d97706]">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#b45309]">
                   The Vardayini Standard
                 </span>
                 <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#24142e]">
@@ -627,7 +454,7 @@ export function WarmCreamHomepage({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 rounded-2xl bg-[#faf6ee] border border-slate-100 space-y-1.5">
                   <span className="text-2xl">🥛</span>
-                  <h4 className="font-bold text-[#24142e] text-sm">100% Shuddh Desi Ghee</h4>
+                  <h3 className="font-bold text-[#24142e] text-sm">100% Shuddh Desi Ghee</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Prepared purely in Gir cow and buffalo desi ghee. Absolutely zero hydrogenated oils or dalda.
                   </p>
@@ -635,7 +462,7 @@ export function WarmCreamHomepage({
 
                 <div className="p-4 rounded-2xl bg-[#faf6ee] border border-slate-100 space-y-1.5">
                   <span className="text-2xl">🌿</span>
-                  <h4 className="font-bold text-[#24142e] text-sm">Zero Preservatives</h4>
+                  <h3 className="font-bold text-[#24142e] text-sm">Zero Preservatives</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Prepared in dawn batches daily and dispatched warm. Never stored with artificial chemicals.
                   </p>
@@ -643,7 +470,7 @@ export function WarmCreamHomepage({
 
                 <div className="p-4 rounded-2xl bg-[#faf6ee] border border-slate-100 space-y-1.5">
                   <span className="text-2xl">📦</span>
-                  <h4 className="font-bold text-[#24142e] text-sm">Food-Grade Sealed Box</h4>
+                  <h3 className="font-bold text-[#24142e] text-sm">Food-Grade Sealed Box</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Vacuum-packed in food-safe tin and gold boxes to preserve crispness and natural moisture.
                   </p>
@@ -651,7 +478,7 @@ export function WarmCreamHomepage({
 
                 <div className="p-4 rounded-2xl bg-[#faf6ee] border border-slate-100 space-y-1.5">
                   <span className="text-2xl">⚡</span>
-                  <h4 className="font-bold text-[#24142e] text-sm">Vadodara Same-Day Delivery</h4>
+                  <h3 className="font-bold text-[#24142e] text-sm">Vadodara Same-Day Delivery</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Same-day delivery across Vadodara for orders before 2:00 PM. Express delivery pan-India.
                   </p>
@@ -668,7 +495,31 @@ export function WarmCreamHomepage({
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          9. PRODUCT OPTIONS MODAL ("Choose options")
+          8.2. WELCOME OFFER BANNER: Flat 10% Off First Order
+         ───────────────────────────────────────────────────────────── */}
+      {uiConfig?.welcomeOffer?.enabled !== false && (
+        <section className="py-12 sm:py-16 bg-[#faf6ee] border-t border-[#3b1e54]/10">
+          <WelcomeOfferBanner config={uiConfig?.welcomeOffer} />
+        </section>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          8.5. TESTIMONIALS: What Our Customers Say
+         ───────────────────────────────────────────────────────────── */}
+      {uiConfig?.testimonialsSection?.enabled !== false && (
+        <TestimonialsSection
+          config={uiConfig?.testimonialsSection}
+          initialReviews={reviews}
+        />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          9. OUR OUTLETS & STORES (section_contact14)
+         ───────────────────────────────────────────────────────────── */}
+      <OutletsSection initialStores={stores} />
+
+      {/* ─────────────────────────────────────────────────────────────
+          10. PRODUCT OPTIONS MODAL ("Choose options")
          ───────────────────────────────────────────────────────────── */}
       <ProductOptionsModal
         product={selectedProductForModal}

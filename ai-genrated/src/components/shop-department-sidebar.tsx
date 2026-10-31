@@ -27,6 +27,9 @@ export const DEPARTMENT_GROUPS_META: DepartmentGroupInfo[] = [
       "sugarless-sweets",
       "premium-packed-sweets",
       "indian-ghee-sweets",
+      "bengali-sweets",
+      "dryfruit-sweets",
+      "festival-specials",
     ],
   },
   {
@@ -46,6 +49,17 @@ export const DEPARTMENT_GROUPS_META: DepartmentGroupInfo[] = [
       "daal-lentil",
       "sev",
       "chips-and-puris",
+      "farsan-snacks",
+      "namkeen-farsan",
+      "farsan",
+      "traditional-gujarati-snacks",
+      "gujarati-farsan",
+      "sev-and-gathiya",
+      "nylon-khaman-and-dhokla",
+      "spiced-mixtures",
+      "farali-snacks",
+      "wafers-and-chips",
+      "namkeen",
     ],
   },
   {
@@ -54,7 +68,7 @@ export const DEPARTMENT_GROUPS_META: DepartmentGroupInfo[] = [
     imageUrl: "/images/hamper.jpg",
     colorClass: "text-[#9a3412] group-hover:text-[#ea580c]",
     badgeColorClass: "bg-orange-100 text-orange-800",
-    slugs: ["biscuits-and-cookies", "toast-and-khari"],
+    slugs: ["biscuits-and-cookies", "toast-and-khari", "bakery"],
   },
 ];
 
@@ -108,6 +122,7 @@ export function ShopDepartmentSidebar({
   const [customMax, setCustomMax] = useState<string>(
     activeMaxPrice !== undefined ? String(activeMaxPrice) : ""
   );
+  const [mobileExpanded, setMobileExpanded] = useState(false);
 
   // Helper to build URL preserving current query params
   const buildUrl = (overrides: Record<string, string | undefined>) => {
@@ -134,19 +149,43 @@ export function ShopDepartmentSidebar({
   const isAllCategoriesActive = !activeCategory && !activeGroup;
 
   return (
-    <aside className="w-full space-y-6">
-      {/* 1. CATEGORIES CARD (Matching Exact Reference Layout) */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-5">
+    <aside className="w-full space-y-4 lg:space-y-6">
+      {/* Mobile Accordion Toggle Button */}
+      <button
+        type="button"
+        onClick={() => setMobileExpanded((prev) => !prev)}
+        className="lg:hidden w-full flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-white border border-[#0b2f8a]/15 shadow-xs text-left transition"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="text-base">🏷️</span>
+          <div>
+            <p className="font-bold text-xs sm:text-sm text-[#0b2f8a]">Filter Categories &amp; Price</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500">
+              {activeCategory || activeGroup || activeMinPrice !== undefined
+                ? "Active filters applied • Tap to change"
+                : "Browse departments, 18 categories & price"}
+            </p>
+          </div>
+        </div>
+        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#0b2f8a]/10 text-[#0b2f8a]">
+          {mobileExpanded ? "Hide Filters ▲" : "Show Filters ▼"}
+        </span>
+      </button>
+
+      {/* Main Filter Cards Wrapper */}
+      <div className={`space-y-6 ${mobileExpanded ? "block" : "hidden lg:block"}`}>
+        {/* 1. CATEGORIES CARD (Matching Exact Reference Layout) */}
+        <div className="bg-white rounded-3xl p-3.5 sm:p-6 border border-slate-100 shadow-sm space-y-4 sm:space-y-5">
         {/* Header with Title and Green Underline Bar */}
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#182230] tracking-tight">
+          <h2 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-[#182230] tracking-tight">
             Categories
           </h2>
-          <div className="w-12 h-1 bg-[#16a34a] rounded-full mt-2" />
+          <div className="w-12 h-1 bg-[#16a34a] rounded-full mt-1.5 sm:mt-2" />
         </div>
 
         {/* View Switcher: Departments vs Subcategories */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-bold">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-[11px] sm:text-xs font-bold">
           <button
             type="button"
             onClick={() => setViewMode("departments")}
@@ -428,6 +467,7 @@ export function ShopDepartmentSidebar({
           </div>
         )}
       </div>
+    </div>
 
       {/* 3. FLOATING WHATSAPP CHAT BUTTON (Bottom Right - Non-intrusive) */}
       <a

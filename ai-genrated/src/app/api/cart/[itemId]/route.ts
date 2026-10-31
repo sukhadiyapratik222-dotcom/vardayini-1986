@@ -64,6 +64,8 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
   return Response.json({ items: cart.lines, totals: cart.totals });
 }
 
+export const PATCH = PUT;
+
 export async function DELETE(_request: Request, context: { params: Promise<{ itemId: string }> }) {
   await ensureSeeded();
   const { itemId: rawId } = await context.params;

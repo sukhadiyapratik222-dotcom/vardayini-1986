@@ -1,4 +1,4 @@
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, like, or, sql } from "drizzle-orm";
 import { createHash, timingSafeEqual } from "crypto";
 import { db } from "@/db";
 import { orderItems, orders, productVariants, products } from "@/db/schema";
@@ -6,6 +6,8 @@ import { getAuthUser, requireAdmin } from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
 import { canCustomerCancel, canTransitionOrder } from "@/lib/order-transitions";
 import { readJsonSafe } from "@/lib/validation";
+import { recordAdminNotification } from "@/lib/notifications";
+import { syncOrderToMysql } from "@/lib/mysql";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +38,7 @@ export async function GET(_request: Request, context: { params: Promise<{ orderN
   const guestCartId = cookieStore.get("vs_cart")?.value;
 
   let isAllowed = false;
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     isAllowed = true;
   } else if (order.userId) {
     if (user?.id === order.userId) {
@@ -144,7 +146,7 @@ export async function GET(_request: Request, context: { params: Promise<{ orderN
 export async function POST(request: Request, context: { params: Promise<{ orderNumber: string }> }) {
   await ensureSeeded();
   const { orderNumber } = await context.params;
-  const body = await readJsonSafe<{ action?: string }>(request);
+  const body = await readJsonSafe<{ action?: string; reason?: string }>(request);
   if (!body) {
     return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
@@ -163,7 +165,7 @@ export async function POST(request: Request, context: { params: Promise<{ orderN
   const guestCartId = cookieStore.get("vs_cart")?.value;
 
   let isAllowed = false;
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     isAllowed = true;
   } else if (order.userId) {
     if (user?.id === order.userId) {
@@ -190,11 +192,21 @@ export async function POST(request: Request, context: { params: Promise<{ orderN
     return Response.json({ error: "Not allowed" }, { status: 403 });
   }
 
+  if (order.status === "cancelled") {
+    const { guestTokenHash: _discardHash, ...safeOrder } = order;
+    return Response.json({
+      success: true,
+      order: safeOrder,
+      message: "This order is already cancelled.",
+      isAlreadyCancelled: true,
+    });
+  }
+
   // Check state machine: Customer can only cancel before shipped
-  if (user?.role !== "admin") {
+  if (user?.role !== "admin" && user?.role !== "super_admin") {
     if (!canCustomerCancel(order.status)) {
       return Response.json(
-        { error: `Orders in '${order.status}' status cannot be cancelled` },
+        { error: `Orders in '${order.status}' status cannot be cancelled because your items have already been dispatched.` },
         { status: 400 }
       );
     }
@@ -211,7 +223,7 @@ export async function POST(request: Request, context: { params: Promise<{ orderN
   const isPaid = order.paymentStatus === "paid" || order.paymentStatus === "completed";
   const updatedOrder = await db.transaction(async (tx) => {
     // Conditional update: only update if current status matches expected status
-    const [updated] = await tx
+    const [updateRes] = await tx
       .update(orders)
       .set({
         status: "cancelled",
@@ -219,10 +231,9 @@ export async function POST(request: Request, context: { params: Promise<{ orderN
         refundStatus: isPaid ? "pending" : "none",
         refundAmount: isPaid ? order.total : 0,
       })
-      .where(and(eq(orders.id, order.id), eq(orders.status, order.status)))
-      .returning();
+      .where(and(eq(orders.id, order.id), eq(orders.status, order.status)));
 
-    if (!updated) {
+    if (!updateRes || updateRes.affectedRows === 0) {
       return null;
     }
 
@@ -243,8 +254,8 @@ export async function POST(request: Request, context: { params: Promise<{ orderN
             and(
               or(
                 eq(products.name, item.productName),
-                ilike(products.name, `%${item.productName}%`),
-                ilike(products.slug, `%${item.productName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}%`)
+                like(products.name, `%${item.productName}%`),
+                like(products.slug, `%${item.productName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}%`)
               ),
               eq(productVariants.weight, item.variantWeight)
             )
@@ -259,15 +270,63 @@ export async function POST(request: Request, context: { params: Promise<{ orderN
       }
     }
 
-    return updated;
+    const [freshOrder] = await tx
+      .select()
+      .from(orders)
+      .where(eq(orders.id, order.id))
+      .limit(1);
+
+    return freshOrder;
   });
 
   if (!updatedOrder) {
     return Response.json({ error: "Order status conflict: order was updated concurrently" }, { status: 409 });
   }
 
+  const reasonText = (body?.reason || "Cancelled by customer").slice(0, 300);
+
+  // Sync to MySQL
+  try {
+    await syncOrderToMysql({
+      orderNumber: updatedOrder.orderNumber,
+      userId: updatedOrder.userId,
+      guestName: updatedOrder.guestName,
+      guestPhone: updatedOrder.guestPhone,
+      status: "cancelled",
+      total: updatedOrder.total,
+      paymentStatus: updatedOrder.paymentStatus,
+    });
+  } catch (err) {
+    console.warn("Failed to sync cancelled order to MySQL:", err);
+  }
+
+  // Send admin notification
+  try {
+    const custName = updatedOrder.guestName || user?.name || "Customer";
+    await recordAdminNotification({
+      type: "order_cancelled",
+      title: `Order Cancelled: ${updatedOrder.orderNumber}`,
+      message: `${custName} has cancelled order ${updatedOrder.orderNumber}. Reason: "${reasonText}". Total: ₹${updatedOrder.total}`,
+      data: {
+        orderNumber: updatedOrder.orderNumber,
+        orderId: updatedOrder.id,
+        customerName: custName,
+        customerPhone: updatedOrder.guestPhone || user?.phone || "",
+        total: updatedOrder.total,
+        reason: reasonText,
+        cancelledAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("Failed to record admin notification for cancellation:", err);
+  }
+
   const { guestTokenHash: _discardHash, ...safeCancelled } = updatedOrder;
-  return Response.json({ order: safeCancelled });
+  return Response.json({
+    success: true,
+    order: safeCancelled,
+    message: "Order cancelled successfully. Store management has been notified.",
+  });
 }
 
 // ─── Admin: Edit order fields ────────────────────────────────────────────────
@@ -301,12 +360,10 @@ export async function PUT(request: Request, context: { params: Promise<{ orderNu
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateFields: Record<string, any> = {};
   if (body.status !== undefined) updateFields.status = body.status;
-  if (body.guestName !== undefined) updateFields.guestName = body.guestName;
-  if (body.guestPhone !== undefined) updateFields.guestPhone = body.guestPhone;
+  // Customer name, phone, and total order price are immutable via admin order edit
   if (body.deliverySlot !== undefined) updateFields.deliverySlot = body.deliverySlot;
   if (body.paymentMethod !== undefined) updateFields.paymentMethod = body.paymentMethod;
   if (body.paymentStatus !== undefined) updateFields.paymentStatus = body.paymentStatus;
-  if (body.total !== undefined) updateFields.total = body.total;
 
   if (body.status && body.status !== order.status) {
     if (!canTransitionOrder(order.status, body.status)) {
@@ -335,15 +392,16 @@ export async function PUT(request: Request, context: { params: Promise<{ orderNu
     return Response.json({ error: "No fields to update" }, { status: 400 });
   }
 
-  const [updated] = await db
+  const [updateRes] = await db
     .update(orders)
     .set(updateFields)
-    .where(and(eq(orders.id, order.id), eq(orders.status, order.status)))
-    .returning();
+    .where(and(eq(orders.id, order.id), eq(orders.status, order.status)));
 
-  if (!updated) {
+  if (!updateRes || updateRes.affectedRows === 0) {
     return Response.json({ error: "Order status conflict: order was updated concurrently" }, { status: 409 });
   }
+
+  const [updated] = await db.select().from(orders).where(eq(orders.id, order.id)).limit(1);
 
   const { guestTokenHash: _discardHash, ...safeUpdated } = updated;
   return Response.json({ order: safeUpdated });

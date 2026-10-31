@@ -71,14 +71,14 @@ describe("Security & Operations: Admin Customer Management", () => {
       expect(res.status).toBe(400);
 
       const data = await res.json();
-      expect(data.error).toContain("Administrator accounts cannot be deleted");
+      expect(data.error).toContain("Administrator and Super Admin accounts cannot be deleted");
     });
 
     it("safely deletes a customer account and cleans up associated records", async () => {
       await loginAs(adminId);
 
       // Create a temporary customer with address & order to test cascade
-      const [tempUser] = await db
+      const [userRes] = await db
         .insert(users)
         .values({
           name: "Test Customer For Deletion",
@@ -86,43 +86,43 @@ describe("Security & Operations: Admin Customer Management", () => {
           phone: "9998887770",
           passwordHash: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
           role: "customer",
-        })
-        .returning();
+        });
+      const tempUserId = (userRes as any).insertId;
 
       // Add address for temp customer
-      const [tempAddress] = await db
+      const [addressRes] = await db
         .insert(addresses)
         .values({
-          userId: tempUser.id,
+          userId: tempUserId,
           label: "Home",
           line1: "123, Mandvi Heritage",
           city: "Vadodara",
           state: "Gujarat",
           pincode: "390001",
           phone: "9998887770",
-        })
-        .returning();
+        });
+      const tempAddressId = (addressRes as any).insertId;
 
       // Add order for temp customer
-      const [tempOrder] = await db
+      const [orderRes] = await db
         .insert(orders)
         .values({
           orderNumber: `VSM-TEST-DEL-${Date.now()}`,
-          userId: tempUser.id,
-          guestName: tempUser.name,
-          guestPhone: tempUser.phone,
+          userId: tempUserId,
+          guestName: "Test Customer For Deletion",
+          guestPhone: "9998887770",
           subtotal: 500,
           total: 500,
           addressSnapshot: "123, Mandvi Heritage, Vadodara, Gujarat 390001",
           deliverySlot: "Today, 5:00–7:00 PM",
           paymentMethod: "cod",
-        })
-        .returning();
+        });
+      const tempOrderId = (orderRes as any).insertId;
 
       // Execute DELETE
       const req = buildRequest({
         method: "DELETE",
-        url: `/api/admin/customers?id=${tempUser.id}`,
+        url: `/api/admin/customers?id=${tempUserId}`,
       });
       const res = await deleteCustomer(req);
       expect(res.status).toBe(200);
@@ -131,15 +131,15 @@ describe("Security & Operations: Admin Customer Management", () => {
       expect(data.success).toBe(true);
 
       // Verify user was deleted from users table
-      const [deletedUser] = await db.select().from(users).where(eq(users.id, tempUser.id));
+      const [deletedUser] = await db.select().from(users).where(eq(users.id, tempUserId));
       expect(deletedUser).toBeUndefined();
 
       // Verify user's address was cleaned up
-      const [deletedAddress] = await db.select().from(addresses).where(eq(addresses.id, tempAddress.id));
+      const [deletedAddress] = await db.select().from(addresses).where(eq(addresses.id, tempAddressId));
       expect(deletedAddress).toBeUndefined();
 
       // Verify historical order still exists with userId set to NULL (sales retained!)
-      const [retainedOrder] = await db.select().from(orders).where(eq(orders.id, tempOrder.id));
+      const [retainedOrder] = await db.select().from(orders).where(eq(orders.id, tempOrderId));
       expect(retainedOrder).toBeDefined();
       expect(retainedOrder.userId).toBeNull();
       expect(retainedOrder.guestName).toBe("Test Customer For Deletion");

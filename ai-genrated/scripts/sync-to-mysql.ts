@@ -115,10 +115,17 @@ async function main() {
     console.log(`Synced ${couponRows.length} coupons to MySQL.`);
 
     // 7. Insert Stores
+    try {
+      await mysqlConn.query("ALTER TABLE stores ADD COLUMN IF NOT EXISTS map_url TEXT NULL");
+    } catch {
+      try {
+        await mysqlConn.query("ALTER TABLE stores ADD COLUMN map_url TEXT NULL");
+      } catch {}
+    }
     for (const s of storeRows) {
       await mysqlConn.query(
-        "INSERT INTO stores (id, name, address, city, pincode, phone, hours, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [s.id, s.name, s.address, s.city, s.pincode, s.phone, s.hours, s.lat, s.lng]
+        "INSERT INTO stores (id, name, address, city, pincode, phone, hours, lat, lng, map_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [s.id, s.name, s.address, s.city, s.pincode, s.phone, s.hours, s.lat, s.lng, s.mapUrl ?? null]
       );
     }
     console.log(`Synced ${storeRows.length} stores to MySQL.`);

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { BorderTrail } from "@/components/core/border-trail";
 
 interface ProductPhoto {
   id: string;
@@ -79,7 +80,7 @@ export function GlassyHeroShowcase() {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -167,19 +168,33 @@ export function GlassyHeroShowcase() {
     }
   }, [activeIndex]);
 
+  const [isSuperZoom, setIsSuperZoom] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<ProductPhoto | null>(null);
+
   return (
     <div
-      className="relative w-full max-w-xl mx-auto select-none"
+      className="relative w-full max-w-lg sm:max-w-xl lg:max-w-[560px] xl:max-w-[620px] 2xl:max-w-[660px] mx-auto select-none px-1 sm:px-0"
       onTouchStart={pauseBriefly}
     >
-      {/* Ambient background glow orbs for glass refraction */}
-      <div className="absolute -top-10 -right-10 h-72 w-72 rounded-full bg-gradient-to-br from-[#dfb755]/25 via-[#b89130]/15 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 -left-10 h-72 w-72 rounded-full bg-gradient-to-tr from-[#0b2f8a]/20 via-[#4068cc]/10 to-transparent blur-3xl pointer-events-none" />
+      {/* Soft ambient royal gold & navy glow contained smoothly behind panel */}
+      <div className="absolute inset-0 -z-10 m-auto h-[92%] w-[92%] rounded-[2.5rem] bg-gradient-to-br from-[#dfb755]/20 via-[#0b2f8a]/8 to-transparent blur-2xl pointer-events-none" />
 
-      {/* Main Glassmorphic Panel Container */}
-      <div className="relative rounded-[2.5rem] p-3 sm:p-4 glass-panel border border-white/80 shadow-[0_25px_60px_-15px_rgba(11,47,138,0.18)]">
-        {/* Scrollable Photo Viewport — 100% Unobstructed Clean Photos */}
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-white/90 to-amber-50/50 shadow-inner group">
+      {/* Main Glassmorphic Panel Container with Animated Golden Shining Border Trail */}
+      <div className="relative rounded-[2rem] p-2.5 sm:p-3.5 glass-panel border-[2px] sm:border-[2.5px] border-amber-200/70 shadow-[0_20px_50px_-15px_rgba(11,47,138,0.16),0_8px_24px_-6px_rgba(223,183,85,0.2)] overflow-hidden w-full max-w-full [transform:translateZ(0)]">
+        {/* Animated Shining Golden Border Trail Motion around the container perimeter */}
+        <BorderTrail
+          className="bg-gradient-to-r from-amber-400 via-[#fffbeb] via-50% to-[#dfb755]"
+          size={200}
+          radius={32}
+          borderWidth={3}
+          style={{
+            boxShadow:
+              "0 0 16px 3px rgba(246, 179, 8, 0.95), 0 0 30px 8px rgba(253, 237, 118, 0.75)",
+          }}
+        />
+
+        {/* Scrollable Photo Viewport — Zoomed In Mouth-Watering Close-Up Food Photography */}
+        <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] bg-gradient-to-b from-white/95 to-amber-50/60 shadow-inner group">
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -189,29 +204,71 @@ export function GlassyHeroShowcase() {
             {products.map((prod, idx) => (
               <div
                 key={prod.id}
-                className="relative aspect-[4/3] sm:aspect-[16/11] w-full shrink-0 snap-center overflow-hidden"
+                onClick={() => setFullscreenImage(prod)}
+                className="relative aspect-[16/11] sm:aspect-[16/11] md:aspect-[4/3] lg:aspect-[16/11] xl:aspect-[4/3] w-full shrink-0 snap-center overflow-hidden cursor-zoom-in"
+                title="Click to view full photo"
               >
                 <Image
                   src={prod.image}
                   alt={prod.name}
                   fill
                   priority={idx === 0}
-                  className="object-cover transition-transform duration-700 ease-out hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 560px"
+                  className={`object-cover transition-transform duration-700 ease-out ${
+                    isSuperZoom
+                      ? "scale-[1.55] sm:scale-[1.6] hover:scale-[1.7]"
+                      : "scale-[1.24] sm:scale-[1.28] md:scale-[1.3] hover:scale-[1.38]"
+                  }`}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 580px, 660px"
                   draggable={false}
                 />
               </div>
             ))}
           </div>
 
-          {/* Glassy Floating Left & Right Scroll Navigation Arrows */}
+          {/* Interactive Zoom Level Pill Toggle (Top-Right) */}
           <button
-            onClick={handlePrev}
-            aria-label="Previous photo"
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full backdrop-blur-xl bg-white/75 hover:bg-white border border-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex items-center justify-center text-[#0b2f8a] transition-all duration-300 hover:scale-110 active:scale-95 opacity-80 group-hover:opacity-100 z-10"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              pauseBriefly();
+              setIsSuperZoom((prev) => !prev);
+            }}
+            aria-label={isSuperZoom ? "Zoom out to normal view" : "Zoom in closer"}
+            className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-white/90 hover:bg-white text-[#0b2f8a] border border-white/80 shadow-[0_4px_14px_rgba(0,0,0,0.12)] text-[10px] sm:text-[11px] font-bold tracking-wide transition-all duration-300 hover:scale-105 active:scale-95"
+            title={isSuperZoom ? "Reset zoom" : "Zoom in close"}
           >
             <svg
-              className="h-5 w-5"
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {isSuperZoom ? (
+                <>
+                  <circle cx="11" cy="11" r="8" strokeWidth={2.2} />
+                  <path strokeLinecap="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M8 11h6" />
+                </>
+              ) : (
+                <>
+                  <circle cx="11" cy="11" r="8" strokeWidth={2.2} />
+                  <path strokeLinecap="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M11 8v6M8 11h6" />
+                </>
+              )}
+            </svg>
+            <span>{isSuperZoom ? "1.6x Zoom" : "Zoom In"}</span>
+          </button>
+
+          {/* Glassy Floating Left & Right Scroll Navigation Arrows */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrev();
+            }}
+            aria-label="Previous photo"
+            className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 rounded-full backdrop-blur-xl bg-white/90 hover:bg-white border border-white/90 shadow-[0_4px_16px_rgba(0,0,0,0.14)] flex items-center justify-center text-[#0b2f8a] transition-all duration-300 hover:scale-110 active:scale-95 opacity-90 group-hover:opacity-100 z-10"
+          >
+            <svg
+              className="h-3.5 w-3.5 sm:h-4 sm:w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -226,12 +283,15 @@ export function GlassyHeroShowcase() {
           </button>
 
           <button
-            onClick={handleNext}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
             aria-label="Next photo"
-            className="absolute right-3 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full backdrop-blur-xl bg-white/75 hover:bg-white border border-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex items-center justify-center text-[#0b2f8a] transition-all duration-300 hover:scale-110 active:scale-95 opacity-80 group-hover:opacity-100 z-10"
+            className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 rounded-full backdrop-blur-xl bg-white/90 hover:bg-white border border-white/90 shadow-[0_4px_16px_rgba(0,0,0,0.14)] flex items-center justify-center text-[#0b2f8a] transition-all duration-300 hover:scale-110 active:scale-95 opacity-90 group-hover:opacity-100 z-10"
           >
             <svg
-              className="h-5 w-5"
+              className="h-3.5 w-3.5 sm:h-4 sm:w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -246,13 +306,13 @@ export function GlassyHeroShowcase() {
           </button>
 
           {/* Minimal Glass Progress Indicator Dots */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl bg-black/30 border border-white/20 z-10 pointer-events-none">
+          <div className="absolute bottom-2.5 sm:bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-xl bg-black/40 border border-white/20 z-10 pointer-events-none">
             {products.map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === activeIndex
-                    ? "w-5 bg-white"
+                    ? "w-4 bg-white shadow-sm"
                     : "w-1.5 bg-white/50"
                 }`}
               />
@@ -261,32 +321,32 @@ export function GlassyHeroShowcase() {
         </div>
 
         {/* Glassy Product Photo Thumbnail Strip — Scroll & Click to Switch */}
-        <div className="mt-3 sm:mt-4 pt-1">
-          <div className="flex items-center justify-between pb-2 px-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#0b2f8a]/80 flex items-center gap-1.5">
+        <div className="mt-2.5 sm:mt-3 pt-0.5">
+          <div className="flex items-center justify-between pb-1.5 px-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#0b2f8a]/80 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#dfb755]" />
-              Tap to view Mithai &amp; Farsan
+              Tap to view Mithai
             </span>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Auto Scrolling
+                Auto
               </span>
-              <span className="text-[11px] font-bold text-[#0b2f8a] bg-[#0b2f8a]/10 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] sm:text-[10px] font-bold text-[#0b2f8a] bg-[#0b2f8a]/10 px-2 py-0.5 rounded-full">
                 {products.length > 0 ? activeIndex + 1 : 0} / {products.length}
               </span>
             </div>
           </div>
 
           <div className="relative group/strip">
-            {/* Scroll Left Button */}
+            {/* Scroll Left Button (Desktop only, mobile uses native touch swipe) */}
             <button
               type="button"
               onClick={() => scrollThumbnails("left")}
               aria-label="Scroll thumbnails left"
-              className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-[#0b2f8a] hover:bg-white hover:scale-110 active:scale-95 transition-all opacity-80 sm:opacity-0 sm:group-hover/strip:opacity-100"
+              className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-6 h-6 rounded-full bg-white/95 shadow-md border border-slate-200 items-center justify-center text-[#0b2f8a] hover:bg-white hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/strip:opacity-100"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -294,7 +354,7 @@ export function GlassyHeroShowcase() {
             {/* Scrollable Thumbnails Container */}
             <div
               ref={thumbnailContainerRef}
-              className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 px-1 scroll-smooth"
+              className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5 px-3 sm:px-1.5 scroll-smooth"
             >
               {products.map((item, idx) => {
                 const isSelected = idx === activeIndex;
@@ -308,23 +368,23 @@ export function GlassyHeroShowcase() {
                       pauseBriefly();
                       scrollToSlide(idx);
                     }}
-                    className={`group relative flex-1 min-w-[70px] sm:min-w-0 max-w-[95px] flex flex-col items-center rounded-xl sm:rounded-2xl p-1 sm:p-1.5 transition-all duration-300 text-center cursor-pointer shrink-0 sm:shrink ${
+                    className={`group relative flex-1 min-w-[58px] sm:min-w-[64px] max-w-[80px] flex flex-col items-center rounded-xl p-1 transition-all duration-300 text-center cursor-pointer shrink-0 sm:shrink ${
                       isSelected
-                        ? "bg-white border-2 border-[#0b2f8a] shadow-lg shadow-[#0b2f8a]/15 ring-2 ring-[#dfb755]/40 scale-[1.02]"
-                        : "bg-white/70 border border-slate-200/80 hover:bg-white hover:border-[#0b2f8a]/40 shadow-sm"
+                        ? "bg-white border-2 border-[#0b2f8a] shadow-md shadow-[#0b2f8a]/20 scale-[1.03] ring-1 ring-amber-300"
+                        : "bg-white/75 border border-slate-200/80 hover:bg-white hover:border-[#0b2f8a]/50 shadow-sm"
                     }`}
                   >
-                    <div className="relative aspect-square w-full overflow-hidden rounded-lg sm:rounded-xl bg-amber-50/60 shadow-inner">
+                    <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-amber-50/70 shadow-inner">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 70px, 95px"
+                        className="object-cover scale-110 group-hover:scale-125 transition-transform duration-500"
+                        sizes="(max-width: 640px) 60px, 80px"
                       />
                     </div>
                     <span
-                      className={`mt-1 sm:mt-1.5 block text-center text-[10px] sm:text-[11px] leading-tight w-full px-0.5 line-clamp-2 ${
+                      className={`mt-1 flex items-center justify-center text-center text-[9px] sm:text-[10px] leading-tight w-full px-0.5 min-h-[24px] sm:min-h-[26px] line-clamp-2 ${
                         isSelected ? "text-[#0b2f8a] font-bold" : "text-slate-600 font-medium"
                       }`}
                       title={item.name}
@@ -336,20 +396,73 @@ export function GlassyHeroShowcase() {
               })}
             </div>
 
-            {/* Scroll Right Button */}
+            {/* Scroll Right Button (Desktop only, mobile uses native touch swipe) */}
             <button
               type="button"
               onClick={() => scrollThumbnails("right")}
               aria-label="Scroll thumbnails right"
-              className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-[#0b2f8a] hover:bg-white hover:scale-110 active:scale-95 transition-all opacity-80 sm:opacity-0 sm:group-hover/strip:opacity-100"
+              className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-6 h-6 rounded-full bg-white/95 shadow-md border border-slate-200 items-center justify-center text-[#0b2f8a] hover:bg-white hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/strip:opacity-100"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
         </div>
       </div>
+
+      {/* High-Resolution Close-Up Food Modal View */}
+      {fullscreenImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <div
+            className="relative max-w-3xl w-full rounded-3xl overflow-hidden bg-white shadow-2xl border border-amber-200/60 p-3 sm:p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 px-1 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#dfb755]" />
+                <h3 className="font-bold text-base sm:text-lg text-[#0b2f8a]">
+                  {fullscreenImage.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFullscreenImage(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition font-bold text-sm"
+                aria-label="Close photo preview"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden mt-3 bg-amber-50/50">
+              <Image
+                src={fullscreenImage.image}
+                alt={fullscreenImage.name}
+                fill
+                className="object-cover scale-110 hover:scale-125 transition-transform duration-700 ease-out"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-3 px-1">
+              <p className="text-xs text-slate-500">
+                Pure Desi Ghee • Prepared Fresh Daily at Vardayini Sweet Mart
+              </p>
+              <button
+                type="button"
+                onClick={() => setFullscreenImage(null)}
+                className="btn-gold rounded-full px-4 py-1.5 text-xs font-semibold"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

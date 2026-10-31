@@ -28,6 +28,7 @@ export function AccountAddressManager({
 }: AccountAddressManagerProps) {
   const [addresses, setAddresses] = useState<AddressItem[]>(initialAddresses);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -52,13 +53,13 @@ export function AccountAddressManager({
     });
   };
 
-  const handleAddAddress = async (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     setGlobalError(null);
     setFieldErrors({});
 
     // Client-Side Validation using Zod
-    const payload = {
+    const payload: any = {
       fullName: fullName.trim() || userName || "Patron",
       phone: phone.trim(),
       line1: line1.trim(),
@@ -70,6 +71,10 @@ export function AccountAddressManager({
       label,
     };
 
+    if (editingId) {
+      payload.id = editingId;
+    }
+
     const clientValidation = AddressSchema.safeParse(payload);
     if (!clientValidation.success) {
       setFieldErrors(formatZodErrors(clientValidation.error));
@@ -80,7 +85,7 @@ export function AccountAddressManager({
 
     try {
       const res = await fetch("/api/account/addresses", {
-        method: "POST",
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -90,15 +95,20 @@ export function AccountAddressManager({
         if (data.details) {
           setFieldErrors(data.details);
         } else {
-          setGlobalError(data.error || "Failed to add delivery address");
+          setGlobalError(data.error || "Failed to save delivery address");
         }
         return;
       }
 
       if (data.address) {
-        setAddresses((prev) => [...prev, data.address]);
+        if (editingId) {
+          setAddresses((prev) => prev.map((a) => (a.id === editingId ? data.address : a)));
+        } else {
+          setAddresses((prev) => [...prev, data.address]);
+        }
       }
       setShowAddForm(false);
+      setEditingId(null);
       setLine1("");
       setLine2("");
     } catch (err) {
@@ -106,6 +116,28 @@ export function AccountAddressManager({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEdit = (addr: AddressItem) => {
+    setEditingId(addr.id);
+    setLabel(addr.label || "Home");
+    setFullName(userName || "");
+    const parts = addr.line1.split(", ");
+    if (parts.length > 1) {
+      setLine1(parts[0]);
+      setLine2(parts.slice(1).join(", "));
+    } else {
+      setLine1(addr.line1);
+      setLine2("");
+    }
+    setCity(addr.city);
+    setState(addr.state);
+    setPincode(addr.pincode);
+    setPhone(addr.phone);
+    setShowAddForm(true);
+    setFieldErrors({});
+    setGlobalError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id: number) => {
@@ -136,6 +168,17 @@ export function AccountAddressManager({
         <button
           type="button"
           onClick={() => {
+            if (!showAddForm) {
+              setEditingId(null);
+              setFullName(userName || "");
+              setLine1("");
+              setLine2("");
+              setCity("Vadodara");
+              setState("Gujarat");
+              setPincode("390001");
+              setPhone(userPhone || "");
+              setLabel("Home");
+            }
             setShowAddForm(!showAddForm);
             setFieldErrors({});
             setGlobalError(null);
@@ -148,12 +191,12 @@ export function AccountAddressManager({
 
       {showAddForm && (
         <form
-          onSubmit={handleAddAddress}
+          onSubmit={handleSaveAddress}
           noValidate
           className="rounded-3xl border border-[#c45c26]/20 bg-white/95 p-5 shadow-sm space-y-4 transition"
         >
           <div className="flex items-center justify-between border-b border-[#2a1a12]/10 pb-3">
-            <h4 className="font-bold text-sm text-[#6b1d1d]">Add Delivery Location</h4>
+            <h4 className="font-bold text-sm text-[#6b1d1d]">{editingId ? "Edit Delivery Location" : "Add Delivery Location"}</h4>
             <div className="flex gap-2">
               {["Home", "Office", "Family / Gift"].map((lbl) => (
                 <button
@@ -423,14 +466,24 @@ export function AccountAddressManager({
                       </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(addr.id)}
-                    className="text-xs text-[#2a1a12]/40 hover:text-rose-600 transition"
-                    title="Remove address"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(addr)}
+                      className="text-xs text-[#2a1a12]/40 hover:text-[#0b2f8a] transition"
+                      title="Edit address"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(addr.id)}
+                      className="text-xs text-[#2a1a12]/40 hover:text-rose-600 transition"
+                      title="Remove address"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
 
                 <p className="font-medium text-sm text-[#2a1a12] leading-snug">{addr.line1}</p>

@@ -3,6 +3,7 @@ import { ProductCard } from "@/components/product-card";
 import { listCategories, listProducts, CATEGORY_GROUPS } from "@/lib/products";
 import { ShopDepartmentSidebar } from "@/components/shop-department-sidebar";
 import { ShowingDropdown } from "@/components/showing-dropdown";
+import { ShopDeliveryBanner } from "@/components/shop-delivery-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -52,15 +53,25 @@ export default async function ShopPage({
   };
 
   // Determine active department group if a specific category is chosen
+  const catSlugLower = params.category?.toLowerCase();
   const activeGroup =
     params.group ||
-    (params.category === "namkeen-farsan" || params.category === "farsan"
+    (catSlugLower &&
+    (catSlugLower === "namkeen" ||
+      catSlugLower === "namkeen-farsan" ||
+      catSlugLower === "farsan" ||
+      catSlugLower === "gujarati-farsan" ||
+      catSlugLower === "farsan-snacks" ||
+      catSlugLower === "traditional-gujarati-snacks" ||
+      catSlugLower === "sev-and-gathiya" ||
+      catSlugLower === "sev" ||
+      catSlugLower === "gathiya")
       ? "namkeen"
-      : params.category === "gift-hampers" || params.category === "hampers"
+      : catSlugLower === "gift-hampers" || catSlugLower === "hampers"
       ? "sweets"
-      : params.category
+      : catSlugLower
       ? Object.keys(CATEGORY_GROUPS).find((g) =>
-          CATEGORY_GROUPS[g].slugs.includes(params.category!)
+          CATEGORY_GROUPS[g].slugs.includes(catSlugLower)
         )
       : undefined);
 
@@ -116,9 +127,9 @@ export default async function ShopPage({
       : "100% Shuddh Desi Ghee Mithai, Crunchy Farsan & Bakery Delights";
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 box-border">
+    <main className="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8 py-4 sm:py-8 box-border">
       {/* Top Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#0b2f8a]">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-[#0b2f8a]">
         <Link href="/" className="hover:underline">
           Home
         </Link>
@@ -137,18 +148,21 @@ export default async function ShopPage({
         {activeCategoryObj && (
           <>
             <span>/</span>
-            <span className="text-[#8d6715]">{activeCategoryObj.name}</span>
+            <span className="text-[#8d6715] truncate max-w-[150px]">{activeCategoryObj.name}</span>
           </>
         )}
       </div>
 
+      {/* Live Delivery Location & Shipping Speed Banner */}
+      <ShopDeliveryBanner />
+
       {/* Main Page Title Header & Search Bar */}
-      <div className="mt-3 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#0b2f8a]/10 pb-6 w-full">
+      <div className="mt-3 flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 border-b border-[#0b2f8a]/10 pb-4 sm:pb-6 w-full">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0b2f8a]">
+          <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-3xl lg:text-4xl font-bold text-[#0b2f8a]">
             {heading}
           </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-[#182230]/75">
+          <p className="mt-1 text-xs sm:text-sm text-[#182230]/75">
             {subHeading} ·{" "}
             <strong className="text-[#0b2f8a] font-semibold">
               {filteredProducts.length} items
@@ -158,25 +172,25 @@ export default async function ShopPage({
         </div>
 
         {/* Search & Sort Form */}
-        <form className="flex flex-wrap items-center gap-2 sm:gap-2.5 max-w-full">
+        <form className="flex flex-wrap items-center gap-2 max-w-full">
           {params.category ? <input type="hidden" name="category" value={params.category} /> : null}
           {params.group && !params.category ? <input type="hidden" name="group" value={params.group} /> : null}
           {params.minPrice ? <input type="hidden" name="minPrice" value={params.minPrice} /> : null}
           {params.maxPrice ? <input type="hidden" name="maxPrice" value={params.maxPrice} /> : null}
           {params.limit ? <input type="hidden" name="limit" value={params.limit} /> : null}
 
-          <div className="relative min-w-[160px] sm:min-w-[200px] flex-1 sm:flex-initial">
+          <div className="relative w-full sm:w-auto flex-1 sm:flex-initial min-w-0">
             <input
               name="search"
               defaultValue={params.search}
-              placeholder="Search mithai or farsan..."
-              className="w-full rounded-xl border border-[#0b2f8a]/15 bg-white px-3.5 py-2 text-xs sm:text-sm text-[#182230] shadow-2xs outline-none focus:border-[#0b2f8a]"
+              placeholder="Search sweets & farsan..."
+              className="w-full rounded-xl border border-[#0b2f8a]/15 bg-white px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-[#182230] shadow-2xs outline-none focus:border-[#0b2f8a]"
             />
           </div>
           <select
             name="sort"
             defaultValue={params.sort || ""}
-            className="rounded-xl border border-[#0b2f8a]/15 bg-white px-3 py-2 text-xs sm:text-sm text-[#182230] shadow-2xs outline-none focus:border-[#0b2f8a]"
+            className="rounded-xl border border-[#0b2f8a]/15 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-[#182230] shadow-2xs outline-none focus:border-[#0b2f8a]"
           >
             <option value="">Featured</option>
             <option value="price_asc">Price: Low to High</option>
@@ -185,7 +199,7 @@ export default async function ShopPage({
           </select>
           <button
             type="submit"
-            className="rounded-xl bg-[#0b2f8a] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-[#082266] transition cursor-pointer"
+            className="rounded-xl bg-[#0b2f8a] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-[#082266] transition cursor-pointer shrink-0"
           >
             Filter
           </button>

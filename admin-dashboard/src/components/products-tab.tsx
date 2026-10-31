@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ProductItem, InventoryItem, CategoryItem, UiConfig, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
@@ -11,7 +11,50 @@ interface ProductsTabProps {
   inventory: { variants: InventoryItem[]; lowStock: InventoryItem[] };
   categories?: CategoryItem[];
   config?: UiConfig | null;
+  initialStockFilter?: "all" | "out_of_stock" | "low_stock" | "in_stock";
+  isReadOnly?: boolean;
   onRefresh: () => void;
+}
+
+export function getDepartmentForCategory(categoryNameOrSlug: string): "Sweets" | "Namkeen" | "Bakery" {
+  const s = (categoryNameOrSlug || "").toLowerCase();
+
+  // Namkeen keywords & slugs
+  if (
+    s.includes("namkeen") ||
+    s.includes("farsan") ||
+    s.includes("snack") ||
+    s.includes("gathiya") ||
+    s.includes("sev") ||
+    s.includes("khakhra") ||
+    s.includes("farali") ||
+    s.includes("millet") ||
+    s.includes("mixture") ||
+    s.includes("puri") ||
+    s.includes("chips") ||
+    s.includes("chivda") ||
+    s.includes("daal") ||
+    s.includes("lentil") ||
+    s.includes("roasted")
+  ) {
+    return "Namkeen";
+  }
+
+  // Bakery keywords & slugs
+  if (
+    s.includes("bakery") ||
+    s.includes("biscuit") ||
+    s.includes("cookie") ||
+    s.includes("toast") ||
+    s.includes("khari") ||
+    s.includes("cake") ||
+    s.includes("rusk")
+  ) {
+    return "Bakery";
+  }
+
+  // Everything else defaults to Sweets (Kaju, Mawa, Penda, Sugarless, Ghee, Bengali, Dryfruit, Festival Specials, etc.)
+  return "Sweets";
 }
 
 export const CATEGORY_GROUPS = [
@@ -20,12 +63,15 @@ export const CATEGORY_GROUPS = [
     icon: "🍬",
     badgeColor: "bg-[#dfb755]/15 text-[#8d6715] border-[#dfb755]/30",
     items: [
-      { id: 7, name: "Kaju Sweets" },
-      { id: 8, name: "Mawa Sweets" },
-      { id: 9, name: "Penda" },
-      { id: 10, name: "Sugarless Sweets" },
-      { id: 11, name: "Premium Packed Sweets" },
-      { id: 12, name: "Indian Ghee Sweets" },
+      { id: 1, name: "Kaju Sweets" },
+      { id: 2, name: "Mawa Sweets" },
+      { id: 3, name: "Penda" },
+      { id: 4, name: "Sugarless Sweets" },
+      { id: 5, name: "Premium Packed Sweets" },
+      { id: 6, name: "Indian Ghee Sweets" },
+      { id: 7, name: "Dryfruit Sweets" },
+      { id: 8, name: "Bengali Sweets" },
+      { id: 10, name: "Festival Specials" },
     ],
   },
   {
@@ -33,6 +79,7 @@ export const CATEGORY_GROUPS = [
     icon: "🥨",
     badgeColor: "bg-emerald-50 text-emerald-800 border-emerald-200",
     items: [
+      { id: 9, name: "Traditional Gujarati Snacks" },
       { id: 13, name: "Millet" },
       { id: 14, name: "Farali" },
       { id: 15, name: "Gujarati" },
@@ -56,16 +103,34 @@ export const CATEGORY_GROUPS = [
   },
 ];
 
-export function ProductsTab({ products, inventory, categories = [], config, onRefresh }: ProductsTabProps) {
+export function ProductsTab({
+  products,
+  inventory,
+  categories = [],
+  config,
+  initialStockFilter = "all",
+  isReadOnly = false,
+  onRefresh,
+}: ProductsTabProps) {
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">(
+    initialStockFilter || "all"
+  );
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editPrice, setEditPrice] = useState<number>(0);
   const [editStock, setEditStock] = useState<number>(0);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (initialStockFilter) {
+      setStockFilter(initialStockFilter);
+      setCurrentPage(1);
+    }
+  }, [initialStockFilter]);
 
   // New product form
   const [showAddModal, setShowAddModal] = useState(false);
@@ -76,15 +141,99 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
   const [newStock, setNewStock] = useState(50);
   const [newImageUrl, setNewImageUrl] = useState("/images/kaju-katli-showcase.jpg");
   const [newDesc, setNewDesc] = useState("");
+  const [newSku, setNewSku] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
 
   // Edit product photo modal
   const [photoEditItem, setPhotoEditItem] = useState<ProductItem | null>(null);
   const [editImageUrl, setEditImageUrl] = useState<string>("");
 
+  // Delete product state
+  const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setIsDeleting(true);
+    try {
+      const pId = productToDelete.productId || productToDelete.id;
+      await api.deleteProduct(pId);
+      toast.success(`"${productToDelete.name}" permanently deleted`);
+      setProductToDelete(null);
+      onRefresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete product");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Dynamically assemble groups so that ALL categories (from database & products) are properly displayed
+  const displayedCategoryGroups = useMemo(() => {
+    const categoryMap = new Map<string, { id?: number; name: string }>();
+
+    // Seeded/standard category names
+    for (const grp of CATEGORY_GROUPS) {
+      for (const item of grp.items) {
+        categoryMap.set(item.name.toLowerCase(), { id: item.id, name: item.name });
+      }
+    }
+
+    // Dynamic categories passed from props
+    for (const c of categories) {
+      if (c.name && !categoryMap.has(c.name.toLowerCase())) {
+        categoryMap.set(c.name.toLowerCase(), { id: c.id, name: c.name });
+      }
+    }
+
+    // Any category present in loaded products
+    for (const p of products) {
+      if (p.categoryName && !categoryMap.has(p.categoryName.toLowerCase())) {
+        categoryMap.set(p.categoryName.toLowerCase(), { id: p.categoryId, name: p.categoryName });
+      }
+    }
+
+    const groups: {
+      group: "Sweets" | "Namkeen" | "Bakery";
+      icon: string;
+      badgeColor: string;
+      items: { id?: number; name: string }[];
+    }[] = [
+      {
+        group: "Sweets",
+        icon: "🍬",
+        badgeColor: "bg-[#dfb755]/15 text-[#8d6715] border-[#dfb755]/30",
+        items: [],
+      },
+      {
+        group: "Namkeen",
+        icon: "🥨",
+        badgeColor: "bg-emerald-50 text-emerald-800 border-emerald-200",
+        items: [],
+      },
+      {
+        group: "Bakery",
+        icon: "🍞",
+        badgeColor: "bg-orange-50 text-orange-800 border-orange-200",
+        items: [],
+      },
+    ];
+
+    for (const item of categoryMap.values()) {
+      const dept = getDepartmentForCategory(item.name);
+      const targetGroup = groups.find((g) => g.group === dept);
+      if (targetGroup) {
+        targetGroup.items.push(item);
+      }
+    }
+
+    return groups;
+  }, [categories, products]);
+
   // Helper to find which group a category name belongs to
   const getCategoryGroup = (catName: string) => {
-    return CATEGORY_GROUPS.find((g) => g.items.some((i) => i.name === catName));
+    const dept = getDepartmentForCategory(catName);
+    return displayedCategoryGroups.find((g) => g.group === dept);
   };
 
   const filtered = useMemo(() => {
@@ -96,14 +245,23 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
       // Check department filter
       let matchesDept = true;
       if (departmentFilter !== "all") {
-        const grp = getCategoryGroup(p.categoryName);
-        matchesDept = grp?.group === departmentFilter;
+        matchesDept = getDepartmentForCategory(p.categoryName || "") === departmentFilter;
       }
 
-      const matchesCat = categoryFilter === "all" || p.categoryName === categoryFilter;
-      return matchesSearch && matchesDept && matchesCat;
+      const matchesCat = categoryFilter === "all" || p.categoryName?.toLowerCase() === categoryFilter.toLowerCase();
+
+      let matchesStock = true;
+      if (stockFilter === "out_of_stock") {
+        matchesStock = p.stock <= 0;
+      } else if (stockFilter === "low_stock") {
+        matchesStock = p.stock > 0 && p.stock <= 10;
+      } else if (stockFilter === "in_stock") {
+        matchesStock = p.stock > 0;
+      }
+
+      return matchesSearch && matchesDept && matchesCat && matchesStock;
     });
-  }, [products, search, departmentFilter, categoryFilter]);
+  }, [products, search, departmentFilter, categoryFilter, stockFilter]);
 
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -122,8 +280,8 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
       await api.updateProduct({
         variantId,
         productId,
-        price: editPrice,
-        stock: editStock,
+        price: Math.max(0, editPrice),
+        stock: Math.max(0, editStock),
       });
       setEditingId(null);
       const storeShopUrl = `${process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}/shop`;
@@ -166,15 +324,17 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
         name: newTitle.trim(),
         categoryId: newCategoryId,
         weight: newWeight,
-        price: Number(newPrice),
-        stock: Number(newStock),
+        price: Math.max(0, Number(newPrice)),
+        stock: Math.max(0, Number(newStock)),
         imageUrl: newImageUrl,
         description: newDesc,
         isFeatured,
+        sku: newSku.trim() || undefined,
       });
       setShowAddModal(false);
       const createdTitle = newTitle.trim();
       setNewTitle("");
+      setNewSku("");
       const storeShopUrl = `${process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}/shop`;
       toast.success(`"${createdTitle}" added to catalog!`, storeShopUrl);
       onRefresh();
@@ -198,12 +358,14 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-5 py-2.5 rounded-xl font-bold text-xs btn-primary shadow-sm hover:shadow-md transition self-start sm:self-auto"
-        >
-          + Add New Sweet / Farsan
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-5 py-2.5 rounded-xl font-bold text-xs btn-primary shadow-sm hover:shadow-md transition self-start sm:self-auto"
+          >
+            + Add New Sweet / Farsan
+          </button>
+        )}
       </div>
 
       {/* Department Tabs & Search / Filter Bar */}
@@ -258,9 +420,9 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
           </button>
 
           {/* Department Group Cards: Sweets, Namkeen, Bakery */}
-          {CATEGORY_GROUPS.map((grp) => {
+          {displayedCategoryGroups.map((grp) => {
             const count = products.filter((p) =>
-              grp.items.some((i) => i.name === p.categoryName)
+              getDepartmentForCategory(p.categoryName || "") === grp.group
             ).length;
             const isSelected = departmentFilter === grp.group;
 
@@ -355,14 +517,14 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
             className="text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-4 py-2.5 text-[#182230] focus:border-[#0b2f8a] outline-none shadow-sm min-w-[220px]"
           >
             <option value="all">All Specific Categories ({filtered.length} shown)</option>
-            {CATEGORY_GROUPS.filter(
+            {displayedCategoryGroups.filter(
               (grp) => departmentFilter === "all" || departmentFilter === grp.group
             ).map((grp) => (
               <optgroup key={grp.group} label={`${grp.icon} ${grp.group}`}>
                 {grp.items.map((cat) => {
-                  const count = products.filter((p) => p.categoryName === cat.name).length;
+                  const count = products.filter((p) => p.categoryName?.toLowerCase() === cat.name.toLowerCase()).length;
                   return (
-                    <option key={cat.id} value={cat.name}>
+                    <option key={cat.id || cat.name} value={cat.name}>
                       {cat.name} ({count})
                     </option>
                   );
@@ -370,6 +532,91 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
               </optgroup>
             ))}
           </select>
+        </div>
+
+        {/* Stock Status Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+            Stock Status:
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setStockFilter("all");
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              stockFilter === "all"
+                ? "bg-[#0b2f8a] text-white shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            All Stock ({products.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStockFilter("in_stock");
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+              stockFilter === "in_stock"
+                ? "bg-emerald-600 text-white shadow-xs"
+                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+            }`}
+          >
+            <span>✓ In Stock</span>
+            <span className="text-[10px] font-mono opacity-90">
+              ({products.filter((p) => p.stock > 0).length})
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStockFilter("low_stock");
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+              stockFilter === "low_stock"
+                ? "bg-amber-600 text-white shadow-xs"
+                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60"
+            }`}
+          >
+            <span>⚠️ Low Stock (≤10)</span>
+            <span className="text-[10px] font-mono opacity-90">
+              ({products.filter((p) => p.stock > 0 && p.stock <= 10).length})
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStockFilter("out_of_stock");
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+              stockFilter === "out_of_stock"
+                ? "bg-cyan-600 text-white shadow-xs"
+                : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200/60"
+            }`}
+          >
+            <span>🚫 Out of Stock</span>
+            <span className="text-[10px] font-mono opacity-90">
+              ({products.filter((p) => p.stock <= 0).length})
+            </span>
+          </button>
+
+          {stockFilter !== "all" && (
+            <button
+              type="button"
+              onClick={() => {
+                setStockFilter("all");
+                setCurrentPage(1);
+              }}
+              className="text-[11px] font-semibold text-[#0b2f8a] hover:underline ml-2"
+            >
+              Reset Stock Filter
+            </button>
+          )}
         </div>
       </div>
 
@@ -447,6 +694,7 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                       {isEditing ? (
                         <input
                           type="number"
+                          min={0}
                           value={editPrice}
                           onChange={(e) => setEditPrice(Number(e.target.value))}
                           className="w-20 px-2 py-1 rounded bg-white border border-[#0b2f8a] text-[#0b2f8a] outline-none"
@@ -460,6 +708,7 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                       {isEditing ? (
                         <input
                           type="number"
+                          min={0}
                           value={editStock}
                           onChange={(e) => setEditStock(Number(e.target.value))}
                           className="w-20 px-2 py-1 rounded bg-white border border-[#0b2f8a] text-[#182230] outline-none"
@@ -510,6 +759,12 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                             ✕
                           </button>
                         </div>
+                      ) : isReadOnly ? (
+                        <div className="flex items-center justify-end">
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                            👁️ View Only
+                          </span>
+                        </div>
                       ) : (
                         <div className="flex items-center justify-end gap-1.5">
                           <button
@@ -529,6 +784,14 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                             className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#0b2f8a] bg-[#0b2f8a]/5 hover:bg-[#0b2f8a]/10 transition"
                           >
                             Edit Price/Stock
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProductToDelete(item)}
+                            className="px-2 py-1 rounded-lg text-[11px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition cursor-pointer"
+                            title="Delete product"
+                          >
+                            🗑️
                           </button>
                         </div>
                       )}
@@ -596,40 +859,15 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                     onChange={(e) => setNewCategoryId(Number(e.target.value))}
                     className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none"
                   >
-                    {CATEGORY_GROUPS.map((grp) => (
+                    {displayedCategoryGroups.map((grp) => (
                       <optgroup key={grp.group} label={`${grp.icon} ${grp.group}`}>
                         {grp.items.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
+                          <option key={cat.id || cat.name} value={cat.id || 1}>
                             {cat.name}
                           </option>
                         ))}
                       </optgroup>
                     ))}
-                    {categories.filter(
-                      (c) =>
-                        !CATEGORY_GROUPS.some((g) =>
-                          g.items.some(
-                            (i) => i.id === c.id || i.name.toLowerCase() === c.name.toLowerCase()
-                          )
-                        )
-                    ).length > 0 && (
-                      <optgroup label="✨ Other Categories">
-                        {categories
-                          .filter(
-                            (c) =>
-                              !CATEGORY_GROUPS.some((g) =>
-                                g.items.some(
-                                  (i) => i.id === c.id || i.name.toLowerCase() === c.name.toLowerCase()
-                                )
-                              )
-                          )
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                      </optgroup>
-                    )}
                   </select>
                 </div>
 
@@ -645,11 +883,25 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                 </div>
               </div>
 
+              <div>
+                <label className="block text-[#182230] font-semibold mb-1">
+                  SKU Code <span className="text-slate-400 font-normal">(Optional — auto-generated if left blank)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. VSM-BIS-500G"
+                  value={newSku}
+                  onChange={(e) => setNewSku(e.target.value)}
+                  className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none font-mono"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[#182230] font-semibold mb-1">Price (₹)</label>
                   <input
                     type="number"
+                    min={0}
                     value={newPrice}
                     onChange={(e) => setNewPrice(Number(e.target.value))}
                     className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#0b2f8a] outline-none font-mono font-bold"
@@ -660,6 +912,7 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                   <label className="block text-[#182230] font-semibold mb-1">Stock Quantity</label>
                   <input
                     type="number"
+                    min={0}
                     value={newStock}
                     onChange={(e) => setNewStock(Number(e.target.value))}
                     className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none font-mono"
@@ -773,6 +1026,43 @@ export function ProductsTab({ products, inventory, categories = [], config, onRe
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-md disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Photo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Product Confirmation Modal */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0" onClick={() => !isDeleting && setProductToDelete(null)} aria-hidden />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-rose-200 overflow-hidden">
+            <div className="px-6 pt-6 pb-4 text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 border border-rose-100">
+                <span className="text-2xl">🗑️</span>
+              </div>
+              <h3 className="font-bold text-[#182230] text-lg">Delete Product?</h3>
+              <p className="mt-1 text-sm text-[#5e6d82]">
+                Permanently delete <span className="font-bold text-rose-600">{productToDelete.name}</span> and its SKUs from the catalog and MySQL database.
+                This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-rose-100 bg-rose-50/30">
+              <button
+                type="button"
+                onClick={() => setProductToDelete(null)}
+                disabled={isDeleting}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProduct}
+                disabled={isDeleting}
+                className="rounded-xl bg-rose-600 px-5 py-2 text-xs font-bold text-white hover:bg-rose-700 transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                {isDeleting ? "Deleting..." : "Yes, Delete"}
               </button>
             </div>
           </div>

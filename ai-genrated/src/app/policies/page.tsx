@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 
 const POLICIES = {
@@ -106,13 +106,44 @@ const POLICIES = {
 type PolicyKey = keyof typeof POLICIES;
 const VALID_TABS = Object.keys(POLICIES) as PolicyKey[];
 
+interface DbCmsPage {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  updatedAt?: string;
+}
+
 function PoliciesContent() {
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab") as PolicyKey | null;
-  const initialKey = tabParam && VALID_TABS.includes(tabParam) ? tabParam : VALID_TABS[0];
-  const [activeKey, setActiveKey] = useState<PolicyKey>(initialKey);
+  const tabParam = searchParams.get("tab") as string | null;
+  const initialKey = tabParam || "terms";
+  const [activeKey, setActiveKey] = useState<string>(initialKey);
+  const [dbPages, setDbPages] = useState<DbCmsPage[]>([]);
 
-  const activePolicy = POLICIES[activeKey] || POLICIES[VALID_TABS[0]];
+  useEffect(() => {
+    fetch("/api/pages")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.pages)) {
+          setDbPages(data.pages);
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  // Check if current tab matches an admin-managed database CMS page
+  const matchedDbPage = dbPages.find(
+    (p) =>
+      p.slug.toLowerCase() === activeKey.toLowerCase() ||
+      (activeKey === "terms" && p.slug === "terms") ||
+      (activeKey === "privacy" && p.slug === "privacy-policy") ||
+      (activeKey === "shipping" && p.slug === "shipping-policy")
+  );
+
+  const fallbackPolicy = POLICIES[activeKey as PolicyKey] || POLICIES.terms;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
@@ -134,55 +165,97 @@ function PoliciesContent() {
 
       {/* Policy Selector Tabs */}
       <div className="flex flex-wrap items-center justify-center gap-2 pb-8 border-b border-[#0b2f8a]/10">
-        {(Object.keys(POLICIES) as PolicyKey[]).map((key) => {
+        {VALID_TABS.map((key) => {
           const isSelected = activeKey === key;
           return (
             <button
               key={key}
               onClick={() => setActiveKey(key)}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
-                isSelected
-                  ? "bg-[#0b2f8a] text-white shadow"
-                  : "bg-white text-[#182230] border border-[#0b2f8a]/15 hover:bg-slate-50"
-              }`}
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition cursor-pointer ${isSelected
+                ? "bg-[#0b2f8a] text-white shadow"
+                : "bg-white text-[#182230] border border-[#0b2f8a]/15 hover:bg-slate-50"
+                }`}
             >
               {POLICIES[key].title}
             </button>
           );
         })}
+
+        {/* Dynamic Admin-Created Custom Pages */}
+        {dbPages
+          .filter(
+            (p) =>
+              p.slug !== "terms" &&
+              p.slug !== "privacy-policy" &&
+              p.slug !== "shipping-policy"
+          )
+          .map((p) => {
+            const isSelected = activeKey === p.slug;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setActiveKey(p.slug)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition cursor-pointer ${isSelected
+                  ? "bg-[#b45309] text-white shadow"
+                  : "bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100"
+                  }`}
+              >
+                {p.title}
+              </button>
+            );
+          })}
       </div>
 
       {/* Policy Content Body */}
       <div className="mt-8 rounded-3xl bg-white border border-[#0b2f8a]/10 p-6 sm:p-10 shadow-sm space-y-6">
-        <div className="flex items-center gap-3">
-          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#dfb755]/20 text-[#b89130]">
-            {activePolicy.badge}
-          </span>
-          <h2 className="text-2xl font-bold font-[family-name:var(--font-display)] text-[#0b2f8a]">
-            {activePolicy.title}
-          </h2>
-        </div>
-
-        <div className="space-y-6 pt-2">
-          {activePolicy.content.map((sec, i) => (
-            <div key={i} className="space-y-1.5 pb-4 border-b border-slate-100 last:border-b-0">
-              <h3 className="font-semibold text-[#182230] text-sm">{sec.heading}</h3>
-              <p className="text-xs sm:text-sm text-[#5e6d82] leading-relaxed">{sec.text}</p>
+        {matchedDbPage ? (
+          <div>
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#dfb755]/20 text-[#b89130]">
+                Official Store Policy
+              </span>
+              <h2 className="text-2xl font-bold font-[family-name:var(--font-display)] text-[#0b2f8a]">
+                {matchedDbPage.title}
+              </h2>
             </div>
-          ))}
-        </div>
+            <div
+              className="prose prose-sm sm:prose-base max-w-none text-slate-700 leading-relaxed space-y-4"
+              dangerouslySetInnerHTML={{ __html: matchedDbPage.content }}
+            />
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#dfb755]/20 text-[#b89130]">
+                {fallbackPolicy.badge}
+              </span>
+              <h2 className="text-2xl font-bold font-[family-name:var(--font-display)] text-[#0b2f8a]">
+                {fallbackPolicy.title}
+              </h2>
+            </div>
+
+            <div className="space-y-6 pt-4">
+              {fallbackPolicy.content.map((sec, i) => (
+                <div key={i} className="space-y-1.5 pb-4 border-b border-slate-100 last:border-b-0">
+                  <h3 className="font-semibold text-[#182230] text-sm">{sec.heading}</h3>
+                  <p className="text-xs sm:text-sm text-[#5e6d82] leading-relaxed">{sec.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#fbf3db]/60 border border-[#dfb755]/30">
           <div>
             <p className="text-xs font-bold text-[#b89130]">Need help with an existing order?</p>
             <p className="text-xs text-[#5e6d82]">Our Mandvi & Alkapuri counters are open daily 8:00 AM – 10:30 PM</p>
           </div>
-          <a
-            href="tel:+919825019760"
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#0b2f8a] text-white hover:bg-[#1a44b5] transition"
+          <Link
+            href="/stores"
+            className="rounded-full bg-[#0b2f8a] text-white px-4 py-2 text-xs font-bold hover:bg-[#071c54] transition shrink-0"
           >
-            Call Support: +91 98250 19760
-          </a>
+            Find Our Stores →
+          </Link>
         </div>
       </div>
     </div>
@@ -194,5 +267,7 @@ export default function PoliciesPage() {
     <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400">Loading policy details...</div>}>
       <PoliciesContent />
     </Suspense>
+  );
+}
   );
 }

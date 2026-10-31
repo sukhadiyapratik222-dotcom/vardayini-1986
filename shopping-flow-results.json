@@ -1,0 +1,27 @@
+[
+  {
+    "step": "Add to Cart",
+    "success": true
+  },
+  {
+    "step": "Increase Quantity",
+    "success": true
+  },
+  {
+    "step": "Apply Coupon FESTIVE15",
+    "success": true
+  },
+  {
+    "step": "Pincode Delivery Check",
+    "success": true
+  },
+  {
+    "step": "Remove Item & Empty State",
+    "success": true
+  },
+  {
+    "step": "Checkout Security & Routing",
+    "success": true,
+    "url": "http://localhost:9449/login?redirect=/checkout"
+  }
+]

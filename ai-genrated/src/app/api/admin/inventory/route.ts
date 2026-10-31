@@ -5,12 +5,13 @@ import { ensureSeeded } from "@/db/seed";
 import { requireAdmin } from "@/lib/auth";
 import { readJsonSafe, parsePositiveInt, parseNonNegativeInt } from "@/lib/validation";
 import { NextResponse } from "next/server";
+import { updateVariantStockInMysql } from "@/lib/mysql";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   await ensureSeeded();
-  const auth = await requireAdmin(request);
+  const auth = await requireAdmin(request, "products:manage");
   if (auth.error) {
     return auth.error;
   }
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   await ensureSeeded();
-  const auth = await requireAdmin(request);
+  const auth = await requireAdmin(request, "products:manage");
   if (auth.error) {
     return auth.error;
   }
@@ -92,14 +93,26 @@ export async function PUT(request: Request) {
     );
   }
 
-  const [updated] = await db
+  await db
     .update(productVariants)
     .set(updateData)
+    .where(eq(productVariants.id, variantId));
+
+  const [updated] = await db
+    .select()
+    .from(productVariants)
     .where(eq(productVariants.id, variantId))
-    .returning();
+    .limit(1);
 
   if (!updated) {
     return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+  }
+
+  // Synchronize stock and pricing directly to MySQL
+  try {
+    await updateVariantStockInMysql(variantId, updateData);
+  } catch (mysqlErr) {
+    console.warn("MySQL inventory update sync notice:", mysqlErr);
   }
 
   return NextResponse.json({ variant: updated });

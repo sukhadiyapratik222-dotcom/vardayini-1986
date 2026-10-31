@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { CheckoutForm } from "@/components/checkout-form";
 import { loadCartLines } from "@/lib/cart";
 import { formatInr } from "@/lib/money";
@@ -7,6 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
   const cart = await loadCartLines();
+
+  // If user is not logged in, show login page first with return path to checkout
+  if (!cart.user) {
+    redirect("/login?redirect=/checkout");
+  }
+
   if (cart.lines.length === 0) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -19,13 +26,13 @@ export default async function CheckoutPage() {
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1.1fr_0.9fr]">
+    <main className="mx-auto grid max-w-6xl gap-6 sm:gap-8 px-3 sm:px-4 py-6 sm:py-10 lg:grid-cols-[1.1fr_0.9fr]">
       <section>
         <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">Checkout</p>
-        <h1 className="mt-2 font-[family-name:var(--font-display)] text-5xl text-[#6b1d1d]">Where should it arrive?</h1>
+        <h1 className="mt-1 sm:mt-2 font-[family-name:var(--font-display)] text-xl sm:text-4xl text-[#6b1d1d] font-bold">Where should it arrive?</h1>
         <CheckoutForm defaultName={cart.user?.name || ""} defaultPhone={cart.user?.phone || ""} />
       </section>
-      <aside className="mithai-card h-fit rounded-3xl p-6">
+      <aside className="mithai-card h-fit rounded-2xl sm:rounded-3xl p-4 sm:p-6">
         <h2 className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">Order summary</h2>
         <ul className="mt-4 space-y-3 text-sm">
           {cart.lines.map((line) => (

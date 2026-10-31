@@ -62,18 +62,18 @@ export function HeritageHeroBanner() {
         </div>
 
         {/* Traditional Ornate Shield Crest */}
-        <div className="relative z-10 px-8 py-1 rounded-xl bg-[#0b2468] border border-[#dfb755]/60 text-center shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-          <p className="text-base sm:text-lg font-bold tracking-wider text-[#f5df9e] font-[family-name:var(--font-display)]">
+        <div className="relative z-10 px-4 sm:px-8 py-1 rounded-xl bg-[#0b2468] border border-[#dfb755]/60 text-center shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          <p className="text-sm sm:text-lg font-bold tracking-wider text-[#f5df9e] font-[family-name:var(--font-display)]">
             {banner.topBadgeGujarati || "સ્વીટ માર્ટ"}
           </p>
-          <p className="text-[10px] uppercase tracking-widest text-[#dfb755]/90 font-semibold -mt-0.5">
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-[#dfb755]/90 font-semibold -mt-0.5">
             {banner.topBadgeEnglish || "Since 1976"}
           </p>
         </div>
       </div>
 
       {/* 3-Panel Heritage Craft Panorama with Centered Content */}
-      <div className="relative aspect-[16/9] sm:aspect-[21/9] md:aspect-[24/9] w-full min-h-[300px] sm:min-h-[380px] lg:min-h-[440px] flex items-center justify-center text-center overflow-hidden">
+      <div className="relative aspect-[16/9] sm:aspect-[21/9] md:aspect-[24/9] w-full min-h-[260px] sm:min-h-[380px] lg:min-h-[440px] flex items-center justify-center text-center overflow-hidden">
         {/* Background Banner Image */}
         <Image
           src={banner.bannerImage || "/images/heritage-hero-banner.png"}
@@ -89,8 +89,8 @@ export function HeritageHeroBanner() {
 
         {/* Centered Typography & Action Buttons */}
         {banner.showTextOverlay && (
-          <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-5 sm:space-y-6">
-            <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-white leading-[1.15] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+          <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-4 sm:space-y-6">
+            <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-white leading-[1.15] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] break-words">
               {banner.titleLine1}
               {banner.titleLine2 && (
                 <>
@@ -102,11 +102,11 @@ export function HeritageHeroBanner() {
               )}
             </h1>
 
-            <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-5 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-5 pt-1 sm:pt-2 w-full max-w-xs sm:max-w-md mx-auto">
               {banner.button1Text && (
                 <Link
                   href={banner.button1Link || "/shop"}
-                  className="px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold bg-[#e5b84c] hover:bg-[#f3cb69] text-slate-950 transition-all shadow-[0_4px_20px_rgba(229,184,76,0.35)] hover:scale-105 active:scale-95 duration-200"
+                  className="w-full sm:w-auto text-center px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full text-xs sm:text-sm font-bold bg-[#e5b84c] hover:bg-[#f3cb69] text-slate-950 transition-all shadow-[0_4px_20px_rgba(229,184,76,0.35)] hover:scale-105 active:scale-95 duration-200"
                 >
                   {banner.button1Text}
                 </Link>
@@ -114,7 +114,7 @@ export function HeritageHeroBanner() {
               {banner.button2Text && (
                 <Link
                   href={banner.button2Link || "/shop?category=gift-hampers"}
-                  className="px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold bg-[#d8a838] hover:bg-[#eec157] text-slate-950 transition-all shadow-[0_4px_20px_rgba(216,168,56,0.35)] hover:scale-105 active:scale-95 duration-200"
+                  className="w-full sm:w-auto text-center px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full text-xs sm:text-sm font-bold bg-[#d8a838] hover:bg-[#eec157] text-slate-950 transition-all shadow-[0_4px_20px_rgba(216,168,56,0.35)] hover:scale-105 active:scale-95 duration-200"
                 >
                   {banner.button2Text}
                 </Link>

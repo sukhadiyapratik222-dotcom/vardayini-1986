@@ -16,7 +16,12 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
-export async function GET() {
+import { requireAdmin } from "@/lib/auth";
+
+export async function GET(request: Request) {
+  const auth = await requireAdmin(request, "reports:view");
+  if ("error" in auth) return auth.error;
+
   await ensureSeeded();
 
   const allOrders = await db.select({ id: orders.id, status: orders.status }).from(orders);
@@ -31,7 +36,7 @@ export async function GET() {
   const readyPickupCount = allOrders.filter((o) => o.status === "packed" || o.status === "ready").length;
   const completedCount = allOrders.filter((o) => o.status === "delivered" || o.status === "completed").length;
   const canceledCount = allOrders.filter((o) => o.status === "cancelled" || o.status === "canceled").length;
-  const customerCount = allCustomers.filter((u) => u.role !== "admin").length;
+  const customerCount = allCustomers.filter((u) => u.role !== "admin" && u.role !== "super_admin").length;
   const outOfStockCount = allVariants.filter((v) => v.stock <= 0).length;
 
   return NextResponse.json(

@@ -2,11 +2,15 @@
   "name": "vrdayini-sweet",
   "private": true,
   "scripts": {
+    "dev": "node scripts/dev.js",
+    "mongo": "node scripts/start-mongo.js",
     "dev:store": "npm --prefix ai-genrated run dev",
-    "dev:admin": "npm --prefix admin-dashboard run dev"
+    "dev:admin": "npm --prefix admin-dashboard run dev",
+    "test": "npm --prefix ai-genrated test",
+    "build": "npm --prefix ai-genrated run build && npm --prefix admin-dashboard run build"
   },
   "dependencies": {
+    "mongodb": "^7.7.0",
     "mysql2": "^3.24.5"
   }
 }
-

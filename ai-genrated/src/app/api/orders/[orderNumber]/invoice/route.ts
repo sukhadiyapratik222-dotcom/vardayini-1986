@@ -31,7 +31,7 @@ export async function GET(
   const guestCartId = cookieStore.get("vs_cart")?.value;
 
   let isAllowed = false;
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     isAllowed = true;
   } else if (order.userId) {
     if (user?.id === order.userId) {

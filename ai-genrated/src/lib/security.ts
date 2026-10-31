@@ -117,7 +117,7 @@ export class AccountLockoutManager {
   private maxFailures: number;
   private lockoutDurationMs: number;
 
-  constructor(maxFailures: number = 5, lockoutDurationMs: number = 15 * 60 * 1000) {
+  constructor(maxFailures: number = 5, lockoutDurationMs: number = 5 * 60 * 1000) {
     this.maxFailures = maxFailures;
     this.lockoutDurationMs = lockoutDurationMs;
   }
@@ -173,8 +173,12 @@ export class AccountLockoutManager {
     const key = identifier.toLowerCase().trim();
     this.tracker.delete(key);
   }
+
+  public resetAll(): void {
+    this.tracker.clear();
+  }
 }
 
 // Global Singleton instances for server routes
 export const globalLoginRateLimiter = new SlidingWindowRateLimiter(60 * 1000, 10); // 10 requests per minute
-export const globalAccountLockoutManager = new AccountLockoutManager(5, 15 * 60 * 1000); // 5 failures -> 15 min lock
+export const globalAccountLockoutManager = new AccountLockoutManager(5, 5 * 60 * 1000); // 5 failures -> 5 min lock

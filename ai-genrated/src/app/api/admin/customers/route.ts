@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  adminPermissions,
   addresses,
   cartItems,
   orders,
@@ -10,7 +11,7 @@ import {
 } from "@/db/schema";
 import { isAuthorizedAdmin } from "@/lib/admin-auth";
 import { parsePositiveInt, readJsonSafe } from "@/lib/validation";
-import { dbPool } from "@/lib/mysql";
+import { deleteUserFromMysql } from "@/lib/mysql";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,9 @@ export const dynamic = "force-dynamic";
  * Returns all registered customers with their delivery addresses, order counts, and lifetime spend.
  */
 export async function GET(request: Request) {
-  const authorized = await isAuthorizedAdmin(request);
+  const authorized = await isAuthorizedAdmin(request, "customers:view");
   if (!authorized) {
-    return Response.json({ error: "Unauthorized access" }, { status: 403 });
+    return Response.json({ error: "Forbidden: Customer Directory access required" }, { status: 403 });
   }
 
   try {
@@ -114,12 +115,12 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "Customer not found." }, { status: 404 });
     }
 
-    // 2. Security rule: Admin accounts cannot be deleted through customer management
-    if (existingUser.role === "admin") {
+    // 2. Security rule: Admin and Super Admin accounts cannot be deleted through customer management
+    if (existingUser.role === "admin" || existingUser.role === "super_admin") {
       return Response.json(
         {
           error:
-            "Security Policy: Administrator accounts cannot be deleted from the customer desk.",
+            "Security Policy: Administrator and Super Admin accounts cannot be deleted from the customer desk.",
         },
         { status: 400 }
       );
@@ -128,16 +129,19 @@ export async function DELETE(request: Request) {
     // 3. Transactional cascade in Drizzle ORM
     await db.transaction(async (tx) => {
       // Clean up child tables referencing users.id
-      await tx.delete(addresses).where(eq(addresses.userId, id!));
-      await tx.delete(cartItems).where(eq(cartItems.userId, id!));
-      await tx.delete(wishlistItems).where(eq(wishlistItems.userId, id!));
-      await tx.delete(reviews).where(eq(reviews.userId, id!));
+      try { await tx.delete(addresses).where(eq(addresses.userId, id!)); } catch {}
+      try { await tx.delete(cartItems).where(eq(cartItems.userId, id!)); } catch {}
+      try { await tx.delete(wishlistItems).where(eq(wishlistItems.userId, id!)); } catch {}
+      try { await tx.delete(reviews).where(eq(reviews.userId, id!)); } catch {}
+      try { await tx.delete(adminPermissions).where(eq(adminPermissions.userId, id!)); } catch {}
 
       // Disassociate historical orders so sales and accounting records remain intact
-      await tx
-        .update(orders)
-        .set({ userId: null })
-        .where(eq(orders.userId, id!));
+      try {
+        await tx
+          .update(orders)
+          .set({ userId: null })
+          .where(eq(orders.userId, id!));
+      } catch {}
 
       // Delete the user record
       await tx.delete(users).where(eq(users.id, id!));
@@ -145,12 +149,7 @@ export async function DELETE(request: Request) {
 
     // 4. Also synchronize deletion to MySQL (vardayini_sweets) if online
     try {
-      await dbPool.query("DELETE FROM addresses WHERE user_id = ?", [id]);
-      await dbPool.query("DELETE FROM cart_items WHERE user_id = ?", [id]);
-      await dbPool.query("DELETE FROM wishlist_items WHERE user_id = ?", [id]);
-      await dbPool.query("DELETE FROM reviews WHERE user_id = ?", [id]);
-      await dbPool.query("UPDATE orders SET user_id = NULL WHERE user_id = ?", [id]);
-      await dbPool.query("DELETE FROM users WHERE id = ?", [id]);
+      await deleteUserFromMysql(id!);
     } catch (mysqlErr) {
       console.warn("MySQL sync during customer deletion skipped/non-fatal:", mysqlErr);
     }
@@ -174,3 +173,91 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
+/**
+ * PATCH /api/admin/customers
+ * Allows Super Admin to manage admin privileges:
+ * - Promote customer to admin
+ * - Demote admin to customer
+ * - Protect super_admin from modification or demotion
+ */
+export async function PATCH(request: Request) {
+  const { requireAdmin } = await import("@/lib/auth");
+  const auth = await requireAdmin(request);
+  if (auth.error) {
+    return auth.error;
+  }
+
+  // Only super_admin can change user roles
+  if (auth.user.role !== "super_admin") {
+    return Response.json(
+      { error: "Forbidden: Only Super Admin can manage administrative access." },
+      { status: 403 }
+    );
+  }
+
+  const body = await readJsonSafe<{ id?: number; role?: string }>(request);
+  const id = parsePositiveInt(body?.id);
+  const newRole = body?.role;
+
+  if (!id || (newRole !== "admin" && newRole !== "customer")) {
+    return Response.json(
+      { error: "Invalid parameters. Role must be 'admin' or 'customer'." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Check target user
+    const [targetUser] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    if (!targetUser) {
+      return Response.json({ error: "User not found." }, { status: 404 });
+    }
+
+    // Cannot modify super_admin role
+    if (targetUser.role === "super_admin" || targetUser.email === "pratik222@gmail.com") {
+      return Response.json(
+        { error: "Security Policy: Super Admin role is protected and cannot be modified." },
+        { status: 400 }
+      );
+    }
+
+    // Update role in DB
+    await db.update(users).set({ role: newRole }).where(eq(users.id, id));
+
+    // Sync to MySQL directly
+    try {
+      const { syncUserToMysql } = await import("@/lib/mysql");
+      await syncUserToMysql({
+        id: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        phone: targetUser.phone,
+        passwordHash: targetUser.passwordHash,
+        role: newRole,
+      });
+    } catch (err) {
+      console.warn("MySQL sync role notice:", err);
+    }
+
+    return Response.json({
+      success: true,
+      message: `User ${targetUser.name} (${targetUser.email}) role successfully updated to "${newRole}".`,
+      user: {
+        id: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        role: newRole,
+      },
+    });
+  } catch (err) {
+    return Response.json(
+      {
+        error: "Failed to update user access level.",
+        message: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 }
+    );
+  }
+}
+

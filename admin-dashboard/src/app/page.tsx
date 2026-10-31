@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   UiConfig,
   OrderItem,
@@ -28,17 +28,41 @@ import { NotificationCenter } from "@/components/notification-center";
 
 import { ReportsTab, ReportType } from "@/components/reports-tab";
 import { SmsWalletTab } from "@/components/sms-wallet-tab";
+import { OutletsTab } from "@/components/outlets-tab";
+import { AdminManagementTab } from "@/components/admin-management-tab";
+import { ActivityLogsTab } from "@/components/activity-logs-tab";
+import { PagesTab } from "@/components/pages-tab";
+import { FestivalsTab } from "@/components/festivals-tab";
+import { ReviewsTab } from "@/components/reviews-tab";
+import { PickupsTab } from "@/components/pickups-tab";
+import { CategoryShowcaseTab } from "@/components/category-showcase-tab";
+import { BestsellersTab } from "@/components/bestsellers-tab";
+import { WelcomeOfferTab } from "@/components/welcome-offer-tab";
+import { TestimonialsTab } from "@/components/testimonials-tab";
+import { NewLaunchTab } from "@/components/new-launch-tab";
 
 export type TabId =
   | "overview"
+  | "festivals"
+  | "admin-management"
+  | "activity-logs"
+  | "pages"
+  | "outlets"
+  | "pickups"
   | "hero"
   | "announcements"
+  | "category-showcase"
+  | "bestsellers"
+  | "welcome-offer"
+  | "testimonials-manager"
+  | "new-launches"
   | "special-items"
   | "branding"
   | "categories"
   | "products"
   | "orders"
   | "customers"
+  | "reviews"
   | "preview"
   | "report-sales"
   | "report-orders"
@@ -58,6 +82,57 @@ interface AdminUser {
   email?: string;
   name?: string;
   role?: string;
+  status?: string;
+  mustChangePassword?: boolean;
+  accessType?: string;
+  permissions?: string[];
+}
+
+function AccessRestrictedCard({
+  moduleName,
+  currentUser,
+}: {
+  moduleName: string;
+  currentUser: AdminUser | null;
+}) {
+  return (
+    <div className="p-8 sm:p-12 bg-white rounded-3xl border border-rose-200/80 shadow-md text-center max-w-2xl mx-auto my-8">
+      <div className="w-16 h-16 bg-rose-50 border border-rose-200 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+        🔒
+      </div>
+      <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold uppercase tracking-wider">
+        Access Restricted
+      </span>
+      <h2 className="text-xl font-bold text-gray-900 mt-3">
+        Module Permission Required
+      </h2>
+      <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+        Your administrator account (<strong>{currentUser?.email}</strong>) has been configured with <strong>Custom Access</strong> and does not have permission to access the <strong>{moduleName}</strong> module.
+      </p>
+      <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs text-slate-700">
+        <div className="font-semibold text-slate-900 mb-1">Your Assigned Permissions:</div>
+        {currentUser?.permissions && currentUser.permissions.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {currentUser.permissions.map((p) => (
+              <span
+                key={p}
+                className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold"
+              >
+                ✓ {p}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-amber-700 font-medium">
+            No specific module permissions assigned. Please ask Super Admin to assign module permissions.
+          </p>
+        )}
+      </div>
+      <p className="text-[11px] text-gray-400 mt-4">
+        To request access, please contact the Super Admin (pratik222@gmail.com).
+      </p>
+    </div>
+  );
 }
 
 export default function AdminDashboardPage() {
@@ -78,6 +153,21 @@ export default function AdminDashboardPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [reportsOpen, setReportsOpen] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [productStockFilter, setProductStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">("all");
+
+  const handleTabChange = useCallback((tab: string) => {
+    if (tab === "out_of_stock") {
+      setProductStockFilter("out_of_stock");
+      setActiveTab("products");
+    } else {
+      if (tab === "products") {
+        setProductStockFilter("all");
+      }
+      setActiveTab(tab as TabId);
+    }
+    setIsMobileSidebarOpen(false);
+  }, []);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -87,13 +177,55 @@ export default function AdminDashboardPage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
+  // Forced Password Change State
+  const [changePasswordOld, setChangePasswordOld] = useState("");
+  const [changePasswordNew, setChangePasswordNew] = useState("");
+  const [changePasswordConfirm, setChangePasswordConfirm] = useState("");
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
+
+  const handleForcePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePasswordError(null);
+    if (!changePasswordOld || !changePasswordNew) {
+      setChangePasswordError("Current and new passwords are required.");
+      return;
+    }
+    if (changePasswordNew !== changePasswordConfirm) {
+      setChangePasswordError("New password and confirmation do not match.");
+      return;
+    }
+    if (changePasswordNew.length < 8) {
+      setChangePasswordError("Password must be at least 8 characters long.");
+      return;
+    }
+    setChangePasswordLoading(true);
+    try {
+      await api.changePassword(changePasswordOld, changePasswordNew);
+      toast.success("Password updated successfully! Welcome to your dashboard.");
+      setCurrentUser((prev) => (prev ? { ...prev, mustChangePassword: false } : null));
+      setChangePasswordOld("");
+      setChangePasswordNew("");
+      setChangePasswordConfirm("");
+    } catch (err: unknown) {
+      setChangePasswordError(err instanceof Error ? err.message : "Failed to change password");
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
   // Verify authentication on mount
   useEffect(() => {
     let isMounted = true;
     async function checkAuth() {
       try {
         const { user } = await api.getCurrentUser();
-        if (user && user.role === "admin") {
+        if (
+          user &&
+          (user.role === "admin" || user.role === "super_admin") &&
+          user.status !== "inactive" &&
+          user.status !== "deactivated"
+        ) {
           if (isMounted) {
             setCurrentUser(user);
             setIsAuthenticated(true);
@@ -101,12 +233,17 @@ export default function AdminDashboardPage() {
         } else {
           if (isMounted) {
             setIsAuthenticated(false);
+            setCurrentUser(null);
             setIsLoading(false);
+            if (user?.status === "inactive" || user?.status === "deactivated") {
+              setLoginError("Your account has been deactivated. Please contact an administrator.");
+            }
           }
         }
       } catch {
         if (isMounted) {
           setIsAuthenticated(false);
+          setCurrentUser(null);
           setIsLoading(false);
         }
       }
@@ -116,6 +253,328 @@ export default function AdminDashboardPage() {
       isMounted = false;
     };
   }, []);
+
+  // Global listener for auth revocation (401 or 403 deactivated)
+  useEffect(() => {
+    const onAuthRevoked = (e: Event) => {
+      const customEvt = e as CustomEvent<{ message?: string; status?: number }>;
+      const msg = (customEvt.detail?.message || "").toLowerCase();
+      const isDeactivated = msg.includes("deactivated") || msg.includes("inactive");
+
+      setErrorMessage(null);
+      handleLogout();
+      setLoginError(
+        isDeactivated
+          ? "Your account has been deactivated. Please contact an administrator."
+          : "Your session has expired. Please sign in again."
+      );
+    };
+
+    window.addEventListener("vsm:admin:auth_revoked", onAuthRevoked);
+    return () => {
+      window.removeEventListener("vsm:admin:auth_revoked", onAuthRevoked);
+    };
+  }, []);
+
+  const isModulePermitted = useCallback(
+    (tab: TabId): boolean => {
+      if (!currentUser) return false;
+      if (currentUser.role === "super_admin") return true;
+      if (currentUser.role === "admin" && currentUser.accessType !== "custom") return true;
+
+      const perms = currentUser.permissions || [];
+      if (perms.includes("*")) return true;
+
+      switch (tab) {
+        // 1. Dashboard Overview
+        case "overview":
+          return (
+            perms.includes("overview:view") ||
+            perms.includes("overview") ||
+            perms.includes("orders:manage") ||
+            perms.includes("orders:view") ||
+            perms.includes("reports:view")
+          );
+
+        // 2. Change Logo & Identity
+        case "branding":
+          return (
+            perms.includes("branding:view") ||
+            perms.includes("branding:manage") ||
+            perms.includes("branding") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 3. Outlets & Stores
+        case "outlets":
+          return (
+            perms.includes("outlets:view") ||
+            perms.includes("outlets:manage") ||
+            perms.includes("outlets") ||
+            perms.includes("stores:manage") ||
+            perms.includes("stores")
+          );
+
+        // 4. Change Hero Banner
+        case "hero":
+          return (
+            perms.includes("hero:view") ||
+            perms.includes("hero:manage") ||
+            perms.includes("hero") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 5. Banners & Promos
+        case "announcements":
+          return (
+            perms.includes("announcements:view") ||
+            perms.includes("announcements:manage") ||
+            perms.includes("announcements") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 6. Customer Bestsellers
+        case "bestsellers":
+          return (
+            perms.includes("bestsellers:view") ||
+            perms.includes("bestsellers:manage") ||
+            perms.includes("bestsellers") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 7. Welcome Offer (10% Off)
+        case "welcome-offer":
+          return (
+            perms.includes("welcome_offer:view") ||
+            perms.includes("welcome_offer:manage") ||
+            perms.includes("welcome_offer") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 8. Customer Testimonials
+        case "testimonials-manager":
+          return (
+            perms.includes("testimonials:view") ||
+            perms.includes("testimonials:manage") ||
+            perms.includes("testimonials") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 9. New Launches (2026)
+        case "new-launches":
+          return (
+            perms.includes("new_launches:view") ||
+            perms.includes("new_launches:manage") ||
+            perms.includes("new_launches") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
+        // 10. Our Special Items
+        case "special-items":
+          return (
+            perms.includes("special_items:view") ||
+            perms.includes("special_items:manage") ||
+            perms.includes("special_items") ||
+            perms.includes("products:manage") ||
+            perms.includes("products:view") ||
+            perms.includes("settings:manage")
+          );
+
+        // 11. Festival Specials
+        case "festivals":
+          return (
+            perms.includes("festivals:view") ||
+            perms.includes("festivals:manage") ||
+            perms.includes("festivals") ||
+            perms.includes("settings:manage") ||
+            perms.includes("products:manage")
+          );
+
+        // 12. Categories
+        case "categories":
+        case "category-showcase":
+          return (
+            perms.includes("categories:view") ||
+            perms.includes("categories:manage") ||
+            perms.includes("categories") ||
+            perms.includes("products:manage") ||
+            perms.includes("products:view")
+          );
+
+        // 13. Products & Stock
+        case "products":
+          return (
+            perms.includes("products:view") ||
+            perms.includes("products:manage") ||
+            perms.includes("products")
+          );
+
+        // 14. Orders Desk
+        case "orders":
+          return (
+            perms.includes("orders:view") ||
+            perms.includes("orders:manage") ||
+            perms.includes("orders")
+          );
+
+        // 15. Store Pickups
+        case "pickups":
+          return (
+            perms.includes("pickups:view") ||
+            perms.includes("pickups:manage") ||
+            perms.includes("pickups") ||
+            perms.includes("orders:view") ||
+            perms.includes("orders:manage")
+          );
+
+        // 16. Customer Reviews
+        case "reviews":
+          return (
+            perms.includes("reviews:view") ||
+            perms.includes("reviews:manage") ||
+            perms.includes("reviews") ||
+            perms.includes("products:manage") ||
+            perms.includes("customers:manage")
+          );
+
+        // 17. Customer Directory
+        case "customers":
+          return (
+            perms.includes("customers:view") ||
+            perms.includes("customers:manage") ||
+            perms.includes("customers")
+          );
+
+        // 18. CMS Pages & Policies
+        case "pages":
+          return (
+            perms.includes("pages:view") ||
+            perms.includes("pages:manage") ||
+            perms.includes("pages")
+          );
+
+        // 19. Live Store Preview
+        case "preview":
+          return (
+            perms.includes("preview:view") ||
+            perms.includes("preview:manage") ||
+            perms.includes("preview") ||
+            perms.length > 0
+          );
+
+        // 20. Reports & Analytics
+        case "report-sales":
+        case "report-orders":
+        case "report-product":
+        case "report-inventory":
+        case "report-customer":
+        case "report-payment":
+        case "report-revenue":
+        case "report-logins":
+        case "report-otp":
+        case "report-emails":
+        case "report-sms":
+          return (
+            perms.includes("reports:view") ||
+            perms.includes("reports:export") ||
+            perms.includes("reports")
+          );
+
+        // 21. SMS Wallet & Credits
+        case "sms-wallet":
+          return (
+            perms.includes("sms_wallet:view") ||
+            perms.includes("sms_wallet:manage") ||
+            perms.includes("sms_wallet") ||
+            perms.includes("sms:view") ||
+            perms.includes("sms:manage") ||
+            perms.includes("settings:manage")
+          );
+
+        // Super Admin Controls
+        case "admin-management":
+        case "activity-logs":
+          return currentUser.role === "super_admin";
+
+        default:
+          return false;
+      }
+    },
+    [currentUser]
+  );
+
+  const canManageModule = useCallback(
+    (tab: TabId): boolean => {
+      if (!currentUser) return false;
+      if (currentUser.role === "super_admin") return true;
+      if (currentUser.role === "admin" && currentUser.accessType !== "custom") return true;
+
+      const perms = currentUser.permissions || [];
+      if (perms.includes("*")) return true;
+
+      switch (tab) {
+        case "branding":
+          return perms.includes("branding:manage") || perms.includes("settings:manage");
+        case "outlets":
+          return perms.includes("outlets:manage") || perms.includes("stores:manage");
+        case "hero":
+          return perms.includes("hero:manage") || perms.includes("settings:manage");
+        case "announcements":
+          return perms.includes("announcements:manage") || perms.includes("settings:manage");
+        case "bestsellers":
+          return perms.includes("bestsellers:manage") || perms.includes("settings:manage");
+        case "welcome-offer":
+          return perms.includes("welcome_offer:manage") || perms.includes("settings:manage");
+        case "testimonials-manager":
+          return perms.includes("testimonials:manage") || perms.includes("settings:manage");
+        case "new-launches":
+          return perms.includes("new_launches:manage") || perms.includes("settings:manage");
+        case "special-items":
+          return perms.includes("special_items:manage") || perms.includes("products:manage");
+        case "festivals":
+          return perms.includes("festivals:manage") || perms.includes("settings:manage");
+        case "categories":
+        case "category-showcase":
+          return perms.includes("categories:manage") || perms.includes("products:manage");
+        case "products":
+          return perms.includes("products:manage");
+        case "orders":
+          return perms.includes("orders:manage");
+        case "pickups":
+          return perms.includes("pickups:manage") || perms.includes("orders:manage");
+        case "reviews":
+          return perms.includes("reviews:manage");
+        case "customers":
+          return perms.includes("customers:manage");
+        case "pages":
+          return perms.includes("pages:manage");
+        case "sms-wallet":
+          return perms.includes("sms_wallet:manage") || perms.includes("sms:manage") || perms.includes("settings:manage");
+        case "report-sales":
+        case "report-orders":
+        case "report-product":
+        case "report-inventory":
+        case "report-customer":
+        case "report-payment":
+        case "report-revenue":
+        case "report-logins":
+        case "report-otp":
+        case "report-emails":
+        case "report-sms":
+          return perms.includes("reports:export");
+        default:
+          return true;
+      }
+    },
+    [currentUser]
+  );
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -127,48 +586,115 @@ export default function AdminDashboardPage() {
       try {
         const errors: string[] = [];
         let authExpired = false;
+        let authExpiredMessage = "";
+
+        const isAuthRevoked = (err: unknown): boolean => {
+          if (err instanceof ApiError) {
+            if (err.status === 401) return true;
+            if (err.status === 403) {
+              const msg = (err.message || "").toLowerCase();
+              return (
+                msg.includes("deactivated") ||
+                msg.includes("inactive") ||
+                msg.includes("session invalid")
+              );
+            }
+          }
+          return false;
+        };
 
         const recordErr = (err: unknown, label: string) => {
-          if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          if (isAuthRevoked(err)) {
             authExpired = true;
+            const errMsg = err instanceof Error ? err.message : String(err);
+            if (errMsg.toLowerCase().includes("deactivated") || errMsg.toLowerCase().includes("inactive")) {
+              authExpiredMessage = "Your account has been deactivated. Contact administrator.";
+            } else {
+              authExpiredMessage = "Your session has expired or admin privileges were revoked. Please sign in again.";
+            }
+            // Do NOT add to errors array to avoid displaying ugly 403 banners
+            return;
           }
           errors.push(`${label}: ${err instanceof Error ? err.message : String(err)}`);
         };
 
+        const canOrders = isModulePermitted("orders");
+        const canProducts = isModulePermitted("products");
+        const canCategories = isModulePermitted("categories") || isModulePermitted("products");
+        const canCustomers = isModulePermitted("customers");
+        const canSettings =
+          isModulePermitted("branding") ||
+          isModulePermitted("hero") ||
+          isModulePermitted("announcements") ||
+          isModulePermitted("bestsellers") ||
+          isModulePermitted("welcome-offer") ||
+          isModulePermitted("testimonials-manager") ||
+          isModulePermitted("new-launches") ||
+          isModulePermitted("special-items") ||
+          isModulePermitted("festivals") ||
+          isModulePermitted("overview");
+        const canReports = isModulePermitted("report-sales");
+
         const [cfg, ords, prods, inv, st, cats, custs] = await Promise.all([
-          api.getUiConfig().catch((err) => {
-            recordErr(err, "Config");
-            return null;
-          }),
-          api.getOrders().catch((err) => {
-            recordErr(err, "Orders");
-            return [];
-          }),
-          api.getProducts().catch((err) => {
-            recordErr(err, "Products");
-            return [];
-          }),
-          api.getInventory().catch((err) => {
-            recordErr(err, "Inventory");
-            return { variants: [], lowStock: [] };
-          }),
-          api.getStats().catch((err) => {
-            recordErr(err, "Stats");
-            return null;
-          }),
-          api.getCategories().catch((err) => {
-            recordErr(err, "Categories");
-            return [];
-          }),
-          api.getCustomers().catch((err) => {
-            recordErr(err, "Customers");
-            return [];
-          }),
+          canSettings
+            ? api.getUiConfig().catch((err) => {
+                recordErr(err, "Config");
+                return null;
+              })
+            : Promise.resolve(null),
+          canOrders
+            ? api.getOrders().catch((err) => {
+                recordErr(err, "Orders");
+                return [];
+              })
+            : Promise.resolve([]),
+          canProducts
+            ? api.getProducts().catch((err) => {
+                recordErr(err, "Products");
+                return [];
+              })
+            : Promise.resolve([]),
+          canProducts
+            ? api.getInventory().catch((err) => {
+                recordErr(err, "Inventory");
+                return { variants: [], lowStock: [] };
+              })
+            : Promise.resolve({ variants: [], lowStock: [] }),
+          canReports
+            ? api.getStats().catch((err) => {
+                recordErr(err, "Stats");
+                return null;
+              })
+            : Promise.resolve(null),
+          canCategories
+            ? api.getCategories().catch((err) => {
+                recordErr(err, "Categories");
+                return [];
+              })
+            : Promise.resolve([]),
+          canCustomers
+            ? api.getCustomers().catch((err) => {
+                recordErr(err, "Customers");
+                return [];
+              })
+            : Promise.resolve([]),
         ]);
 
         if (authExpired) {
+          setErrorMessage(null);
+          try {
+            await api.logout();
+          } catch {
+            // ignore
+          }
           setIsAuthenticated(false);
           setCurrentUser(null);
+          setConfig(null);
+          setOrders([]);
+          setProducts([]);
+          setCategories([]);
+          setCustomers([]);
+          setLoginError(authExpiredMessage || "Your session has expired. Please sign in again.");
           setIsLoading(false);
           return;
         }
@@ -184,18 +710,37 @@ export default function AdminDashboardPage() {
           setErrorMessage(errors.join(" • "));
         }
       } catch (err) {
-        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
-          setIsAuthenticated(false);
-          setCurrentUser(null);
-        } else {
-          setErrorMessage(err instanceof Error ? err.message : "Error loading dashboard data");
+        if (err instanceof ApiError) {
+          const msg = (err.message || "").toLowerCase();
+          const isDeactivated = msg.includes("deactivated") || msg.includes("inactive");
+          if (err.status === 401 || (err.status === 403 && isDeactivated)) {
+            setErrorMessage(null);
+            try {
+              await api.logout();
+            } catch {
+              // ignore
+            }
+            setIsAuthenticated(false);
+            setCurrentUser(null);
+            setLoginError(
+              isDeactivated
+                ? "Your account has been deactivated. Contact administrator."
+                : "Your session has expired. Please sign in again."
+            );
+            setIsLoading(false);
+            return;
+          }
         }
+        setErrorMessage(err instanceof Error ? err.message : "Error loading dashboard data");
       }
     } else {
-      setErrorMessage("Storefront is offline. Please check connection to " + (process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"));
+      setErrorMessage(
+        "Storefront is offline. Please check connection to " +
+          (process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449")
+      );
     }
     setIsLoading(false);
-  }, []);
+  }, [isModulePermitted]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -215,7 +760,7 @@ export default function AdminDashboardPage() {
     setLoginError(null);
     try {
       const res = await api.login(loginEmail, loginPassword);
-      if (res.user && res.user.role === "admin") {
+      if (res.user && (res.user.role === "admin" || res.user.role === "super_admin")) {
         setCurrentUser(res.user);
         setIsAuthenticated(true);
         setLoginPassword("");
@@ -268,11 +813,41 @@ export default function AdminDashboardPage() {
     },
     { id: "branding", label: "Change Logo & Identity", icon: "✨" },
     {
+      id: "outlets",
+      label: "Outlets & Stores",
+      icon: "📍",
+      badge: "Manage",
+    },
+    {
       id: "hero",
       label: "Change Hero Banner",
       icon: "🖼️",
     },
     { id: "announcements", label: "Banners & Promos", icon: "📢" },
+    {
+      id: "bestsellers",
+      label: "Customer Bestsellers",
+      icon: "💎",
+      badge: "Most Loved",
+    },
+    {
+      id: "welcome-offer",
+      label: "Welcome Offer (10% Off)",
+      icon: "🎁",
+      badge: "Promo",
+    },
+    {
+      id: "testimonials-manager",
+      label: "Customer Testimonials",
+      icon: "💬",
+      badge: "Verified",
+    },
+    {
+      id: "new-launches",
+      label: "New Launches (2026)",
+      icon: "🚀",
+      badge: "Page",
+    },
     {
       id: "special-items",
       label: "Our Special Items",
@@ -280,6 +855,12 @@ export default function AdminDashboardPage() {
       badge: config?.specialItems?.productIds?.length
         ? `${config.specialItems.productIds.length} items`
         : undefined,
+    },
+    {
+      id: "festivals",
+      label: "Festival Specials",
+      icon: "🪔",
+      badge: "Manage",
     },
     {
       id: "categories",
@@ -300,11 +881,23 @@ export default function AdminDashboardPage() {
       badge: orders.filter((o) => o.status === "pending").length || undefined,
     },
     {
+      id: "pickups",
+      label: "Store Pickups",
+      icon: "🏪",
+      badge: "Live",
+    },
+    {
+      id: "reviews",
+      label: "Customer Reviews",
+      icon: "⭐",
+    },
+    {
       id: "customers",
       label: "Customer Directory",
       icon: "👥",
-      badge: customers.filter((c) => c.role !== "admin").length || undefined,
+      badge: customers.filter((c) => c.role !== "admin" && c.role !== "super_admin").length || undefined,
     },
+    { id: "pages", label: "CMS Pages & Policies", icon: "📄" },
     { id: "preview", label: "Live Store Preview", icon: "👁️" },
   ];
 
@@ -321,6 +914,32 @@ export default function AdminDashboardPage() {
     { id: "report-emails", label: "Email Report" },
     { id: "report-sms", label: "SMS Reports" },
   ];
+
+  const visibleNavItems = useMemo(() => {
+    return navItems.filter((item) => isModulePermitted(item.id));
+  }, [navItems, isModulePermitted]);
+
+  // Auto-switch to first permitted module if activeTab is not permitted or if custom admin with products only
+  useEffect(() => {
+    if (!currentUser || currentUser.role === "super_admin" || currentUser.accessType !== "custom") {
+      return;
+    }
+    const perms = currentUser.permissions || [];
+    const onlyProducts =
+      perms.length > 0 &&
+      perms.every((p) => p.startsWith("products")) &&
+      !perms.includes("orders:manage") &&
+      !perms.includes("reports:view");
+
+    if (!isModulePermitted(activeTab) || (activeTab === "overview" && onlyProducts)) {
+      const firstAllowed = visibleNavItems.find(
+        (n) => n.id !== "overview" && isModulePermitted(n.id)
+      )?.id;
+      if (firstAllowed && firstAllowed !== activeTab) {
+        setActiveTab(firstAllowed);
+      }
+    }
+  }, [currentUser, isModulePermitted, visibleNavItems, activeTab]);
 
   // Auth Gate: Checking initial session
   if (isAuthenticated === null) {
@@ -485,10 +1104,39 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
+      {/* Mobile Top Navigation & Drawer Toggle */}
+      <div className="lg:hidden bg-white border-b border-[#0b2f8a]/10 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0b2f8a] text-white">
+            <span className="font-[family-name:var(--font-display)] text-sm font-bold text-[#dfb755]">વ</span>
+          </div>
+          <div>
+            <span className="block font-bold text-xs text-[#0b2f8a]">Vardayini Admin Desk</span>
+            <span className="block text-[10px] text-[#5e6d82] capitalize font-medium">
+              {activeTab.startsWith("report-")
+                ? `Report: ${reportMenuItems.find((m) => m.id === activeTab)?.label || ""}`
+                : activeTab === "sms-wallet"
+                ? "SMS Wallet"
+                : navItems.find((n) => n.id === activeTab)?.label || activeTab}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0b2f8a]/10 text-[#0b2f8a] text-xs font-bold transition hover:bg-[#0b2f8a]/20"
+        >
+          <span>{isMobileSidebarOpen ? "✕ Close" : "☰ Menu"}</span>
+        </button>
+      </div>
+
       {/* Main Body Shell */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Sidebar Navigation */}
-        <aside className="w-full lg:w-72 bg-white/95 backdrop-blur-md border-r border-[#0b2f8a]/10 p-5 flex flex-col justify-between shrink-0 shadow-sm">
+        <aside className={`w-full lg:w-72 bg-white/95 backdrop-blur-md border-r border-[#0b2f8a]/10 p-5 flex-col justify-between shrink-0 shadow-sm ${
+          isMobileSidebarOpen ? "flex" : "hidden lg:flex"
+        }`}>
           <div className="space-y-6">
             {/* Vardayini Authentic Brand Crest */}
             <div className="pb-5 border-b border-[#0b2f8a]/10">
@@ -523,10 +1171,15 @@ export default function AdminDashboardPage() {
               <div className="mt-3 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${currentUser?.role === "super_admin" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
                     <span className="font-bold text-[#0b2f8a] text-[11px] truncate">
                       {currentUser?.name || "Admin"}
                     </span>
+                    {currentUser?.role === "super_admin" && (
+                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold uppercase bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-xs">
+                        👑 Super Admin
+                      </span>
+                    )}
                   </div>
                   <span className="block text-[10px] text-[#5e6d82] truncate">
                     {currentUser?.email || "admin@vardayini.com"}
@@ -545,12 +1198,54 @@ export default function AdminDashboardPage() {
 
             {/* Navigation Links */}
             <nav className="space-y-1.5">
-              {navItems.map((item) => {
+              {/* Super Admin Control Center */}
+              {currentUser?.role === "super_admin" && (
+                <div className="pb-2.5 mb-2 border-b border-[#0b2f8a]/10 space-y-1">
+                  <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-[#b89130] uppercase flex items-center justify-between">
+                    <span>👑 Super Admin Controls</span>
+                    <span className="bg-[#dfb755]/20 text-[#b89130] px-1.5 py-0.2 rounded text-[9px] font-extrabold">
+                      Owner
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange("admin-management")}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                      activeTab === "admin-management"
+                        ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                        : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-base">🛡️</span>
+                      <span>Administrators & RBAC</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange("activity-logs")}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                      activeTab === "activity-logs"
+                        ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                        : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-base">📜</span>
+                      <span>Security & Activity Logs</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {visibleNavItems.map((item) => {
                 const isActive = activeTab === item.id;
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => handleTabChange(item.id)}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
                       isActive
                         ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
@@ -577,66 +1272,70 @@ export default function AdminDashboardPage() {
                 );
               })}
 
-              {/* Exact Reports Accordion matching user screenshot */}
-              <div className="pt-2">
+              {/* Exact Reports Accordion matching user screenshot - Gated by reports:view */}
+              {isModulePermitted("report-sales") && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setReportsOpen((prev) => !prev)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold bg-[#00681c] hover:bg-[#005417] text-white shadow-sm transition"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm">📊</span>
+                      <span className="text-[13px] tracking-wide">Reports</span>
+                    </div>
+                    <span
+                      className={`text-[10px] transition-transform duration-200 ${
+                        reportsOpen ? "rotate-0" : "-rotate-90"
+                      }`}
+                    >
+                      ▼
+                    </span>
+                  </button>
+
+                  {reportsOpen && (
+                    <div className="mt-1 bg-[#f8fafd] rounded-2xl p-1.5 border border-slate-200/60 space-y-0.5 shadow-inner">
+                      {reportMenuItems.map((item) => {
+                        const isSelected = activeTab === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleTabChange(item.id)}
+                            className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between ${
+                              isSelected
+                                ? "bg-white text-[#00681c] font-bold shadow-sm border border-slate-200/80"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                            }`}
+                          >
+                            <span>{item.label}</span>
+                            {isSelected && <span className="text-[10px] text-[#00681c]">●</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SMS Wallet & Credits item - Gated by settings:manage */}
+              {isModulePermitted("sms-wallet") && (
                 <button
                   type="button"
-                  onClick={() => setReportsOpen((prev) => !prev)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold bg-[#00681c] hover:bg-[#005417] text-white shadow-sm transition"
+                  onClick={() => handleTabChange("sms-wallet")}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold transition mt-1.5 ${
+                    activeTab === "sms-wallet"
+                      ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                      : "text-slate-700 hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="text-sm">📊</span>
-                    <span className="text-[13px] tracking-wide">Reports</span>
+                    <span className="text-base text-[#0b2f8a]">💬</span>
+                    <span className="text-[12px]">SMS Wallet & Credits</span>
                   </div>
-                  <span
-                    className={`text-[10px] transition-transform duration-200 ${
-                      reportsOpen ? "rotate-0" : "-rotate-90"
-                    }`}
-                  >
-                    ▼
-                  </span>
+                  <span className="text-sm font-bold opacity-60">›</span>
                 </button>
-
-                {reportsOpen && (
-                  <div className="mt-1 bg-[#f8fafd] rounded-2xl p-1.5 border border-slate-200/60 space-y-0.5 shadow-inner">
-                    {reportMenuItems.map((item) => {
-                      const isSelected = activeTab === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setActiveTab(item.id)}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between ${
-                            isSelected
-                              ? "bg-white text-[#00681c] font-bold shadow-sm border border-slate-200/80"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-                          }`}
-                        >
-                          <span>{item.label}</span>
-                          {isSelected && <span className="text-[10px] text-[#00681c]">●</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* SMS Wallet & Credits item matching user screenshot */}
-              <button
-                type="button"
-                onClick={() => setActiveTab("sms-wallet")}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold transition mt-1.5 ${
-                  activeTab === "sms-wallet"
-                    ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
-                    : "text-slate-700 hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base text-[#0b2f8a]">💬</span>
-                  <span className="text-[12px]">SMS Wallet & Credits</span>
-                </div>
-                <span className="text-sm font-bold opacity-60">›</span>
-              </button>
+              )}
             </nav>
           </div>
 
@@ -673,7 +1372,15 @@ export default function AdminDashboardPage() {
                 <span className="hover:text-[#0b2f8a] cursor-pointer">Vardayini Admin Desk</span>
                 <span>/</span>
                 <span className="text-[#0b2f8a] font-semibold capitalize">
-                  {activeTab.startsWith("report-")
+                  {activeTab === "admin-management"
+                    ? "Super Admin / Administrators"
+                    : activeTab === "activity-logs"
+                    ? "Super Admin / Activity Logs"
+                    : activeTab === "pages"
+                    ? "Content / CMS Pages"
+                    : activeTab === "reviews"
+                    ? "Customer Reviews & Ratings"
+                    : activeTab.startsWith("report-")
                     ? "Reports"
                     : activeTab === "sms-wallet"
                     ? "Communications"
@@ -688,31 +1395,35 @@ export default function AdminDashboardPage() {
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <div className="flex items-center gap-3 mt-1">
                 <h1 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#0b2f8a] tracking-tight flex items-center gap-2.5">
                   <span>
-                    {activeTab.startsWith("report-")
+                    {activeTab === "admin-management"
+                      ? "🛡️"
+                      : activeTab === "activity-logs"
+                      ? "📜"
+                      : activeTab === "pages"
+                      ? "📄"
+                      : activeTab.startsWith("report-")
                       ? "📊"
                       : activeTab === "sms-wallet"
                       ? "💬"
                       : navItems.find((n) => n.id === activeTab)?.icon}
                   </span>
                   <span>
-                    {activeTab.startsWith("report-")
+                    {activeTab === "admin-management"
+                      ? "Administrators & RBAC Management"
+                      : activeTab === "activity-logs"
+                      ? "Security & Activity Audit Logs"
+                      : activeTab === "pages"
+                      ? "Website CMS Pages & Policies"
+                      : activeTab.startsWith("report-")
                       ? reportMenuItems.find((m) => m.id === activeTab)?.label
                       : activeTab === "sms-wallet"
                       ? "SMS Wallet & Credits"
                       : navItems.find((n) => n.id === activeTab)?.label}
                   </span>
                 </h1>
-
-                {/* Notification Bell Icon right next to Dashboard Overview */}
-                <NotificationCenter
-                  onUnreadChange={setUnreadNotificationCount}
-                  onNavigateTab={(tab) => {
-                    setActiveTab(tab);
-                  }}
-                />
               </div>
             </div>
 
@@ -726,6 +1437,12 @@ export default function AdminDashboardPage() {
                 <span className={isLoading ? "animate-spin" : ""}>🔄</span>
                 <span>Sync with Store</span>
               </button>
+
+              {/* Notification Bell Icon on right side corner */}
+              <NotificationCenter
+                onUnreadChange={setUnreadNotificationCount}
+                onNavigateTab={handleTabChange}
+              />
             </div>
           </div>
 
@@ -756,83 +1473,366 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <>
+              {/* Read-Only Access Banner when admin has view-only permission */}
+              {isModulePermitted(activeTab) &&
+                !canManageModule(activeTab) &&
+                activeTab !== "overview" &&
+                activeTab !== "preview" && (
+                  <div className="mb-4 p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base shrink-0">👁️</span>
+                      <div>
+                        <span className="font-bold">Read-Only Mode:</span> Your account has View-Only permission for this module. You can inspect all data and settings, but creating, editing, and deleting are restricted by Super Admin policy.
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-amber-200/80 text-amber-950 font-extrabold text-[10px] tracking-wide uppercase shrink-0">
+                      👁️ View Only
+                    </span>
+                  </div>
+                )}
+
               {activeTab === "overview" && (
-                <OverviewTab
-                  config={config}
-                  orders={orders}
-                  products={products}
-                  inventory={inventory}
-                  stats={stats}
-                  isStoreOnline={isStoreOnline}
-                  onRefresh={loadData}
-                  onNavigateTab={(tab) => setActiveTab(tab as TabId)}
-                />
+                isModulePermitted("overview") ? (
+                  <OverviewTab
+                    config={config}
+                    orders={orders}
+                    products={products}
+                    inventory={inventory}
+                    stats={stats}
+                    isStoreOnline={isStoreOnline}
+                    onRefresh={loadData}
+                    onNavigateTab={handleTabChange}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Dashboard Overview" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "outlets" && (
+                isModulePermitted("outlets") ? (
+                  <OutletsTab />
+                ) : (
+                  <AccessRestrictedCard moduleName="Outlets & Stores" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "hero" && (
-                <HeroScrollerTab config={config} onRefresh={loadData} />
+                isModulePermitted("hero") ? (
+                  <HeroScrollerTab config={config} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Hero Banner Settings" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "announcements" && (
-                <AnnouncementsTab config={config} onRefresh={loadData} />
+                isModulePermitted("announcements") ? (
+                  <AnnouncementsTab config={config} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Announcements & Promos" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "category-showcase" && (
+                isModulePermitted("categories") || isModulePermitted("category-showcase") ? (
+                  <CategoriesTab
+                    categories={categories}
+                    products={products}
+                    config={config}
+                    initialSubTab="showcase"
+                    onRefresh={loadData}
+                    onSelectCategoryFilter={() => handleTabChange("products")}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Category Showcase (2x2)" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "bestsellers" && (
+                isModulePermitted("bestsellers") ? (
+                  <BestsellersTab
+                    config={config}
+                    onRefresh={loadData}
+                    currentUser={currentUser}
+                    products={products}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Customer Bestsellers" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "welcome-offer" && (
+                isModulePermitted("welcome-offer") ? (
+                  <WelcomeOfferTab config={config} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Welcome Offer (10% Off)" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "testimonials-manager" && (
+                isModulePermitted("testimonials-manager") ? (
+                  <TestimonialsTab config={config} onRefresh={loadData} currentUser={currentUser} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Customer Testimonials" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "new-launches" && (
+                isModulePermitted("new-launches") ? (
+                  <NewLaunchTab config={config} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="New Launches (2026)" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "special-items" && (
-                <SpecialItemsTab
-                  config={config}
-                  products={products}
-                  onRefresh={loadData}
-                />
+                isModulePermitted("special-items") ? (
+                  <SpecialItemsTab
+                    config={config}
+                    products={products}
+                    onRefresh={loadData}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Our Special Items" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "festivals" && (
+                isModulePermitted("festivals") ? (
+                  <FestivalsTab
+                    config={config}
+                    onRefresh={loadData}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Festival Specials" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "branding" && (
-                <StoreBrandingTab config={config} onRefresh={loadData} />
+                isModulePermitted("branding") ? (
+                  <StoreBrandingTab config={config} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Store Branding & Identity" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "categories" && (
-                <CategoriesTab
-                  categories={categories}
-                  products={products}
-                  onRefresh={loadData}
-                  onSelectCategoryFilter={() => setActiveTab("products")}
-                />
+                isModulePermitted("categories") ? (
+                  <CategoriesTab
+                    categories={categories}
+                    products={products}
+                    config={config}
+                    isReadOnly={!canManageModule("categories")}
+                    onRefresh={loadData}
+                    onSelectCategoryFilter={() => handleTabChange("products")}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Categories" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "products" && (
-                <ProductsTab
-                  products={products}
-                  inventory={inventory}
-                  categories={categories}
-                  config={config}
-                  onRefresh={loadData}
-                />
+                isModulePermitted("products") ? (
+                  <ProductsTab
+                    products={products}
+                    inventory={inventory}
+                    categories={categories}
+                    config={config}
+                    initialStockFilter={productStockFilter}
+                    isReadOnly={!canManageModule("products")}
+                    onRefresh={loadData}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Products & Stock" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "orders" && (
-                <OrdersTab orders={orders} onRefresh={loadData} />
+                isModulePermitted("orders") ? (
+                  <OrdersTab orders={orders} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Orders Desk" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "pickups" && (
+                isModulePermitted("pickups") ? (
+                  <PickupsTab />
+                ) : (
+                  <AccessRestrictedCard moduleName="Store Pickups Management" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "reviews" && (
+                isModulePermitted("reviews") ? (
+                  <ReviewsTab onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Customer Reviews" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "customers" && (
-                <CustomersTab customers={customers} onRefresh={loadData} />
+                isModulePermitted("customers") ? (
+                  <CustomersTab customers={customers} onRefresh={loadData} currentUser={currentUser} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Customer Directory" currentUser={currentUser} />
+                )
               )}
 
               {activeTab === "preview" && <LivePreviewTab />}
 
               {activeTab.startsWith("report-") && (
-                <ReportsTab
-                  reportType={activeTab.replace("report-", "") as ReportType}
-                  orders={orders}
-                  products={products}
-                  inventory={inventory}
-                  stats={stats}
-                />
+                isModulePermitted(activeTab) ? (
+                  <ReportsTab
+                    reportType={activeTab.replace("report-", "") as ReportType}
+                    orders={orders}
+                    products={products}
+                    inventory={inventory}
+                    stats={stats}
+                    customers={customers}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Analytics & Reports" currentUser={currentUser} />
+                )
               )}
 
-              {activeTab === "sms-wallet" && <SmsWalletTab />}
+              {activeTab === "admin-management" && (
+                currentUser?.role === "super_admin" ? (
+                  <AdminManagementTab
+                    currentUserId={currentUser?.id}
+                    currentUserRole={currentUser?.role}
+                    onLogout={handleLogout}
+                  />
+                ) : (
+                  <div className="p-8 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-center shadow-sm">
+                    <div className="text-3xl mb-2">🚫</div>
+                    <h3 className="font-bold text-base mb-1">403 Forbidden: Access Restricted</h3>
+                    <p className="text-xs text-rose-700 max-w-md mx-auto">
+                      Administrator management is reserved exclusively for the system Super Admin. Your account role does not have authorization to view or alter administrator credentials.
+                    </p>
+                  </div>
+                )
+              )}
+
+              {activeTab === "activity-logs" && (
+                currentUser?.role === "super_admin" ? (
+                  <ActivityLogsTab />
+                ) : (
+                  <div className="p-8 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-center shadow-sm">
+                    <div className="text-3xl mb-2">🚫</div>
+                    <h3 className="font-bold text-base mb-1">403 Forbidden: Access Restricted</h3>
+                    <p className="text-xs text-rose-700 max-w-md mx-auto">
+                      Security audit logs can only be inspected by the Super Admin account.
+                    </p>
+                  </div>
+                )
+              )}
+
+              {activeTab === "pages" && (
+                isModulePermitted("pages") ? (
+                  <PagesTab />
+                ) : (
+                  <AccessRestrictedCard moduleName="CMS Pages & Policies" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "sms-wallet" && (
+                isModulePermitted("sms-wallet") ? (
+                  <SmsWalletTab />
+                ) : (
+                  <AccessRestrictedCard moduleName="SMS Communications & Wallet" currentUser={currentUser} />
+                )
+              )}
             </>
           )}
         </main>
       </div>
+
+      {/* Mandatory Forced Password Change Modal */}
+      {currentUser?.mustChangePassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-[#0b2f8a] to-[#103a9f] p-6 text-white text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-400 text-gray-900 text-2xl shadow-md mb-3">
+                🔐
+              </div>
+              <h3 className="text-lg font-bold">Mandatory Password Change</h3>
+              <p className="text-white/80 text-xs mt-1">
+                Your administrator account requires a new password before you can proceed.
+              </p>
+            </div>
+
+            <form onSubmit={handleForcePasswordChange} className="p-6 flex flex-col gap-4 text-xs">
+              {changePasswordError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-medium">
+                  {changePasswordError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-1">
+                  Current / Temporary Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={changePasswordOld}
+                  onChange={(e) => setChangePasswordOld(e.target.value)}
+                  placeholder="Enter current password"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/30 focus:border-[#0b2f8a]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-1">
+                  New Secure Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={changePasswordNew}
+                  onChange={(e) => setChangePasswordNew(e.target.value)}
+                  placeholder="Minimum 8 characters"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/30 focus:border-[#0b2f8a]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-1">
+                  Confirm New Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={changePasswordConfirm}
+                  onChange={(e) => setChangePasswordConfirm(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/30 focus:border-[#0b2f8a]"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={changePasswordLoading}
+                  className="w-full py-2.5 rounded-xl btn-gold font-bold shadow-sm transition disabled:opacity-50 text-xs"
+                >
+                  {changePasswordLoading ? "Updating Password..." : "Set New Password & Proceed"}
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-gray-800 text-[11px] font-medium underline"
+                >
+                  Cancel and Sign Out
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

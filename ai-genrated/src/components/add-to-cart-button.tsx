@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Magnetic } from "@/components/core/magnetic";
 
 export function AddToCartButton({
   variantId,
@@ -51,18 +52,20 @@ export function AddToCartButton({
   }
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={add}
-        disabled={disabled || status === "loading"}
-        className={
-          className ||
-          "btn-primary w-full rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-        }
-      >
-        {status === "loading" ? "Adding..." : status === "done" ? "Added" : label}
-      </button>
+    <div className="w-full">
+      <Magnetic className="w-full">
+        <button
+          type="button"
+          onClick={add}
+          disabled={disabled || status === "loading"}
+          className={
+            className ||
+            "btn-primary w-full min-h-[44px] flex items-center justify-center rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          }
+        >
+          {status === "loading" ? "Adding..." : status === "done" ? "Added" : label}
+        </button>
+      </Magnetic>
       {status === "error" ? <p className="mt-1 text-xs text-[#6b1d1d]">{message}</p> : null}
     </div>
   );

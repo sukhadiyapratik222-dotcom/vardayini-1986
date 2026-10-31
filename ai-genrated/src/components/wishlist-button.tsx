@@ -43,7 +43,7 @@ export function WishlistButton({ productId }: { productId: number }) {
     <button
       onClick={toggle}
       disabled={loading}
-      className="rounded-full border border-[#6b1d1d]/20 px-4 py-2.5 text-sm hover:bg-[#fff8ee] disabled:opacity-50"
+      className="min-h-[44px] flex items-center justify-center rounded-full border border-[#6b1d1d]/20 px-5 py-2.5 text-sm font-medium hover:bg-[#fff8ee] disabled:opacity-50 transition cursor-pointer"
     >
       {loading ? "Updating..." : msg || "Save to wishlist"}
     </button>

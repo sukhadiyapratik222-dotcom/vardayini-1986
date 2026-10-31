@@ -35,7 +35,7 @@ export async function POST(
   const guestCartId = cookieStore.get("vs_cart")?.value;
 
   let isAllowed = false;
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     isAllowed = true;
   } else if (order.userId) {
     if (user?.id === order.userId) {
@@ -109,14 +109,15 @@ export async function POST(
   const reqType = body.type === "exchange" ? "Exchange" : "Return";
   const sanitizedReason = `${reqType}: ${body.reason.trim()}${body.comments ? ` - ${body.comments.trim()}` : ""}`.slice(0, 300);
 
-  const [updatedOrder] = await db
+  await db
     .update(orders)
     .set({
       returnStatus: "requested",
       returnReason: sanitizedReason,
     })
-    .where(eq(orders.id, order.id))
-    .returning();
+    .where(eq(orders.id, order.id));
+
+  const [updatedOrder] = await db.select().from(orders).where(eq(orders.id, order.id)).limit(1);
 
   // Log status history
   await logOrderStatusHistory(
@@ -124,7 +125,7 @@ export async function POST(
     "return_requested",
     `Customer initiated ${reqType.toLowerCase()} request: ${sanitizedReason}`,
     "Customer Support Desk",
-    user?.role === "admin" ? "admin" : "customer"
+    user?.role === "super_admin" ? "super_admin" : user?.role === "admin" ? "admin" : "customer"
   );
 
   return Response.json({

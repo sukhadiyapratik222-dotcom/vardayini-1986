@@ -44,8 +44,8 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
             key={variant.id}
             type="button"
             onClick={() => handleSelectVariant(variant)}
-            className={`rounded-full px-4 py-2 text-sm ${
-              variant.id === selected.id ? "bg-[#6b1d1d] text-[#fff8ee]" : "mithai-card"
+            className={`min-h-[44px] flex items-center rounded-full px-4 py-2.5 text-sm font-medium transition cursor-pointer ${
+              variant.id === selected.id ? "bg-[#6b1d1d] text-[#fff8ee] shadow-sm" : "mithai-card hover:bg-slate-50"
             }`}
           >
             {variant.weight}
@@ -57,27 +57,29 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
       ) : (
         <p className="text-xs text-[#2a1a12]/55">{selected.stock} packs left</p>
       )}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center rounded-full border border-[#6b1d1d]/15">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center justify-center self-start rounded-full border border-[#6b1d1d]/15 bg-white shadow-xs">
           <button
             type="button"
-            className="px-3 py-2 disabled:opacity-40"
+            className="min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center px-3 font-bold text-base disabled:opacity-40 cursor-pointer"
             disabled={isOutOfStock || qty <= 1}
             onClick={() => setQty((q) => Math.max(1, q - 1))}
+            aria-label="Decrease quantity"
           >
             −
           </button>
-          <span className="w-8 text-center">{isOutOfStock ? 0 : qty}</span>
+          <span className="w-8 text-center font-semibold text-sm">{isOutOfStock ? 0 : qty}</span>
           <button
             type="button"
-            className="px-3 py-2 disabled:opacity-40"
+            className="min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center px-3 font-bold text-base disabled:opacity-40 cursor-pointer"
             disabled={isOutOfStock || qty >= selected.stock}
             onClick={() => setQty((q) => Math.min(selected.stock, q + 1))}
+            aria-label="Increase quantity"
           >
             +
           </button>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           <AddToCartButton
             variantId={selected.id}
             quantity={isOutOfStock ? 0 : qty}

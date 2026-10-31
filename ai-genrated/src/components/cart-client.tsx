@@ -12,6 +12,7 @@ type CartState = {
   totals: { subtotal: number; discount: number; tax: number; deliveryFee: number; total: number };
   couponCode: string | null;
   couponLabel: string | null;
+  user?: { id: number; name: string; phone: string; email: string } | null;
 };
 
 export function CartClient({ initial }: { initial: CartState }) {
@@ -115,50 +116,55 @@ export function CartClient({ initial }: { initial: CartState }) {
           </div>
         ) : null}
         {cart.lines.map((line) => (
-          <article key={line.id} className="mithai-card flex gap-4 rounded-3xl p-4">
-            <div className="relative h-24 w-24 overflow-hidden rounded-2xl">
-              <Image src={line.imageUrl} alt={line.name} fill className="object-cover" />
+          <article key={line.id} className="mithai-card flex flex-col sm:flex-row gap-3 sm:gap-4 rounded-2xl sm:rounded-3xl p-3 sm:p-4">
+            <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+              <div className="relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl sm:rounded-2xl shrink-0 bg-slate-50">
+                <Image src={line.imageUrl} alt={line.name} fill className="object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Link href={`/shop/${line.slug}`} className="font-[family-name:var(--font-display)] text-lg sm:text-2xl text-[#6b1d1d] font-bold hover:underline line-clamp-1">
+                  {line.name}
+                </Link>
+                <p className="text-xs sm:text-sm text-[#2a1a12]/60">{line.weight}</p>
+                <p className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-base text-[#182230]">{formatInr(line.unit)}</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <Link href={`/shop/${line.slug}`} className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">
-                {line.name}
-              </Link>
-              <p className="text-sm text-[#2a1a12]/60">{line.weight}</p>
-              <p className="mt-1 font-medium">{formatInr(line.unit)}</p>
-              <div className="mt-3 flex items-center gap-3">
+
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   aria-label="Decrease quantity"
                   disabled={loading}
                   onClick={() => updateQty(line.id, line.quantity - 1)}
-                  className="h-8 w-8 rounded-full border disabled:opacity-50"
+                  className="min-h-[36px] min-w-[36px] h-9 w-9 sm:min-h-[44px] sm:min-w-[44px] sm:h-11 sm:w-11 rounded-full border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center font-bold text-base disabled:opacity-50 transition cursor-pointer shadow-xs"
                 >
                   −
                 </button>
-                <span>{line.quantity}</span>
+                <span className="font-bold text-xs sm:text-sm min-w-[20px] text-center">{line.quantity}</span>
                 <button
                   type="button"
                   aria-label="Increase quantity"
                   disabled={loading}
                   onClick={() => updateQty(line.id, line.quantity + 1)}
-                  className="h-8 w-8 rounded-full border disabled:opacity-50"
+                  className="min-h-[36px] min-w-[36px] h-9 w-9 sm:min-h-[44px] sm:min-w-[44px] sm:h-11 sm:w-11 rounded-full border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center font-bold text-base disabled:opacity-50 transition cursor-pointer shadow-xs"
                 >
                   +
                 </button>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => remove(line.id)}
-                  className="ml-auto text-xs text-[#c45c26] disabled:opacity-50"
-                >
-                  Remove
-                </button>
               </div>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => remove(line.id)}
+                className="text-xs font-semibold text-[#c45c26] hover:text-[#9e3a10] min-h-[36px] sm:min-h-[44px] px-2.5 flex items-center disabled:opacity-50 cursor-pointer transition"
+              >
+                Remove
+              </button>
             </div>
           </article>
         ))}
       </div>
-      <aside className="mithai-card h-fit rounded-3xl p-6">
+      <aside className="mithai-card h-fit rounded-2xl sm:rounded-3xl p-4 sm:p-6">
         <h2 className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">Bill</h2>
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between">
@@ -186,24 +192,27 @@ export function CartClient({ initial }: { initial: CartState }) {
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="Coupon"
+            placeholder="Coupon (e.g. FESTIVE15)"
             disabled={loading}
-            className="flex-1 rounded-full border border-[#6b1d1d]/15 px-3 py-2 text-sm disabled:opacity-50"
+            className="flex-1 min-h-[44px] rounded-full border border-[#6b1d1d]/15 px-4 py-2.5 text-sm disabled:opacity-50 outline-none focus:border-[#0b2f8a]"
           />
           <button
             type="button"
             onClick={applyCoupon}
             disabled={loading}
-            className="rounded-full border px-4 text-sm disabled:opacity-50"
+            className="min-h-[44px] rounded-full border border-[#0b2f8a] bg-[#0b2f8a] text-white hover:bg-[#071c54] px-5 text-sm font-semibold disabled:opacity-50 transition cursor-pointer"
           >
             {loading ? "..." : "Apply"}
           </button>
         </div>
-        {cart.couponLabel ? <p className="mt-2 text-xs text-[#2f4a3c]">{cart.couponLabel}</p> : null}
-        {error ? <p className="mt-2 text-xs text-[#6b1d1d]">{error}</p> : null}
+        {cart.couponLabel ? <p className="mt-2 text-xs font-semibold text-[#2f4a3c]">✓ {cart.couponLabel}</p> : null}
+        {error ? <p className="mt-2 text-xs font-semibold text-[#6b1d1d]">✕ {error}</p> : null}
         <p className="mt-3 text-xs text-[#2a1a12]/50">Try FESTIVE15, MITHAI50 or FREEDEL</p>
-        <Link href="/checkout" className="btn-primary mt-6 block rounded-full py-3 text-center text-sm">
-          Checkout
+        <Link
+          href={cart.user ? "/checkout" : "/login?redirect=/checkout"}
+          className="btn-primary mt-6 min-h-[48px] flex items-center justify-center rounded-full py-3 text-center text-sm font-semibold transition"
+        >
+          {cart.user ? "Proceed to Checkout" : "Login"}
         </Link>
       </aside>
     </div>

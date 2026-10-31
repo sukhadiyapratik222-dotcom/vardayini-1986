@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatInr, unitPrice } from "@/lib/money";
+import { Magnetic } from "@/components/core/magnetic";
 
 export interface ProductOptionVariant {
   id: number;
@@ -80,27 +81,27 @@ export function ProductOptionsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl z-10 border border-[#3b1e54]/10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl z-10 border border-[#3b1e54]/10 animate-in zoom-in-95 duration-200">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+          className="absolute top-3.5 right-3.5 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
           aria-label="Close"
         >
           ✕
         </button>
 
-        <div className="p-6 sm:p-7 space-y-4">
-          <div className="flex gap-4 items-start">
-            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-[#faf6ee] border border-slate-100">
+        <div className="p-4 sm:p-7 space-y-3.5 sm:space-y-4">
+          <div className="flex gap-3 sm:gap-4 items-start">
+            <div className="relative h-18 w-18 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-2xl bg-[#faf6ee] border border-slate-100">
               {product.imageUrl ? (
                 <Image
                   src={product.imageUrl}
@@ -117,14 +118,14 @@ export function ProductOptionsModal({
 
             <div className="flex-1 min-w-0 pr-6">
               {product.categoryName && (
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#d97706]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#b45309]">
                   {product.categoryName}
                 </span>
               )}
-              <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-[#24142e] leading-snug">
+              <h3 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-[#24142e] leading-snug">
                 {product.name}
               </h3>
-              <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+              <p className="mt-1 text-xs text-slate-600 line-clamp-2">
                 {product.description}
               </p>
             </div>
@@ -162,7 +163,7 @@ export function ProductOptionsModal({
                         {formatInr(vPrice)}
                       </span>
                       {v.discountedPrice && (
-                        <span className="block text-[10px] text-slate-400 line-through">
+                        <span className="block text-[10px] text-slate-500 line-through">
                           {formatInr(v.price)}
                         </span>
                       )}
@@ -212,14 +213,16 @@ export function ProductOptionsModal({
 
           {/* Add to Cart CTA */}
           <div className="pt-2 space-y-2">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleAdd}
-              className="btn-purple w-full rounded-2xl py-3 text-xs sm:text-sm font-bold shadow-md cursor-pointer disabled:opacity-50"
-            >
-              {loading ? "Adding to Cart..." : `Add to Cart • ${formatInr(totalPrice)}`}
-            </button>
+            <Magnetic className="w-full">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleAdd}
+                className="btn-purple w-full rounded-2xl py-3 text-xs sm:text-sm font-bold shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {loading ? "Adding to Cart..." : `Add to Cart • ${formatInr(totalPrice)}`}
+              </button>
+            </Magnetic>
 
             <Link
               href={`/shop/${product.slug}`}

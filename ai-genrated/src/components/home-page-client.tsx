@@ -3,12 +3,38 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { WarmCreamHomepage, HomepageProductData } from "@/components/warm-cream-homepage";
+import { HeritageGlassHero } from "@/components/heritage-glass-hero";
 import { HeritageHeroBanner } from "@/components/heritage-hero-banner";
+import { ProductListMarquee } from "@/components/product-list-marquee";
 import { MainHeroSection } from "@/components/main-hero-section";
+import { CulinaryExperienceSection } from "@/components/culinary-experience-section";
 import { FestiveSeasonHomeSection } from "@/components/festive-season-home-section";
 import { ProductCard } from "@/components/product-card";
 import { formatInr } from "@/lib/money";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselNavigation,
+  CarouselIndicator,
+  CarouselItem,
+} from "@/components/core/carousel";
+import {
+  MorphingDialog,
+  MorphingDialogTrigger,
+  MorphingDialogContent,
+  MorphingDialogTitle,
+  MorphingDialogImage,
+  MorphingDialogSubtitle,
+  MorphingDialogClose,
+  MorphingDialogContainer,
+} from "@/components/core/morphing-dialog";
+import { ScrollArea } from "@/components/website/scroll-area";
+import { OutletsSection } from "@/components/outlets-section";
+import { TestimonialsSection } from "@/components/testimonials-section";
+import { CustomerBestsellersSection } from "@/components/customer-bestsellers-section";
+import { BrowseByCategorySection } from "@/components/browse-by-category-section";
 
 interface CategoryItem {
   id: number;
@@ -34,6 +60,9 @@ interface HomePageClientProps {
   bestsellers: HomepageProductData[];
   specialItemsConfig?: SpecialItemsConfig;
   specialProducts?: HomepageProductData[];
+  stores?: any[];
+  reviews?: any[];
+  uiConfig?: any;
 }
 
 export function HomePageClient({
@@ -42,7 +71,11 @@ export function HomePageClient({
   bestsellers,
   specialItemsConfig,
   specialProducts = [],
+  stores = [],
+  reviews = [],
+  uiConfig,
 }: HomePageClientProps) {
+  const router = useRouter();
   // UI Design mode: "warm-cream" (New 2026 Redesign) vs "classic" (Royal Navy Heritage)
   const [uiDesign, setUiDesign] = useState<"warm-cream" | "classic">("warm-cream");
   const [mounted, setMounted] = useState(false);
@@ -78,6 +111,9 @@ export function HomePageClient({
         bestsellers={bestsellers}
         specialItemsConfig={specialItemsConfig}
         specialProducts={specialProducts}
+        stores={stores}
+        reviews={reviews}
+        uiConfig={uiConfig}
         onToggleUiDesign={toggleUiDesign}
         currentUiDesign={uiDesign}
       />
@@ -86,106 +122,85 @@ export function HomePageClient({
 
   // 2. Classic Royal Navy & Gold Design
   return (
-    <div className="space-y-16 pb-20">
-      {/* Design Switcher Top Bar for Classic Theme */}
-      <aside aria-label="Design System Switcher" className="bg-[#0b2f8a] text-white px-4 py-2 text-xs border-b border-[#dfb755]/30">
-        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-[#dfb755] animate-pulse" />
-            <span>
-              Active Design: <strong>Royal Navy &amp; Gold (Heritage Classic)</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-slate-200">Switch to the new Warm Cream &amp; Deep-Purple design:</span>
-            <button
-              type="button"
-              onClick={toggleUiDesign}
-              className="rounded-full bg-[#dfb755] hover:bg-[#b89130] text-slate-950 px-3 py-1 font-bold text-[11px] shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>🎨</span>
-              <span>Switch to Warm Cream UI</span>
-            </button>
-          </div>
-        </div>
-      </aside>
+    <div className="pb-20 w-full max-w-full overflow-x-hidden">
 
       {/* Heritage Craftsmanship Hero Banner */}
-      <HeritageHeroBanner />
+      <HeritageGlassHero />
 
-      {/* Featured Showcase Section */}
-      <MainHeroSection />
+      {/* Artisan Product List Marquee (.bb-marquee) */}
+      <ProductListMarquee variant="basil" />
+
+      {/* Main Content Sections with balanced spacing */}
+      <div className="space-y-6 sm:space-y-10">
+        {/* Featured Showcase Section */}
+        <MainHeroSection />
+
+      {/* Elevating The Culinary Experience Pillars Section */}
+      {uiConfig?.culinaryPillars?.enabled !== false && <CulinaryExperienceSection />}
 
       {/* Indian Festive Season Specials Showcase Section */}
       <FestiveSeasonHomeSection />
 
-      {/* Category Pills Bar */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between pb-4">
-          <div>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-[#182230]">
-              Browse By Category
-            </h2>
-            <p className="text-sm text-[#5e6d82]">
-              Select from our freshly rolled sweets and steaming hot snacks
-            </p>
-          </div>
-          <Link
-            href="/shop"
-            className="text-sm font-semibold text-[#0b2f8a] hover:underline"
-          >
-            View Full Menu →
-          </Link>
-        </div>
-
-        <div className="flex flex-wrap gap-2.5 pt-2">
-          <Link href="/shop" className="category-pill active">
-            All Items
-          </Link>
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/shop?category=${cat.slug}`}
-              className="category-pill"
-            >
-              {cat.name}
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* 2x2 Grid Category Showcase with Real Food Photography */}
+      {uiConfig?.browseByCategory?.enabled !== false && (
+        <BrowseByCategorySection
+          config={uiConfig?.browseByCategory}
+          subcategories={categories}
+        />
+      )}
 
       {/* Our Special Items Container - Placed directly above Fresh Daily Specials */}
       {specialItemsConfig?.enabled !== false && specialProducts && specialProducts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8">
+          {/* Section Header: Title on Left, Link Button on Right */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
-              <span className="inline-block text-xs font-bold uppercase tracking-wider text-[#b89130] bg-[#dfb755]/15 px-3 py-1 rounded-full border border-[#dfb755]/30">
-                {specialItemsConfig?.badge || "Karigars' Special Selection"}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b89130] bg-[#dfb755]/15 px-3.5 py-1 rounded-full border border-[#dfb755]/30 shadow-xs mb-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#dfb755] animate-pulse" />
+                {specialItemsConfig?.badge || "Customers' Special Selection"}
               </span>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold text-[#182230] sm:text-4xl flex items-center gap-2">
+              <h2 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[#182230] sm:text-4xl flex items-center gap-2 tracking-tight">
                 <span>{specialItemsConfig?.title || "Our Special Items"}</span>
-                <span className="text-xl">✨</span>
+                <span className="text-2xl drop-shadow-sm select-none">✨</span>
               </h2>
               {specialItemsConfig?.subtitle && (
-                <p className="mt-1 text-sm text-[#5e6d82]">
+                <p className="mt-2 text-sm text-[#5e6d82] max-w-xl leading-relaxed">
                   {specialItemsConfig.subtitle}
                 </p>
               )}
             </div>
-            <Link
-              href={specialItemsConfig?.linkUrl || "/shop"}
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-[#0b2f8a] hover:text-[#b89130] transition group"
-            >
-              <span>{specialItemsConfig?.linkText || "See all special items →"}</span>
-              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-            </Link>
+            <div className="shrink-0 self-start sm:self-end">
+              <Link
+                href={specialItemsConfig?.linkUrl || "/shop"}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#0b2f8a] hover:text-[#b89130] transition group bg-[#0b2f8a]/5 hover:bg-[#0b2f8a]/10 px-4 py-2 rounded-full border border-[#0b2f8a]/10 shadow-xs"
+              >
+                <span>{(specialItemsConfig?.linkText || "See all special items").replace(/[→\->\s]+$/, "")}</span>
+                <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+              </Link>
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {specialProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="relative pb-12 overflow-hidden px-2 sm:px-5 md:px-8">
+            <Carousel
+              autoplay={true}
+              autoplayInterval={3500}
+              pauseOnHover={true}
+              loop={true}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-3 sm:-ml-4 py-3 sm:py-4">
+                {specialProducts.map((product) => (
+                  <CarouselItem
+                    key={product.id}
+                    className="pl-3 sm:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+                  >
+                    <ProductCard product={product} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselNavigation alwaysShow />
+              <CarouselIndicator className="-bottom-5" />
+            </Carousel>
           </div>
         </section>
       )}
@@ -195,7 +210,7 @@ export function HomePageClient({
         <div className="flex items-end justify-between mb-8">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#0b2f8a]">
-              Karigars&apos; Choice
+              Customers&apos; Choice
             </span>
             <h2 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[#182230] sm:text-4xl">
               Fresh Daily Specials
@@ -250,51 +265,22 @@ export function HomePageClient({
         </div>
       </section>
 
-      {/* House Bestsellers Ranking */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-[#182230]">
-          Customer Favorites
-        </h2>
-        <p className="mt-1 text-sm text-[#5e6d82]">
-          Our most-ordered boxes across Vadodara &amp; Ahmedabad
-        </p>
+      {/* Customer Bestsellers ("MOST LOVED") */}
+      {uiConfig?.bestsellersSection?.enabled !== false && (
+        <CustomerBestsellersSection config={uiConfig?.bestsellersSection} />
+      )}
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {bestsellers.map((product, index) => (
-            <Link
-              key={product.id}
-              href={`/shop/${product.slug}`}
-              className="mithai-card flex items-center gap-4 p-4 hover:border-[#0b2f8a]/30"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef3ff] font-[family-name:var(--font-display)] text-xl font-bold text-[#0b2f8a]">
-                #{index + 1}
-              </span>
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#faf7f0]">
-                {product.imageUrl ? (
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl">
-                    🍬
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate font-semibold text-[#182230]">{product.name}</p>
-                <p className="text-xs text-[#5e6d82]">{product.categoryName}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-[#0b2f8a]">{formatInr(product.fromPrice)}</p>
-                <span className="text-[11px] text-[#5e6d82]">View Box →</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Testimonials */}
+      {uiConfig?.testimonialsSection?.enabled !== false && (
+        <TestimonialsSection
+          config={uiConfig?.testimonialsSection}
+          initialReviews={reviews}
+        />
+      )}
+
+      {/* Outlets & Store Locations */}
+      <OutletsSection initialStores={stores} />
+      </div>
     </div>
   );
 }

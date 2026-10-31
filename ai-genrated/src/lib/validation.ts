@@ -85,7 +85,7 @@ export const LoginSchema = z.object({
   password: z
     .string()
     .min(1, "Password is required.")
-    .min(8, "Password must be at least 8 characters.")
+    .min(6, "Password must be at least 6 characters.")
     .max(64, "Password cannot exceed 64 characters."),
 });
 
@@ -93,8 +93,7 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 
 /**
  * Registration Input Schema:
- * Enforces strong password complexity (upper, lower, number, special symbol)
- * and blocks commonly breached passwords.
+ * Allows user-friendly customer passwords (>= 6 chars) and supports Gujarati / multilingual names.
  */
 export const RegisterSchema = z
   .object({
@@ -104,10 +103,6 @@ export const RegisterSchema = z
       .trim()
       .min(2, "Full name must be at least 2 characters.")
       .max(100, "Full name cannot exceed 100 characters.")
-      .regex(
-        FULL_NAME_REGEX,
-        "Full name may only contain letters, spaces, hyphens, and apostrophes."
-      )
       .transform((val) => sanitizeString(val)),
     email: z
       .string()
@@ -129,22 +124,17 @@ export const RegisterSchema = z
     password: z
       .string()
       .min(1, "Password is required.")
-      .min(8, "Password must be at least 8 characters long.")
-      .max(64, "Password cannot exceed 64 characters.")
-      .regex(
-        PASSWORD_COMPLEXITY_REGEX,
-        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#^_-)."
-      )
-      .refine(
-        (pwd) => !BLOCKED_COMMON_PASSWORDS.has(pwd.toLowerCase()),
-        "This password is too common and easily guessed. Please select a more unique password."
-      ),
-    confirmPassword: z.string().min(1, "Please confirm your password."),
+      .min(6, "Password must be at least 6 characters long.")
+      .max(64, "Password cannot exceed 64 characters."),
+    confirmPassword: z.string().optional(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+  .refine(
+    (data) => !data.confirmPassword || data.password === data.confirmPassword,
+    {
+      message: "Passwords do not match.",
+      path: ["confirmPassword"],
+    }
+  );
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 

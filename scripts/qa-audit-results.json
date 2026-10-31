@@ -1,0 +1,391 @@
+{
+  "timestamp": "2026-10-23T18:54:33.336Z",
+  "environment": {
+    "storefront": "http://127.0.0.1:9449",
+    "admin": "http://127.0.0.1:3001",
+    "nodeVersion": "v24.21.0"
+  },
+  "phase1_discovery": [
+    {
+      "testName": "Discovery: Home Page (/)",
+      "passed": true,
+      "status": 200,
+      "duration": 516,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Mithai & Farsan Catalog (/shop)",
+      "passed": true,
+      "status": 200,
+      "duration": 403,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Festivals & Occasions (/festivals)",
+      "passed": true,
+      "status": 200,
+      "duration": 325,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Shopping Cart (/cart)",
+      "passed": true,
+      "status": 200,
+      "duration": 264,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Secure Checkout (/checkout)",
+      "passed": true,
+      "status": 307,
+      "duration": 271,
+      "authRequired": true,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Customer Login (/login)",
+      "passed": true,
+      "status": 200,
+      "duration": 332,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Customer Registration (/register)",
+      "passed": true,
+      "status": 200,
+      "duration": 369,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Customer Account Dashboard (/account)",
+      "passed": true,
+      "status": 307,
+      "duration": 427,
+      "authRequired": true,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Password Recovery (/forgot-password)",
+      "passed": true,
+      "status": 200,
+      "duration": 407,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Reset Password (/reset-password)",
+      "passed": true,
+      "status": 200,
+      "duration": 395,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Heritage Outlets Directory (/stores)",
+      "passed": true,
+      "status": 200,
+      "duration": 1069,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Live Order Tracker (/track)",
+      "passed": true,
+      "status": 200,
+      "duration": 969,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Customer Wishlist (/wishlist)",
+      "passed": true,
+      "status": 307,
+      "duration": 1064,
+      "authRequired": true,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Store & Purity Policies (/policies)",
+      "passed": true,
+      "status": 200,
+      "duration": 910,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: New Arrivals Showcase (/new-arrivals)",
+      "passed": true,
+      "status": 200,
+      "duration": 877,
+      "authRequired": false,
+      "bug": null
+    },
+    {
+      "testName": "Discovery: Order History Index (/orders)",
+      "passed": true,
+      "status": 307,
+      "duration": 296,
+      "authRequired": true,
+      "bug": null
+    }
+  ],
+  "phase2_functional": [
+    {
+      "testName": "Branding: UI Config API returns Vardayini Store Info & Heritage Attributes",
+      "passed": true,
+      "storeName": "Vardayini Sweet Mart",
+      "tagline": "Pure Ghee Gujarati Mithai & Live Morning Farsan",
+      "duration": 81
+    },
+    {
+      "testName": "Assets: Category & Banner Media Files Exist on Server Disk",
+      "passed": true,
+      "missingCount": 0,
+      "samples": [],
+      "bug": null
+    },
+    {
+      "testName": "Catalog: Products List API returns active sweets (16 items)",
+      "passed": true,
+      "itemCount": 16,
+      "duration": 199
+    },
+    {
+      "testName": "Catalog: Product Detail API resolves for top items (5/5)",
+      "passed": true,
+      "testedCount": 5
+    },
+    {
+      "testName": "Search: Exact keyword 'Kaju' returns matching mithai items",
+      "passed": true,
+      "resultsFound": 2,
+      "duration": 132
+    },
+    {
+      "testName": "Search: Partial prefix 'kaj' handles smoothly without error",
+      "passed": true,
+      "duration": 89
+    },
+    {
+      "testName": "Search: Special characters query handled safely",
+      "passed": true,
+      "duration": 79
+    },
+    {
+      "testName": "Search: Non-matching query returns clean zero-results array",
+      "passed": true
+    },
+    {
+      "testName": "Auth: Customer Registration with valid 10-digit mobile & credentials",
+      "passed": true,
+      "status": 200,
+      "email": "qa_patron_1792781685080@vardayini-test.com",
+      "duration": 625,
+      "bug": null
+    },
+    {
+      "testName": "Auth: Duplicate email registration rejected with HTTP 400/409",
+      "passed": true,
+      "status": 409
+    },
+    {
+      "testName": "Auth: Customer Login returns active session & set-cookie",
+      "passed": {
+        "id": 19,
+        "name": "Radha Sharma",
+        "email": "qa_patron_1792781685080@vardayini-test.com",
+        "phone": "9825144556",
+        "role": "customer",
+        "status": "active",
+        "mustChangePassword": false,
+        "accessType": "full",
+        "permissions": []
+      },
+      "status": 200,
+      "duration": 408
+    },
+    {
+      "testName": "Auth: Session Profile Verification (/api/auth/me) returns authenticated user",
+      "passed": true,
+      "status": 200,
+      "userEmail": "qa_patron_1792781685080@vardayini-test.com"
+    },
+    {
+      "testName": "Cart: Add item to cart (Quantity: 2) successfully updates cart state",
+      "passed": true,
+      "status": 200,
+      "duration": 581
+    },
+    {
+      "testName": "Cart: Cart persistence verified (1 line items)",
+      "passed": true,
+      "itemsCount": 1,
+      "totals": {
+        "subtotal": 1300,
+        "discount": 0,
+        "tax": 65,
+        "deliveryFee": 0,
+        "total": 1365
+      }
+    },
+    {
+      "testName": "Cart: Update line item quantity (PATCH to quantity: 4)",
+      "passed": true
+    },
+    {
+      "testName": "Checkout: Order successfully created (VSM-20261024-1CFD197F)",
+      "passed": true,
+      "status": 200,
+      "orderNumber": "VSM-20261024-1CFD197F",
+      "total": 2730,
+      "duration": 1398,
+      "bug": null
+    },
+    {
+      "testName": "Orders: Authenticated Order Details Retrieval (/api/orders/[orderNumber])",
+      "passed": true
+    },
+    {
+      "testName": "Orders: Public Tracking Endpoint (/api/orders/track) resolves order status",
+      "passed": true
+    },
+    {
+      "testName": "Contact: Customer inquiry submission (/api/contact) succeeds",
+      "passed": true,
+      "status": 200,
+      "duration": 186
+    },
+    {
+      "testName": "Outlets: Physical stores directory resolves (2 locations)",
+      "passed": true,
+      "count": 2
+    }
+  ],
+  "phase3_negative": [
+    {
+      "testName": "Negative: Empty login credentials rejected with HTTP 400",
+      "passed": true
+    },
+    {
+      "testName": "Negative: Empty registration payload rejected with HTTP 400",
+      "passed": true
+    },
+    {
+      "testName": "Negative: Malformed email syntax rejected with HTTP 400",
+      "passed": true
+    },
+    {
+      "testName": "Negative: Short mobile number (< 10 digits) rejected with HTTP 400",
+      "passed": true
+    },
+    {
+      "testName": "Negative: Non-existent coupon code rejected with HTTP 400/404",
+      "passed": true
+    },
+    {
+      "testName": "Boundary: Negative quantity (-10) rejected by cart API",
+      "passed": true
+    },
+    {
+      "testName": "Boundary: Massive 3,000-character search string handled safely",
+      "passed": true,
+      "status": 200
+    }
+  ],
+  "phase4_security": [
+    {
+      "testName": "Security: Reflected XSS payload safely sanitized & not rendered unencoded",
+      "passed": true
+    },
+    {
+      "testName": "Security: SQL Injection payload (' OR '1'='1) neutralized via parameterization",
+      "passed": true
+    },
+    {
+      "testName": "Security: SQL Injection in Order Tracker (' OR 1=1 --) neutralized",
+      "passed": true
+    },
+    {
+      "testName": "Security: Unauthorized access to Admin Reports API denied (HTTP 401/403)",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "testName": "Security: Unauthorized access to Admin Customers API denied (HTTP 401/403)",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "testName": "Security: No password hashes ($2a$/$2b$) or secret keys exposed in public payloads",
+      "passed": true
+    },
+    {
+      "testName": "Security: Session cookies enforce HttpOnly and SameSite flags",
+      "passed": true,
+      "cookieHeader": "vs_session=eyJ1c2VySWQiOjE5LCJleHAiOjE3OTM5OTEyODYyMDJ9.3fa0816ba1bcdc8ceac2bbd64d6f26dc0f801cccbcb7df07efc504133a58ac46; Path=/; Expires=Fri, 06 Nov 2026 18:54:46 GMT; Max-Age=1209600; HttpOnly; SameSite=lax"
+    }
+  ],
+  "phase6_accessibility": [
+    {
+      "testName": "WCAG: Document root declares lang attribute & responsive viewport",
+      "passed": true
+    },
+    {
+      "testName": "WCAG: Interactive buttons have accessible text or aria-label attributes",
+      "passed": true,
+      "emptyButtonsFound": 0,
+      "bug": null
+    }
+  ],
+  "phase7_performance": [
+    {
+      "testName": "Perf SLA: Home Page (SSR) responds under 3000ms (Actual: 496ms)",
+      "passed": true,
+      "duration": 496,
+      "bug": null
+    },
+    {
+      "testName": "Perf SLA: Mithai Catalog (/shop) responds under 3000ms (Actual: 539ms)",
+      "passed": true,
+      "duration": 539,
+      "bug": null
+    },
+    {
+      "testName": "Perf SLA: Festivals Showcase (/festivals) responds under 3000ms (Actual: 606ms)",
+      "passed": true,
+      "duration": 606,
+      "bug": null
+    },
+    {
+      "testName": "Perf SLA: Products Catalog API responds under 3000ms (Actual: 79ms)",
+      "passed": true,
+      "duration": 79,
+      "bug": null
+    },
+    {
+      "testName": "Perf SLA: Product Search API responds under 3000ms (Actual: 109ms)",
+      "passed": true,
+      "duration": 109,
+      "bug": null
+    },
+    {
+      "testName": "Perf SLA: Store Outlets API responds under 3000ms (Actual: 115ms)",
+      "passed": true,
+      "duration": 115,
+      "bug": null
+    },
+    {
+      "testName": "Perf SLA: Admin Dashboard Proxy Reports responds under 3000ms (Actual: 358ms)",
+      "passed": true,
+      "duration": 358,
+      "bug": null
+    }
+  ],
+  "bugsFound": []
+}

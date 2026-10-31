@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { formatInr, unitPrice } from "@/lib/money";
+import { Magnetic } from "@/components/core/magnetic";
+import { WelcomeOfferBanner } from "@/components/welcome-offer-banner";
 
 export interface ProductVariant {
   id: number;
@@ -34,14 +36,24 @@ export interface ShowcaseProduct {
   ingredients?: string;
 }
 
+export interface NewLaunchConfig {
+  enabled?: boolean;
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  tickerTexts?: string[];
+}
+
 interface NewProductMotionShowcaseProps {
   products: ShowcaseProduct[];
+  config?: NewLaunchConfig;
+  welcomeOfferConfig?: any;
 }
 
 const TEXT_LOOP_ITEMS = [
   "Handcrafted with 100% Shuddh Gir Cow Desi Ghee",
   "Adorned with Pure Edible 24K Silver Leaf & Iranian Saffron",
-  "Fresh Morning Batches Direct from Mandvi & Alkapuri Karigars",
+  "Fresh Morning Batches Direct for Mandvi & Alkapuri Customers",
   "Zero Artificial Essence · 100% Wholesome Authentic Purity",
   "Vacuum Sealed & Delivered Fresh Across Gujarat & India",
 ];
@@ -54,16 +66,31 @@ const CATEGORY_TABS = [
   { id: "hampers", label: "🎁 Luxury Hampers" },
 ];
 
-export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseProps) {
+export function NewProductMotionShowcase({
+  products,
+  config,
+  welcomeOfferConfig,
+}: NewProductMotionShowcaseProps) {
+  const activeTickerItems =
+    config?.tickerTexts && config.tickerTexts.length > 0
+      ? config.tickerTexts
+      : TEXT_LOOP_ITEMS;
+
+  const pageBadge = config?.badge || "Fresh 2026 Collection · Customers' Choice Batch";
+  const pageTitle = config?.title || "New Artisanal Creations, Crafted in Pure Motion.";
+  const pageSubtitle =
+    config?.subtitle ||
+    "Explore our latest limited-run batches. Tap any creation below to experience our interactive morphing inspection, ingredient sourcing stories, and authentic royal flavors.";
+
   // 1. Text Loop State
   const [textIndex, setTextIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTextIndex((prev) => (prev + 1) % TEXT_LOOP_ITEMS.length);
+      setTextIndex((prev) => (prev + 1) % activeTickerItems.length);
     }, 3800);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTickerItems]);
 
   // 2. Tab Filter State
   const [activeTab, setActiveTab] = useState("all");
@@ -172,7 +199,7 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
           >
             <span className="flex h-2 w-2 rounded-full bg-[#dfb755] animate-ping" />
             <span className="text-xs font-bold tracking-widest uppercase text-shimmer">
-              Fresh 2026 Collection · Master Karigar Batch
+              {pageBadge}
             </span>
           </motion.div>
 
@@ -183,8 +210,7 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
             transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
             className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[#0b2f8a] leading-[1.15]"
           >
-            New Artisanal Creations,{" "}
-            <span className="italic font-normal text-[#b89130]">Crafted in Pure Motion.</span>
+            {pageTitle}
           </motion.h1>
 
           {/* Animated TextLoop Subtitle */}
@@ -198,7 +224,7 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
                 transition={{ duration: 0.45, ease: "easeInOut" }}
                 className="text-sm sm:text-base md:text-lg font-medium text-[#182230]/80 tracking-wide"
               >
-                ✨ {TEXT_LOOP_ITEMS[textIndex]}
+                ✨ {activeTickerItems[textIndex]}
               </motion.p>
             </AnimatePresence>
           </div>
@@ -209,8 +235,7 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
             transition={{ duration: 0.8, delay: 0.3 }}
             className="mx-auto mt-4 max-w-2xl text-xs sm:text-sm text-slate-500 leading-relaxed"
           >
-            Explore our latest limited-run batches. Tap any creation below to experience our interactive morphing
-            inspection, ingredient sourcing stories, and authentic royal flavors.
+            {pageSubtitle}
           </motion.p>
 
           {/* Action Pills */}
@@ -314,11 +339,10 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
                             key={v.id}
                             type="button"
                             onClick={() => setHeroVariantIdx(idx)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                              heroVariantIdx === idx
-                                ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20 scale-102"
-                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                            }`}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${heroVariantIdx === idx
+                              ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20 scale-102"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                              }`}
                           >
                             {v.weight} — ₹{v.discountedPrice || v.price}
                           </button>
@@ -341,22 +365,33 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
                       <p className="text-[11px] text-emerald-700 font-medium">✓ In Stock &amp; Freshly Packed</p>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={isAdding}
-                      onClick={() =>
-                        heroVariant && handleAddToCart(heroVariant.id, 1, heroProduct.name)
-                      }
-                      className="btn-gold rounded-full px-6 py-3 text-xs sm:text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition flex items-center gap-2 cursor-pointer"
-                    >
-                      <span>🛒</span>
-                      <span>Add to Mithai Box</span>
-                    </button>
+                    <Magnetic>
+                      <button
+                        type="button"
+                        disabled={isAdding}
+                        onClick={() =>
+                          heroVariant && handleAddToCart(heroVariant.id, 1, heroProduct.name)
+                        }
+                        className="btn-gold rounded-full px-6 py-3 text-xs sm:text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition flex items-center gap-2 cursor-pointer"
+                      >
+                        <span>🛒</span>
+                        <span>Add to Mithai Box</span>
+                      </button>
+                    </Magnetic>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          2.5. WELCOME OFFER: Flat 10% Off On Your First Order
+         ───────────────────────────────────────────────────────────── */}
+      {welcomeOfferConfig?.enabled !== false && (
+        <section className="py-12 sm:py-16 bg-[#faf8f5]">
+          <WelcomeOfferBanner config={welcomeOfferConfig} />
         </section>
       )}
 
@@ -452,9 +487,8 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
                       />
                     )}
                     <span
-                      className={`relative z-10 transition-colors ${
-                        isActive ? "text-white font-bold" : "text-slate-700 hover:text-slate-950"
-                      }`}
+                      className={`relative z-10 transition-colors ${isActive ? "text-white font-bold" : "text-slate-700 hover:text-slate-950"
+                        }`}
                     >
                       {tab.label}
                     </span>
@@ -647,11 +681,10 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
                               key={v.id}
                               type="button"
                               onClick={() => setSelectedVariantIdx(i)}
-                              className={`p-2 rounded-xl text-left border text-xs transition cursor-pointer ${
-                                isSelected
-                                  ? "border-[#0b2f8a] bg-[#0b2f8a]/5 ring-1 ring-[#0b2f8a]"
-                                  : "border-slate-200 bg-white hover:border-slate-300"
-                              }`}
+                              className={`p-2 rounded-xl text-left border text-xs transition cursor-pointer ${isSelected
+                                ? "border-[#0b2f8a] bg-[#0b2f8a]/5 ring-1 ring-[#0b2f8a]"
+                                : "border-slate-200 bg-white hover:border-slate-300"
+                                }`}
                             >
                               <p className="font-bold text-slate-900">{v.weight}</p>
                               <p className="text-[11px] text-[#0b2f8a] font-semibold">
@@ -701,21 +734,23 @@ export function NewProductMotionShowcase({ products }: NewProductMotionShowcaseP
 
                   {/* Add to Box Button */}
                   <div className="pt-2 space-y-2">
-                    <button
-                      type="button"
-                      disabled={isAdding}
-                      onClick={() => {
-                        const v = selectedProduct.variants[selectedVariantIdx];
-                        if (v) {
-                          handleAddToCart(v.id, quantity, selectedProduct.name);
-                          setSelectedProduct(null);
-                        }
-                      }}
-                      className="btn-primary w-full rounded-2xl py-3 text-sm font-bold shadow-lg shadow-[#0b2f8a]/20 hover:scale-102 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <span>🎁</span>
-                      <span>Add {quantity} to Mithai Box</span>
-                    </button>
+                    <Magnetic className="w-full">
+                      <button
+                        type="button"
+                        disabled={isAdding}
+                        onClick={() => {
+                          const v = selectedProduct.variants[selectedVariantIdx];
+                          if (v) {
+                            handleAddToCart(v.id, quantity, selectedProduct.name);
+                            setSelectedProduct(null);
+                          }
+                        }}
+                        className="btn-primary w-full rounded-2xl py-3 text-sm font-bold shadow-lg shadow-[#0b2f8a]/20 hover:scale-102 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <span>🎁</span>
+                        <span>Add {quantity} to Mithai Box</span>
+                      </button>
+                    </Magnetic>
 
                     <Link
                       href={`/shop/${selectedProduct.slug}`}

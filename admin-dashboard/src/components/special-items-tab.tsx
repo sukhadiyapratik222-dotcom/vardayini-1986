@@ -14,7 +14,7 @@ interface SpecialItemsTabProps {
 export function SpecialItemsTab({ config, products, onRefresh }: SpecialItemsTabProps) {
   const initialSpecial = config?.specialItems || {
     enabled: true,
-    badge: "Karigars' Special Selection",
+    badge: "Customers' Special Selection",
     title: "Our Special Items",
     subtitle: "Prepared fresh every morning with 100% Shuddh Desi Ghee. Handcrafted Gujarati delicacies.",
     productIds: [1, 2, 4, 6],
@@ -23,7 +23,7 @@ export function SpecialItemsTab({ config, products, onRefresh }: SpecialItemsTab
   };
 
   const [enabled, setEnabled] = useState(initialSpecial.enabled ?? true);
-  const [badge, setBadge] = useState(initialSpecial.badge || "Karigars' Special Selection");
+  const [badge, setBadge] = useState(initialSpecial.badge || "Customers' Special Selection");
   const [title, setTitle] = useState(initialSpecial.title || "Our Special Items");
   const [subtitle, setSubtitle] = useState(
     initialSpecial.subtitle || "Prepared fresh every morning with 100% Shuddh Desi Ghee. Handcrafted Gujarati delicacies."
@@ -208,7 +208,7 @@ export function SpecialItemsTab({ config, products, onRefresh }: SpecialItemsTab
                   type="text"
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}
-                  placeholder="e.g. Karigars' Special Selection"
+                  placeholder="e.g. Customers' Special Selection"
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-[#0b2f8a] focus:outline-none text-[#182230]"
                 />
               </div>

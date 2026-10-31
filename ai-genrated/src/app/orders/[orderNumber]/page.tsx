@@ -45,7 +45,7 @@ export default async function OrderPage({
   const guestCartId = cookieStore.get("vs_cart")?.value;
 
   let isAllowed = false;
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     isAllowed = true;
   } else if (order.userId) {
     if (user?.id === order.userId) {
@@ -99,70 +99,244 @@ export default async function OrderPage({
     // Graceful fallback on malformed addressSnapshot JSON
   }
 
+  const isPickup = order.fulfillmentType === "pickup" || Boolean(order.pickupStoreId);
+  let pickupStore: any = null;
+  if (order.pickupStoreId) {
+    const { stores } = await import("@/db/schema");
+    const [store] = await db.select().from(stores).where(eq(stores.id, order.pickupStoreId)).limit(1);
+    pickupStore = store || null;
+  }
+
   const statusHeading =
     order.status === "cancelled"
       ? "Order Cancelled"
+      : order.status === "picked_up"
+      ? "Order Picked Up"
+      : order.status === "ready_for_pickup"
+      ? "Ready for Pickup"
+      : order.status === "preparing"
+      ? "Order Preparing Fresh"
       : order.status === "delivered"
       ? "Order Delivered"
       : order.status === "shipped"
       ? "Order Shipped"
-      : order.status === "confirmed"
-      ? "Order Confirmed"
-      : "Order Placed";
+      : isPickup
+      ? "Pickup Order Confirmed"
+      : "Order Confirmed";
+
+  const directionsUrl = pickupStore?.latitude && pickupStore?.longitude
+    ? `https://www.google.com/maps/dir/?api=1&destination=${pickupStore.latitude},${pickupStore.longitude}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Vadodara"))}`;
+
+  const mapUrl = pickupStore?.latitude && pickupStore?.longitude
+    ? `https://www.google.com/maps/search/?api=1&query=${pickupStore.latitude},${pickupStore.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Vadodara"))}`;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">{statusHeading}</p>
-      <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl text-[#6b1d1d]">
-        {statusHeading} — {order.orderNumber}
-      </h1>
+    <main className="mx-auto max-w-3xl px-3 sm:px-4 py-6 sm:py-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">
+            {isPickup ? "🏪 Store Pickup Order" : "🚚 Doorstep Delivery"}
+          </p>
+          <h1 className="mt-1 sm:mt-2 font-[family-name:var(--font-display)] text-xl sm:text-3xl text-[#6b1d1d] font-bold">
+            {statusHeading} — #{order.orderNumber}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href={`/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-300 px-4 py-2 text-xs font-bold text-amber-950 shadow-sm hover:bg-amber-100 transition"
+          >
+            <span>🧾</span>
+            <span>Tax Invoice</span>
+          </Link>
+          <Link
+            href={`/track?orderId=${encodeURIComponent(order.orderNumber)}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#0b2f8a] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#071c54] transition"
+          >
+            <span>📍</span>
+            <span>Track Order Live →</span>
+          </Link>
+        </div>
+      </div>
+
       <p className="mt-2 capitalize text-sm text-[#2a1a12]/70">
-        Status: <span className={order.status === "cancelled" ? "text-red-700 font-semibold" : "font-medium"}>{order.status}</span> · Payment: {order.paymentStatus} ({order.paymentMethod.toUpperCase()})
+        Status: <span className={order.status === "cancelled" ? "text-red-700 font-semibold" : "font-medium"}>{order.status.replace(/_/g, " ")}</span> · Payment: {order.paymentStatus} ({order.paymentMethod.toUpperCase()})
       </p>
+
+      {/* Store Pickup Banner Card if Pickup */}
+      {isPickup && (
+        <section className="mt-6 rounded-3xl border border-[#dfb755]/40 bg-gradient-to-br from-[#faf8f5] to-[#f5eedb] p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#6b1d1d]/10 pb-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#c45c26]">
+                🏪 Your Pickup Details
+              </span>
+              <h2 className="text-xl font-bold text-[#6b1d1d] mt-0.5">
+                {pickupStore?.name || "Vardayini Sweet Mart Branch"}
+              </h2>
+            </div>
+
+            {order.pickupOtp && (
+              <div className="rounded-2xl border-2 border-dashed border-[#dfb755] bg-white px-4 py-2 text-center shadow-xs">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#2a1a12]/60">
+                  Counter Pickup OTP
+                </span>
+                <span className="font-mono text-2xl font-black text-[#6b1d1d] tracking-widest">
+                  {order.pickupOtp}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 text-xs">
+            <div className="space-y-1.5">
+              <span className="font-bold text-[#2a1a12]/70 uppercase tracking-wider text-[10px] block">
+                Branch Address & Contact
+              </span>
+              <p className="font-medium text-[#2a1a12]/90 leading-relaxed">
+                {pickupStore?.address || "Main Road"}, {pickupStore?.city || "Vadodara"} - {pickupStore?.pincode || "390001"}
+              </p>
+              <p className="text-[#2a1a12]/70">📞 Store Phone: {pickupStore?.phone || "+91 98250 19760"}</p>
+              <p className="text-[#2a1a12]/70">🕒 Hours: {pickupStore?.hours || "8:00 AM - 10:00 PM"}</p>
+            </div>
+
+            <div className="space-y-1.5 sm:border-l sm:border-[#6b1d1d]/10 sm:pl-4">
+              <span className="font-bold text-[#2a1a12]/70 uppercase tracking-wider text-[10px] block">
+                Pickup Schedule
+              </span>
+              <p className="font-semibold text-[#6b1d1d]">
+                📅 Date: {order.pickupDate || "Today"}
+              </p>
+              <p className="font-semibold text-[#6b1d1d]">
+                ⏰ Confirmed Slot: {order.pickupSlot || order.deliverySlot}
+              </p>
+              {order.estimatedReadyAt && (
+                <p className="text-[#c45c26] font-medium">
+                  ⏳ Estimated Ready: {new Date(order.estimatedReadyAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 pt-4 border-t border-[#6b1d1d]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2">
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#c45c26] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#a64c1e] transition"
+              >
+                <span>🗺️</span>
+                <span>Get Directions</span>
+              </a>
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[#6b1d1d] border border-[#6b1d1d]/20 hover:bg-[#6b1d1d]/5 transition"
+              >
+                View on Map
+              </a>
+            </div>
+
+            <p className="text-[11px] text-[#2a1a12]/70 italic">
+              Please present your 6-digit OTP at the store counter upon arrival.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Ordered Sweets Items */}
       <div className="mithai-card mt-6 space-y-4 rounded-3xl p-6">
+        <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#6b1d1d] border-b border-[#6b1d1d]/10 pb-2">
+          Ordered Sweets & Namkeen ({items.length})
+        </h3>
         {items.map((item) => (
           <div key={item.id} className="flex items-center gap-4">
-            <div className="relative h-16 w-16 overflow-hidden rounded-2xl">
+            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-amber-50">
               <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">{item.productName}</p>
-              <p className="text-sm text-[#2a1a12]/60">
+              <p className="font-medium text-sm text-[#2a1a12]">{item.productName}</p>
+              <p className="text-xs text-[#2a1a12]/60">
                 {item.variantWeight} × {item.quantity}
               </p>
             </div>
-            <p>{formatInr(item.unitPrice * item.quantity)}</p>
+            <p className="font-semibold text-sm">{formatInr(item.unitPrice * item.quantity)}</p>
           </div>
         ))}
-        <div className="flex justify-between border-t border-[#6b1d1d]/10 pt-4 font-semibold">
-          <span>Total</span>
+        <div className="flex justify-between border-t border-[#6b1d1d]/10 pt-4 font-bold text-base text-[#6b1d1d]">
+          <span>Total Paid / Payable</span>
           <span>{formatInr(order.total)}</span>
         </div>
       </div>
+
+      {/* Delivery or Recipient Info Grid */}
       <div className="mt-6 grid gap-4 text-sm md:grid-cols-2">
         <article className="mithai-card rounded-3xl p-5">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">Deliver to</h2>
-          <p className="mt-2 leading-7">
-            {address.name}
-            <br />
-            {address.line1}
-            <br />
-            {address.city}, {address.state} {address.pincode}
+          <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[#6b1d1d]">
+            {isPickup ? "Customer Information" : "Deliver to"}
+          </h2>
+          <p className="mt-2 leading-6 text-xs text-[#2a1a12]/80">
+            <strong>{address.name}</strong>
             <br />
             {address.phone}
+            {!isPickup && (
+              <>
+                <br />
+                {address.line1}
+                <br />
+                {address.city}, {address.state} {address.pincode}
+              </>
+            )}
           </p>
         </article>
+
         <article className="mithai-card rounded-3xl p-5">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">Slot</h2>
-          <p className="mt-2">{order.deliverySlot}</p>
-          {order.status !== "cancelled" && order.status !== "delivered" ? (
-            <CancelOrderButton orderNumber={order.orderNumber} />
+          <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[#6b1d1d]">
+            Fulfillment Details
+          </h2>
+          <p className="mt-2 text-xs text-[#2a1a12]/80 leading-5">
+            <strong>Method:</strong> {isPickup ? "Store Pickup (Click & Collect)" : "Home Delivery"}
+            <br />
+            <strong>Scheduled Window:</strong> {order.pickupSlot || order.deliverySlot}
+          </p>
+          {order.status !== "cancelled" && order.status !== "delivered" && order.status !== "picked_up" ? (
+            <div className="mt-3">
+              <CancelOrderButton orderNumber={order.orderNumber} initialStatus={order.status} />
+            </div>
+          ) : order.status === "cancelled" ? (
+            <div className="mt-3 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+              <p className="font-bold">🛑 Order Cancelled</p>
+              <p className="text-rose-600 mt-0.5">
+                This order has been cancelled and store management has been notified.
+              </p>
+            </div>
+          ) : order.status === "picked_up" ? (
+            <div className="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+              <p className="font-bold">✓ Collected from Store</p>
+              <p className="text-emerald-700 mt-0.5">
+                Thank you for picking up your fresh order. Enjoy authentic sweets!
+              </p>
+            </div>
           ) : null}
         </article>
       </div>
-      <Link href="/shop" className="mt-8 inline-block text-sm text-[#c45c26]">
-        Continue shopping →
-      </Link>
+
+      <div className="mt-8 flex items-center justify-between">
+        <Link href="/shop" className="text-sm font-semibold text-[#c45c26] hover:underline">
+          ← Continue shopping
+        </Link>
+        <Link
+          href={`/track?orderId=${encodeURIComponent(order.orderNumber)}`}
+          className="text-sm font-semibold text-[#0b2f8a] hover:underline"
+        >
+          View live tracking timeline →
+        </Link>
+      </div>
     </main>
   );
 }

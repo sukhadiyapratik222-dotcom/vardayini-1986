@@ -44,7 +44,7 @@ describe("Coupon Validation & Application Logic", () => {
     it("verifies percent rounding on FESTIVE10", async () => {
       // Create cart line with subtotal that yields fractional discount
       // E.g. Subtotal 505 -> 10% is 50.5, must round to 51
-      const [customVariant] = await db
+      const [varRes] = await db
         .insert(productVariants)
         .values({
           productId: 1,
@@ -52,11 +52,11 @@ describe("Coupon Validation & Application Logic", () => {
           sku: `CUSTOM-${Date.now()}`,
           price: 505,
           stock: 10,
-        })
-        .returning();
+        });
+      const customVariantId = (varRes as any).insertId;
 
       await clearCartForIdentity();
-      await addToCart(customVariant.id, 1);
+      await addToCart(customVariantId, 1);
 
       const req = buildRequest({
         method: "POST",

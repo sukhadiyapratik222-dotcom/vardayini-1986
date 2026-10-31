@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "vardayini-sweets-store",
   "private": true,
   "scripts": {
     "dev": "next dev -p 9449",
@@ -11,15 +11,15 @@
     "db:sync:mysql": "tsx scripts/sync-to-mysql.ts"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.5.8",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
     "dotenv": "17.3.1",
     "drizzle-orm": "0.45.2",
+    "lucide-react": "^1.54.0",
+    "mongodb": "^7.7.0",
     "motion": "^14.0.0",
     "mysql2": "^3.24.5",
     "next": "^16.2.6",
-    "pg": "8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "zod": "^4.6.5"
@@ -27,7 +27,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
     "@types/node": "22.19.15",
-    "@types/pg": "8.18.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "drizzle-kit": "0.31.10",

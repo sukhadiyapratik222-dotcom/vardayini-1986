@@ -123,10 +123,11 @@ describe("Session-Based Admin Authorization & Guest Order Security", () => {
         guestPhone: "9876501234",
         addressSnapshot: JSON.stringify({ line1: "Guest Address", city: "Vadodara" }),
         guestTokenHash,
-      }).returning();
+      });
+      const orderId = (gOrder as any).insertId;
 
       await db.insert(orderItems).values({
-        orderId: gOrder.id,
+        orderId,
         productName: "Guest Kaju Katli",
         variantWeight: "250 g",
         unitPrice: 400,

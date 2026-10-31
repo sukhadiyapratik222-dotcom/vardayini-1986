@@ -63,40 +63,40 @@ export function MainHeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden pt-4 pb-12 md:py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-12 lg:grid-cols-12">
+    <section className="relative overflow-hidden pt-3 sm:pt-4 md:pt-6 pb-6 sm:pb-8 md:pb-12">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-6 lg:gap-8 xl:gap-12 lg:grid-cols-12">
           {/* Left Content */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#0b2f8a]/15 bg-[#eef3ff] px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[#0b2f8a]">
+          <div className="lg:col-span-6 space-y-4 sm:space-y-5">
+            <div className="inline-flex max-w-full items-center gap-1.5 sm:gap-2 rounded-full border border-[#0b2f8a]/15 bg-[#eef3ff] px-2.5 sm:px-3.5 py-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-wider text-[#0b2f8a]">
               <span>✨ {content.badgeEst}</span>
               <span className="text-[#0b2f8a]/30">•</span>
-              <span>{content.badgeText}</span>
+              <span className="break-words line-clamp-1 sm:line-clamp-none">{content.badgeText}</span>
             </div>
 
-            <h1 className="font-[family-name:var(--font-display)] text-5xl font-bold leading-[1.05] tracking-tight text-[#182230] sm:text-6xl lg:text-7xl">
+            <h1 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold leading-[1.14] sm:leading-[1.08] tracking-tight text-[#182230] break-words">
               {content.titlePrefix}{" "}
               <span className="text-[#0b2f8a]">{content.titleHighlight1}</span>{" "}
               {content.titleMiddle}{" "}
               <span className="text-[#b89130]">{content.titleHighlight2}</span>
             </h1>
 
-            <p className="max-w-xl text-base leading-relaxed text-[#5e6d82] sm:text-lg">
+            <p className="max-w-lg text-xs sm:text-sm lg:text-[15px] leading-relaxed text-[#5e6d82]">
               {content.description}
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3.5 pt-1 w-full">
               <Link
                 href={content.button1Link || "/shop"}
-                className="btn-gold rounded-full px-8 py-3.5 text-sm font-semibold shadow-sm transition hover:scale-105"
+                className="btn-gold rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold shadow-sm transition hover:scale-102 text-center w-full sm:w-auto"
               >
                 {content.button1Text || "Order Fresh Mithai →"}
               </Link>
               {content.button2Text && (
                 <Link
                   href={content.button2Link || "/shop?category=gift-hampers"}
-                  className="rounded-full border-2 border-[#0b2f8a] bg-white px-7 py-3 text-sm font-semibold text-[#0b2f8a] transition hover:bg-[#0b2f8a] hover:text-white"
+                  className="rounded-full border-2 border-[#0b2f8a] bg-white px-5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-[#0b2f8a] transition hover:bg-[#0b2f8a] hover:text-white text-center w-full sm:w-auto"
                 >
                   {content.button2Text}
                 </Link>
@@ -104,30 +104,30 @@ export function MainHeroSection() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="grid grid-cols-3 gap-4 border-t border-[#0b2f8a]/10 pt-6">
-              <div>
-                <p className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a]">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-3 border-t border-[#0b2f8a]/10 pt-3 sm:pt-4">
+              <div className="min-w-0 text-center sm:text-left bg-[#0b2f8a]/[0.02] sm:bg-transparent p-1 sm:p-0 rounded-lg">
+                <p className="font-[family-name:var(--font-display)] text-base sm:text-xl font-bold text-[#0b2f8a] truncate">
                   {content.stat1Value}
                 </p>
-                <p className="text-xs text-[#5e6d82]">{content.stat1Label}</p>
+                <p className="text-[9px] sm:text-[11px] text-[#5e6d82] leading-tight mt-0.5 line-clamp-2">{content.stat1Label}</p>
               </div>
-              <div>
-                <p className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a]">
+              <div className="min-w-0 text-center sm:text-left bg-[#0b2f8a]/[0.02] sm:bg-transparent p-1 sm:p-0 rounded-lg">
+                <p className="font-[family-name:var(--font-display)] text-base sm:text-xl font-bold text-[#0b2f8a] truncate">
                   {content.stat2Value}
                 </p>
-                <p className="text-xs text-[#5e6d82]">{content.stat2Label}</p>
+                <p className="text-[9px] sm:text-[11px] text-[#5e6d82] leading-tight mt-0.5 line-clamp-2">{content.stat2Label}</p>
               </div>
-              <div>
-                <p className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a]">
+              <div className="min-w-0 text-center sm:text-left bg-[#0b2f8a]/[0.02] sm:bg-transparent p-1 sm:p-0 rounded-lg">
+                <p className="font-[family-name:var(--font-display)] text-base sm:text-xl font-bold text-[#0b2f8a] truncate">
                   {content.stat3Value}
                 </p>
-                <p className="text-xs text-[#5e6d82]">{content.stat3Label}</p>
+                <p className="text-[9px] sm:text-[11px] text-[#5e6d82] leading-tight mt-0.5 line-clamp-2">{content.stat3Label}</p>
               </div>
             </div>
           </div>
 
           {/* Right Hero Showcase — Interactive Glassmorphic Product Gallery */}
-          <div className="lg:col-span-6 relative flex items-center justify-center">
+          <div className="lg:col-span-6 relative flex items-center justify-center w-full max-w-full">
             <GlassyHeroShowcase />
           </div>
         </div>

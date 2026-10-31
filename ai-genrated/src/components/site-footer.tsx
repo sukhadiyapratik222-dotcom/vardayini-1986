@@ -1,6 +1,26 @@
-import Link from "next/link";
+"use client";
 
-export function SiteFooter() {
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+export interface SiteFooterProps {
+  initialConfig?: any;
+}
+
+export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
+  const [uiConfig, setUiConfig] = useState<any>(initialConfig || null);
+
+  useEffect(() => {
+    fetch("/api/ui-config", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && !data.error) {
+          setUiConfig(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const sweetsMenu = [
     { label: "Kaju Sweets", href: "/shop?category=kaju-sweets" },
     { label: "Mawa Sweets", href: "/shop?category=mawa-sweets" },
@@ -38,28 +58,51 @@ export function SiteFooter() {
   ];
 
   return (
-    <footer className="mt-20 border-t border-[#0b2f8a]/10 bg-[#071c54] text-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 pb-12 space-y-12">
+    <footer className="mt-14 sm:mt-20 border-t border-[#0b2f8a]/10 bg-[#071c54] text-white">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-8 sm:pb-12 space-y-8 sm:space-y-12">
         {/* Top Tier: Brand Story & Visit Our Stores */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 pb-10 border-b border-white/10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-8 sm:pb-10 border-b border-white/10">
           {/* Brand Column */}
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dfb755] text-[#071c54] font-bold text-xl shadow-md">
-                વ
-              </div>
+              {uiConfig?.logo?.type === "image" && uiConfig?.logo?.imageUrl ? (
+                <div className="relative h-12 w-12 rounded-full overflow-hidden border border-[#dfb755]/70 shadow-md shrink-0 bg-white">
+                  <img
+                    src={uiConfig.logo.imageUrl}
+                    alt={uiConfig.logo.brandName || "Logo"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="flex h-11 w-11 items-center justify-center rounded-full shadow-md font-bold text-xl shrink-0"
+                  style={{
+                    backgroundColor: uiConfig?.logo?.crestBgColor || "#dfb755",
+                    color: uiConfig?.logo?.crestTextColor || "#071c54",
+                    border: uiConfig?.logo?.crestBorderColor
+                      ? `2px solid ${uiConfig.logo.crestBorderColor}`
+                      : "none",
+                  }}
+                >
+                  {uiConfig?.logo?.crestLetter || "વ"}
+                </div>
+              )}
               <div>
                 <p className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                  વરદાયિની સ્વીટ માર્ટ
+                  {uiConfig?.storeInfo?.name || "વરદાયિની સ્વીટ માર્ટ"}
                 </p>
                 <p className="text-[11px] uppercase tracking-widest text-[#dfb755] font-semibold">
-                  Vardayini Sweet Mart · Since 1976
+                  {uiConfig?.logo?.brandSubtitle ||
+                    `${uiConfig?.logo?.brandName || "Vardayini Sweet Mart"} · Since ${
+                      uiConfig?.storeInfo?.established || "1976"
+                    }`}
                 </p>
               </div>
             </div>
 
             <p className="max-w-xl text-sm leading-relaxed text-white/75">
-              Authentic Gujarati mithai and fresh morning farsan from Vadodara. Pure shuddh desi ghee, saffron, and patience — rolled and packed the same morning it leaves our karigars.
+              {uiConfig?.storeInfo?.tagline ||
+                "Authentic Gujarati mithai and fresh morning farsan from Vadodara. Pure shuddh desi ghee, saffron, and patience — rolled and packed fresh for our customers."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-[#dfb755] font-medium pt-1">
@@ -71,30 +114,61 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* Visit Our Stores */}
+          {/* Visit Our Stores & Contact */}
           <div className="lg:col-span-5 space-y-3">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#dfb755]">
-              Visit Our Stores
+              Visit Our Store &amp; Orders
             </p>
-            <div className="space-y-2 text-sm text-white/80 leading-relaxed">
+            <div className="space-y-2.5 text-sm text-white/80 leading-relaxed">
               <div>
-                <p className="font-semibold text-white">Mandvi Main Counter</p>
-                <p className="text-xs text-white/60">Opp. Tower, Mandvi, Vadodara</p>
+                <p className="font-semibold text-white">
+                  {uiConfig?.storeInfo?.city ? `${uiConfig.storeInfo.city} Counter` : "Mandvi Main Counter & Flagship"}
+                </p>
+                <p className="text-xs text-white/70 mt-0.5 leading-normal">
+                  {uiConfig?.storeInfo?.address || "Mandvi Main Counter & Alkapuri Flagship, Vadodara, Gujarat 390001"}
+                </p>
               </div>
-              <div className="pt-2">
-                <p className="font-semibold text-white">Alkapuri Flagship</p>
-                <p className="text-xs text-white/60">RC Dutt Road, Alkapuri, Vadodara</p>
+              <div className="pt-1 space-y-1.5 border-t border-white/10">
+                <p className="text-xs text-[#dfb755] font-medium flex items-center gap-1.5">
+                  <span>🕒</span>
+                  <span>Open {uiConfig?.storeInfo?.hours || "7:00 AM – 8:30 PM (All 7 Days)"}</span>
+                </p>
+                <div className="text-xs text-white/80 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {uiConfig?.storeInfo?.phone && (
+                    <span className="flex items-center gap-1">
+                      <span>📞</span>
+                      <span>Support:</span>
+                      <a
+                        href={`tel:${uiConfig.storeInfo.phone}`}
+                        className="text-white font-semibold hover:text-[#dfb755] transition underline underline-offset-2"
+                      >
+                        {uiConfig.storeInfo.phone}
+                      </a>
+                    </span>
+                  )}
+                  {uiConfig?.storeInfo?.whatsapp && (
+                    <span className="flex items-center gap-1">
+                      <span>💬</span>
+                      <span>WhatsApp:</span>
+                      <a
+                        href={`https://wa.me/${uiConfig.storeInfo.whatsapp.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-400 font-semibold hover:underline"
+                      >
+                        {uiConfig.storeInfo.whatsapp}
+                      </a>
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-[#dfb755] font-medium pt-1">
-                Open 8:00 AM – 10:30 PM Daily · Support: +91 98250 19760
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Explore Categories Menu (Exactly matching reference design) */}
+        {/* Explore Categories Menu */}
         <div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
             {/* Column 1: Sweets */}
             <div>
               <h3 className="font-bold text-lg text-white">Sweets</h3>
@@ -175,9 +249,12 @@ export function SiteFooter() {
 
       {/* Bottom Copyright Bar */}
       <div className="mx-auto flex max-w-7xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 py-5 text-xs text-white/60">
-        <p>© 1976 – 2026 Vardayini Sweet Mart. All rights reserved.</p>
+        <p>
+          © {uiConfig?.storeInfo?.established || "1976"} – {new Date().getFullYear()}{" "}
+          {uiConfig?.storeInfo?.name || "Vardayini Sweet Mart"}. All rights reserved.
+        </p>
         <p className="text-center sm:text-right">
-          Handcrafted with pure devotion in Vadodara, Gujarat.
+          Handcrafted with pure devotion in {uiConfig?.storeInfo?.city || "Gujarat"}.
         </p>
       </div>
     </footer>

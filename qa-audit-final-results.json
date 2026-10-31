@@ -1,0 +1,3370 @@
+{
+  "timestamp": "2026-10-24T13:47:22.684Z",
+  "totalTests": 76,
+  "issuesCount": 38,
+  "issues": [
+    {
+      "page": "Home",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-home-360x640.png"
+    },
+    {
+      "page": "All Items",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-all-items-360x640.png"
+    },
+    {
+      "page": "New Launches",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-new-launches-360x640.png"
+    },
+    {
+      "page": "Festive Season",
+      "viewport": "360x640",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "Sweets",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-sweets-360x640.png"
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-namkeen---farsan-360x640.png"
+    },
+    {
+      "page": "Bakery",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-bakery-360x640.png"
+    },
+    {
+      "page": "Stores",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-stores-360x640.png"
+    },
+    {
+      "page": "Search Results",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-search-results-360x640.png"
+    },
+    {
+      "page": "Wishlist",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-wishlist-360x640.png"
+    },
+    {
+      "page": "Cart",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-cart-360x640.png"
+    },
+    {
+      "page": "Checkout",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-checkout-360x640.png"
+    },
+    {
+      "page": "Login",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-login-360x640.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "360x640",
+      "issue": "HTTP Error 404 on navigation",
+      "severity": "High",
+      "screenshot": "screenshot-product-detail-360x640.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "360x640",
+      "issue": "Console JavaScript Error(s): Failed to load resource: the server responded with a status of 404 (Not Found)...",
+      "severity": "Med",
+      "screenshot": "screenshot-product-detail-360x640.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "360x640",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-product-detail-360x640.png"
+    },
+    {
+      "page": "Home",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "All Items",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "New Launches",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "Festive Season",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "Sweets",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-namkeen---farsan-390x844.png"
+    },
+    {
+      "page": "Bakery",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[67x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-bakery-390x844.png"
+    },
+    {
+      "page": "Stores",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-stores-390x844.png"
+    },
+    {
+      "page": "Search Results",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "Wishlist",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-wishlist-390x844.png"
+    },
+    {
+      "page": "Cart",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-cart-390x844.png"
+    },
+    {
+      "page": "Checkout",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-checkout-390x844.png"
+    },
+    {
+      "page": "Login",
+      "viewport": "390x844",
+      "issue": "Mobile touch targets under 44x44px (6 found, e.g. a[96x15px], a[66x28px], a[124x26px], a[119x28px], button[81x28px], a[121x28px])",
+      "severity": "Low",
+      "screenshot": "screenshot-login-390x844.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "390x844",
+      "issue": "Test failed to complete: Navigation timeout of 18000 ms exceeded",
+      "severity": "High",
+      "screenshot": "n/a"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "768x1024",
+      "issue": "HTTP Error 404 on navigation",
+      "severity": "High",
+      "screenshot": "screenshot-product-detail-768x1024.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "768x1024",
+      "issue": "Console JavaScript Error(s): Failed to load resource: the server responded with a status of 404 (Not Found)...",
+      "severity": "Med",
+      "screenshot": "screenshot-product-detail-768x1024.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "1366x768",
+      "issue": "HTTP Error 404 on navigation",
+      "severity": "High",
+      "screenshot": "screenshot-product-detail-1366x768.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "1366x768",
+      "issue": "Console JavaScript Error(s): Failed to load resource: the server responded with a status of 404 (Not Found)...",
+      "severity": "Med",
+      "screenshot": "screenshot-product-detail-1366x768.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "1920x1080",
+      "issue": "HTTP Error 404 on navigation",
+      "severity": "High",
+      "screenshot": "screenshot-product-detail-1920x1080.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "1920x1080",
+      "issue": "Console JavaScript Error(s): Failed to load resource: the server responded with a status of 404 (Not Found)...",
+      "severity": "Med",
+      "screenshot": "screenshot-product-detail-1920x1080.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "3840x2160",
+      "issue": "HTTP Error 404 on navigation",
+      "severity": "High",
+      "screenshot": "screenshot-product-detail-3840x2160.png"
+    },
+    {
+      "page": "Product Detail",
+      "viewport": "3840x2160",
+      "issue": "Console JavaScript Error(s): Failed to load resource: the server responded with a status of 404 (Not Found)...",
+      "severity": "Med",
+      "screenshot": "screenshot-product-detail-3840x2160.png"
+    }
+  ],
+  "testResults": [
+    {
+      "page": "Home",
+      "path": "/",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-home-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "All Items",
+      "path": "/shop",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-all-items-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "New Launches",
+      "path": "/new-products",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-new-launches-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Sweets",
+      "path": "/shop?group=sweets",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-sweets-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "path": "/shop?group=namkeen",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-namkeen---farsan-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Bakery",
+      "path": "/shop?group=bakery",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-bakery-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Stores",
+      "path": "/stores",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-stores-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Search Results",
+      "path": "/shop?q=kaju",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-search-results-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Wishlist",
+      "path": "/wishlist",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-wishlist-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Cart",
+      "path": "/cart",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-cart-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Checkout",
+      "path": "/checkout",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-checkout-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Login",
+      "path": "/login",
+      "viewport": "360x640",
+      "statusCode": 200,
+      "screenshot": "screenshot-login-360x640.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Product Detail",
+      "path": "/shop/kaju-pista-roll",
+      "viewport": "360x640",
+      "statusCode": 404,
+      "screenshot": "screenshot-product-detail-360x640.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 360,
+        "windowInnerWidth": 360,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "path": "/shop?group=namkeen",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-namkeen---farsan-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Bakery",
+      "path": "/shop?group=bakery",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-bakery-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 67,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Stores",
+      "path": "/stores",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-stores-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Wishlist",
+      "path": "/wishlist",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-wishlist-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Cart",
+      "path": "/cart",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-cart-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Checkout",
+      "path": "/checkout",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-checkout-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Login",
+      "path": "/login",
+      "viewport": "390x844",
+      "statusCode": 200,
+      "screenshot": "screenshot-login-390x844.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 390,
+        "windowInnerWidth": 390,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 5,
+        "smallTextSamples": [
+          {
+            "text": "Free delivery on orders above ",
+            "fontSize": "11px",
+            "tag": "span"
+          },
+          {
+            "text": "SWEET MART · 1986",
+            "fontSize": "10px",
+            "tag": "span"
+          },
+          {
+            "text": "🪔\nFestive Season",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "a"
+          },
+          {
+            "text": "Namkeen & Farsan",
+            "fontSize": "12px",
+            "tag": "span"
+          }
+        ],
+        "smallTouchCount": 6,
+        "smallTouchSamples": [
+          {
+            "tag": "a",
+            "text": "Order Hampers →",
+            "width": 96,
+            "height": 15
+          },
+          {
+            "tag": "a",
+            "text": "All Items",
+            "width": 66,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "✨\nNew Launches",
+            "width": 124,
+            "height": 26
+          },
+          {
+            "tag": "a",
+            "text": "🪔\nFestive Season",
+            "width": 119,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Sweets",
+            "width": 81,
+            "height": 28
+          },
+          {
+            "tag": "a",
+            "text": "Namkeen & Farsan",
+            "width": 121,
+            "height": 28
+          }
+        ],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Home",
+      "path": "/",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-home-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "All Items",
+      "path": "/shop",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-all-items-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "New Launches",
+      "path": "/new-products",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-new-launches-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Festive Season",
+      "path": "/festivals",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-festive-season-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Sweets",
+      "path": "/shop?group=sweets",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-sweets-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "path": "/shop?group=namkeen",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-namkeen---farsan-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Bakery",
+      "path": "/shop?group=bakery",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-bakery-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Stores",
+      "path": "/stores",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-stores-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Search Results",
+      "path": "/shop?q=kaju",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-search-results-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Wishlist",
+      "path": "/wishlist",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-wishlist-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Cart",
+      "path": "/cart",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-cart-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Checkout",
+      "path": "/checkout",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-checkout-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Login",
+      "path": "/login",
+      "viewport": "768x1024",
+      "statusCode": 200,
+      "screenshot": "screenshot-login-768x1024.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Product Detail",
+      "path": "/shop/kaju-pista-roll",
+      "viewport": "768x1024",
+      "statusCode": 404,
+      "screenshot": "screenshot-product-detail-768x1024.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 768,
+        "windowInnerWidth": 768,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Home",
+      "path": "/",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-home-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "All Items",
+      "path": "/shop",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-all-items-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "New Launches",
+      "path": "/new-products",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-new-launches-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Festive Season",
+      "path": "/festivals",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-festive-season-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Sweets",
+      "path": "/shop?group=sweets",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-sweets-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "path": "/shop?group=namkeen",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-namkeen---farsan-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Bakery",
+      "path": "/shop?group=bakery",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-bakery-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Stores",
+      "path": "/stores",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-stores-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Search Results",
+      "path": "/shop?q=kaju",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-search-results-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Wishlist",
+      "path": "/wishlist",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-wishlist-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Cart",
+      "path": "/cart",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-cart-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Checkout",
+      "path": "/checkout",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-checkout-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Login",
+      "path": "/login",
+      "viewport": "1366x768",
+      "statusCode": 200,
+      "screenshot": "screenshot-login-1366x768.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Product Detail",
+      "path": "/shop/kaju-pista-roll",
+      "viewport": "1366x768",
+      "statusCode": 404,
+      "screenshot": "screenshot-product-detail-1366x768.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1366,
+        "windowInnerWidth": 1366,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Home",
+      "path": "/",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-home-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "All Items",
+      "path": "/shop",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-all-items-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "New Launches",
+      "path": "/new-products",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-new-launches-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Festive Season",
+      "path": "/festivals",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-festive-season-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Sweets",
+      "path": "/shop?group=sweets",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-sweets-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "path": "/shop?group=namkeen",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-namkeen---farsan-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Bakery",
+      "path": "/shop?group=bakery",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-bakery-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Stores",
+      "path": "/stores",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-stores-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Search Results",
+      "path": "/shop?q=kaju",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-search-results-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Wishlist",
+      "path": "/wishlist",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-wishlist-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Cart",
+      "path": "/cart",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-cart-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Checkout",
+      "path": "/checkout",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-checkout-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Login",
+      "path": "/login",
+      "viewport": "1920x1080",
+      "statusCode": 200,
+      "screenshot": "screenshot-login-1920x1080.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Product Detail",
+      "path": "/shop/kaju-pista-roll",
+      "viewport": "1920x1080",
+      "statusCode": 404,
+      "screenshot": "screenshot-product-detail-1920x1080.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 1920,
+        "windowInnerWidth": 1920,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Home",
+      "path": "/",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-home-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "All Items",
+      "path": "/shop",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-all-items-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "New Launches",
+      "path": "/new-products",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-new-launches-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Festive Season",
+      "path": "/festivals",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-festive-season-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Sweets",
+      "path": "/shop?group=sweets",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-sweets-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Namkeen & Farsan",
+      "path": "/shop?group=namkeen",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-namkeen---farsan-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Bakery",
+      "path": "/shop?group=bakery",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-bakery-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Stores",
+      "path": "/stores",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-stores-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Search Results",
+      "path": "/shop?q=kaju",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-search-results-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Wishlist",
+      "path": "/wishlist",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-wishlist-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Cart",
+      "path": "/cart",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-cart-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Checkout",
+      "path": "/checkout",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-checkout-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Login",
+      "path": "/login",
+      "viewport": "3840x2160",
+      "statusCode": 200,
+      "screenshot": "screenshot-login-3840x2160.png",
+      "consoleErrors": [],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    },
+    {
+      "page": "Product Detail",
+      "path": "/shop/kaju-pista-roll",
+      "viewport": "3840x2160",
+      "statusCode": 404,
+      "screenshot": "screenshot-product-detail-3840x2160.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failedRequests": [],
+      "analysis": {
+        "hasHorizontalOverflow": false,
+        "docScrollWidth": 3840,
+        "windowInnerWidth": 3840,
+        "missingAltCount": 0,
+        "brokenImagesCount": 0,
+        "brokenImageSrcs": [],
+        "smallTextCount": 0,
+        "smallTextSamples": [],
+        "smallTouchCount": 0,
+        "smallTouchSamples": [],
+        "hasChangeUi": false,
+        "deadLinksCount": 0,
+        "deadLinksSamples": []
+      }
+    }
+  ],
+  "shoppingFlowIssues": []
+}

@@ -11,38 +11,127 @@ interface NotificationCenterProps {
   buttonClassName?: string;
 }
 
-// Gentle pleasant chime synthesizer using Web Audio API
-function playChime() {
+export type SoundTone = "fahhh" | "fahhh-7x" | "faaah-synth" | "crystal" | "bell" | "pop";
+
+// Web Audio synthesizer fallback
+function playWebAudioSynthesizer(tone: string = "faaah") {
   try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
-    
-    // Note 1: 880Hz (A5)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(880, ctx.currentTime);
-    gain1.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(ctx.currentTime);
-    osc1.stop(ctx.currentTime + 0.35);
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
 
-    // Note 2: 1320Hz (E6)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(1320, ctx.currentTime + 0.12);
-    gain2.gain.setValueAtTime(0.15, ctx.currentTime + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(ctx.currentTime + 0.12);
-    osc2.stop(ctx.currentTime + 0.6);
+    const now = ctx.currentTime;
+
+    if (tone === "faaah" || tone === "faaah-synth" || tone === "fahhh") {
+      // Signature "Faaah" rich harmonic chime:
+      // Lush multi-harmonic F-major/A chord with a warm resonant low-pass filter swell
+      const frequencies = [349.23, 440.0, 523.25, 659.25, 880.0]; // F4, A4, C5, E5, A5
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.linearRampToValueAtTime(0.22, now + 0.08); // Warm swell attack -> "Faaa..."
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.25); // Resonant decay -> "...aaaah"
+      master.connect(ctx.destination);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.exponentialRampToValueAtTime(3600, now + 0.18);
+      filter.frequency.exponentialRampToValueAtTime(600, now + 1.25);
+      filter.connect(master);
+
+      frequencies.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = i === 0 ? "triangle" : "sine";
+        osc.frequency.setValueAtTime(freq, now);
+        osc.detune.setValueAtTime((i - 2) * 4, now);
+
+        const oscGain = ctx.createGain();
+        const weights = [0.28, 0.22, 0.18, 0.14, 0.1];
+        oscGain.gain.setValueAtTime(weights[i] || 0.1, now);
+
+        osc.connect(oscGain);
+        oscGain.connect(filter);
+
+        // Staggered arpeggiated attack gives the silky "fa-a-a-h" wash
+        osc.start(now + i * 0.02);
+        osc.stop(now + 1.3);
+      });
+    } else if (tone === "crystal") {
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(880, now);
+      gain1.gain.setValueAtTime(0.14, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.4);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(1320, now + 0.12);
+      gain2.gain.setValueAtTime(0.16, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.65);
+    } else if (tone === "bell") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(1046.5, now);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.85);
+    } else {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(580, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    }
   } catch {
-    // Ignore audio autoplay restrictions
+    // Ignore audio restrictions
+  }
+}
+
+// Signature notification player with viral #fahhh audio effect
+export function playNotificationSound(tone: SoundTone = "fahhh") {
+  try {
+    if (tone === "fahhh" || tone === "fahhh-7x") {
+      const audioUrl = tone === "fahhh-7x" ? "/sounds/fahhh-7x.mp3" : "/sounds/fahhh.mp3";
+      const audio = new Audio(audioUrl);
+      audio.volume = 0.85;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Fahhh audio playback blocked, falling back to synth:", err);
+          playWebAudioSynthesizer("faaah");
+        });
+      }
+      return;
+    }
+
+    playWebAudioSynthesizer(tone);
+  } catch {
+    playWebAudioSynthesizer(tone);
   }
 }
 
@@ -77,8 +166,44 @@ export function NotificationCenter({
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeFilter, setActiveFilter] = useState<"all" | "orders" | "logins">("all");
+  const [soundTone, setSoundTone] = useState<SoundTone>("fahhh");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTone = localStorage.getItem("admin_notification_tone") as string | null;
+      if (savedTone) {
+        if (savedTone === "faaah" || savedTone === "fahhh") {
+          setSoundTone("fahhh");
+          localStorage.setItem("admin_notification_tone", "fahhh");
+        } else {
+          setSoundTone(savedTone as SoundTone);
+        }
+      }
+      const savedMute = localStorage.getItem("admin_notification_sound_enabled");
+      if (savedMute !== null) setSoundEnabled(savedMute === "true");
+    }
+  }, []);
+
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_notification_sound_enabled", String(next));
+    }
+    if (next) {
+      playNotificationSound(soundTone);
+    }
+  };
+
+  const handleChangeTone = (tone: SoundTone) => {
+    setSoundTone(tone);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_notification_tone", tone);
+    }
+    playNotificationSound(tone);
+  };
 
   const prevIdsRef = useRef<Set<number>>(new Set());
   const isInitialLoadRef = useRef(true);
@@ -101,7 +226,7 @@ export function NotificationCenter({
 
         if (newUnread.length > 0) {
           if (soundEnabled) {
-            playChime();
+            playNotificationSound(soundTone);
           }
 
           // Show floating toast for the newest notification
@@ -192,9 +317,11 @@ export function NotificationCenter({
     try {
       await api.deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      toast.success("Notification deleted", "Removed successfully.");
       fetchNotifications();
     } catch (err) {
       console.error(err);
+      toast.error("Failed to delete", err instanceof Error ? err.message : "Error deleting notification");
     }
   };
 
@@ -205,8 +332,10 @@ export function NotificationCenter({
       await api.deleteNotification(undefined, true);
       setNotifications([]);
       setUnreadCount(0);
+      toast.success("Notifications cleared", "All notifications have been removed.");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to clear", err instanceof Error ? err.message : "Error clearing notifications");
     } finally {
       setLoading(false);
     }
@@ -221,7 +350,7 @@ export function NotificationCenter({
       if (item.data) meta = JSON.parse(item.data);
     } catch {}
 
-    if (item.type === "order_created" && onNavigateTab) {
+    if ((item.type === "order_created" || item.type === "order_cancelled") && onNavigateTab) {
       setIsOpen(false);
       onNavigateTab("orders", meta.orderNumber);
     } else if ((item.type === "user_login" || item.type === "user_registered") && onNavigateTab) {
@@ -232,7 +361,7 @@ export function NotificationCenter({
 
   // Filtered notifications
   const filteredNotifications = notifications.filter((n) => {
-    if (activeFilter === "orders") return n.type === "order_created";
+    if (activeFilter === "orders") return n.type === "order_created" || n.type === "order_cancelled";
     if (activeFilter === "logins") return n.type === "user_login" || n.type === "user_registered";
     return true;
   });
@@ -290,11 +419,11 @@ export function NotificationCenter({
               {/* Sound Toggle */}
               <button
                 type="button"
-                onClick={() => setSoundEnabled((prev) => !prev)}
+                onClick={handleToggleSound}
                 className={`p-1.5 rounded-lg text-xs transition ${
                   soundEnabled ? "bg-white/20 text-white" : "bg-white/10 text-white/40"
                 }`}
-                title={soundEnabled ? "Chime sound enabled" : "Chime sound muted"}
+                title={soundEnabled ? "Chime sound enabled (click to mute)" : "Chime sound muted (click to unmute)"}
               >
                 {soundEnabled ? "🔊" : "🔇"}
               </button>
@@ -325,6 +454,35 @@ export function NotificationCenter({
             </div>
           </div>
 
+          {/* Sound Controls Bar (Faaah sound preset & Test Sound button) */}
+          <div className="px-3.5 py-2 bg-[#061947] border-t border-white/10 flex items-center justify-between text-white text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs">🎵</span>
+              <span className="text-white/80 font-medium">Chime Sound:</span>
+              <select
+                value={soundTone}
+                onChange={(e) => handleChangeTone(e.target.value as SoundTone)}
+                className="bg-white/15 text-white font-semibold text-[11px] rounded-lg px-2 py-0.5 outline-none border border-white/20 focus:bg-[#0b2f8a] cursor-pointer"
+              >
+                <option value="fahhh" className="bg-[#0b2f8a] text-white">🔥 Viral FAHHH! (#fahhh Original)</option>
+                <option value="fahhh-7x" className="bg-[#0b2f8a] text-white">📢 FAHHHHH (7x Loud Alert)</option>
+                <option value="faaah-synth" className="bg-[#0b2f8a] text-white">✨ Faaah Harmonic Swell Chime</option>
+                <option value="crystal" className="bg-[#0b2f8a] text-white">🔔 Crystal Chime</option>
+                <option value="bell" className="bg-[#0b2f8a] text-white">🛎️ Temple Bell</option>
+                <option value="pop" className="bg-[#0b2f8a] text-white">🫧 Soft Pop</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => playNotificationSound(soundTone)}
+              className="px-2.5 py-1 rounded-lg bg-[#dfb755] hover:bg-[#edd077] text-[#071c54] font-bold text-[10px] flex items-center gap-1 transition shadow-xs cursor-pointer active:scale-95"
+              title="Click to test the Fahhh notification sound effect"
+            >
+              <span>▶ Test Sound</span>
+            </button>
+          </div>
+
           {/* Filter Tabs */}
           <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-xs">
             <button
@@ -349,7 +507,7 @@ export function NotificationCenter({
             >
               <span>Orders 🛍️</span>
               <span className="text-[9px] opacity-75">
-                ({notifications.filter((n) => n.type === "order_created").length})
+                ({notifications.filter((n) => n.type === "order_created" || n.type === "order_cancelled").length})
               </span>
             </button>
             <button
@@ -381,6 +539,7 @@ export function NotificationCenter({
             ) : (
               filteredNotifications.map((item) => {
                 const isOrder = item.type === "order_created";
+                const isCancelled = item.type === "order_cancelled";
                 const isRegister = item.type === "user_registered";
                 const isLogin = item.type === "user_login";
 
@@ -395,21 +554,25 @@ export function NotificationCenter({
                     onClick={() => handleNotificationClick(item)}
                     className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors duration-150 select-none group relative ${
                       !item.isRead
-                        ? "bg-amber-50/50 hover:bg-amber-100/60 border-l-4 border-amber-500"
+                        ? isCancelled
+                          ? "bg-rose-50/60 hover:bg-rose-100/70 border-l-4 border-rose-500"
+                          : "bg-amber-50/50 hover:bg-amber-100/60 border-l-4 border-amber-500"
                         : "bg-white hover:bg-slate-50"
                     }`}
                   >
                     {/* Icon Badge */}
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base shadow-sm ${
-                        isOrder
+                        isCancelled
+                          ? "bg-rose-100 text-rose-800 border border-rose-300/60"
+                          : isOrder
                           ? "bg-emerald-100 text-emerald-800 border border-emerald-300/60"
                           : isRegister
                           ? "bg-purple-100 text-purple-800 border border-purple-300/60"
                           : "bg-blue-100 text-blue-800 border border-blue-300/60"
                       }`}
                     >
-                      {isOrder ? "🛍️" : isRegister ? "🌟" : "👤"}
+                      {isCancelled ? "🛑" : isOrder ? "🛍️" : isRegister ? "🌟" : "👤"}
                     </div>
 
                     {/* Content */}

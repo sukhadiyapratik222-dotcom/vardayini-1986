@@ -9,6 +9,8 @@ import { LogoutButton } from "@/components/logout-button";
 import { ensureSeeded } from "@/db/seed";
 import { AccountAddressManager, AddressItem } from "@/components/account-address-manager";
 
+import { Breadcrumbs } from "@/components/breadcrumbs";
+
 export const dynamic = "force-dynamic";
 
 function parseAddressSnapshot(raw: string | null | undefined): string {
@@ -109,6 +111,7 @@ export default async function AccountPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 space-y-10">
+      <Breadcrumbs items={[{ label: "My Account" }]} />
       {/* 1. Profile Header Card */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b2f8a] via-[#09256e] to-[#06184a] text-white p-6 sm:p-8 shadow-xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#dfb755]/20 via-transparent to-transparent pointer-events-none" />
@@ -125,7 +128,7 @@ export default async function AccountPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#dfb755]/20 text-[#dfb755] border border-[#dfb755]/40">
-                  {authUser.role === "admin" ? "Head Karigar · Admin" : "Royal Patron Member"}
+                  {authUser.role === "super_admin" ? "👑 Super Admin" : authUser.role === "admin" ? "Store Admin" : "Royal Customer Member"}
                 </span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   ✓ Verified Account
@@ -147,14 +150,14 @@ export default async function AccountPage() {
           </div>
 
           <div className="flex items-center gap-3 self-start md:self-auto">
-            {authUser.role === "admin" && (
+            {(authUser.role === "admin" || authUser.role === "super_admin") && (
               <a
                 href="http://localhost:3001"
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full bg-[#dfb755] px-4 py-2 text-xs font-bold text-[#0b2f8a] shadow-sm hover:bg-[#c99f3b] transition"
+                className="rounded-full bg-[#dfb755] px-4 py-2 text-xs font-bold text-[#0b2f8a] shadow-sm hover:bg-[#c99f3b] transition flex items-center gap-1.5"
               >
-                Karigar Desk (3001) →
+                <span>{authUser.role === "super_admin" ? "👑 Admin Desk (3001) →" : "Admin Desk (3001) →"}</span>
               </a>
             )}
             <LogoutButton />
