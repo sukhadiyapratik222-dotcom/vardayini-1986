@@ -537,28 +537,6 @@
           "festival",
           "uttarayan"
         ]
-      },
-      {
-        "name": "Tikha khaja",
-        "gujaratiName": "tikha khaja",
-        "festivalId": "nagpanchami",
-        "festivalName": "Nagpanchami",
-        "badge": "Festive Special",
-        "description": "Handcrafted festive sweet delicacy prepared with 100% pure desi ghee.",
-        "imageUrl": "/uploads/1793034208102-Canva_AI_Image_Oct_24__2026__12_41_20_AM.png",
-        "price": 120,
-        "comparePrice": 200,
-        "weight": "250 grams",
-        "stock": 10,
-        "tags": [
-          "nagpanchami",
-          "festival",
-          "Festive Special"
-        ],
-        "id": 919,
-        "legacyId": 919,
-        "dbProductId": 23,
-        "dbVariantId": 919
       }
     ],
     "festivalPages": {

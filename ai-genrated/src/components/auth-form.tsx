@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
-import { buildApiUrl, getApiHeaders } from "@/lib/api-config";
 
 export function AuthForm({
   mode,
@@ -228,9 +227,9 @@ export function AuthForm({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(buildApiUrl("/api/auth/register"), {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
-        headers: getApiHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
           phone: cleanPhone,
@@ -283,9 +282,9 @@ export function AuthForm({
         password: String(form.get("password") || ""),
       };
 
-      const res = await fetch(buildApiUrl("/api/auth/login"), {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: getApiHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
