@@ -2,7 +2,7 @@
   "name": "vardayini-sweets-store",
   "private": true,
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev -p 9449",

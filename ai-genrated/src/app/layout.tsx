@@ -27,7 +27,13 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  await ensureSeeded();
+  try {
+    await ensureSeeded();
+  } catch (err) {
+    // Never let a seeding problem replace the whole site with Next's global
+    // error page; log it so Vercel runtime logs still show the cause.
+    console.error("[layout] ensureSeeded failed:", err);
+  }
   const uiConfig = getUiConfigSafe();
 
   return (
