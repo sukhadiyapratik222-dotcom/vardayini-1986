@@ -1,6 +1,9 @@
 {
   "name": "vardayini-sweets-store",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev -p 9449",
     "build": "next build",
