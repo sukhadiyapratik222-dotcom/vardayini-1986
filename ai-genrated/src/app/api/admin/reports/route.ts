@@ -40,10 +40,8 @@ export async function GET(req: Request) {
           ORDER BY id DESC
           LIMIT 200
         `;
-        const { DatabaseSync } = await import("node:sqlite");
-        const path = await import("node:path");
-        const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-        const sqlite = new DatabaseSync(dbPath);
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
         rows = sqlite.prepare(rawSql).all();
       } catch (sqlErr) {
         console.warn("[Reports API] Logins fallback error:", sqlErr);
@@ -56,10 +54,8 @@ export async function GET(req: Request) {
     if (type === "otp") {
       let rows: any[] = [];
       try {
-        const { DatabaseSync } = await import("node:sqlite");
-        const path = await import("node:path");
-        const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-        const sqlite = new DatabaseSync(dbPath);
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
         const raw = sqlite.prepare(`
           SELECT 
             'OTP-' || id as id,
@@ -85,10 +81,8 @@ export async function GET(req: Request) {
     if (type === "emails") {
       let rows: any[] = [];
       try {
-        const { DatabaseSync } = await import("node:sqlite");
-        const path = await import("node:path");
-        const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-        const sqlite = new DatabaseSync(dbPath);
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
         const raw = sqlite.prepare(`
           SELECT 
             'EML-' || id as id,
@@ -115,10 +109,8 @@ export async function GET(req: Request) {
     if (type === "sms") {
       let rows: any[] = [];
       try {
-        const { DatabaseSync } = await import("node:sqlite");
-        const path = await import("node:path");
-        const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-        const sqlite = new DatabaseSync(dbPath);
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
         const raw = sqlite.prepare(`
           SELECT 
             'SMS-' || id as id,
@@ -145,10 +137,8 @@ export async function GET(req: Request) {
     if (type === "products") {
       let sales: any[] = [];
       try {
-        const { DatabaseSync } = await import("node:sqlite");
-        const path = await import("node:path");
-        const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-        const sqlite = new DatabaseSync(dbPath);
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
         const raw = sqlite.prepare(`
           SELECT 
             product_name as productName,

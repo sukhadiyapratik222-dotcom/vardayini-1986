@@ -685,10 +685,8 @@ export async function POST(request: Request) {
     const custEmail = user?.email || (name ? `${name.toLowerCase().replace(/[^a-z0-9]/g, "")}@gmail.com` : "customer@vardayini.com");
     const custPhone = phone || user?.phone || "+91 98250 19760";
 
-    const { DatabaseSync } = await import("node:sqlite");
-    const path = await import("node:path");
-    const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-    const sqlite = new DatabaseSync(dbPath);
+    const { getSqliteDb } = await import("@/db");
+    const sqlite = getSqliteDb();
 
     const isPickup = fulfillmentType === "pickup";
     const emailSubject = isPickup

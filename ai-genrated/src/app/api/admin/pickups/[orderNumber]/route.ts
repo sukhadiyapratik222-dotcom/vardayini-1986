@@ -185,10 +185,8 @@ async function handleUpdate(
 
     // Customer SMS notification for time update
     try {
-      const { DatabaseSync } = await import("node:sqlite");
-      const path = await import("node:path");
-      const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-      const sqlite = new DatabaseSync(dbPath);
+      const { getSqliteDb } = await import("@/db");
+      const sqlite = getSqliteDb();
 
       const custPhone = existingOrder.guestPhone || "+91 98250 19760";
       const custName = existingOrder.guestName || "Customer";
@@ -337,10 +335,8 @@ async function handleUpdate(
 
       // Notification logs for cancellation
       try {
-        const { DatabaseSync } = await import("node:sqlite");
-        const path = await import("node:path");
-        const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-        const sqlite = new DatabaseSync(dbPath);
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
 
         const custPhone = existingOrder.guestPhone || "+91 98250 19760";
         const custName = existingOrder.guestName || "Customer";
@@ -387,10 +383,8 @@ async function handleUpdate(
 
     // Send customer notifications based on target status
     try {
-      const { DatabaseSync } = await import("node:sqlite");
-      const path = await import("node:path");
-      const dbPath = path.resolve(process.cwd(), ".data/vardayini_local.db");
-      const sqlite = new DatabaseSync(dbPath);
+      const { getSqliteDb } = await import("@/db");
+      const sqlite = getSqliteDb();
 
       const custPhone = existingOrder.guestPhone || "+91 98250 19760";
       const custName = existingOrder.guestName || "Customer";

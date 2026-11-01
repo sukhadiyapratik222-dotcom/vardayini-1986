@@ -27,17 +27,31 @@ const isTestEnvironment =
 // RESILIENT EMBEDDED SQLITE ENGINE (ZERO-CRASH FALLBACK & MONGO CACHE)
 // ============================================================================
 
+function canWriteTo(dir: string): boolean {
+  try {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const probe = path.join(dir, `.write-probe-${process.pid}-${Date.now()}`);
+    fs.writeFileSync(probe, "1");
+    fs.unlinkSync(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function getSqliteDb(): DatabaseSync {
   if (globalForDb.__sqliteDb) return globalForDb.__sqliteDb;
 
   try {
     const dataDir = path.resolve(process.cwd(), ".data");
-    if (!fs.existsSync(dataDir)) {
-      try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
-    }
-    const dbPath = isTestEnvironment
-      ? ":memory:"
-      : path.join(dataDir, "vardayini_local.db");
+    // Serverless platforms (Vercel) mount the app directory read-only. Opening
+    // an existing SQLite file there "succeeds" but every write then fails with
+    // SQLITE_READONLY, which used to crash every page. Probe for write access
+    // first and use an in-memory database when the directory is not writable.
+    const dbPath =
+      isTestEnvironment || !canWriteTo(dataDir)
+        ? ":memory:"
+        : path.join(dataDir, "vardayini_local.db");
     globalForDb.__sqliteDb = new DatabaseSync(dbPath);
   } catch {
     globalForDb.__sqliteDb = new DatabaseSync(":memory:");
