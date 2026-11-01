@@ -338,6 +338,9 @@ export interface OrderItem {
   pickupDate?: string | null;
   pickupSlot?: string | null;
   estimatedReadyAt?: string | null;
+  courierName?: string | null;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
   createdAt: string;
 }
 
