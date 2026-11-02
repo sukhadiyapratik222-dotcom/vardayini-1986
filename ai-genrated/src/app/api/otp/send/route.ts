@@ -57,8 +57,8 @@ export async function POST(request: Request) {
       isSimulated: result.isSimulated || false,
       message: result.message || "OTP has been sent to your mobile number.",
       expiresAt: result.expiresAt,
-      // In development mode, provide OTP to assist frontend developer testing
-      ...(process.env.NODE_ENV !== "production" && result.otp ? { devOtp: result.otp } : {}),
+      // Provide OTP in simulation mode so users/testers can verify
+      ...(result.otp ? { devOtp: result.otp } : {}),
     });
   } catch (error: any) {
     console.error("[API /api/otp/send Error]:", error);

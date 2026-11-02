@@ -136,7 +136,10 @@ export function AuthForm({
 
       setOtpStep("verify");
       setResendTimer(60);
-      if (data.devOtp) setDevOtp(data.devOtp);
+      if (data.devOtp) {
+        setDevOtp(data.devOtp);
+        setOtpCode(data.devOtp);
+      }
       if (data.isSimulated) setIsSimulated(true);
       setSuccessMsg(`Verification code sent to +91 ${cleanPhone}`);
     } catch {
@@ -168,7 +171,10 @@ export function AuthForm({
 
       setSuccessMsg(`Verification code resent via WhatsApp to +91 ${cleanPhone}`);
       setResendTimer(60);
-      if (data.devOtp) setDevOtp(data.devOtp);
+      if (data.devOtp) {
+        setDevOtp(data.devOtp);
+        setOtpCode(data.devOtp);
+      }
     } catch {
       setError("Failed to reach WhatsApp service. Please try again.");
     } finally {
@@ -361,12 +367,20 @@ export function AuthForm({
 
         {/* Development Helper Badge */}
         {devOtp && (
-          <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-            <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
-            <code className="rounded bg-amber-200 px-1.5 py-0.5 font-mono font-bold tracking-widest text-amber-950">
-              {devOtp}
-            </code>{" "}
-            <span className="text-[11px] text-amber-800">(Fast2SMS Quick Route Simulation)</span>
+          <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 shadow-xs">
+            <div>
+              <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
+              <code className="rounded bg-amber-200 px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-amber-950">
+                {devOtp}
+              </code>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOtpCode(devOtp)}
+              className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 text-[11px] transition shadow-xs cursor-pointer"
+            >
+              Auto-fill ⚡
+            </button>
           </div>
         )}
 
@@ -573,12 +587,20 @@ export function AuthForm({
 
       {/* Development Helper Badge */}
       {devOtp && (
-        <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-          <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
-          <code className="rounded bg-amber-200 px-1.5 py-0.5 font-mono font-bold tracking-widest text-amber-950">
-            {devOtp}
-          </code>{" "}
-          <span className="text-[11px] text-amber-800">(Fast2SMS Quick Route Simulation)</span>
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 shadow-xs">
+          <div>
+            <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
+            <code className="rounded bg-amber-200 px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-amber-950">
+              {devOtp}
+            </code>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOtpCode(devOtp)}
+            className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 text-[11px] transition shadow-xs cursor-pointer"
+          >
+            Auto-fill ⚡
+          </button>
         </div>
       )}
 

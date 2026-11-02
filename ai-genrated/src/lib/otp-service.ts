@@ -174,7 +174,7 @@ export async function sendOTP(
     console.warn("[OTP Service] Database logging notice:", dbErr);
   }
 
-  // If running in development / test environment without an API key, simulate delivery safely
+  // If running in development / test environment or without an API key, simulate delivery safely
   if (isSimulation) {
     console.log(
       `\x1b[36m[Fast2SMS Dev Mode]\x1b[0m Generated OTP \x1b[32m${otp}\x1b[0m for ${cleanPhone} (${trigger}). Live SMS disabled because FAST2SMS_API_KEY is not configured.`
@@ -184,7 +184,7 @@ export async function sendOTP(
       otpSent: true,
       isSimulated: true,
       message: "OTP generated successfully (simulated delivery mode for testing).",
-      otp: process.env.NODE_ENV !== "production" ? otp : undefined,
+      otp: otp, // Always return OTP in simulation mode so users/testers can verify without live SMS gateway
       expiresAt,
     };
   }
