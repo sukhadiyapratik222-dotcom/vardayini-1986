@@ -85,7 +85,7 @@ export const LoginSchema = z.object({
   password: z
     .string()
     .min(1, "Password is required.")
-    .min(6, "Password must be at least 6 characters.")
+    .min(8, "Password must be at least 8 characters.")
     .max(64, "Password cannot exceed 64 characters."),
 });
 
@@ -124,8 +124,16 @@ export const RegisterSchema = z
     password: z
       .string()
       .min(1, "Password is required.")
-      .min(6, "Password must be at least 6 characters long.")
-      .max(64, "Password cannot exceed 64 characters."),
+      .min(8, "Password must be at least 8 characters long.")
+      .max(64, "Password cannot exceed 64 characters.")
+      .regex(
+        PASSWORD_COMPLEXITY_REGEX,
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#^_-)."
+      )
+      .refine(
+        (val) => !BLOCKED_COMMON_PASSWORDS.has(val.toLowerCase()),
+        "This password is too common or easily guessed. Please choose a stronger password."
+      ),
     confirmPassword: z.string().optional(),
   })
   .refine(

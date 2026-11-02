@@ -91,6 +91,10 @@ export async function POST(request: Request) {
     await ensureSeeded();
     const user = await getAuthUser(request);
 
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await readJsonSafe<{
       productId?: unknown;
       rating?: unknown;

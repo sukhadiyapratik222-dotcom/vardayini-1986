@@ -241,6 +241,14 @@ export function TestimonialsSection({
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        setSubmitError("Please log in to submit a review. Redirecting to login…");
+        if (typeof window !== "undefined") {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+        }
+        return;
+      }
+
       if (!res.ok) {
         setSubmitError(data?.error || "Could not submit review.");
         return;
