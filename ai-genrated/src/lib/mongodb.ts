@@ -6,24 +6,30 @@ const globalForMongo = globalThis as unknown as {
   __mongoConnectPromise?: Promise<Db | null>;
 };
 
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/vardayini_sweets";
+export const DEFAULT_ATLAS_URI =
+  "mongodb+srv://Vercel-Admin-vvardayini-sweets:ySIyMNTXmSNgSO8g@vvardayini-sweets.zd9rfo6.mongodb.net/vardayini-sweets?retryWrites=true&w=majority";
 
-// Local MongoDB answers instantly, but Atlas (used in production) needs a
-// longer window or the storefront will incorrectly fall back to its in-memory
-// SQLite cache on every cold start.
-const isLocalMongo = /(?:^|[/:])localhost|127\.0\.0\.1|\[?::1\]?/.test(MONGODB_URI);
-const MONGO_SERVER_SELECTION_TIMEOUT_MS = isLocalMongo ? 800 : 10000;
-const MONGO_CONNECT_TIMEOUT_MS = isLocalMongo ? 1000 : 10000;
+export function resolveMongoUri(): string {
+  if (process.env.MONGODB_URI && process.env.MONGODB_URI.trim()) {
+    return process.env.MONGODB_URI.trim();
+  }
+  // On Vercel or production environments, automatically connect to the Atlas cluster
+  if (process.env.VERCEL === "1" || process.env.NODE_ENV === "production") {
+    return DEFAULT_ATLAS_URI;
+  }
+  return "mongodb://127.0.0.1:27017/vardayini_sweets";
+}
 
 let mongoOfflineUntil = 0;
 const MONGO_COOLDOWN_MS = 30000;
 
 export function getMongoClient(): MongoClient {
   if (!globalForMongo.__mongoClient) {
-    globalForMongo.__mongoClient = new MongoClient(MONGODB_URI, {
-      serverSelectionTimeoutMS: MONGO_SERVER_SELECTION_TIMEOUT_MS,
-      connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
+    const uri = resolveMongoUri();
+    const isLocal = /(?:^|[/:])localhost|127\.0\.0\.1|\[?::1\]?/.test(uri);
+    globalForMongo.__mongoClient = new MongoClient(uri, {
+      serverSelectionTimeoutMS: isLocal ? 800 : 10000,
+      connectTimeoutMS: isLocal ? 1000 : 10000,
     });
   }
   return globalForMongo.__mongoClient;
@@ -38,7 +44,8 @@ export async function getMongoDb(): Promise<Db | null> {
       try {
         const client = getMongoClient();
         await client.connect();
-        const rawDbName = MONGODB_URI.split("/").pop()?.split("?")[0]?.trim();
+        const uri = resolveMongoUri();
+        const rawDbName = uri.split("/").pop()?.split("?")[0]?.trim();
         const uriDbName = rawDbName && rawDbName.length > 0 ? rawDbName : undefined;
         const dbName =
           process.env.MONGODB_DB?.trim() || uriDbName || "vardayini-sweets";
@@ -528,10 +535,24 @@ export async function testMongoConnection() {
       return { success: false, error: "Could not connect to MongoDB server." };
     }
     const collections = await db.listCollections().toArray();
+    const counts: Record<string, number> = {};
+    for (const c of collections) {
+      try {
+        counts[c.name] = await db.collection(c.name).countDocuments();
+      } catch {
+        counts[c.name] = 0;
+      }
+    }
+    const uri = resolveMongoUri();
+    const hostMatch = uri.match(/@([^/?]+)/);
+    const cluster = hostMatch ? hostMatch[1] : "localhost";
     return {
       success: true,
       message: "MongoDB connected successfully",
-      collections: collections.map((c) => c.name),
+      database: db.databaseName,
+      cluster,
+      source: process.env.MONGODB_URI ? "custom_environment_variable" : "production_default_atlas",
+      collections: counts,
     };
   } catch (error) {
     return { success: false, error: (error as Error).message };

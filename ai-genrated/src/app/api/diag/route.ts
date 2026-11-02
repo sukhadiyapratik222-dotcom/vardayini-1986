@@ -91,6 +91,14 @@ export async function GET() {
     report.seed = { ok: false, error: errorInfo(err) };
   }
 
+  // 5. MongoDB connectivity & collections
+  try {
+    const { testMongoConnection } = await import("@/lib/mongodb");
+    report.mongodb = await testMongoConnection();
+  } catch (err) {
+    report.mongodb = { ok: false, error: errorInfo(err) };
+  }
+
   return NextResponse.json(report, {
     status: 200,
     headers: { "cache-control": "no-store" },
