@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     const phone = sanitizeString(body?.phone || body?.phoneNumber || "");
     const otp = sanitizeString(body?.otp || body?.otpCode || "");
     const trigger = (sanitizeString(body?.trigger || "login") || "login") as OtpTrigger;
+    const otpProof = sanitizeString(body?.otpProof || "");
 
     if (!phone) {
       return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "OTP code is required." }, { status: 400 });
     }
 
-    const result = await verifyOTP(phone, otp, trigger);
+    const result = await verifyOTP(phone, otp, trigger, otpProof);
 
     if (!result.success) {
       const statusCode = result.isLocked ? 429 : 400;

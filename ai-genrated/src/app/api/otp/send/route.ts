@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       expiresAt: result.expiresAt,
       // Provide OTP in simulation mode so users/testers can verify
       ...(result.otp ? { devOtp: result.otp } : {}),
+      ...(result.otpProof ? { otpProof: result.otpProof } : {}),
     });
   } catch (error: any) {
     console.error("[API /api/otp/send Error]:", error);

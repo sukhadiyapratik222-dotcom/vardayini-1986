@@ -525,6 +525,70 @@ export async function deleteNotificationFromMongo(id?: number | string | null, a
 }
 
 // ============================================================================
+// OTP & SMS LOGS CRUD (SERVERLESS PERSISTENCE & MULTI-CONTAINER SHARING)
+// ============================================================================
+
+export async function syncOtpToMongo(data: {
+  phone: string;
+  otpCode: string;
+  purpose: string;
+  gateway: string;
+  status?: string;
+  expiresAt: Date;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return null;
+    const col = db.collection("otp_logs");
+    // Supersede older pending OTPs for the same phone and purpose
+    await col.updateMany(
+      { phone: data.phone, purpose: data.purpose, status: "Pending" },
+      { $set: { status: "Superseded", updatedAt: new Date() } }
+    );
+    const res = await col.insertOne({
+      phone: data.phone,
+      otp_code: data.otpCode,
+      purpose: data.purpose,
+      gateway: data.gateway,
+      status: data.status || "Pending",
+      expiresAt: data.expiresAt,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    return res.insertedId;
+  } catch (err) {
+    console.warn("[MongoDB] syncOtpToMongo notice:", err);
+    return null;
+  }
+}
+
+export async function findActiveOtpInMongo(phone: string, purpose: string) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return null;
+    const col = db.collection("otp_logs");
+    return await col.findOne(
+      { phone, purpose, status: "Pending" },
+      { sort: { createdAt: -1, _id: -1 } }
+    );
+  } catch (err) {
+    console.warn("[MongoDB] findActiveOtpInMongo notice:", err);
+    return null;
+  }
+}
+
+export async function updateOtpStatusInMongo(filter: any, status: string) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const col = db.collection("otp_logs");
+    await col.updateMany(filter, { $set: { status, updatedAt: new Date() } });
+  } catch (err) {
+    console.warn("[MongoDB] updateOtpStatusInMongo notice:", err);
+  }
+}
+
+// ============================================================================
 // CONNECTION TEST UTILITY
 // ============================================================================
 

@@ -45,7 +45,9 @@ export async function POST(request: Request) {
         ? `Test OTP generated: ${result.otp}`
         : "SMS OTP sent successfully",
       isSimulated: result.isSimulated || false,
+      expiresAt: result.expiresAt,
       ...(result.otp ? { devOtp: result.otp } : {}),
+      ...(result.otpProof ? { otpProof: result.otpProof } : {}),
     });
   } catch (error: any) {
     console.error("[API /api/auth/send-otp Error]:", error);

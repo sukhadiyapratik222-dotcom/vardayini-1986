@@ -37,8 +37,9 @@ export async function POST(request: Request) {
 
     // Customer OTP verification
     const rawOtp = sanitizeString((body as any)?.otp || "");
+    const otpProof = sanitizeString((body as any)?.otpProof || "");
     if (rawOtp) {
-      const verifyResult = await verifyOTP(phone, rawOtp, "register");
+      const verifyResult = await verifyOTP(phone, rawOtp, "register", otpProof);
       if (!verifyResult.success) {
         return Response.json(
           { error: verifyResult.error || "Invalid or expired OTP code." },
@@ -74,10 +75,27 @@ export async function POST(request: Request) {
       );
     }
 
-    await setAuthCookie(user.id);
+    await setAuthCookie(user.id, {
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      name: user.name,
+    });
     await mergeGuestCart(user.id);
 
-    // Synchronize new user to MySQL (phpMyAdmin) & MongoDB
+    // Synchronize new user to MongoDB Atlas & MySQL
+    try {
+      const { syncUserToMongo } = await import("@/lib/mongodb");
+      await syncUserToMongo({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        passwordHash: user.passwordHash,
+        role: user.role,
+      });
+    } catch {}
+
     try {
       await syncUserToMysql({
         id: user.id,
@@ -88,7 +106,7 @@ export async function POST(request: Request) {
         role: user.role,
       });
     } catch (syncErr) {
-      console.warn("[Register] MySQL/Mongo user sync notice:", syncErr);
+      console.warn("[Register] MySQL user sync notice:", syncErr);
     }
 
     // Notify admin when a new user registers

@@ -32,6 +32,7 @@ export function AuthForm({
   // OTP Verification state
   const [otpStep, setOtpStep] = useState<"input" | "verify">("input");
   const [otpCode, setOtpCode] = useState("");
+  const [otpProof, setOtpProof] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
   const [devOtp, setDevOtp] = useState<string | null>(null);
   const [isSimulated, setIsSimulated] = useState(false);
@@ -136,12 +137,16 @@ export function AuthForm({
 
       setOtpStep("verify");
       setResendTimer(60);
+      if (data.otpProof) {
+        setOtpProof(data.otpProof);
+      }
       if (data.devOtp) {
         setDevOtp(data.devOtp);
         setOtpCode(data.devOtp);
       }
       if (data.isSimulated) setIsSimulated(true);
-      setSuccessMsg(`Verification code sent to +91 ${cleanPhone}`);
+      const testOtpBadge = data.devOtp ? ` · Test OTP: ${data.devOtp}` : "";
+      setSuccessMsg(`Verification code sent to +91 ${cleanPhone}${testOtpBadge}`);
     } catch {
       setError("Network error while sending verification OTP. Please try again.");
     } finally {
@@ -169,12 +174,16 @@ export function AuthForm({
         return;
       }
 
-      setSuccessMsg(`Verification code resent via WhatsApp to +91 ${cleanPhone}`);
-      setResendTimer(60);
+      if (data.otpProof) {
+        setOtpProof(data.otpProof);
+      }
       if (data.devOtp) {
         setDevOtp(data.devOtp);
         setOtpCode(data.devOtp);
       }
+      const testOtpBadge = data.devOtp ? ` · Test OTP: ${data.devOtp}` : "";
+      setSuccessMsg(`Verification code resent via WhatsApp to +91 ${cleanPhone}${testOtpBadge}`);
+      setResendTimer(60);
     } catch {
       setError("Failed to reach WhatsApp service. Please try again.");
     } finally {
@@ -200,7 +209,12 @@ export function AuthForm({
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: cleanPhone, userOtp: cleanOtp, trigger: "login" }),
+        body: JSON.stringify({
+          phoneNumber: cleanPhone,
+          userOtp: cleanOtp,
+          trigger: "login",
+          otpProof: otpProof || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -243,6 +257,7 @@ export function AuthForm({
           password,
           confirmPassword,
           otp: cleanOtp,
+          otpProof: otpProof || undefined,
         }),
       });
 
@@ -453,6 +468,24 @@ export function AuthForm({
                     Change Number
                   </button>
                 </div>
+
+                {devOtp && (
+                  <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 shadow-xs">
+                    <div>
+                      <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
+                      <code className="rounded bg-amber-200 px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-amber-950">
+                        {devOtp}
+                      </code>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOtpCode(devOtp)}
+                      className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 text-[11px] transition shadow-xs cursor-pointer"
+                    >
+                      Auto-fill ⚡
+                    </button>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-bold text-[#6b1d1d] mb-1">
@@ -743,6 +776,24 @@ export function AuthForm({
               Edit Details
             </button>
           </div>
+
+          {devOtp && (
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 shadow-xs">
+              <div>
+                <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
+                <code className="rounded bg-amber-200 px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-amber-950">
+                  {devOtp}
+                </code>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOtpCode(devOtp)}
+                className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 text-[11px] transition shadow-xs cursor-pointer"
+              >
+                Auto-fill ⚡
+              </button>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold text-[#6b1d1d] mb-1">

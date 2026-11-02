@@ -70,8 +70,18 @@ export async function getCartSessionId() {
   return id;
 }
 
-export async function setAuthCookie(userId: number): Promise<string> {
-  const payload = JSON.stringify({ userId, exp: Date.now() + 1000 * 60 * 60 * 24 * 14 });
+export async function setAuthCookie(
+  userId: number,
+  extra?: { email?: string; phone?: string; role?: string; name?: string }
+): Promise<string> {
+  const payload = JSON.stringify({
+    userId,
+    email: extra?.email,
+    phone: extra?.phone,
+    role: extra?.role,
+    name: extra?.name,
+    exp: Date.now() + 1000 * 60 * 60 * 24 * 14,
+  });
   const token = Buffer.from(payload).toString("base64url") + "." + sign(payload);
   const store = await cookies();
   store.set(AUTH_COOKIE, token, {
@@ -146,7 +156,76 @@ export async function getAuthUser(req?: Request) {
     return null;
   }
 
-  const [user] = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  let [user] = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+
+  // If not found in local SQLite (e.g. serverless instance cold start), attempt hydration from MongoDB Atlas
+  if (!user && (data.email || data.phone || data.userId)) {
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const query: any = { $or: [] };
+        if (data.userId) query.$or.push({ id: data.userId });
+        if (data.email) query.$or.push({ email: String(data.email).toLowerCase().trim() });
+        if (data.phone) query.$or.push({ phone: data.phone });
+        if (query.$or.length > 0) {
+          const mongoUser = await mongo.collection("users").findOne(query);
+          if (mongoUser) {
+            try {
+              const { getSqliteDb } = await import("@/db");
+              const sqlite = getSqliteDb();
+              sqlite.prepare(`
+                INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role, status, access_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              `).run(
+                mongoUser.id || data.userId,
+                mongoUser.name || data.name || "Customer",
+                mongoUser.email || data.email || "",
+                mongoUser.phone || data.phone || "",
+                mongoUser.passwordHash || "",
+                mongoUser.role || data.role || "customer",
+                mongoUser.status || "active",
+                mongoUser.accessType || "full"
+              );
+              [user] = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+            } catch {
+              user = {
+                id: mongoUser.id || data.userId,
+                name: mongoUser.name || data.name || "Customer",
+                email: mongoUser.email || data.email || "",
+                phone: mongoUser.phone || data.phone || "",
+                passwordHash: mongoUser.passwordHash || "",
+                role: mongoUser.role || data.role || "customer",
+                status: mongoUser.status || "active",
+                mustChangePassword: false,
+                accessType: mongoUser.accessType || "full",
+                createdAt: new Date().toISOString(),
+              } as any;
+            }
+          }
+        }
+      }
+    } catch (mErr) {
+      console.warn("[getAuthUser] MongoDB lookup notice:", mErr);
+    }
+  }
+
+  // Stateless fallback: Reconstitute verified session from cryptographic HMAC token payload
+  if (!user && data.role) {
+    user = {
+      id: data.userId,
+      name: data.name || `Patron ${String(data.phone || data.userId).slice(-4)}`,
+      email: data.email || `${data.userId}@patron.vardayini.com`,
+      phone: data.phone || "",
+      passwordHash: "",
+      role: data.role || "customer",
+      status: "active",
+      mustChangePassword: false,
+      accessType: "full",
+      createdAt: new Date().toISOString(),
+    } as any;
+  }
+
   if (!user) return null;
 
   let permissionsList: string[] = [];

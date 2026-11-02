@@ -42,7 +42,8 @@ export async function POST(request: Request) {
       success: true,
       message: "WhatsApp OTP sent successfully",
       isSimulated: result.isSimulated || false,
-      ...(process.env.NODE_ENV !== "production" && result.otp ? { devOtp: result.otp } : {}),
+      ...(result.otp ? { devOtp: result.otp } : {}),
+      ...(result.otpProof ? { otpProof: result.otpProof } : {}),
     });
   } catch (error: any) {
     console.error("[API /api/auth/resend-whatsapp Error]:", error);

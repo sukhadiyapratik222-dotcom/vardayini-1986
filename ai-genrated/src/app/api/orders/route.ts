@@ -189,15 +189,16 @@ export async function POST(request: Request) {
 
   // 2b. Customer Order Phone OTP Verification
   const orderOtp = typeof body.otp === "string" ? body.otp.trim() : "";
+  const orderOtpProof = typeof body.otpProof === "string" ? body.otpProof.trim() : undefined;
   if (orderOtp) {
-    const otpVerify = await verifyOTP(phone, orderOtp, "order");
+    const otpVerify = await verifyOTP(phone, orderOtp, "order", orderOtpProof);
     if (!otpVerify.success) {
       return Response.json(
         { error: otpVerify.error || "Invalid or expired order confirmation OTP." },
         { status: 400 }
       );
     }
-  } else if (process.env.NODE_ENV === "production") {
+  } else if (process.env.NODE_ENV === "production" && !user) {
     return Response.json(
       { error: "Customer mobile verification OTP is required to place your order." },
       { status: 400 }

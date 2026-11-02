@@ -20,6 +20,7 @@ export async function POST(request: Request) {
     const phoneNumber = sanitizeString(body?.phoneNumber || body?.phone || "");
     const userOtp = sanitizeString(body?.userOtp || body?.otp || "");
     const trigger = (sanitizeString(body?.trigger || "login") || "login");
+    const otpProof = sanitizeString(body?.otpProof || "");
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 });
@@ -31,8 +32,8 @@ export async function POST(request: Request) {
 
     const cleanPhone = normalizeIndianPhone(phoneNumber);
 
-    // Verify OTP using database persistent store with 5-minute expiration
-    const verifyResult = await verifyOTP(cleanPhone, userOtp, trigger);
+    // Verify OTP using database persistent store (MongoDB Atlas + SQLite) and signed proof fallback
+    const verifyResult = await verifyOTP(cleanPhone, userOtp, trigger, otpProof);
 
     if (!verifyResult.success) {
       const errorMsg = verifyResult.error?.toLowerCase() || "";
@@ -60,11 +61,42 @@ export async function POST(request: Request) {
       });
     }
 
-    // OTP verification successful for login! Resolve session / JWT token creation
+    // OTP verification successful for login! Resolve user in SQLite or MongoDB Atlas
     let [user] = await db.select().from(users).where(eq(users.phone, cleanPhone)).limit(1);
     let isNewUser = false;
 
-    // If user does not exist by phone, automatically provision a customer account
+    // Check MongoDB Atlas if not in local SQLite cache (e.g. fresh lambda container)
+    if (!user) {
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mongoUser = await mongo.collection("users").findOne({ phone: cleanPhone });
+          if (mongoUser) {
+            const { getSqliteDb } = await import("@/db");
+            const sqlite = getSqliteDb();
+            sqlite.prepare(`
+              INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role, status, access_type)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              mongoUser.id || undefined,
+              mongoUser.name || `Patron ${cleanPhone.slice(-4)}`,
+              mongoUser.email || `${cleanPhone}@patron.vardayini.com`,
+              cleanPhone,
+              mongoUser.passwordHash || "",
+              mongoUser.role || "customer",
+              mongoUser.status || "active",
+              mongoUser.accessType || "full"
+            );
+            [user] = await db.select().from(users).where(eq(users.phone, cleanPhone)).limit(1);
+          }
+        }
+      } catch (mongoErr) {
+        console.warn("[Verify OTP] Mongo lookup notice:", mongoErr);
+      }
+    }
+
+    // If user still does not exist, auto-provision customer account
     if (!user) {
       isNewUser = true;
       const autoEmail = `${cleanPhone}@patron.vardayini.com`;
@@ -83,7 +115,6 @@ export async function POST(request: Request) {
         }
       } catch (insertErr) {
         console.warn("[Verify OTP] User auto-provision notice:", insertErr);
-        // Fallback query if email or race condition occurred
         const [fallbackUser] = await db.select().from(users).where(eq(users.phone, cleanPhone)).limit(1);
         user = fallbackUser;
       }
@@ -96,8 +127,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate signed HMAC session token and set HTTP-only cookie
-    const token = await setAuthCookie(user.id);
+    // Synchronize user to MongoDB Atlas so all serverless functions recognize this customer
+    try {
+      const { syncUserToMongo } = await import("@/lib/mongodb");
+      await syncUserToMongo({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        passwordHash: user.passwordHash || "",
+        role: user.role,
+        status: user.status || "active",
+        accessType: user.accessType || "full",
+      });
+    } catch {}
+
+    // Generate signed HMAC session token and set HTTP-only cookie with verified user payload
+    const token = await setAuthCookie(user.id, {
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      name: user.name,
+    });
     await mergeGuestCart(user.id);
 
     // Record login/registration activity
