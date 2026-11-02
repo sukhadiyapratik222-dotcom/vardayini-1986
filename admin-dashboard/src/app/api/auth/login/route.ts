@@ -55,7 +55,9 @@ export async function POST(req: Request) {
 
       if (isAdminCandidate) {
         // Allow admin login even if storefront is offline, using fallback admin session
-        const sessionToken = `vsm_fallback_admin_${Date.now()}`;
+        const sessionToken = isSuperAdminCandidate
+          ? `vsm_fallback_super_admin_${Date.now()}`
+          : `vsm_fallback_admin_${Date.now()}`;
         const cookieStore = await cookies();
         cookieStore.set("vsm_admin_session", sessionToken, {
           httpOnly: true,
@@ -70,14 +72,14 @@ export async function POST(req: Request) {
           offlineMode: true,
           user: isSuperAdminCandidate
             ? {
-                id: 2,
+                id: 1,
                 name: "Pratik Sukhadiya (Super Admin)",
                 email: "pratik222@gmail.com",
                 phone: "9876543210",
                 role: "super_admin",
               }
             : {
-                id: 1,
+                id: 2,
                 name: "Vardayini Admin",
                 email: "admin@vardayini.com",
                 phone: "9000000000",
@@ -118,7 +120,9 @@ export async function POST(req: Request) {
 
       if (isAdminCandidate && (res.status >= 500 || res.status === 404)) {
         console.warn(`[Dashboard Auth] Storefront returned ${res.status}. Falling back to dev admin session.`);
-        const sessionToken = `vsm_fallback_admin_${Date.now()}`;
+        const sessionToken = isSuperAdminCandidate
+          ? `vsm_fallback_super_admin_${Date.now()}`
+          : `vsm_fallback_admin_${Date.now()}`;
         const cookieStore = await cookies();
         cookieStore.set("vsm_admin_session", sessionToken, {
           httpOnly: true,
@@ -192,7 +196,8 @@ export async function POST(req: Request) {
 
     if (!sessionToken) {
       // Fallback session token if confirmed admin
-      sessionToken = `admin_session_${Date.now()}`;
+      const isSuper = data?.user?.role === "super_admin";
+      sessionToken = isSuper ? `admin_session_super_admin_${Date.now()}` : `admin_session_${Date.now()}`;
     }
 
     const cookieStore = await cookies();

@@ -13,17 +13,26 @@ export async function GET() {
 
   // Handle fallback or offline admin session tokens
   if (
-    sessionToken.startsWith("vsm_fallback_admin_") ||
+    sessionToken.startsWith("vsm_fallback_") ||
     sessionToken.startsWith("admin_session_")
   ) {
+    const isSuper = sessionToken.includes("super_admin");
     return NextResponse.json({
-      user: {
-        id: 1,
-        name: "Vardayini Admin",
-        email: "admin@vardayini.com",
-        phone: "9000000000",
-        role: "admin",
-      },
+      user: isSuper
+        ? {
+            id: 1,
+            name: "Pratik Sukhadiya (Super Admin)",
+            email: "pratik222@gmail.com",
+            phone: "9876543210",
+            role: "super_admin",
+          }
+        : {
+            id: 2,
+            name: "Vardayini Admin",
+            email: "admin@vardayini.com",
+            phone: "9000000000",
+            role: "admin",
+          },
       offlineMode: true,
     });
   }
@@ -40,20 +49,30 @@ export async function GET() {
       res = await fetch(`${storeUrl}/api/auth/me`, {
         headers: {
           Cookie: `vs_session=${sessionToken}`,
+          "x-admin-key": process.env.ADMIN_API_KEY || "vsm_admin_secret_key_2026_secured",
         },
         cache: "no-store",
         signal: AbortSignal.timeout(15000),
       });
     } catch (fetchErr: unknown) {
       console.warn("[Dashboard Auth] Me check: Storefront unreachable, maintaining session:", fetchErr);
+      const isSuper = sessionToken.includes("super_admin");
       return NextResponse.json({
-        user: {
-          id: 1,
-          name: "Vardayini Admin",
-          email: "admin@vardayini.com",
-          phone: "9000000000",
-          role: "admin",
-        },
+        user: isSuper
+          ? {
+              id: 1,
+              name: "Pratik Sukhadiya (Super Admin)",
+              email: "pratik222@gmail.com",
+              phone: "9876543210",
+              role: "super_admin",
+            }
+          : {
+              id: 2,
+              name: "Vardayini Admin",
+              email: "admin@vardayini.com",
+              phone: "9000000000",
+              role: "admin",
+            },
         offlineMode: true,
       });
     }
