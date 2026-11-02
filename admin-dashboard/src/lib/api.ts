@@ -575,6 +575,10 @@ async function handleResponse<T>(res: Response, fallbackMessage: string): Promis
   return res.json() as Promise<T>;
 }
 
+function cleanOrderParam(orderNumber: string): string {
+  return encodeURIComponent((orderNumber || "").replace(/^#/, "").trim());
+}
+
 export const api = {
   // Authentication methods
   async login(email: string, password: string): Promise<{ success: boolean; user: any }> {
@@ -710,7 +714,8 @@ export const api = {
   },
 
   async getOrder(orderNumber: string): Promise<FullOrderDetail> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${orderNumber}`, {
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${cleanNum}`, {
       cache: "no-store",
     });
     const data = await handleResponse<{ order: FullOrderDetail }>(res, "Failed to load order details");
@@ -721,22 +726,24 @@ export const api = {
     orderNumber: string,
     payload: UpdateOrderTrackingPayload
   ): Promise<FullOrderDetail> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${orderNumber}`, {
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${cleanNum}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, orderNumber: (orderNumber || "").replace(/^#/, "").trim() }),
     });
     const data = await handleResponse<{ order: FullOrderDetail }>(res, "Failed to update order tracking");
     return data.order;
   },
 
   async updateOrderStatus(orderNumber: string, status: string): Promise<Record<string, unknown>> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${orderNumber}`, {
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${cleanNum}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, orderNumber: (orderNumber || "").replace(/^#/, "").trim() }),
     });
     return handleResponse<Record<string, unknown>>(res, "Failed to update order status");
   },
@@ -753,16 +760,18 @@ export const api = {
       total?: number;
     }
   ): Promise<Record<string, unknown>> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${orderNumber}`, {
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${cleanNum}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fields),
+      body: JSON.stringify({ ...fields, orderNumber: (orderNumber || "").replace(/^#/, "").trim() }),
     });
     return handleResponse<Record<string, unknown>>(res, "Failed to update order");
   },
 
   async deleteOrder(orderNumber: string): Promise<{ success: boolean; deleted: string }> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${orderNumber}`, {
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${cleanNum}`, {
       method: "DELETE",
     });
     return handleResponse<{ success: boolean; deleted: string }>(res, "Failed to delete order");
@@ -970,7 +979,7 @@ export const api = {
   async updatePickupOrder(
     orderNumber: string,
     payload: {
-      action?: "update_status" | "update_ready_time" | "verify_otp";
+      action?: "update_status" | "update_ready_time" | "verify_otp" | "override_capacity";
       status?: string;
       expectedStatus?: string;
       otp?: string;
@@ -978,12 +987,15 @@ export const api = {
       estimatedReadyAt?: string;
       cancelReason?: string;
       notes?: string;
+      orderNumber?: string;
     }
   ): Promise<{ order: PickupOrder; success: boolean; message?: string }> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/pickups/${orderNumber}`, {
+    const rawClean = (orderNumber || "").replace(/^#/, "").trim();
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/pickups/${cleanNum}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, orderNumber: rawClean }),
     });
     return handleResponse<{ order: PickupOrder; success: boolean; message?: string }>(
       res,
@@ -992,10 +1004,12 @@ export const api = {
   },
 
   async verifyPickupOtp(orderNumber: string, otp: string): Promise<{ valid: boolean; message: string }> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/pickups/${orderNumber}`, {
+    const rawClean = (orderNumber || "").replace(/^#/, "").trim();
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/pickups/${cleanNum}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "verify_otp", otp }),
+      body: JSON.stringify({ action: "verify_otp", otp, orderNumber: rawClean }),
     });
     return handleResponse<{ valid: boolean; message: string }>(res, "Failed to verify OTP");
   },

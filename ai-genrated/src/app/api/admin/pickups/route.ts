@@ -5,6 +5,7 @@ import { orders, orderItems, stores, users, orderStatusHistory } from "@/db/sche
 import { ensureSeeded } from "@/db/seed";
 import { requireAdmin } from "@/lib/auth";
 import { getISTDateString, getNowInIST, parseTimeToMinutes } from "@/lib/pickup";
+import { handlePickupUpdate } from "./[orderNumber]/route";
 
 export const dynamic = "force-dynamic";
 
@@ -252,4 +253,12 @@ export async function GET(request: NextRequest) {
     stores: allStores,
     todayIST,
   });
+}
+
+export async function PATCH(request: NextRequest) {
+  return handlePickupUpdate(request);
+}
+
+export async function PUT(request: NextRequest) {
+  return handlePickupUpdate(request);
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { and, desc, eq, or, sql } from "drizzle-orm";
+import { db, getSqliteDb } from "@/db";
 import { orders, orderItems, stores, productVariants, orderStatusHistory } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
 import { requireAdmin } from "@/lib/auth";
@@ -13,6 +13,28 @@ export const dynamic = "force-dynamic";
 
 const pickupOtpLockout = new AccountLockoutManager(5, 10 * 60 * 1000);
 
+function parseOrderLookup(rawNum?: string | number) {
+  const str = String(rawNum || "").trim();
+  const decoded = decodeURIComponent(str).trim();
+  const clean = decoded.replace(/^#/, "").trim();
+  const numId = parseInt(clean, 10);
+  const isValidNumId = !isNaN(numId) && numId > 0 && String(numId) === clean;
+
+  const conditions = [
+    eq(orders.orderNumber, clean),
+    eq(orders.orderNumber, decoded),
+    eq(orders.orderNumber, str),
+    sql`LOWER(${orders.orderNumber}) = LOWER(${clean})`,
+    sql`REPLACE(${orders.orderNumber}, '#', '') = ${clean}`,
+  ];
+
+  if (isValidNumId) {
+    conditions.push(eq(orders.id, numId));
+  }
+
+  return { clean, decoded, numId: isValidNumId ? numId : undefined, condition: or(...conditions) };
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ orderNumber: string }> }
@@ -24,9 +46,9 @@ export async function GET(
   }
 
   const { orderNumber } = await context.params;
-  const cleanNum = orderNumber?.trim();
+  const lookup = parseOrderLookup(orderNumber);
 
-  const [order] = await db
+  let [order] = await db
     .select({
       id: orders.id,
       orderNumber: orders.orderNumber,
@@ -66,11 +88,77 @@ export async function GET(
     })
     .from(orders)
     .leftJoin(stores, eq(orders.pickupStoreId, stores.id))
-    .where(eq(orders.orderNumber, cleanNum))
+    .where(lookup.condition)
     .limit(1);
 
+  // Direct SQLite fallback
   if (!order) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    try {
+      const sqlite = getSqliteDb();
+      const sqliteRow = sqlite
+        .prepare(`
+          SELECT o.*, s.name as store_name, s.address as store_address, s.city as store_city, 
+                 s.phone as store_phone, s.lat as store_lat, s.lng as store_lng, s.hours as store_hours
+          FROM orders o
+          LEFT JOIN stores s ON o.pickup_store_id = s.id
+          WHERE o.order_number = ? 
+             OR REPLACE(o.order_number, '#', '') = ?
+             OR LOWER(o.order_number) = LOWER(?)
+             ${lookup.numId ? "OR o.id = ?" : ""}
+          LIMIT 1
+        `)
+        .get(
+          ...(lookup.numId
+            ? [lookup.clean, lookup.clean, lookup.clean, lookup.numId]
+            : [lookup.clean, lookup.clean, lookup.clean])
+        ) as any;
+
+      if (sqliteRow) {
+        order = {
+          id: sqliteRow.id,
+          orderNumber: sqliteRow.order_number,
+          userId: sqliteRow.user_id,
+          guestName: sqliteRow.guest_name,
+          guestPhone: sqliteRow.guest_phone,
+          status: sqliteRow.status,
+          subtotal: sqliteRow.subtotal,
+          discount: sqliteRow.discount,
+          deliveryFee: sqliteRow.delivery_fee,
+          tax: sqliteRow.tax,
+          total: sqliteRow.total,
+          couponCode: sqliteRow.coupon_code,
+          addressSnapshot: sqliteRow.address_snapshot,
+          deliverySlot: sqliteRow.delivery_slot,
+          fulfillmentType: sqliteRow.fulfillment_type || "pickup",
+          pickupStoreId: sqliteRow.pickup_store_id,
+          pickupDate: sqliteRow.pickup_date,
+          pickupSlot: sqliteRow.pickup_slot,
+          estimatedReadyAt: sqliteRow.estimated_ready_at ? new Date(sqliteRow.estimated_ready_at) : null,
+          actualReadyAt: sqliteRow.actual_ready_at ? new Date(sqliteRow.actual_ready_at) : null,
+          pickupOtp: sqliteRow.pickup_otp,
+          pickupVerifiedBy: sqliteRow.pickup_verified_by,
+          paymentMethod: sqliteRow.payment_method,
+          paymentStatus: sqliteRow.payment_status,
+          createdAt: sqliteRow.created_at ? new Date(sqliteRow.created_at) : new Date(),
+          deliveredAt: sqliteRow.delivered_at ? new Date(sqliteRow.delivered_at) : null,
+          cancelledAt: sqliteRow.cancelled_at ? new Date(sqliteRow.cancelled_at) : null,
+          cancelReason: sqliteRow.cancel_reason,
+          storeName: sqliteRow.store_name,
+          storeAddress: sqliteRow.store_address,
+          storeCity: sqliteRow.store_city,
+          storePhone: sqliteRow.store_phone,
+          storeLat: sqliteRow.store_lat,
+          storeLng: sqliteRow.store_lng,
+          storeHours: sqliteRow.store_hours,
+        } as any;
+      }
+    } catch (e) {
+      console.warn("[pickups] SQLite fallback query error:", e);
+    }
+  }
+
+  if (!order) {
+    return NextResponse.json({ error: `Pickup order '${lookup.clean}' not found` }, { status: 404 });
   }
 
   const items = await db
@@ -94,19 +182,22 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ orderNumber: string }> }
 ) {
-  return handleUpdate(request, context);
+  const { orderNumber } = await context.params;
+  return handlePickupUpdate(request, orderNumber);
 }
 
 export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ orderNumber: string }> }
 ) {
-  return handleUpdate(request, context);
+  const { orderNumber } = await context.params;
+  return handlePickupUpdate(request, orderNumber);
 }
 
-async function handleUpdate(
+export async function handlePickupUpdate(
   request: NextRequest,
-  context: { params: Promise<{ orderNumber: string }> }
+  orderNumberParam?: string,
+  preParsedBody?: any
 ) {
   await ensureSeeded();
   const auth = await requireAdmin(request, "orders:manage");
@@ -114,34 +205,100 @@ async function handleUpdate(
     return auth.error;
   }
 
-  const { orderNumber } = await context.params;
-  const cleanNum = orderNumber?.trim();
-
-  const body = await readJsonSafe<{
-    action?: "update_status" | "update_ready_time" | "verify_otp" | "override_capacity";
-    status?: string;
-    expectedStatus?: string;
-    otp?: string;
-    verifyByOrderNumber?: boolean;
-    estimatedReadyAt?: string;
-    cancelReason?: string;
-    notes?: string;
-  }>(request);
+  const body =
+    preParsedBody ??
+    (await readJsonSafe<{
+      action?: "update_status" | "update_ready_time" | "verify_otp" | "override_capacity";
+      status?: string;
+      expectedStatus?: string;
+      otp?: string;
+      verifyByOrderNumber?: boolean;
+      estimatedReadyAt?: string;
+      cancelReason?: string;
+      notes?: string;
+      orderNumber?: string;
+      orderId?: string | number;
+      id?: string | number;
+    }>(request));
 
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 
-  const [existingOrder] = await db
-    .select()
-    .from(orders)
-    .where(eq(orders.orderNumber, cleanNum))
-    .limit(1);
+  const rawTarget = (orderNumberParam || body.orderNumber || body.orderId || body.id || "").toString().trim();
+  const lookup = parseOrderLookup(rawTarget);
 
-  if (!existingOrder) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  if (!lookup.clean && !lookup.numId) {
+    return NextResponse.json({ error: "Order number or ID is required" }, { status: 400 });
   }
 
+  let [existingOrder] = await db
+    .select()
+    .from(orders)
+    .where(lookup.condition)
+    .limit(1);
+
+  // Direct SQLite fallback
+  if (!existingOrder) {
+    try {
+      const sqlite = getSqliteDb();
+      const sqliteRow = sqlite
+        .prepare(`
+          SELECT * FROM orders
+          WHERE order_number = ? 
+             OR REPLACE(order_number, '#', '') = ?
+             OR LOWER(order_number) = LOWER(?)
+             ${lookup.numId ? "OR id = ?" : ""}
+          LIMIT 1
+        `)
+        .get(
+          ...(lookup.numId
+            ? [lookup.clean, lookup.clean, lookup.clean, lookup.numId]
+            : [lookup.clean, lookup.clean, lookup.clean])
+        ) as any;
+
+      if (sqliteRow) {
+        existingOrder = {
+          id: sqliteRow.id,
+          orderNumber: sqliteRow.order_number,
+          userId: sqliteRow.user_id,
+          guestName: sqliteRow.guest_name,
+          guestPhone: sqliteRow.guest_phone,
+          status: sqliteRow.status,
+          subtotal: sqliteRow.subtotal,
+          discount: sqliteRow.discount,
+          deliveryFee: sqliteRow.delivery_fee,
+          tax: sqliteRow.tax,
+          total: sqliteRow.total,
+          couponCode: sqliteRow.coupon_code,
+          addressSnapshot: sqliteRow.address_snapshot,
+          deliverySlot: sqliteRow.delivery_slot,
+          fulfillmentType: sqliteRow.fulfillment_type || "pickup",
+          pickupStoreId: sqliteRow.pickup_store_id,
+          pickupDate: sqliteRow.pickup_date,
+          pickupSlot: sqliteRow.pickup_slot,
+          estimatedReadyAt: sqliteRow.estimated_ready_at ? new Date(sqliteRow.estimated_ready_at) : null,
+          actualReadyAt: sqliteRow.actual_ready_at ? new Date(sqliteRow.actual_ready_at) : null,
+          pickupOtp: sqliteRow.pickup_otp,
+          pickupVerifiedBy: sqliteRow.pickup_verified_by,
+          paymentMethod: sqliteRow.payment_method,
+          paymentStatus: sqliteRow.payment_status,
+          createdAt: sqliteRow.created_at ? new Date(sqliteRow.created_at) : new Date(),
+          deliveredAt: sqliteRow.delivered_at ? new Date(sqliteRow.delivered_at) : null,
+          cancelledAt: sqliteRow.cancelled_at ? new Date(sqliteRow.cancelled_at) : null,
+          cancelReason: sqliteRow.cancel_reason,
+        } as any;
+      }
+    } catch (e) {
+      console.warn("[pickups] SQLite fallback query error:", e);
+    }
+  }
+
+  if (!existingOrder) {
+    return NextResponse.json({ error: `Pickup order '${lookup.clean || rawTarget}' not found` }, { status: 404 });
+  }
+
+  const cleanNum = existingOrder.orderNumber;
   const adminName = auth.user.name || auth.user.email || "Admin Staff";
   const action = body.action || (body.status ? "update_status" : body.estimatedReadyAt ? "update_ready_time" : "update_status");
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import {
   api,
   FullOrderDetail,
@@ -109,7 +109,7 @@ export function OrderDetailModal({
   const [copiedId, setCopiedId] = useState(false);
   const [copiedOtp, setCopiedOtp] = useState(false);
   const [copiedTracking, setCopiedTracking] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   // Tracking Management Form
   const [targetStatus, setTargetStatus] = useState<string>(initialOrder?.status || "");
@@ -229,19 +229,20 @@ export function OrderDetailModal({
   const handleSaveStatus = async () => {
     if (!order) return;
     try {
-      startTransition(async () => {
-        const updated = await api.updateOrderTracking(order.orderNumber, {
-          status: targetStatus,
-          expectedStatus: order.status,
-          note: statusNote.trim() || undefined,
-        });
-        setOrder(updated);
-        setStatusNote("");
-        toast.success(`Order status updated to ${targetStatus.toUpperCase()}`);
-        onUpdated?.();
+      setIsPending(true);
+      const updated = await api.updateOrderTracking(order.orderNumber, {
+        status: targetStatus,
+        expectedStatus: order.status,
+        note: statusNote.trim() || undefined,
       });
+      setOrder(updated);
+      setStatusNote("");
+      toast.success(`Order status updated to ${targetStatus.toUpperCase()}`);
+      onUpdated?.();
     } catch (err: any) {
       toast.error(err.message || "Failed to update order status");
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -249,22 +250,23 @@ export function OrderDetailModal({
   const handleSaveShipping = async () => {
     if (!order) return;
     try {
-      startTransition(async () => {
-        const updated = await api.updateOrderTracking(order.orderNumber, {
-          courierName: courierName.trim() || undefined,
-          trackingNumber: trackingNumber.trim() || undefined,
-          trackingUrl: trackingUrl.trim() || undefined,
-          expectedDeliveryDate: expectedDeliveryDate || undefined,
-          note: trackingNumber
-            ? `Dispatched via ${courierName || "Courier"} (AWB: ${trackingNumber})`
-            : "Shipping details updated",
-        });
-        setOrder(updated);
-        toast.success("Shipping & Courier tracking information saved!");
-        onUpdated?.();
+      setIsPending(true);
+      const updated = await api.updateOrderTracking(order.orderNumber, {
+        courierName: courierName.trim() || undefined,
+        trackingNumber: trackingNumber.trim() || undefined,
+        trackingUrl: trackingUrl.trim() || undefined,
+        expectedDeliveryDate: expectedDeliveryDate || undefined,
+        note: trackingNumber
+          ? `Dispatched via ${courierName || "Courier"} (AWB: ${trackingNumber})`
+          : "Shipping details updated",
       });
+      setOrder(updated);
+      toast.success("Shipping & Courier tracking information saved!");
+      onUpdated?.();
     } catch (err: any) {
       toast.error(err.message || "Failed to save shipping info");
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -284,24 +286,25 @@ export function OrderDetailModal({
     }
 
     try {
-      startTransition(async () => {
-        const staff = counterStaffName.trim() || "Store Counter Staff";
-        const updated = await api.updateOrderTracking(order.orderNumber, {
-          status: "picked_up",
-          expectedStatus: order.status,
-          verifyPickup: true,
-          pickupVerifiedBy: staff,
-          note: `Customer pickup verified by ${staff} (${
-            overrideWithOrderNumber ? "Verified by Order ID" : "Verified via OTP"
-          })`,
-        });
-        setOrder(updated);
-        setEnteredOtp("");
-        toast.success(`Order marked as PICKED UP! Handover complete.`);
-        onUpdated?.();
+      setIsPending(true);
+      const staff = counterStaffName.trim() || "Store Counter Staff";
+      const updated = await api.updateOrderTracking(order.orderNumber, {
+        status: "picked_up",
+        expectedStatus: order.status,
+        verifyPickup: true,
+        pickupVerifiedBy: staff,
+        note: `Customer pickup verified by ${staff} (${
+          overrideWithOrderNumber ? "Verified by Order ID" : "Verified via OTP"
+        })`,
       });
+      setOrder(updated);
+      setEnteredOtp("");
+      toast.success(`Order marked as PICKED UP! Handover complete.`);
+      onUpdated?.();
     } catch (err: any) {
       toast.error(err.message || "Failed to verify pickup");
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -312,19 +315,20 @@ export function OrderDetailModal({
       return;
     }
     try {
-      startTransition(async () => {
-        const updated = await api.updateOrderTracking(order.orderNumber, {
-          note: customNote.trim(),
-          location: customLocation.trim() || undefined,
-        });
-        setOrder(updated);
-        setCustomNote("");
-        setCustomLocation("");
-        toast.success("Tracking milestone note logged into order history!");
-        onUpdated?.();
+      setIsPending(true);
+      const updated = await api.updateOrderTracking(order.orderNumber, {
+        note: customNote.trim(),
+        location: customLocation.trim() || undefined,
       });
+      setOrder(updated);
+      setCustomNote("");
+      setCustomLocation("");
+      toast.success("Tracking milestone note logged into order history!");
+      onUpdated?.();
     } catch (err: any) {
       toast.error(err.message || "Failed to log note");
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -332,18 +336,19 @@ export function OrderDetailModal({
   const handleSavePayment = async () => {
     if (!order) return;
     try {
-      startTransition(async () => {
-        const updated = await api.updateOrderTracking(order.orderNumber, {
-          paymentStatus,
-          paymentMethod,
-          note: `Payment updated: ${paymentMethod.toUpperCase()} (${paymentStatus})`,
-        });
-        setOrder(updated);
-        toast.success("Payment details updated!");
-        onUpdated?.();
+      setIsPending(true);
+      const updated = await api.updateOrderTracking(order.orderNumber, {
+        paymentStatus,
+        paymentMethod,
+        note: `Payment updated: ${paymentMethod.toUpperCase()} (${paymentStatus})`,
       });
+      setOrder(updated);
+      toast.success("Payment details updated!");
+      onUpdated?.();
     } catch (err: any) {
       toast.error(err.message || "Failed to update payment");
+    } finally {
+      setIsPending(false);
     }
   };
 
