@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { toast } from "@/lib/toast";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 export function LivePreviewTab() {
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [key, setKey] = useState(0);
-  const storeUrl = process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449";
+  const storeUrl = getPublicStoreUrl();
 
   const handleReload = () => {
     setKey((prev) => prev + 1);

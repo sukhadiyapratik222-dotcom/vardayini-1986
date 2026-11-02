@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { toast } from "@/lib/toast";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 export const PHOTO_GALLERY = [
   // Mithai
@@ -94,7 +95,7 @@ export function ImagePickerField({
 
       // If local failed, fallback to storefront upload route
       if (!res.ok) {
-        const storeApi = process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449";
+        const storeApi = getPublicStoreUrl();
         res = await fetch(`${storeApi}/api/upload`, {
           method: "POST",
           body: formData,

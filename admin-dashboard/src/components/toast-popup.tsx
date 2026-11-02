@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 export interface ToastData {
   id?: string;
@@ -33,7 +34,7 @@ export function ToastPopup({ toast, onClose }: ToastPopupProps) {
 
   const isSuccess = toast.type === "success";
   const isError = toast.type === "error";
-  const targetUrl = toast.linkUrl || process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449";
+  const targetUrl = toast.linkUrl || getPublicStoreUrl();
 
   const handleClick = () => {
     if (toast.onClick) {

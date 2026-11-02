@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UiConfig, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 interface StoreBrandingTabProps {
   config: UiConfig | null;
@@ -129,7 +130,7 @@ export function StoreBrandingTab({ config, onRefresh }: StoreBrandingTabProps) {
       <div className="p-6 rounded-2xl bg-white border border-[#0b2f8a]/15 shadow-sm space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <span className="text-xs font-bold text-[#0b2f8a] flex items-center gap-2">
-            <span>👁️</span> Live Navbar Logo Preview (Exact Render on {process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"})
+            <span>👁️</span> Live Navbar Logo Preview (Exact Render on {getPublicStoreUrl()})
           </span>
           <span className="text-[11px] text-slate-500 font-medium">Updates in real time</span>
         </div>

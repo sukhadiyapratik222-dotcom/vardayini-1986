@@ -25,6 +25,7 @@ import { LivePreviewTab } from "@/components/live-preview-tab";
 import { ToastPopup, ToastData } from "@/components/toast-popup";
 import { toast } from "@/lib/toast";
 import { NotificationCenter } from "@/components/notification-center";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 import { ReportsTab, ReportType } from "@/components/reports-tab";
 import { SmsWalletTab } from "@/components/sms-wallet-tab";
@@ -740,8 +741,7 @@ export default function AdminDashboardPage() {
       }
     } else {
       setErrorMessage(
-        "Storefront is offline. Please check connection to " +
-          (process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449")
+        "Storefront is offline. Please check connection to " + getPublicStoreUrl()
       );
     }
     setIsLoading(false);
@@ -1064,6 +1064,13 @@ export default function AdminDashboardPage() {
                   </>
                 )}
               </button>
+
+              <div className="pt-1 text-center">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Store API: <strong className="text-[#0b2f8a] font-semibold">{getPublicStoreUrl()}</strong>
+                </span>
+              </div>
             </form>
 
             {/* Security Notice */}
@@ -1358,7 +1365,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <a
-              href={process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}
+              href={getPublicStoreUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold btn-gold shadow-sm transition"

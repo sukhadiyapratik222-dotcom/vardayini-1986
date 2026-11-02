@@ -5,6 +5,7 @@ import { ProductItem, InventoryItem, CategoryItem, UiConfig, api } from "@/lib/a
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
 import { TablePagination } from "./table-pagination";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 interface ProductsTabProps {
   products: ProductItem[];
@@ -284,7 +285,7 @@ export function ProductsTab({
         stock: Math.max(0, editStock),
       });
       setEditingId(null);
-      const storeShopUrl = `${process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}/shop`;
+      const storeShopUrl = `${getPublicStoreUrl()}/shop`;
       toast.success("Product price and stock updated successfully!", storeShopUrl);
       onRefresh();
     } catch (err) {
@@ -302,7 +303,7 @@ export function ProductsTab({
         imageUrl,
       });
       setPhotoEditItem(null);
-      const storeShopUrl = `${process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}/shop`;
+      const storeShopUrl = `${getPublicStoreUrl()}/shop`;
       toast.success("Product photo updated successfully!", storeShopUrl);
       onRefresh();
     } catch (err) {
@@ -335,7 +336,7 @@ export function ProductsTab({
       const createdTitle = newTitle.trim();
       setNewTitle("");
       setNewSku("");
-      const storeShopUrl = `${process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}/shop`;
+      const storeShopUrl = `${getPublicStoreUrl()}/shop`;
       toast.success(`"${createdTitle}" added to catalog!`, storeShopUrl);
       onRefresh();
     } catch (err) {

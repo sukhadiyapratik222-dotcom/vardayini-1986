@@ -10,6 +10,7 @@ import {
   api,
 } from "@/lib/api";
 import { toast } from "@/lib/toast";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 interface OverviewTabProps {
   config: UiConfig | null;
@@ -341,7 +342,7 @@ export function OverviewTab({
 
         <div className="flex items-center gap-3">
           <a
-            href={process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}
+            href={getPublicStoreUrl()}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold btn-primary shadow-sm"

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UiConfig, HeroPhoto, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 interface HeroScrollerTabProps {
   config: UiConfig | null;
@@ -163,7 +164,7 @@ export function HeroScrollerTab({ config, onRefresh }: HeroScrollerTabProps) {
         },
         heritageBanner: banner,
       });
-      const storeUrl = process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449";
+      const storeUrl = getPublicStoreUrl();
       toast.success("Hero section updated successfully!", storeUrl);
       onRefresh();
     } catch (err) {
@@ -258,7 +259,7 @@ export function HeroScrollerTab({ config, onRefresh }: HeroScrollerTabProps) {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-bold tracking-wide">
-              Live Preview · Exactly How Customers See It on {process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449"}
+              Live Preview · Exactly How Customers See It on {getPublicStoreUrl()}
             </span>
           </div>
           <span className="text-[11px] text-white/70">Updates in Real-Time as You Edit</span>

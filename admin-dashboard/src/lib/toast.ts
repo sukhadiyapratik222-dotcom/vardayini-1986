@@ -1,9 +1,10 @@
 import { ToastData } from "@/components/toast-popup";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 type ToastListener = (toast: ToastData | null) => void;
 let listeners: ToastListener[] = [];
 
-const defaultStoreUrl = process.env.NEXT_PUBLIC_STORE_API || "http://localhost:9449";
+const defaultStoreUrl = getPublicStoreUrl();
 
 export const toast = {
   show(data: ToastData) {

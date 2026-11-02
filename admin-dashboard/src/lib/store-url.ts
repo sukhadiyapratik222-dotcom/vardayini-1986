@@ -10,11 +10,12 @@
  */
 
 export const DEV_STORE_URL = "http://127.0.0.1:9449";
+export const PROD_DEFAULT_STORE_URL = "https://vardayini-1986.vercel.app";
 
 export const STORE_URL_CONFIG_ERROR =
   "Storefront URL is not configured. Set STORE_API_URL (server) and " +
   "NEXT_PUBLIC_STORE_API (browser) to the deployed storefront URL, " +
-  "for example https://your-store.vercel.app, then redeploy.";
+  "for example https://vardayini-1986.vercel.app, then redeploy.";
 
 function normalise(url: string): string {
   return url.trim().replace(/\/+$/, "");
@@ -22,31 +23,43 @@ function normalise(url: string): string {
 
 /**
  * Server-only base URL used by the auth routes and the /api/store proxy.
- * Returns null when running in production without configuration so callers
- * can return a clear 503 instead of silently calling localhost.
+ * Automatically falls back to the live deployed Vardayini storefront
+ * (https://vardayini-1986.vercel.app) in production if not explicitly set.
  */
-export function getStoreApiBase(): string | null {
-  const configured = process.env.STORE_API_URL;
-  if (configured && configured.trim()) return normalise(configured);
+export function getStoreApiBase(): string {
+  const configured = process.env.STORE_API_URL || process.env.NEXT_PUBLIC_STORE_API;
+  if (configured && configured.trim()) {
+    const norm = normalise(configured);
+    // If running in production on Vercel and configured points to localhost, fall back to deployed store
+    if (process.env.NODE_ENV === "production" && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
+      return PROD_DEFAULT_STORE_URL;
+    }
+    return norm;
+  }
 
-  // Development keeps the zero-config local workflow.
+  // Development keeps the local workflow (port 9449)
   if (process.env.NODE_ENV !== "production") return DEV_STORE_URL;
 
-  return null;
+  // Production default: live deployed storefront
+  return PROD_DEFAULT_STORE_URL;
 }
 
 /**
- * Public storefront origin used by client components for preview links and
- * iframes. NEXT_PUBLIC_* values are inlined by Next.js at build time, so this
- * must be read directly from process.env.
+ * Public storefront origin used by client components for preview links and iframes.
  */
 export function getPublicStoreUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_STORE_API;
-  if (configured && configured.trim()) return normalise(configured);
+  const configured = process.env.NEXT_PUBLIC_STORE_API || process.env.STORE_API_URL;
+  if (configured && configured.trim()) {
+    const norm = normalise(configured);
+    if (process.env.NODE_ENV === "production" && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
+      return PROD_DEFAULT_STORE_URL;
+    }
+    return norm;
+  }
 
   if (process.env.NODE_ENV !== "production") return normalise(DEV_STORE_URL);
 
-  return "";
+  return PROD_DEFAULT_STORE_URL;
 }
 
 /**
