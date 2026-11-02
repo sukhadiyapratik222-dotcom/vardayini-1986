@@ -19,8 +19,8 @@ export type OrderStatus =
 
 export const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "cancelled"],
-  confirmed: ["preparing", "packed", "ready_for_pickup", "cancelled"],
-  preparing: ["ready_for_pickup", "packed", "cancelled"],
+  confirmed: ["preparing", "packed", "shipped", "ready_for_pickup", "cancelled"],
+  preparing: ["ready_for_pickup", "packed", "shipped", "cancelled"],
   packed: ["shipped", "ready_for_pickup", "cancelled"],
   ready_for_pickup: ["picked_up", "cancelled"],
   shipped: ["delivered"],

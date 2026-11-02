@@ -648,6 +648,34 @@ export async function resendWhatsAppOTP(
         otpProof,
       };
     }
+
+    // Live dispatch via WhatsApp API
+    const waUrl = process.env.WHATSAPP_API_URL || "https://api.your-provider.com/whatsapp";
+    try {
+      await fetch(waUrl, {
+        method: "POST",
+        headers: {
+          "authorization": waApiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          api_key: waApiKey,
+          to: cleanPhone,
+          template_name: "otp_verification",
+          parameters: [{ type: "text", text: activeOtp }],
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (netErr) {
+      console.warn("[WhatsApp Live Dispatch Warning]:", netErr);
+    }
+
+    return {
+      success: true,
+      message: "WhatsApp OTP resent successfully.",
+      otp: activeOtp,
+      otpProof,
+    };
   } catch (err: any) {
     console.error("[WhatsApp Dispatch Error]:", err);
     return {

@@ -14,13 +14,26 @@ interface OrdersTabProps {
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-50 text-amber-800 border-amber-200",
   confirmed: "bg-blue-50 text-blue-800 border-blue-200",
+  preparing: "bg-orange-50 text-orange-800 border-orange-200",
+  ready_for_pickup: "bg-indigo-50 text-indigo-800 border-indigo-200",
+  picked_up: "bg-emerald-50 text-emerald-800 border-emerald-200",
   packed: "bg-purple-50 text-purple-800 border-purple-200",
   shipped: "bg-cyan-50 text-cyan-800 border-cyan-200",
   delivered: "bg-emerald-50 text-emerald-800 border-emerald-200",
   cancelled: "bg-rose-50 text-rose-800 border-rose-200",
 };
 
-const ALL_STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"];
+const ALL_STATUSES = [
+  "pending",
+  "confirmed",
+  "preparing",
+  "ready_for_pickup",
+  "picked_up",
+  "packed",
+  "shipped",
+  "delivered",
+  "cancelled",
+];
 
 /** Parse the JSON address snapshot into a human-readable string */
 function parseAddress(raw: string | null | undefined): string {

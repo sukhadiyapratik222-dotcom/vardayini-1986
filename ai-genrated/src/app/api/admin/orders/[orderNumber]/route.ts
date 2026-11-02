@@ -59,12 +59,38 @@ export async function PUT(request: Request, context: { params: Promise<{ orderNu
   }
 
   const { orderNumber } = await context.params;
+  const decodedNum = decodeURIComponent(orderNumber || "").trim();
+  const cleanOrderNum = decodedNum.replace(/^#/, "").trim();
 
-  const [existingOrder] = await db
+  let [existingOrder] = await db
     .select()
     .from(orders)
-    .where(eq(orders.orderNumber, orderNumber))
+    .where(
+      or(
+        eq(orders.orderNumber, cleanOrderNum),
+        eq(orders.orderNumber, `#${cleanOrderNum}`),
+        eq(orders.orderNumber, decodedNum)
+      )
+    )
     .limit(1);
+
+  if (!existingOrder) {
+    try {
+      const sqlite = getSqliteDb();
+      const sqliteRow = sqlite
+        .prepare(`
+          SELECT * FROM orders 
+          WHERE order_number = ? 
+             OR REPLACE(order_number, '#', '') = ? 
+             OR LOWER(order_number) = LOWER(?)
+          LIMIT 1
+        `)
+        .get(cleanOrderNum, cleanOrderNum, cleanOrderNum) as any;
+      if (sqliteRow) {
+        existingOrder = sqliteRow;
+      }
+    } catch {}
+  }
 
   if (!existingOrder) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -615,5 +641,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ orde
 
   return NextResponse.json({ success: true, deleted: cleanNum });
 }
+
+export const PATCH = PUT;
 
 
