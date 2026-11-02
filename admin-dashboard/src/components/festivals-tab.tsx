@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 interface FestivalsTabProps {
   config: UiConfig | null;
@@ -928,8 +929,8 @@ export function FestivalsTab({ config, onRefresh }: FestivalsTabProps) {
           <a
             href={
               selectedPageId === "all"
-                ? "http://localhost:9449/festivals"
-                : `http://localhost:9449/festivals#${selectedPageId}`
+                ? `${getPublicStoreUrl()}/festivals`
+                : `${getPublicStoreUrl()}/festivals#${selectedPageId}`
             }
             target="_blank"
             rel="noreferrer"
@@ -1075,8 +1076,8 @@ export function FestivalsTab({ config, onRefresh }: FestivalsTabProps) {
           <a
             href={
               selectedPageId === "all"
-                ? "http://localhost:9449/festivals"
-                : `http://localhost:9449/festivals#${selectedPageId}`
+                ? `${getPublicStoreUrl()}/festivals`
+                : `${getPublicStoreUrl()}/festivals#${selectedPageId}`
             }
             target="_blank"
             rel="noreferrer"

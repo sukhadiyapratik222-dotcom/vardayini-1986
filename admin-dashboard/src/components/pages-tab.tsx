@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CmsPageItem, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 export function PagesTab() {
   const [pages, setPages] = useState<CmsPageItem[]>([]);
@@ -235,7 +236,7 @@ export function PagesTab() {
 
                     <td className="py-3.5 px-4">
                       <a
-                        href={`http://localhost:9449/pages/${page.slug}`}
+                        href={`${getPublicStoreUrl()}/pages/${page.slug}`}
                         target="_blank"
                         rel="noreferrer"
                         className="font-mono text-[11px] bg-blue-50 text-[#0b2f8a] hover:underline px-2 py-0.5 rounded border border-blue-200 inline-flex items-center gap-1"

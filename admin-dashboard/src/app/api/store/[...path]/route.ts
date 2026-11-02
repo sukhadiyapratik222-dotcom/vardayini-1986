@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { STORE_URL_CONFIG_ERROR, getStoreApiBase } from "@/lib/store-url";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,11 @@ interface RouteContext {
 
 async function forwardRequest(req: NextRequest, ctx: RouteContext) {
   const { path } = await ctx.params;
-  const storeApiBase = (process.env.STORE_API_URL || "http://127.0.0.1:9449").replace(/\/$/, "");
+  const storeApiBase = getStoreApiBase();
+  if (!storeApiBase) {
+    console.error("[Store Proxy] STORE_API_URL is not configured.");
+    return NextResponse.json({ error: STORE_URL_CONFIG_ERROR }, { status: 503 });
+  }
 
   const subPath = path.join("/");
   const url = new URL(req.url);
@@ -57,7 +62,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
       headers,
       body,
       cache: "no-store",
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(30000),
     });
 
     const responseData = await response.arrayBuffer();
@@ -98,7 +103,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
     if (isConnRefused) {
       console.warn(
         `[Store Proxy] Storefront service at ${targetUrl} is unreachable (ECONNREFUSED). ` +
-        `Ensure the storefront app is running on port 9449.`
+        `Ensure the storefront deployment is running and STORE_API_URL is correct.`
       );
     } else {
       console.error(`Store proxy error forwarding to ${targetUrl}:`, error);
@@ -107,7 +112,8 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
       {
         error: "Store service unavailable",
         message: isConnRefused
-          ? `Storefront service at ${storeApiBase} is offline. Please ensure the store service is running on port 9449.`
+          ? `Storefront service at ${storeApiBase} is unreachable. ` +
+            `Ensure the storefront deployment is running and STORE_API_URL is correct.`
           : (error instanceof Error ? error.message : "Proxy fetch error"),
       },
       { status: 502 }

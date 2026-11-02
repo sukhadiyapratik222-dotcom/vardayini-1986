@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { STORE_URL_CONFIG_ERROR, getStoreApiBase } from "@/lib/store-url";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,12 @@ export async function GET() {
   }
 
   try {
-    const storeUrl = (process.env.STORE_API_URL || "http://127.0.0.1:9449").replace(/\/$/, "");
+    const storeUrl = getStoreApiBase();
+    if (!storeUrl) {
+      console.error("[Dashboard Auth] Me check: STORE_API_URL is not configured.");
+      return NextResponse.json({ error: STORE_URL_CONFIG_ERROR }, { status: 503 });
+    }
+
     let res: Response;
     try {
       res = await fetch(`${storeUrl}/api/auth/me`, {
@@ -36,7 +42,7 @@ export async function GET() {
           Cookie: `vs_session=${sessionToken}`,
         },
         cache: "no-store",
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(15000),
       });
     } catch (fetchErr: unknown) {
       console.warn("[Dashboard Auth] Me check: Storefront unreachable, maintaining session:", fetchErr);

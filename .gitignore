@@ -27,6 +27,7 @@ next-env.d.ts
 .data/
 .test_db/
 vardayini.db
+mongo-backup/
 
 # Logs & temp
 npm-debug.log*

@@ -1,4 +1,28 @@
 const path = require("path");
+const fs = require("fs");
+
+// Load .env.local if present
+try {
+  const envPath = path.resolve(__dirname, "../.env.local");
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        let val = trimmed.slice(eqIdx + 1).trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+} catch {}
 
 let MongoClient;
 try {
@@ -24,8 +48,10 @@ async function seedMongo() {
 
   try {
     await client.connect();
-    const db = client.db("vardayini_sweets");
-    console.log("Connected to MongoDB database: vardayini_sweets");
+    const uriDbName = MONGODB_URI.split("/").pop()?.split("?")[0]?.trim();
+    const dbName = process.env.MONGODB_DB || (uriDbName && uriDbName.length > 0 ? uriDbName : "vardayini-sweets");
+    const db = client.db(dbName);
+    console.log(`Connected to MongoDB database: ${dbName}`);
 
     // 1. Users
     const usersCol = db.collection("users");

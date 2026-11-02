@@ -9,14 +9,21 @@ const globalForMongo = globalThis as unknown as {
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/vardayini_sweets";
 
+// Local MongoDB answers instantly, but Atlas (used in production) needs a
+// longer window or the storefront will incorrectly fall back to its in-memory
+// SQLite cache on every cold start.
+const isLocalMongo = /(?:^|[/:])localhost|127\.0\.0\.1|\[?::1\]?/.test(MONGODB_URI);
+const MONGO_SERVER_SELECTION_TIMEOUT_MS = isLocalMongo ? 800 : 10000;
+const MONGO_CONNECT_TIMEOUT_MS = isLocalMongo ? 1000 : 10000;
+
 let mongoOfflineUntil = 0;
 const MONGO_COOLDOWN_MS = 30000;
 
 export function getMongoClient(): MongoClient {
   if (!globalForMongo.__mongoClient) {
     globalForMongo.__mongoClient = new MongoClient(MONGODB_URI, {
-      serverSelectionTimeoutMS: 800,
-      connectTimeoutMS: 1000,
+      serverSelectionTimeoutMS: MONGO_SERVER_SELECTION_TIMEOUT_MS,
+      connectTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
     });
   }
   return globalForMongo.__mongoClient;
@@ -31,7 +38,10 @@ export async function getMongoDb(): Promise<Db | null> {
       try {
         const client = getMongoClient();
         await client.connect();
-        const dbName = MONGODB_URI.split("/").pop()?.split("?")[0] || "vardayini_sweets";
+        const rawDbName = MONGODB_URI.split("/").pop()?.split("?")[0]?.trim();
+        const uriDbName = rawDbName && rawDbName.length > 0 ? rawDbName : undefined;
+        const dbName =
+          process.env.MONGODB_DB?.trim() || uriDbName || "vardayini-sweets";
         const db = client.db(dbName);
         globalForMongo.__mongoDb = db;
         console.log(`[MongoDB] Connected to database: ${dbName}`);

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  STORE_URL_CONFIG_ERROR,
+  getStoreApiBase,
+  storeUnreachableMessage,
+} from "@/lib/store-url";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +16,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const storeUrl = (process.env.STORE_API_URL || "http://127.0.0.1:9449").replace(/\/$/, "");
+    const storeUrl = getStoreApiBase();
+    if (!storeUrl) {
+      console.error("[Dashboard Auth] STORE_API_URL is not configured.");
+      return NextResponse.json({ error: STORE_URL_CONFIG_ERROR }, { status: 503 });
+    }
+
     let res: Response;
     try {
       res = await fetch(`${storeUrl}/api/auth/login`, {
@@ -19,7 +29,7 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
         cache: "no-store",
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(20000),
       });
     } catch (fetchErr: unknown) {
       const err = fetchErr as { code?: string; cause?: { code?: string; errors?: Array<{ code?: string }> } };
@@ -79,7 +89,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: isConnRefused
-            ? `Store service unavailable: Storefront backend on port 9449 is offline. Please start it with 'npm run dev:store'.`
+            ? storeUnreachableMessage(storeUrl)
             : "Store service is unreachable during authentication.",
         },
         { status: 503 }

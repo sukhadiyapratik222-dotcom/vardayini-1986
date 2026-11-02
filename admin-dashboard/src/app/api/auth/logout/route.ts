@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getStoreApiBase } from "@/lib/store-url";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,11 @@ export async function POST() {
 
   if (sessionToken) {
     try {
-      const storeUrl = (process.env.STORE_API_URL || "http://localhost:9449").replace(/\/$/, "");
+      const storeUrl = getStoreApiBase();
+      if (!storeUrl) {
+        // Local cookie is already cleared; nothing to revoke remotely.
+        return NextResponse.json({ success: true });
+      }
       await fetch(`${storeUrl}/api/auth/logout`, {
         method: "POST",
         headers: {

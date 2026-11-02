@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminStoreOutlet, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
+import { getPublicStoreUrl } from "@/lib/store-url";
 
 const CITY_PRESETS = [
   { label: "Kalol (Navjivan Center)", lat: "23.246300", lng: "72.508600", city: "Kalol", pincode: "382721", mapUrl: "https://maps.google.com/maps?q=23.2463,72.5086" },
@@ -223,7 +224,7 @@ export function OutletsTab() {
               <span>Add New Outlet</span>
             </button>
             <a
-              href="http://localhost:9449/stores"
+              href={`${getPublicStoreUrl()}/stores`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"

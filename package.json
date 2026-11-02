@@ -4,6 +4,8 @@
   "scripts": {
     "dev": "node scripts/dev.js",
     "mongo": "node scripts/start-mongo.js",
+    "mongo:dump": "node scripts/dump-mongo.cjs",
+    "mongo:restore": "node scripts/restore-mongo.cjs",
     "dev:store": "npm --prefix ai-genrated run dev",
     "dev:admin": "npm --prefix admin-dashboard run dev",
     "test": "npm --prefix ai-genrated test",
