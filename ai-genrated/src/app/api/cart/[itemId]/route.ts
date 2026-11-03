@@ -8,8 +8,10 @@ import { readJsonSafe, parsePositiveInt } from "@/lib/validation";
 export const dynamic = "force-dynamic";
 
 async function ownedItem(itemId: number) {
+  // Multi-container synchronization: Ensure fresh lambda hydrates latest items from MongoDB Atlas
+  await loadCartLines();
   const { user, sessionId } = await getCartIdentity();
-  const [item] = await db
+  let [item] = await db
     .select()
     .from(cartItems)
     .where(
@@ -21,6 +23,24 @@ async function ownedItem(itemId: number) {
       ),
     )
     .limit(1);
+
+  // Fallback: match by variantId if client passed variantId or auto-increment ID differed across containers
+  if (!item) {
+    const [byVariant] = await db
+      .select()
+      .from(cartItems)
+      .where(
+        and(
+          eq(cartItems.variantId, itemId),
+          user
+            ? or(eq(cartItems.userId, user.id), eq(cartItems.sessionId, sessionId))
+            : eq(cartItems.sessionId, sessionId),
+        ),
+      )
+      .limit(1);
+    item = byVariant;
+  }
+
   return item;
 }
 
