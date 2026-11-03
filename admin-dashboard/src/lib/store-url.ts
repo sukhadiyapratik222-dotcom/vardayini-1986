@@ -24,42 +24,48 @@ function normalise(url: string): string {
 /**
  * Server-only base URL used by the auth routes and the /api/store proxy.
  * Automatically falls back to the live deployed Vardayini storefront
- * (https://vardayini-1986.vercel.app) in production if not explicitly set.
+ * (https://vardayini-1986.vercel.app) in production or Vercel if not explicitly set.
  */
 export function getStoreApiBase(): string {
+  const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_URL);
   const configured = process.env.STORE_API_URL || process.env.NEXT_PUBLIC_STORE_API;
   if (configured && configured.trim()) {
     const norm = normalise(configured);
-    // If running in production on Vercel and configured points to localhost, fall back to deployed store
-    if (process.env.NODE_ENV === "production" && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
+    // If running on Vercel or production and configured points to localhost, fall back to deployed store
+    if ((isVercel || process.env.NODE_ENV === "production") && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
       return PROD_DEFAULT_STORE_URL;
     }
     return norm;
   }
 
-  // Development keeps the local workflow (port 9449)
-  if (process.env.NODE_ENV !== "production") return DEV_STORE_URL;
+  // On Vercel, localhost:9449 does not exist in serverless containers - always use live deployed storefront
+  if (isVercel || process.env.NODE_ENV === "production") {
+    return PROD_DEFAULT_STORE_URL;
+  }
 
-  // Production default: live deployed storefront
-  return PROD_DEFAULT_STORE_URL;
+  // Local development workflow (port 9449)
+  return DEV_STORE_URL;
 }
 
 /**
  * Public storefront origin used by client components for preview links and iframes.
  */
 export function getPublicStoreUrl(): string {
+  const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_URL);
   const configured = process.env.NEXT_PUBLIC_STORE_API || process.env.STORE_API_URL;
   if (configured && configured.trim()) {
     const norm = normalise(configured);
-    if (process.env.NODE_ENV === "production" && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
+    if ((isVercel || process.env.NODE_ENV === "production") && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
       return PROD_DEFAULT_STORE_URL;
     }
     return norm;
   }
 
-  if (process.env.NODE_ENV !== "production") return normalise(DEV_STORE_URL);
+  if (isVercel || process.env.NODE_ENV === "production") {
+    return PROD_DEFAULT_STORE_URL;
+  }
 
-  return PROD_DEFAULT_STORE_URL;
+  return normalise(DEV_STORE_URL);
 }
 
 /**
