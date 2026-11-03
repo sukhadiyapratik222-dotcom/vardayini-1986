@@ -28,11 +28,17 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
     headers.set("content-type", contentType);
   }
 
+  // Forward incoming admin identity headers if present
+  const incomingRole = req.headers.get("x-admin-role");
+  const incomingEmail = req.headers.get("x-admin-email");
+  if (incomingRole) headers.set("x-admin-role", incomingRole);
+  if (incomingEmail) headers.set("x-admin-email", incomingEmail);
+
   // Forward session server-to-server using the dashboard's HttpOnly cookie
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("vsm_admin_session")?.value;
 
-  // Set Cookie header forwarding vs_session
+  // Set Cookie header forwarding vs_session and super admin credentials
   if (sessionToken) {
     headers.set("cookie", `vs_session=${sessionToken}`);
     headers.set("x-admin-role", "super_admin");

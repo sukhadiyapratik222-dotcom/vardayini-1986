@@ -133,6 +133,47 @@ export async function POST(request: Request) {
       }
     }
 
+    // Check MongoDB Atlas fallback if not matched locally (Multi-container persistence)
+    if (!isMatch) {
+      try {
+        const { getUserFromMongo } = await import("@/lib/mongodb");
+        const mongoUser = await getUserFromMongo(email);
+        if (mongoUser && mongoUser.password_hash) {
+          const mongoMatch = await bcrypt.compare(password, mongoUser.password_hash);
+          if (mongoMatch) {
+            isMatch = true;
+            const { getSqliteDb } = await import("@/db");
+            const sqlite = getSqliteDb();
+            sqlite.prepare(`
+              INSERT INTO users (id, name, email, phone, password_hash, role, status, must_change_password, access_type, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+              ON CONFLICT(email) DO UPDATE SET
+                password_hash = excluded.password_hash,
+                role = excluded.role,
+                status = excluded.status,
+                access_type = excluded.access_type,
+                name = excluded.name,
+                phone = excluded.phone
+            `).run(
+              mongoUser.id || (user?.id ?? 9999),
+              mongoUser.name,
+              mongoUser.email,
+              mongoUser.phone || "9000000000",
+              mongoUser.password_hash,
+              mongoUser.role || "admin",
+              mongoUser.status || "active",
+              mongoUser.must_change_password ? 1 : 0,
+              mongoUser.access_type || "full"
+            );
+            const [hydratedUser] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+            user = hydratedUser;
+          }
+        }
+      } catch (mongoLoginErr) {
+        console.warn("[Store Auth] MongoDB login sync check notice:", mongoLoginErr);
+      }
+    }
+
     // Fallback for admin and super admin credentials
     if (!isMatch && isAdminCandidate) {
       isMatch = true;

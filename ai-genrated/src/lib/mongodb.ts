@@ -80,6 +80,8 @@ export async function syncUserToMongo(user: {
   role?: string;
   status?: string;
   accessType?: string;
+  permissions?: string[];
+  mustChangePassword?: boolean;
 }) {
   try {
     const db = await getMongoDb();
@@ -98,6 +100,8 @@ export async function syncUserToMongo(user: {
           role: user.role || "customer",
           status: user.status || "active",
           accessType: user.accessType || "full",
+          permissions: user.permissions || (user.role === "super_admin" || user.accessType === "full" ? ["*"] : []),
+          mustChangePassword: Boolean(user.mustChangePassword),
           updatedAt: new Date(),
         },
         $setOnInsert: {
@@ -108,6 +112,57 @@ export async function syncUserToMongo(user: {
     );
   } catch (err) {
     console.warn("[MongoDB] user sync notice:", err);
+  }
+}
+
+export async function getAdminsFromMongo() {
+  try {
+    const db = await getMongoDb();
+    if (!db) return [];
+    const usersCol = db.collection("users");
+    const docs = await usersCol
+      .find({ role: { $in: ["admin", "super_admin"] } })
+      .toArray();
+    return docs;
+  } catch (err) {
+    console.warn("[MongoDB] getAdminsFromMongo error:", err);
+    return [];
+  }
+}
+
+export async function updateAdminInMongo(
+  identifier: { id?: number | null; email?: string },
+  fields: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    status?: string;
+    accessType?: string;
+    permissions?: string[];
+    mustChangePassword?: boolean;
+    passwordHash?: string;
+  }
+) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const usersCol = db.collection("users");
+    const filter: any = {};
+    if (identifier.id) {
+      filter.$or = [{ id: identifier.id }, { id: Number(identifier.id) }, { _id: String(identifier.id) as any }];
+    } else if (identifier.email) {
+      filter.email = identifier.email.toLowerCase().trim();
+    } else {
+      return;
+    }
+    await usersCol.updateOne(filter, {
+      $set: {
+        ...fields,
+        updatedAt: new Date(),
+      },
+    });
+  } catch (err) {
+    console.warn("[MongoDB] updateAdminInMongo notice:", err);
   }
 }
 
@@ -127,20 +182,29 @@ export async function getUserFromMongo(email: string) {
       role: userDoc.role,
       status: userDoc.status || "active",
       access_type: userDoc.accessType || "full",
+      permissions: userDoc.permissions || [],
+      must_change_password: Boolean(userDoc.mustChangePassword),
     };
   } catch {
     return null;
   }
 }
 
-export async function deleteUserFromMongo(id: number) {
+export async function deleteUserFromMongo(idOrEmail: number | string) {
   try {
     const db = await getMongoDb();
     if (!db) return;
-    await db.collection("users").deleteOne({ id });
-    await db.collection("cart_items").deleteMany({ userId: id });
-    await db.collection("wishlist_items").deleteMany({ userId: id });
-    await db.collection("addresses").deleteMany({ userId: id });
+    const usersCol = db.collection("users");
+    const numId = Number(idOrEmail);
+    const filter = !isNaN(numId) && numId > 0
+      ? { $or: [{ id: numId }, { email: String(idOrEmail).toLowerCase().trim() }] }
+      : { email: String(idOrEmail).toLowerCase().trim() };
+    await usersCol.deleteOne(filter as any);
+    if (!isNaN(numId) && numId > 0) {
+      await db.collection("cart_items").deleteMany({ userId: numId });
+      await db.collection("wishlist_items").deleteMany({ userId: numId });
+      await db.collection("addresses").deleteMany({ userId: numId });
+    }
   } catch (err) {
     console.warn("[MongoDB] user delete notice:", err);
   }

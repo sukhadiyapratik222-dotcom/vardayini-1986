@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { db } from "@/db";
+import { db, getSqliteDb } from "@/db";
 import { users } from "@/db/schema";
 import { requireSuperAdmin, logActivity } from "@/lib/auth";
 
@@ -27,7 +27,42 @@ export async function POST(req: Request) {
       );
     }
 
-    const [target] = await db.select().from(users).where(eq(users.id, targetId)).limit(1);
+    let [target] = await db.select().from(users).where(eq(users.id, targetId)).limit(1);
+
+    // Multi-container fallback: Check MongoDB Atlas if user was created on another container
+    if (!target) {
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mUser = await mongo.collection("users").findOne({
+            $or: [{ id: targetId }, { id: Number(targetId) }, { _id: String(targetId) as any }],
+          });
+          if (mUser) {
+            const sqlite = getSqliteDb();
+            sqlite.prepare(`
+              INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role, status, must_change_password, access_type, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              mUser.id || targetId,
+              mUser.name || "Admin",
+              (mUser.email || "").toLowerCase().trim(),
+              mUser.phone || "9000000000",
+              mUser.passwordHash || mUser.password_hash || "",
+              mUser.role || "admin",
+              mUser.status || "active",
+              1,
+              mUser.accessType || mUser.access_type || "full",
+              mUser.createdAt ? new Date(mUser.createdAt).toISOString() : new Date().toISOString()
+            );
+            [target] = await db.select().from(users).where(eq(users.id, targetId)).limit(1);
+          }
+        }
+      } catch (mErr) {
+        console.warn("[ResetAdminPassword] MongoDB lookup notice:", mErr);
+      }
+    }
+
     if (!target) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
@@ -40,6 +75,17 @@ export async function POST(req: Request) {
         mustChangePassword: true, // Forces password change on login
       })
       .where(eq(users.id, targetId));
+
+    // Multi-container persistence: Sync password reset directly to MongoDB Atlas
+    try {
+      const { updateAdminInMongo } = await import("@/lib/mongodb");
+      await updateAdminInMongo(
+        { id: targetId, email: target.email },
+        { passwordHash, mustChangePassword: true }
+      );
+    } catch (mPassErr) {
+      console.warn("[ResetAdminPassword] MongoDB update notice:", mPassErr);
+    }
 
     // Audit log
     await logActivity({

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { and, eq, inArray, or, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { db } from "@/db";
+import { db, getSqliteDb } from "@/db";
 import { users, adminPermissions, permissions as permissionsTable, addresses, cartItems, wishlistItems, reviews, orders } from "@/db/schema";
 import { requireSuperAdmin, logActivity } from "@/lib/auth";
 
@@ -11,12 +11,68 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/admins
  * Lists all Administrators and the Super Admin.
  * Strictly protected: Super Admin only.
+ * Multi-container persistence: Hydrates all admin accounts from MongoDB Atlas.
  */
 export async function GET(req: Request) {
   const auth = await requireSuperAdmin(req);
   if (auth.error) return auth.error;
 
   try {
+    // Multi-container synchronization: Hydrate admins from MongoDB Atlas into local SQLite cache
+    try {
+      const { getAdminsFromMongo } = await import("@/lib/mongodb");
+      const mAdmins = await getAdminsFromMongo();
+      if (mAdmins && mAdmins.length > 0) {
+        const sqlite = getSqliteDb();
+        const insertUserStmt = sqlite.prepare(`
+          INSERT INTO users (id, name, email, phone, password_hash, role, status, must_change_password, access_type, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            name = excluded.name,
+            email = excluded.email,
+            phone = excluded.phone,
+            password_hash = CASE WHEN excluded.password_hash != '' THEN excluded.password_hash ELSE users.password_hash END,
+            role = excluded.role,
+            status = excluded.status,
+            must_change_password = excluded.must_change_password,
+            access_type = excluded.access_type
+        `);
+        const delPermStmt = sqlite.prepare(`DELETE FROM admin_permissions WHERE user_id = ?`);
+        const insPermStmt = sqlite.prepare(`INSERT OR IGNORE INTO admin_permissions (user_id, permission_slug) VALUES (?, ?)`);
+
+        for (const ma of mAdmins) {
+          const maId = ma.id ? Number(ma.id) : (ma._id ? parseInt(String(ma._id).slice(-6), 16) : 9999);
+          try {
+            insertUserStmt.run(
+              maId,
+              ma.name || "Admin",
+              (ma.email || "").toLowerCase().trim(),
+              ma.phone || "9000000000",
+              ma.passwordHash || ma.password_hash || "",
+              ma.role || "admin",
+              ma.status || "active",
+              ma.mustChangePassword ? 1 : 0,
+              ma.accessType || ma.access_type || "full",
+              ma.createdAt ? new Date(ma.createdAt).toISOString() : new Date().toISOString()
+            );
+
+            if (Array.isArray(ma.permissions) && ma.permissions.length > 0) {
+              delPermStmt.run(maId);
+              for (const p of ma.permissions) {
+                if (p && p !== "*") {
+                  insPermStmt.run(maId, p);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("[GetAdmins] Admin SQLite hydration notice:", e);
+          }
+        }
+      }
+    } catch (mErr) {
+      console.warn("[GetAdmins] MongoDB admin fetch notice:", mErr);
+    }
+
     const adminRows = await db
       .select({
         id: users.id,
@@ -73,6 +129,7 @@ export async function GET(req: Request) {
  * POST /api/admin/admins
  * Creates a new Admin account with temporary password & permissions.
  * Strictly protected: Super Admin only.
+ * Multi-container persistence: Synced directly to MongoDB Atlas.
  */
 export async function POST(req: Request) {
   const auth = await requireSuperAdmin(req);
@@ -93,8 +150,16 @@ export async function POST(req: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Check if email already exists in SQLite or MongoDB Atlas
     const [existing] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
-    if (existing) {
+    let mongoExisting = null;
+    try {
+      const { getUserFromMongo } = await import("@/lib/mongodb");
+      mongoExisting = await getUserFromMongo(cleanEmail);
+    } catch {}
+
+    if (existing || mongoExisting) {
       return NextResponse.json(
         { error: `An account with email ${cleanEmail} already exists.` },
         { status: 409 }
@@ -102,20 +167,26 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const [result] = await db.insert(users).values({
-      name: name.trim(),
-      email: cleanEmail,
-      phone: (phone || "9000000000").trim(),
-      passwordHash,
-      role: "admin",
-      status: "active",
-      mustChangePassword: true, // Force password change on first login
-      accessType: accessType === "custom" ? "custom" : "full",
-    });
+    const sqlite = getSqliteDb();
 
-    const newAdminId = result.insertId;
+    const insertResult = sqlite.prepare(`
+      INSERT INTO users (name, email, phone, password_hash, role, status, must_change_password, access_type, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `).run(
+      name.trim(),
+      cleanEmail,
+      (phone || "9000000000").trim(),
+      passwordHash,
+      "admin",
+      "active",
+      1,
+      accessType === "custom" ? "custom" : "full"
+    );
+
+    const newAdminId = Number(insertResult.lastInsertRowid);
 
     // If custom permissions, insert them safely
+    const resolvedPerms: string[] = [];
     if (accessType === "custom" && Array.isArray(permissions) && permissions.length > 0) {
       const allDbPerms = await db.select().from(permissionsTable);
       const slugLookup = new Map<string, string>();
@@ -124,16 +195,34 @@ export async function POST(req: Request) {
         slugLookup.set(dp.slug, dp.slug);
       }
 
+      const permStmt = sqlite.prepare(`INSERT OR IGNORE INTO admin_permissions (user_id, permission_slug) VALUES (?, ?)`);
       for (const p of permissions) {
         const key = String(p).trim();
         const resolvedSlug = slugLookup.get(key) || (typeof p === "string" ? key : "");
         if (resolvedSlug && resolvedSlug !== "*" && resolvedSlug !== "admins:manage" && resolvedSlug !== "logs:view") {
-          await db.insert(adminPermissions).values({
-            userId: newAdminId,
-            permissionSlug: resolvedSlug,
-          });
+          permStmt.run(newAdminId, resolvedSlug);
+          resolvedPerms.push(resolvedSlug);
         }
       }
+    }
+
+    // Multi-container persistence: Directly sync created admin account to MongoDB Atlas
+    try {
+      const { syncUserToMongo } = await import("@/lib/mongodb");
+      await syncUserToMongo({
+        id: newAdminId,
+        name: name.trim(),
+        email: cleanEmail,
+        phone: (phone || "9000000000").trim(),
+        passwordHash,
+        role: "admin",
+        status: "active",
+        accessType: accessType === "custom" ? "custom" : "full",
+        permissions: accessType === "full" ? ["*"] : resolvedPerms,
+        mustChangePassword: true,
+      });
+    } catch (mSyncErr) {
+      console.warn("[CreateAdmin] MongoDB admin sync notice:", mSyncErr);
     }
 
     // Record audit activity log
@@ -161,7 +250,7 @@ export async function POST(req: Request) {
           status: "active",
           accessType,
           mustChangePassword: true,
-          permissions: accessType === "full" ? ["*"] : permissions,
+          permissions: accessType === "full" ? ["*"] : resolvedPerms,
         },
       },
       { status: 201 }
@@ -176,7 +265,7 @@ export async function POST(req: Request) {
  * PUT /api/admin/admins
  * Updates an Admin account (status, accessType, permissions, name, phone).
  * Strictly protected: Super Admin only.
- * Prevents privilege escalation and tampering with Super Admin.
+ * Multi-container persistence: Synced directly to MongoDB Atlas.
  */
 export async function PUT(req: Request) {
   const auth = await requireSuperAdmin(req);
@@ -184,14 +273,49 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { id, name, email, phone, status, accessType, permissions } = body;
+    const { id, name, email, phone, status, accessType, permissions, mustChangePassword } = body;
 
     const adminId = Number(id);
     if (!adminId || isNaN(adminId)) {
       return NextResponse.json({ error: "Valid Admin ID is required" }, { status: 400 });
     }
 
-    const [target] = await db.select().from(users).where(eq(users.id, adminId)).limit(1);
+    let [target] = await db.select().from(users).where(eq(users.id, adminId)).limit(1);
+
+    // Multi-container fallback: Check MongoDB Atlas if user was created on another container
+    if (!target) {
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mUser = await mongo.collection("users").findOne({
+            $or: [{ id: adminId }, { id: Number(adminId) }, { _id: String(adminId) as any }],
+          });
+          if (mUser) {
+            const sqlite = getSqliteDb();
+            sqlite.prepare(`
+              INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role, status, must_change_password, access_type, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              mUser.id || adminId,
+              mUser.name || "Admin",
+              (mUser.email || "").toLowerCase().trim(),
+              mUser.phone || "9000000000",
+              mUser.passwordHash || mUser.password_hash || "",
+              mUser.role || "admin",
+              mUser.status || "active",
+              mUser.mustChangePassword ? 1 : 0,
+              mUser.accessType || mUser.access_type || "full",
+              mUser.createdAt ? new Date(mUser.createdAt).toISOString() : new Date().toISOString()
+            );
+            [target] = await db.select().from(users).where(eq(users.id, adminId)).limit(1);
+          }
+        }
+      } catch (mErr) {
+        console.warn("[UpdateAdmin] MongoDB lookup notice:", mErr);
+      }
+    }
+
     if (!target) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
@@ -226,7 +350,6 @@ export async function PUT(req: Request) {
     }
 
     if (status && ["active", "inactive"].includes(status)) {
-      // Cannot deactivate Super Admin
       if (target.role === "super_admin" && status === "inactive") {
         return NextResponse.json(
           { error: "Super Admin cannot be deactivated." },
@@ -240,12 +363,17 @@ export async function PUT(req: Request) {
       updateFields.accessType = accessType;
     }
 
+    if (typeof mustChangePassword === "boolean") {
+      updateFields.mustChangePassword = mustChangePassword ? 1 : 0;
+    }
+
     if (Object.keys(updateFields).length > 0) {
       await db.update(users).set(updateFields).where(eq(users.id, adminId));
     }
 
     // Update permissions if custom
-    if (target.role === "admin" && accessType === "custom" && Array.isArray(permissions)) {
+    const resolvedPerms: string[] = [];
+    if (target.role === "admin" && (accessType === "custom" || target.accessType === "custom") && Array.isArray(permissions)) {
       await db.delete(adminPermissions).where(eq(adminPermissions.userId, adminId));
       const allDbPerms = await db.select().from(permissionsTable);
       const slugLookup = new Map<string, string>();
@@ -254,18 +382,37 @@ export async function PUT(req: Request) {
         slugLookup.set(dp.slug, dp.slug);
       }
 
+      const sqlite = getSqliteDb();
+      const permStmt = sqlite.prepare(`INSERT OR IGNORE INTO admin_permissions (user_id, permission_slug) VALUES (?, ?)`);
       for (const p of permissions) {
         const key = String(p).trim();
         const resolvedSlug = slugLookup.get(key) || (typeof p === "string" ? key : "");
         if (resolvedSlug && resolvedSlug !== "*" && resolvedSlug !== "admins:manage" && resolvedSlug !== "logs:view") {
-          await db.insert(adminPermissions).values({
-            userId: adminId,
-            permissionSlug: resolvedSlug,
-          });
+          permStmt.run(adminId, resolvedSlug);
+          resolvedPerms.push(resolvedSlug);
         }
       }
     } else if (target.role === "admin" && accessType === "full") {
       await db.delete(adminPermissions).where(eq(adminPermissions.userId, adminId));
+    }
+
+    // Multi-container persistence: Sync update to MongoDB Atlas
+    try {
+      const { updateAdminInMongo } = await import("@/lib/mongodb");
+      await updateAdminInMongo(
+        { id: adminId, email: target.email },
+        {
+          name: updateFields.name,
+          email: updateFields.email,
+          phone: updateFields.phone,
+          status: updateFields.status,
+          accessType: updateFields.accessType,
+          permissions: (accessType === "full" || target.role === "super_admin") ? ["*"] : resolvedPerms,
+          mustChangePassword: typeof mustChangePassword === "boolean" ? mustChangePassword : undefined,
+        }
+      );
+    } catch (mUpErr) {
+      console.warn("[UpdateAdmin] MongoDB update notice:", mUpErr);
     }
 
     // Record audit log
@@ -280,9 +427,22 @@ export async function PUT(req: Request) {
       req,
     });
 
+    const [refreshed] = await db.select().from(users).where(eq(users.id, adminId)).limit(1);
+
     return NextResponse.json({
       success: true,
       message: `Admin account ${target.email} updated successfully.`,
+      admin: {
+        id: refreshed.id,
+        name: refreshed.name,
+        email: refreshed.email,
+        phone: refreshed.phone,
+        role: refreshed.role,
+        status: refreshed.status,
+        accessType: refreshed.accessType,
+        mustChangePassword: Boolean(refreshed.mustChangePassword),
+        permissions: (refreshed.role === "super_admin" || refreshed.accessType === "full") ? ["*"] : resolvedPerms,
+      },
     });
   } catch (err) {
     console.error("[UpdateAdmin] Error:", err);
@@ -295,6 +455,7 @@ export async function PUT(req: Request) {
  * Deletes an Admin account.
  * Strictly protected: Super Admin only.
  * Immune: Super Admin CANNOT be deleted.
+ * Multi-container persistence: Removed from both SQLite and MongoDB Atlas.
  */
 export async function DELETE(req: Request) {
   const auth = await requireSuperAdmin(req);
@@ -308,7 +469,28 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Valid Admin ID is required" }, { status: 400 });
     }
 
-    const [target] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    let [target] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    if (!target) {
+      // Check MongoDB Atlas
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mUser = await mongo.collection("users").findOne({
+            $or: [{ id }, { id: Number(id) }, { _id: String(id) as any }],
+          });
+          if (mUser) {
+            target = {
+              id: mUser.id || id,
+              name: mUser.name,
+              email: mUser.email,
+              role: mUser.role,
+            } as any;
+          }
+        }
+      } catch {}
+    }
+
     if (!target) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
@@ -335,9 +517,20 @@ export async function DELETE(req: Request) {
     try { await db.delete(reviews).where(eq(reviews.userId, id)); } catch {}
     try { await db.update(orders).set({ userId: null }).where(eq(orders.userId, id)); } catch {}
 
-    // Delete custom permissions and user
+    // Delete custom permissions and user from SQLite
     try { await db.delete(adminPermissions).where(eq(adminPermissions.userId, id)); } catch {}
     await db.delete(users).where(eq(users.id, id));
+
+    // Multi-container persistence: Delete user from MongoDB Atlas
+    try {
+      const { deleteUserFromMongo } = await import("@/lib/mongodb");
+      await deleteUserFromMongo(id);
+      if (target.email) {
+        await deleteUserFromMongo(target.email);
+      }
+    } catch (mDelErr) {
+      console.warn("[DeleteAdmin] MongoDB delete notice:", mDelErr);
+    }
 
     // Audit log
     await logActivity({
