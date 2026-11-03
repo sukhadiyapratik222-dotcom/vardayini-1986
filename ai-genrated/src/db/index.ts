@@ -3,6 +3,7 @@ import mysql from "mysql2/promise";
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import fs from "node:fs";
+import os from "node:os";
 import * as schema from "./schema";
 
 export type AppDatabase = MySql2Database<typeof schema>;
@@ -43,11 +44,11 @@ export function getSqliteDb(): DatabaseSync {
   if (globalForDb.__sqliteDb) return globalForDb.__sqliteDb;
 
   try {
-    const dataDir = path.resolve(process.cwd(), ".data");
-    // Serverless platforms (Vercel) mount the app directory read-only. Opening
-    // an existing SQLite file there "succeeds" but every write then fails with
-    // SQLITE_READONLY, which used to crash every page. Probe for write access
-    // first and use an in-memory database when the directory is not writable.
+    const isVercel = process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
+    const dataDir = isVercel
+      ? path.join(os.tmpdir(), "vardayini-data")
+      : path.resolve(process.cwd(), ".data");
+
     const dbPath =
       isTestEnvironment || !canWriteTo(dataDir)
         ? ":memory:"
