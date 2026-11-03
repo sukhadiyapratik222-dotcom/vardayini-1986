@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 
@@ -126,11 +127,16 @@ export function AuthForm({
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: cleanPhone, trigger }),
+        body: JSON.stringify({
+          phoneNumber: cleanPhone,
+          trigger,
+          email: trigger === "register" ? email.trim().toLowerCase() : undefined,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        if (data.fields) setFieldErrors(data.fields);
         setError(data.error || "Failed to send OTP. Please try again.");
         return;
       }
@@ -265,15 +271,18 @@ export function AuthForm({
       if (!res.ok) {
         if (data.fields) {
           setFieldErrors(data.fields);
-          if (
-            data.fields.name ||
-            data.fields.email ||
-            data.fields.password ||
-            data.fields.confirmPassword ||
-            data.fields.phone
-          ) {
-            setOtpStep("input");
-          }
+        }
+        if (
+          data.accountExists ||
+          res.status === 409 ||
+          data.fields?.name ||
+          data.fields?.email ||
+          data.fields?.password ||
+          data.fields?.confirmPassword ||
+          data.fields?.phone ||
+          (data.error && data.error.toLowerCase().includes("already exists"))
+        ) {
+          setOtpStep("input");
         }
         setError(data.error || "Registration failed. Please check your details.");
         return;
@@ -608,8 +617,35 @@ export function AuthForm({
 
       {/* Global Feedback Banners */}
       {error && (
-        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700">
-          {error}
+        <div
+          className={`mb-4 rounded-2xl border p-3.5 text-xs shadow-xs ${
+            error.toLowerCase().includes("already exists")
+              ? "border-amber-300 bg-amber-50/90 text-amber-950"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          <div className="flex items-start gap-2.5">
+            {error.toLowerCase().includes("already exists") && <span className="text-base shrink-0">🔐</span>}
+            <div className="flex-1">
+              <p className="font-semibold leading-relaxed">{error}</p>
+              {error.toLowerCase().includes("already exists") && (
+                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                  <Link
+                    href={explicitRedirectUrl || searchParams?.get("redirect") ? `/login?redirect=${encodeURIComponent(explicitRedirectUrl || searchParams?.get("redirect") || "")}` : "/login"}
+                    className="inline-flex items-center gap-1 rounded-xl bg-[#6b1d1d] text-white px-3 py-1.5 text-xs font-bold hover:bg-[#852525] transition shadow-xs cursor-pointer"
+                  >
+                    👉 Sign In Now
+                  </Link>
+                  <Link
+                    href={`/forgot-password?email=${encodeURIComponent(email)}`}
+                    className="text-xs font-semibold text-[#c45c26] hover:underline ml-1"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
       {successMsg && (

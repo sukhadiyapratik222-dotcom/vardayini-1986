@@ -24,9 +24,44 @@ export async function POST(request: Request) {
 
     const phoneNumber = sanitizeString(body?.phoneNumber || body?.phone || "");
     const trigger = (sanitizeString(body?.trigger || "login") || "login");
+    const incomingEmail = sanitizeString(body?.email || "").toLowerCase().trim();
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 });
+    }
+
+    // Pre-validation for registration to avoid sending pointless OTPs for accounts that already exist
+    if (trigger === "register" && incomingEmail) {
+      try {
+        const { db } = await import("@/db");
+        const { users } = await import("@/db/schema");
+        const { eq } = await import("drizzle-orm");
+
+        let [existingUser] = await db.select().from(users).where(eq(users.email, incomingEmail)).limit(1);
+        if (!existingUser) {
+          const { getMongoDb } = await import("@/lib/mongodb");
+          const mongo = await getMongoDb();
+          if (mongo) {
+            const m = await mongo.collection("users").findOne({ email: incomingEmail });
+            if (m) existingUser = m as any;
+          }
+        }
+
+        if (existingUser && (existingUser.role === "super_admin" || existingUser.role === "admin" || existingUser.role === "staff")) {
+          return NextResponse.json(
+            {
+              error: `An administrator account with email "${incomingEmail}" already exists. Please sign in directly at the login desk.`,
+              accountExists: true,
+              fields: { email: "An account with this email already exists. Please log in instead." },
+              existingEmail: incomingEmail,
+              role: existingUser.role,
+            },
+            { status: 409 }
+          );
+        }
+      } catch (checkErr) {
+        console.warn("[send-otp] Early user existence check notice:", checkErr);
+      }
     }
 
     // 6-digit OTP as specified in the implementation design

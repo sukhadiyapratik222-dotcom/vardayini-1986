@@ -29,11 +29,82 @@ export async function POST(request: Request) {
     const { name, email, phone, password } = result.data;
     const cleanEmail = email.toLowerCase().trim();
 
-    const [exists] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
-    if (exists) return Response.json({ error: "An account with this email already exists." }, { status: 409 });
+    // Check if user already exists by email (SQLite or MongoDB Atlas)
+    let [exists] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
+    if (!exists) {
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mUser = await mongo.collection("users").findOne({ email: cleanEmail });
+          if (mUser) {
+            exists = {
+              id: mUser.id || 9999,
+              name: mUser.name,
+              email: mUser.email,
+              phone: mUser.phone,
+              passwordHash: mUser.passwordHash || "",
+              role: mUser.role || "customer",
+              status: mUser.status || "active",
+            } as any;
+          }
+        }
+      } catch {}
+    }
 
-    const [existsPhone] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
-    if (existsPhone) return Response.json({ error: "An account with this phone number already exists." }, { status: 409 });
+    // Check if user already exists by phone (SQLite or MongoDB Atlas)
+    let [existsPhone] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+    if (!existsPhone) {
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mUserPhone = await mongo.collection("users").findOne({ phone });
+          if (mUserPhone) {
+            existsPhone = {
+              id: mUserPhone.id || 9999,
+              name: mUserPhone.name,
+              email: mUserPhone.email,
+              phone: mUserPhone.phone,
+              passwordHash: mUserPhone.passwordHash || "",
+              role: mUserPhone.role || "customer",
+              status: mUserPhone.status || "active",
+            } as any;
+          }
+        }
+      } catch {}
+    }
+
+    // If an Administrator / Super Admin account exists with this email or phone, prevent public overwrite
+    if (exists && (exists.role === "super_admin" || exists.role === "admin" || exists.role === "staff")) {
+      return Response.json(
+        {
+          error: `An administrator account with email "${cleanEmail}" already exists. Please sign in directly at the login desk.`,
+          fields: {
+            email: "An account with this email already exists. Please log in instead.",
+          },
+          accountExists: true,
+          existingEmail: cleanEmail,
+          role: exists.role,
+        },
+        { status: 409 }
+      );
+    }
+
+    if (existsPhone && (existsPhone.role === "super_admin" || existsPhone.role === "admin" || existsPhone.role === "staff")) {
+      return Response.json(
+        {
+          error: `An administrator account with phone number "${phone}" already exists. Please sign in directly at the login desk.`,
+          fields: {
+            phone: "An account with this phone number already exists. Please log in instead.",
+          },
+          accountExists: true,
+          existingPhone: phone,
+          role: existsPhone.role,
+        },
+        { status: 409 }
+      );
+    }
 
     // Customer OTP verification
     const rawOtp = sanitizeString((body as any)?.otp || "");
@@ -53,19 +124,75 @@ export async function POST(request: Request) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    const [insertRes] = await db
-      .insert(users)
-      .values({ name, email: cleanEmail, phone, passwordHash, role: "customer" });
+    // Check if an existing customer account can be activated / claimed with verified phone OTP
+    const existingTargetUser = (exists && exists.phone === phone) ? exists : ((existsPhone && !exists) ? existsPhone : null);
 
     let user: any = null;
-    if (insertRes?.insertId) {
-      const [u] = await db.select().from(users).where(eq(users.id, insertRes.insertId)).limit(1);
-      user = u;
-    }
-    if (!user) {
-      const [u] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
-      user = u;
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    if (existingTargetUser && existingTargetUser.role === "customer") {
+      // Customer verified their phone OTP — upgrade/claim their existing patron profile
+      try {
+        await db
+          .update(users)
+          .set({
+            name: name.trim(),
+            email: cleanEmail,
+            phone,
+            passwordHash,
+            status: "active",
+          })
+          .where(eq(users.id, existingTargetUser.id));
+
+        const [updatedUser] = await db.select().from(users).where(eq(users.id, existingTargetUser.id)).limit(1);
+        user = updatedUser || existingTargetUser;
+      } catch (upErr) {
+        console.warn("[Register API] Upgrade user notice:", upErr);
+        user = existingTargetUser;
+      }
+    } else {
+      // If email exists with a DIFFERENT phone number, reject with clear field error
+      if (exists && exists.phone !== phone) {
+        return Response.json(
+          {
+            error: "An account with this email already exists. Please log in or use another email.",
+            fields: {
+              email: "An account with this email already exists. Please log in instead or use another email.",
+            },
+            accountExists: true,
+            existingEmail: cleanEmail,
+          },
+          { status: 409 }
+        );
+      }
+
+      // If phone exists with a DIFFERENT email, reject with clear field error
+      if (existsPhone && existsPhone.email !== cleanEmail) {
+        return Response.json(
+          {
+            error: "An account with this phone number already exists. Please log in with Mobile OTP instead.",
+            fields: {
+              phone: "An account with this phone number already exists. Please log in with Mobile OTP instead.",
+            },
+            accountExists: true,
+            existingPhone: phone,
+          },
+          { status: 409 }
+        );
+      }
+
+      const [insertRes] = await db
+        .insert(users)
+        .values({ name, email: cleanEmail, phone, passwordHash, role: "customer" });
+
+      if (insertRes?.insertId) {
+        const [u] = await db.select().from(users).where(eq(users.id, insertRes.insertId)).limit(1);
+        user = u;
+      }
+      if (!user) {
+        const [u] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
+        user = u;
+      }
     }
 
     if (!user) {
