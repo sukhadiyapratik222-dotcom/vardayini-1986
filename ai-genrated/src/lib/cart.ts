@@ -35,28 +35,49 @@ export async function loadCartLines() {
   try {
     const { getMongoCartItems } = await import("@/lib/mongodb");
     const mongoItems = await getMongoCartItems({ userId: user?.id, sessionId });
-    if (mongoItems && mongoItems.length > 0) {
-      const { getSqliteDb } = await import("@/db");
-      const sqlite = getSqliteDb();
+    const { getSqliteDb } = await import("@/db");
+    const sqlite = getSqliteDb();
 
-      // Clear local rows for this identity first to ensure accurate mirror
+    if (mongoItems && mongoItems.length > 0) {
+      // Upsert into local SQLite preserving existing auto-increment IDs
+      for (const mItem of mongoItems) {
+        const existingRow = sqlite
+          .prepare(
+            user
+              ? "SELECT id FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id = ? LIMIT 1"
+              : "SELECT id FROM cart_items WHERE session_id = ? AND variant_id = ? LIMIT 1"
+          )
+          .get(...(user ? [user.id, sessionId, mItem.variantId] : [sessionId, mItem.variantId])) as any;
+
+        if (existingRow) {
+          sqlite.prepare("UPDATE cart_items SET quantity = ? WHERE id = ?").run(mItem.quantity, existingRow.id);
+        } else {
+          sqlite
+            .prepare("INSERT INTO cart_items (user_id, session_id, variant_id, quantity) VALUES (?, ?, ?, ?)")
+            .run(
+              user?.id ?? mItem.userId ?? null,
+              user ? null : sessionId,
+              mItem.variantId,
+              mItem.quantity
+            );
+        }
+      }
+
+      // Clean up any local rows that are no longer in MongoDB
+      const mongoVariantIds = mongoItems.map((m) => m.variantId);
+      const placeholders = mongoVariantIds.map(() => "?").join(",");
+      sqlite
+        .prepare(
+          user
+            ? `DELETE FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id NOT IN (${placeholders})`
+            : `DELETE FROM cart_items WHERE session_id = ? AND variant_id NOT IN (${placeholders})`
+        )
+        .run(...(user ? [user.id, sessionId, ...mongoVariantIds] : [sessionId, ...mongoVariantIds]));
+    } else if (mongoItems && mongoItems.length === 0) {
       if (user) {
         sqlite.prepare("DELETE FROM cart_items WHERE user_id = ? OR session_id = ?").run(user.id, sessionId);
       } else {
         sqlite.prepare("DELETE FROM cart_items WHERE session_id = ?").run(sessionId);
-      }
-
-      // Mirror fresh items from MongoDB Atlas
-      const insertStmt = sqlite.prepare(
-        "INSERT INTO cart_items (user_id, session_id, variant_id, quantity) VALUES (?, ?, ?, ?)"
-      );
-      for (const mItem of mongoItems) {
-        insertStmt.run(
-          user?.id ?? mItem.userId ?? null,
-          user ? null : sessionId,
-          mItem.variantId,
-          mItem.quantity
-        );
       }
     }
   } catch (mErr) {

@@ -11,6 +11,8 @@ async function ownedItem(itemId: number) {
   // Multi-container synchronization: Ensure fresh lambda hydrates latest items from MongoDB Atlas
   await loadCartLines();
   const { user, sessionId } = await getCartIdentity();
+
+  // 1. Try matching by local SQLite cart_items.id
   let [item] = await db
     .select()
     .from(cartItems)
@@ -24,7 +26,7 @@ async function ownedItem(itemId: number) {
     )
     .limit(1);
 
-  // Fallback: match by variantId if client passed variantId or auto-increment ID differed across containers
+  // 2. Fallback: match by variantId if client passed variantId
   if (!item) {
     const [byVariant] = await db
       .select()
@@ -39,6 +41,37 @@ async function ownedItem(itemId: number) {
       )
       .limit(1);
     item = byVariant;
+  }
+
+  // 3. Fallback: Direct MongoDB Atlas lookup if container SQLite is cold
+  if (!item) {
+    try {
+      const { getMongoCartItems } = await import("@/lib/mongodb");
+      const mItems = await getMongoCartItems({ userId: user?.id, sessionId });
+      const found = mItems.find((m) => m.variantId === itemId);
+      if (found) {
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
+        const res = sqlite
+          .prepare(
+            "INSERT INTO cart_items (user_id, session_id, variant_id, quantity) VALUES (?, ?, ?, ?)"
+          )
+          .run(
+            user?.id ?? null,
+            user ? null : sessionId,
+            found.variantId,
+            found.quantity
+          );
+        item = {
+          id: Number(res.lastInsertRowid),
+          userId: user?.id ?? null,
+          sessionId: user ? null : sessionId,
+          variantId: found.variantId,
+          quantity: found.quantity,
+          createdAt: new Date(),
+        } as any;
+      }
+    } catch {}
   }
 
   return item;
