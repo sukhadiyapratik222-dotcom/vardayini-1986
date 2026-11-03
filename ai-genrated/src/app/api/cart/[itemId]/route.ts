@@ -47,6 +47,11 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
 
   if (q === 0) {
     await db.delete(cartItems).where(eq(cartItems.id, item.id));
+    try {
+      const { removeMongoCartItem } = await import("@/lib/mongodb");
+      const { user, sessionId } = await getCartIdentity();
+      await removeMongoCartItem({ userId: user?.id, sessionId, variantId: item.variantId });
+    } catch {}
   } else {
     const [variant] = await db
       .select()
@@ -58,6 +63,11 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
       return Response.json({ error: "Not enough stock" }, { status: 400 });
     }
     await db.update(cartItems).set({ quantity: q }).where(eq(cartItems.id, item.id));
+    try {
+      const { updateMongoCartItemQuantity } = await import("@/lib/mongodb");
+      const { user, sessionId } = await getCartIdentity();
+      await updateMongoCartItemQuantity({ userId: user?.id, sessionId, variantId: item.variantId, quantity: q });
+    } catch {}
   }
 
   const cart = await loadCartLines();
@@ -78,6 +88,11 @@ export async function DELETE(_request: Request, context: { params: Promise<{ ite
   if (!item) return Response.json({ error: "Item not found" }, { status: 404 });
 
   await db.delete(cartItems).where(eq(cartItems.id, item.id));
+  try {
+    const { removeMongoCartItem } = await import("@/lib/mongodb");
+    const { user, sessionId } = await getCartIdentity();
+    await removeMongoCartItem({ userId: user?.id, sessionId, variantId: item.variantId });
+  } catch {}
   const cart = await loadCartLines();
   return Response.json({ items: cart.lines, totals: cart.totals });
 }

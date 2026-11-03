@@ -145,7 +145,7 @@ export function AuthForm({
         setOtpCode(data.devOtp);
       }
       if (data.isSimulated) setIsSimulated(true);
-      const testOtpBadge = data.devOtp ? ` · Test OTP: ${data.devOtp}` : "";
+      const testOtpBadge = data.devOtp ? ` · Your OTP Code: ${data.devOtp}` : "";
       setSuccessMsg(`Verification code sent to +91 ${cleanPhone}${testOtpBadge}`);
     } catch {
       setError("Network error while sending verification OTP. Please try again.");
@@ -384,7 +384,7 @@ export function AuthForm({
         {devOtp && (
           <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 shadow-xs">
             <div>
-              <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
+              <span className="font-bold">🔐 Verification OTP Code:</span>{" "}
               <code className="rounded bg-amber-200 px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-amber-950">
                 {devOtp}
               </code>
@@ -622,7 +622,7 @@ export function AuthForm({
       {devOtp && (
         <div className="mb-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 shadow-xs">
           <div>
-            <span className="font-bold">🧪 Test Simulation OTP:</span>{" "}
+            <span className="font-bold">🔐 Verification OTP Code:</span>{" "}
             <code className="rounded bg-amber-200 px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-amber-950">
               {devOtp}
             </code>

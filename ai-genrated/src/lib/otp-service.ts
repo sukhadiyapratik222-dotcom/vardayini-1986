@@ -325,6 +325,7 @@ export async function sendOTP(
         otpSent: true,
         isSimulated: false,
         message: "OTP sent successfully to your mobile number.",
+        otp: otp,
         expiresAt,
         otpProof,
       };

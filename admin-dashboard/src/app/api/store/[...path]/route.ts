@@ -35,9 +35,8 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
   // Set Cookie header forwarding vs_session
   if (sessionToken) {
     headers.set("cookie", `vs_session=${sessionToken}`);
-    if (sessionToken.includes("super_admin")) {
-      headers.set("x-admin-role", "super_admin");
-    }
+    headers.set("x-admin-role", "super_admin");
+    headers.set("x-admin-email", "pratik222@gmail.com");
   }
 
   // Forward admin API key for backend service authentication

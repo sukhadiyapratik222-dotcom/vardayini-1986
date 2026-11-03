@@ -589,6 +589,207 @@ export async function updateOtpStatusInMongo(filter: any, status: string) {
 }
 
 // ============================================================================
+// CART ITEMS CRUD (SERVERLESS PERSISTENCE ACROSS VERCEL INSTANCES)
+// ============================================================================
+
+export async function getMongoCartItems(identity: {
+  userId?: number | null;
+  sessionId?: string | null;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return [];
+    const col = db.collection("cart_items");
+    const orConditions: any[] = [];
+    if (identity.userId && identity.userId > 0) {
+      orConditions.push({ userId: identity.userId });
+    }
+    if (identity.sessionId) {
+      orConditions.push({ sessionId: identity.sessionId });
+    }
+    if (orConditions.length === 0) return [];
+
+    return await col.find({ $or: orConditions }).toArray();
+  } catch (err) {
+    console.warn("[MongoDB] getMongoCartItems notice:", err);
+    return [];
+  }
+}
+
+export async function upsertMongoCartItem(data: {
+  userId?: number | null;
+  sessionId?: string | null;
+  variantId: number;
+  quantity: number;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const col = db.collection("cart_items");
+    const orConditions: any[] = [];
+    if (data.userId && data.userId > 0) {
+      orConditions.push({ userId: data.userId });
+    }
+    if (data.sessionId) {
+      orConditions.push({ sessionId: data.sessionId });
+    }
+    if (orConditions.length === 0) return;
+
+    const existing = await col.findOne({
+      $or: orConditions,
+      variantId: data.variantId,
+    });
+
+    if (existing) {
+      await col.updateOne(
+        { _id: existing._id },
+        {
+          $inc: { quantity: data.quantity },
+          $set: {
+            userId: data.userId ?? existing.userId,
+            sessionId: data.sessionId ?? existing.sessionId,
+            updatedAt: new Date(),
+          },
+        }
+      );
+    } else {
+      await col.insertOne({
+        userId: data.userId ?? null,
+        sessionId: data.sessionId ?? null,
+        variantId: data.variantId,
+        quantity: data.quantity,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  } catch (err) {
+    console.warn("[MongoDB] upsertMongoCartItem notice:", err);
+  }
+}
+
+export async function updateMongoCartItemQuantity(data: {
+  userId?: number | null;
+  sessionId?: string | null;
+  variantId: number;
+  quantity: number;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const col = db.collection("cart_items");
+    const orConditions: any[] = [];
+    if (data.userId && data.userId > 0) {
+      orConditions.push({ userId: data.userId });
+    }
+    if (data.sessionId) {
+      orConditions.push({ sessionId: data.sessionId });
+    }
+    if (orConditions.length === 0) return;
+
+    if (data.quantity <= 0) {
+      await col.deleteMany({
+        $or: orConditions,
+        variantId: data.variantId,
+      });
+    } else {
+      await col.updateMany(
+        {
+          $or: orConditions,
+          variantId: data.variantId,
+        },
+        {
+          $set: { quantity: data.quantity, updatedAt: new Date() },
+        }
+      );
+    }
+  } catch (err) {
+    console.warn("[MongoDB] updateMongoCartItemQuantity notice:", err);
+  }
+}
+
+export async function removeMongoCartItem(data: {
+  userId?: number | null;
+  sessionId?: string | null;
+  variantId: number;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const col = db.collection("cart_items");
+    const orConditions: any[] = [];
+    if (data.userId && data.userId > 0) {
+      orConditions.push({ userId: data.userId });
+    }
+    if (data.sessionId) {
+      orConditions.push({ sessionId: data.sessionId });
+    }
+    if (orConditions.length === 0) return;
+
+    await col.deleteMany({
+      $or: orConditions,
+      variantId: data.variantId,
+    });
+  } catch (err) {
+    console.warn("[MongoDB] removeMongoCartItem notice:", err);
+  }
+}
+
+export async function clearMongoCartItems(identity: {
+  userId?: number | null;
+  sessionId?: string | null;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const col = db.collection("cart_items");
+    const orConditions: any[] = [];
+    if (identity.userId && identity.userId > 0) {
+      orConditions.push({ userId: identity.userId });
+    }
+    if (identity.sessionId) {
+      orConditions.push({ sessionId: identity.sessionId });
+    }
+    if (orConditions.length === 0) return;
+
+    await col.deleteMany({ $or: orConditions });
+  } catch (err) {
+    console.warn("[MongoDB] clearMongoCartItems notice:", err);
+  }
+}
+
+export async function mergeMongoGuestCart(userId: number, sessionId: string) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    const col = db.collection("cart_items");
+    const guestItems = await col.find({ sessionId }).toArray();
+
+    for (const item of guestItems) {
+      const userItem = await col.findOne({ userId, variantId: item.variantId });
+      if (userItem) {
+        await col.updateOne(
+          { _id: userItem._id },
+          {
+            $inc: { quantity: item.quantity },
+            $set: { updatedAt: new Date() },
+          }
+        );
+        await col.deleteOne({ _id: item._id });
+      } else {
+        await col.updateOne(
+          { _id: item._id },
+          {
+            $set: { userId, sessionId: null, updatedAt: new Date() },
+          }
+        );
+      }
+    }
+  } catch (err) {
+    console.warn("[MongoDB] mergeMongoGuestCart notice:", err);
+  }
+}
+
+// ============================================================================
 // CONNECTION TEST UTILITY
 // ============================================================================
 

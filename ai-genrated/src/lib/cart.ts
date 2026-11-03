@@ -30,6 +30,39 @@ export async function getCartIdentity() {
 export async function loadCartLines() {
   await ensureSeeded();
   const { user, sessionId } = await getCartIdentity();
+
+  // Multi-container persistence: Hydrate cart items from MongoDB Atlas into local cache
+  try {
+    const { getMongoCartItems } = await import("@/lib/mongodb");
+    const mongoItems = await getMongoCartItems({ userId: user?.id, sessionId });
+    if (mongoItems && mongoItems.length > 0) {
+      const { getSqliteDb } = await import("@/db");
+      const sqlite = getSqliteDb();
+
+      // Clear local rows for this identity first to ensure accurate mirror
+      if (user) {
+        sqlite.prepare("DELETE FROM cart_items WHERE user_id = ? OR session_id = ?").run(user.id, sessionId);
+      } else {
+        sqlite.prepare("DELETE FROM cart_items WHERE session_id = ?").run(sessionId);
+      }
+
+      // Mirror fresh items from MongoDB Atlas
+      const insertStmt = sqlite.prepare(
+        "INSERT INTO cart_items (user_id, session_id, variant_id, quantity) VALUES (?, ?, ?, ?)"
+      );
+      for (const mItem of mongoItems) {
+        insertStmt.run(
+          user?.id ?? mItem.userId ?? null,
+          user ? null : sessionId,
+          mItem.variantId,
+          mItem.quantity
+        );
+      }
+    }
+  } catch (mErr) {
+    console.warn("[loadCartLines] MongoDB cart hydration notice:", mErr);
+  }
+
   const rows = await db
     .select({
       id: cartItems.id,
@@ -111,6 +144,15 @@ export async function loadCartLines() {
 
 export async function mergeGuestCart(userId: number) {
   const sessionId = await getCartSessionId();
+
+  // Multi-container persistence: Merge guest cart into user in MongoDB Atlas
+  try {
+    const { mergeMongoGuestCart } = await import("@/lib/mongodb");
+    await mergeMongoGuestCart(userId, sessionId);
+  } catch (mErr) {
+    console.warn("[mergeGuestCart] MongoDB merge notice:", mErr);
+  }
+
   const guestRows = await db.select().from(cartItems).where(eq(cartItems.sessionId, sessionId));
 
   for (const row of guestRows) {
@@ -213,22 +255,39 @@ export async function addToCart(variantId: number, quantity: number) {
     : and(eq(cartItems.sessionId, sessionId), eq(cartItems.variantId, actualVariantId));
 
   const [existing] = await db.select().from(cartItems).where(match).limit(1);
+  let finalItemId: number;
+
   if (existing) {
     const nextQty = existing.quantity + quantity;
     if (nextQty > variant.stock) throw new Error("Not enough stock");
     await db.update(cartItems).set({ quantity: nextQty }).where(eq(cartItems.id, existing.id));
-    return existing.id;
+    finalItemId = existing.id;
+  } else {
+    const [created] = await db
+      .insert(cartItems)
+      .values({
+        userId: user?.id ?? null,
+        sessionId: user ? null : sessionId,
+        variantId: actualVariantId,
+        quantity,
+      });
+    finalItemId = created.insertId;
   }
 
-  const [created] = await db
-    .insert(cartItems)
-    .values({
+  // Multi-container persistence: Save into MongoDB Atlas so cart survives across all serverless containers
+  try {
+    const { upsertMongoCartItem } = await import("@/lib/mongodb");
+    await upsertMongoCartItem({
       userId: user?.id ?? null,
-      sessionId: user ? null : sessionId,
+      sessionId,
       variantId: actualVariantId,
       quantity,
     });
-  return created.insertId;
+  } catch (mErr) {
+    console.warn("[addToCart] MongoDB cart sync notice:", mErr);
+  }
+
+  return finalItemId;
 }
 
 export async function clearCartForIdentity() {
@@ -237,6 +296,14 @@ export async function clearCartForIdentity() {
     await db.delete(cartItems).where(or(eq(cartItems.userId, user.id), eq(cartItems.sessionId, sessionId)));
   } else {
     await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+  }
+
+  // Multi-container persistence: Clear in MongoDB Atlas as well
+  try {
+    const { clearMongoCartItems } = await import("@/lib/mongodb");
+    await clearMongoCartItems({ userId: user?.id, sessionId });
+  } catch (mErr) {
+    console.warn("[clearCartForIdentity] MongoDB clear notice:", mErr);
   }
 }
 

@@ -200,7 +200,12 @@ export async function POST(request: Request) {
     globalAccountLockoutManager.recordSuccess(`ip:${clientIp}`);
 
     // Set secure HttpOnly session cookie and merge guest cart
-    const token = await setAuthCookie(user.id);
+    const token = await setAuthCookie(user.id, {
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      name: user.name,
+    });
     await mergeGuestCart(user.id);
 
     // Audit log for admin/super_admin logins (non-blocking background)

@@ -294,6 +294,108 @@ export async function handlePickupUpdate(
     }
   }
 
+  // MongoDB Atlas fallback (multi-container synchronization across Vercel lambdas)
+  if (!existingOrder) {
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const query: any = {
+          $or: [
+            { orderNumber: lookup.clean },
+            { orderNumber: `#${lookup.clean}` },
+            { orderNumber: lookup.decoded },
+          ],
+        };
+        if (lookup.numId) {
+          query.$or.push({ id: lookup.numId });
+        }
+        const mOrder = await mongo.collection("orders").findOne(query);
+        if (mOrder) {
+          try {
+            const sqlite = getSqliteDb();
+            sqlite.prepare(`
+              INSERT OR REPLACE INTO orders (
+                id, order_number, user_id, guest_name, guest_phone, status, subtotal, discount,
+                delivery_fee, tax, total, coupon_code, address_snapshot, delivery_slot,
+                fulfillment_type, pickup_store_id, pickup_date, pickup_slot, estimated_ready_at,
+                actual_ready_at, pickup_otp, pickup_verified_by, payment_method, payment_status,
+                created_at, delivered_at, cancelled_at, cancel_reason
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              mOrder.id || (lookup.numId ?? 9999),
+              mOrder.orderNumber || lookup.clean,
+              mOrder.userId || null,
+              mOrder.guestName || "Customer",
+              mOrder.guestPhone || "",
+              mOrder.status || "confirmed",
+              mOrder.subtotal || 0,
+              mOrder.discount || 0,
+              mOrder.deliveryFee || 0,
+              mOrder.tax || 0,
+              mOrder.total || 0,
+              mOrder.couponCode || null,
+              typeof mOrder.addressSnapshot === "object" ? JSON.stringify(mOrder.addressSnapshot) : (mOrder.addressSnapshot || null),
+              mOrder.deliverySlot || null,
+              mOrder.fulfillmentType || "pickup",
+              mOrder.pickupStoreId || 1,
+              mOrder.pickupDate || null,
+              mOrder.pickupSlot || null,
+              mOrder.estimatedReadyAt ? new Date(mOrder.estimatedReadyAt).toISOString() : null,
+              mOrder.actualReadyAt ? new Date(mOrder.actualReadyAt).toISOString() : null,
+              mOrder.pickupOtp || null,
+              mOrder.pickupVerifiedBy || null,
+              mOrder.paymentMethod || "cod",
+              mOrder.paymentStatus || "pending",
+              mOrder.createdAt ? new Date(mOrder.createdAt).toISOString() : new Date().toISOString(),
+              mOrder.deliveredAt ? new Date(mOrder.deliveredAt).toISOString() : null,
+              mOrder.cancelledAt ? new Date(mOrder.cancelledAt).toISOString() : null,
+              mOrder.cancelReason || null
+            );
+            [existingOrder] = await db.select().from(orders).where(lookup.condition).limit(1);
+          } catch (hydErr) {
+            console.warn("[pickups] SQLite hydration error:", hydErr);
+          }
+
+          if (!existingOrder) {
+            existingOrder = {
+              id: mOrder.id || (lookup.numId ?? 9999),
+              orderNumber: mOrder.orderNumber || lookup.clean,
+              userId: mOrder.userId || null,
+              guestName: mOrder.guestName || "Customer",
+              guestPhone: mOrder.guestPhone || "",
+              status: mOrder.status || "confirmed",
+              subtotal: mOrder.subtotal || 0,
+              discount: mOrder.discount || 0,
+              deliveryFee: mOrder.deliveryFee || 0,
+              tax: mOrder.tax || 0,
+              total: mOrder.total || 0,
+              couponCode: mOrder.couponCode || null,
+              addressSnapshot: typeof mOrder.addressSnapshot === "object" ? JSON.stringify(mOrder.addressSnapshot) : (mOrder.addressSnapshot || null),
+              deliverySlot: mOrder.deliverySlot || null,
+              fulfillmentType: mOrder.fulfillmentType || "pickup",
+              pickupStoreId: mOrder.pickupStoreId || 1,
+              pickupDate: mOrder.pickupDate || null,
+              pickupSlot: mOrder.pickupSlot || null,
+              estimatedReadyAt: mOrder.estimatedReadyAt ? new Date(mOrder.estimatedReadyAt) : null,
+              actualReadyAt: mOrder.actualReadyAt ? new Date(mOrder.actualReadyAt) : null,
+              pickupOtp: mOrder.pickupOtp || null,
+              pickupVerifiedBy: mOrder.pickupVerifiedBy || null,
+              paymentMethod: mOrder.paymentMethod || "cod",
+              paymentStatus: mOrder.paymentStatus || "pending",
+              createdAt: mOrder.createdAt ? new Date(mOrder.createdAt) : new Date(),
+              deliveredAt: mOrder.deliveredAt ? new Date(mOrder.deliveredAt) : null,
+              cancelledAt: mOrder.cancelledAt ? new Date(mOrder.cancelledAt) : null,
+              cancelReason: mOrder.cancelReason || null,
+            } as any;
+          }
+        }
+      }
+    } catch (mErr) {
+      console.warn("[pickups] MongoDB fallback query error:", mErr);
+    }
+  }
+
   if (!existingOrder) {
     return NextResponse.json({ error: `Pickup order '${lookup.clean || rawTarget}' not found` }, { status: 404 });
   }
@@ -339,6 +441,24 @@ export async function handlePickupUpdate(
         note: `Estimated ready time updated to: ${newReadyTime} by ${adminName}`,
       });
     } catch {}
+
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        await mongo.collection("orders").updateOne(
+          { orderNumber: existingOrder.orderNumber },
+          {
+            $set: {
+              estimatedReadyAt: validReadyDate,
+              updatedAt: new Date(),
+            },
+          }
+        );
+      }
+    } catch (mTimeErr) {
+      console.warn("[pickups] MongoDB ready time update notice:", mTimeErr);
+    }
 
     // Customer SMS notification for time update
     try {
@@ -519,6 +639,27 @@ export async function handlePickupUpdate(
         });
       } catch {}
 
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          await mongo.collection("orders").updateOne(
+            { orderNumber: existingOrder.orderNumber },
+            {
+              $set: {
+                status: "cancelled",
+                cancelledAt: patch.cancelledAt,
+                cancelReason: patch.cancelReason,
+                paymentStatus: updated.paymentStatus,
+                updatedAt: new Date(),
+              },
+            }
+          );
+        }
+      } catch (mCancelErr) {
+        console.warn("[pickups] MongoDB cancel update notice:", mCancelErr);
+      }
+
       const { guestTokenHash: _discard, ...safe } = updated;
       return NextResponse.json({ order: safe, success: true });
     }
@@ -604,6 +745,24 @@ export async function handlePickupUpdate(
         paymentStatus: patch.paymentStatus || existingOrder.paymentStatus,
       });
     } catch {}
+
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        await mongo.collection("orders").updateOne(
+          { orderNumber: existingOrder.orderNumber },
+          {
+            $set: {
+              ...patch,
+              updatedAt: new Date(),
+            },
+          }
+        );
+      }
+    } catch (mUpErr) {
+      console.warn("[pickups] MongoDB status sync notice:", mUpErr);
+    }
 
     const [updated] = await db.select().from(orders).where(eq(orders.id, existingOrder.id)).limit(1);
     const { guestTokenHash: _discard, ...safe } = updated;

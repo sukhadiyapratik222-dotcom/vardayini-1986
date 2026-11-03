@@ -33,6 +33,76 @@ export async function GET(request: NextRequest) {
     .where(eq(stores.isActive, true))
     .orderBy(stores.name);
 
+  // Multi-container synchronization: Hydrate pickup orders from MongoDB Atlas into local cache
+  try {
+    const { getMongoDb } = await import("@/lib/mongodb");
+    const mongo = await getMongoDb();
+    if (mongo) {
+      const mOrders = await mongo
+        .collection("orders")
+        .find({
+          $or: [
+            { fulfillmentType: "pickup" },
+            { pickupStoreId: { $ne: null } },
+            { pickupSlot: { $ne: null } },
+          ],
+        })
+        .limit(100)
+        .toArray();
+
+      if (mOrders && mOrders.length > 0) {
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
+        const insertStmt = sqlite.prepare(`
+          INSERT OR REPLACE INTO orders (
+            id, order_number, user_id, guest_name, guest_phone, status, subtotal, discount,
+            delivery_fee, tax, total, coupon_code, address_snapshot, delivery_slot,
+            fulfillment_type, pickup_store_id, pickup_date, pickup_slot, estimated_ready_at,
+            actual_ready_at, pickup_otp, pickup_verified_by, payment_method, payment_status,
+            created_at, delivered_at, cancelled_at, cancel_reason
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const m of mOrders) {
+          try {
+            insertStmt.run(
+              m.id || 9999,
+              m.orderNumber,
+              m.userId || null,
+              m.guestName || "Customer",
+              m.guestPhone || "",
+              m.status || "confirmed",
+              m.subtotal || 0,
+              m.discount || 0,
+              m.deliveryFee || 0,
+              m.tax || 0,
+              m.total || 0,
+              m.couponCode || null,
+              typeof m.addressSnapshot === "object" ? JSON.stringify(m.addressSnapshot) : (m.addressSnapshot || null),
+              m.deliverySlot || null,
+              m.fulfillmentType || "pickup",
+              m.pickupStoreId || 1,
+              m.pickupDate || null,
+              m.pickupSlot || null,
+              m.estimatedReadyAt ? new Date(m.estimatedReadyAt).toISOString() : null,
+              m.actualReadyAt ? new Date(m.actualReadyAt).toISOString() : null,
+              m.pickupOtp || null,
+              m.pickupVerifiedBy || null,
+              m.paymentMethod || "cod",
+              m.paymentStatus || "pending",
+              m.createdAt ? new Date(m.createdAt).toISOString() : new Date().toISOString(),
+              m.deliveredAt ? new Date(m.deliveredAt).toISOString() : null,
+              m.cancelledAt ? new Date(m.cancelledAt).toISOString() : null,
+              m.cancelReason || null
+            );
+          } catch {}
+        }
+      }
+    }
+  } catch (mErr) {
+    console.warn("[pickups] MongoDB pickup hydration error:", mErr);
+  }
+
   // 2. Fetch all pickup orders with joins
   const baseCondition = or(
     eq(orders.fulfillmentType, "pickup"),
