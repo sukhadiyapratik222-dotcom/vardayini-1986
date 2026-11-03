@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "crypto";
 import { db } from "@/db";
 import { cartItems, coupons, orderItems, orders, orderStatusHistory, productVariants, products, stores, users } from "@/db/schema";
 import { getAuthUser, getCartSessionId, getCouponCode, setCouponCode, requireAdmin } from "@/lib/auth";
+import { loadCartLines } from "@/lib/cart";
 import { calcTotals, unitPrice } from "@/lib/money";
 import { ensureSeeded } from "@/db/seed";
 import { readJsonSafe, isValidPhone, isValidPincode, AddressSchema } from "@/lib/validation";
@@ -345,6 +346,9 @@ export async function POST(request: Request) {
   const rawGuestToken = !user ? randomBytes(24).toString("hex") : null;
   const guestTokenHash = rawGuestToken ? createHash("sha256").update(rawGuestToken).digest("hex") : null;
 
+  // Multi-container persistence: Hydrate cart items from MongoDB Atlas into local cache before claiming
+  await loadCartLines();
+
   const matchCondition = user
     ? or(eq(cartItems.userId, user.id), eq(cartItems.sessionId, sessionId))
     : eq(cartItems.sessionId, sessionId);
@@ -374,6 +378,57 @@ export async function POST(request: Request) {
           .where(matchCondition);
 
         if (!claimedRows || claimedRows.length === 0) {
+          // Check for duplicate / already placed order (e.g. user retrying, double clicking, or re-entering OTP)
+          try {
+            const { getMongoDb } = await import("@/lib/mongodb");
+            const mongo = await getMongoDb();
+            if (mongo) {
+              const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+              const query: any = {
+                createdAt: { $gte: fiveMinutesAgo },
+                $or: [],
+              };
+              if (phone) query.$or.push({ guestPhone: phone });
+              if (user?.id) query.$or.push({ userId: user.id });
+              if (sessionId) query.$or.push({ sessionId });
+
+              if (query.$or.length > 0) {
+                const recentOrders = await mongo
+                  .collection("orders")
+                  .find(query)
+                  .sort({ createdAt: -1 })
+                  .limit(1)
+                  .toArray();
+
+                if (recentOrders && recentOrders.length > 0) {
+                  const existing = recentOrders[0];
+                  return {
+                    id: existing.id || 9999,
+                    orderNumber: existing.orderNumber,
+                    userId: existing.userId || null,
+                    guestName: existing.guestName || name,
+                    guestPhone: existing.guestPhone || phone,
+                    status: existing.status || "confirmed",
+                    subtotal: existing.subtotal || 0,
+                    discount: existing.discount || 0,
+                    deliveryFee: existing.deliveryFee || 0,
+                    tax: existing.tax || 0,
+                    total: existing.total || 0,
+                    couponCode: existing.couponCode || null,
+                    addressSnapshot: typeof existing.addressSnapshot === "object" ? JSON.stringify(existing.addressSnapshot) : existing.addressSnapshot,
+                    deliverySlot: existing.deliverySlot || deliverySlot,
+                    fulfillmentType: existing.fulfillmentType || fulfillmentType,
+                    paymentMethod: existing.paymentMethod || paymentMethod,
+                    paymentStatus: existing.paymentStatus || "pending",
+                    alreadyPlaced: true,
+                  };
+                }
+              }
+            }
+          } catch (dupErr) {
+            console.warn("[Orders API] Duplicate/already placed order check:", dupErr);
+          }
+
           const emptyErr: any = new Error("Your cart is empty or already claimed.");
           emptyErr.status = 400;
           throw emptyErr;
@@ -757,6 +812,53 @@ export async function POST(request: Request) {
     );
   } catch (err) {
     console.warn("MySQL order sync error:", err);
+  }
+
+  // Multi-container persistence: Clear cart in MongoDB Atlas
+  try {
+    const { clearMongoCartItems } = await import("@/lib/mongodb");
+    await clearMongoCartItems({ userId: user?.id, sessionId });
+  } catch (mClrErr) {
+    console.warn("[Orders API] MongoDB cart clear notice:", mClrErr);
+  }
+
+  // Multi-container persistence: Directly sync created order to MongoDB Atlas
+  try {
+    const { syncOrderToMongo } = await import("@/lib/mongodb");
+    await syncOrderToMongo(
+      {
+        orderNumber: createdOrder.orderNumber,
+        userId: createdOrder.userId,
+        guestName: createdOrder.guestName,
+        guestPhone: createdOrder.guestPhone,
+        status: createdOrder.status,
+        subtotal: createdOrder.subtotal,
+        discount: createdOrder.discount,
+        deliveryFee: createdOrder.deliveryFee,
+        tax: createdOrder.tax,
+        total: createdOrder.total,
+        couponCode: createdOrder.couponCode,
+        addressSnapshot: createdOrder.addressSnapshot,
+        deliverySlot: createdOrder.deliverySlot,
+        paymentMethod: createdOrder.paymentMethod,
+        paymentStatus: createdOrder.paymentStatus,
+        fulfillmentType: createdOrder.fulfillmentType,
+        pickupStoreId: createdOrder.pickupStoreId,
+        pickupDate: createdOrder.pickupDate,
+        pickupSlot: createdOrder.pickupSlot,
+        estimatedReadyAt: createdOrder.estimatedReadyAt,
+        pickupOtp: createdOrder.pickupOtp,
+      },
+      createdLines.map((l) => ({
+        productName: l.name,
+        variantWeight: l.weight,
+        unitPrice: l.unit,
+        quantity: l.quantity,
+        imageUrl: l.imageUrl,
+      }))
+    );
+  } catch (mSyncErr) {
+    console.warn("[Orders API] MongoDB order sync notice:", mSyncErr);
   }
 
   const { guestTokenHash: _discardHash, ...orderWithoutHash } = createdOrder;

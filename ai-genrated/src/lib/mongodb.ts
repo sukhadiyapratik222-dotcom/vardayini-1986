@@ -172,9 +172,16 @@ export async function syncOrderToMongo(
     total?: number;
     couponCode?: string | null;
     addressSnapshot?: string | null | Record<string, unknown>;
-    deliverySlot?: string;
+    deliverySlot?: string | null;
     paymentMethod?: string;
     paymentStatus?: string;
+    fulfillmentType?: string | null;
+    pickupStoreId?: number | null;
+    pickupDate?: string | null;
+    pickupSlot?: string | null;
+    estimatedReadyAt?: Date | string | null;
+    pickupOtp?: string | null;
+    [key: string]: any;
   },
   items?: MongoOrderItemInput[]
 ) {
