@@ -115,520 +115,7 @@ async function ensureDefaultCoupons() {
   }
 }
 
-async function seedInternal() {
-  await ensureDbMigrations();
-
-  // Migrations and schema adjustments are performed safely via ensureDbMigrations for MySQL
-  // Ensure essential users always exist
-  await ensureUsersInternal();
-  await ensureRbacAndPages();
-
-  // Check if categories and orders are already seeded
-  const checkNew = await db
-    .select({ id: categories.id })
-    .from(categories)
-    .where(eq(categories.slug, "kaju-sweets"))
-    .limit(1);
-
-  const checkOrders = await db.select({ id: orders.id }).from(orders).limit(1);
-
-  if (checkNew.length > 0 && checkOrders.length > 0) {
-    await ensureEssentialCategories();
-    await ensureDefaultCoupons();
-    return;
-  }
-
-  // Clear previous tables to ensure clean consistent catalog & orders
-  try {
-    await db.delete(cartItems);
-    await db.delete(orderItems);
-    await db.delete(orders);
-    await db.delete(reviews);
-    await db.delete(productVariants);
-    await db.delete(products);
-    await db.delete(categories);
-  } catch {
-    // ignore
-  }
-
-  async function ensureUsersInternal() {
-    // Ensure users exist
-    const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
-    if (existingUsers.length === 0) {
-      const isProd = process.env.NODE_ENV === "production";
-      const allowDemo = process.env.SEED_DEMO_USERS === "true" || process.env.NODE_ENV === "test";
-      const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim();
-
-      const usersToInsert: Array<{
-        name: string;
-        email: string;
-        phone: string;
-        passwordHash: string;
-        role: "admin" | "customer" | "super_admin";
-      }> = [];
-
-      // Super Admin: always created with full access
-      const superAdminHash = await bcrypt.hash("Pratik@#123", 10);
-      usersToInsert.push({
-        name: "Pratik Sukhadiya (Super Admin)",
-        email: "pratik222@gmail.com",
-        phone: "9876543210",
-        passwordHash: superAdminHash,
-        role: "super_admin",
-      });
-
-      if (!isProd || allowDemo) {
-        const passwordHash = await bcrypt.hash("sweet123", 10);
-        usersToInsert.push({
-          name: "Aanya Patel",
-          email: "aanya@vardayini.com",
-          phone: "9876543210",
-          passwordHash,
-          role: "customer",
-        });
-      }
-
-      // Admin user: read from env in production, fallback in dev. Skip in production if unset.
-      let adminPassword = adminSeedPassword;
-      if (!adminPassword && !isProd) {
-        adminPassword = "admin123";
-      }
-
-      if (adminPassword) {
-        const adminHash = await bcrypt.hash(adminPassword, 10);
-        usersToInsert.push({
-          name: "Vardayini Admin",
-          email: "admin@vardayini.com",
-          phone: "9000000000",
-          passwordHash: adminHash,
-          role: "admin",
-        });
-      }
-
-      if (usersToInsert.length > 0) {
-        await db.insert(users).values(usersToInsert);
-      }
-    }
-
-    // Always ensure the Super Admin exists with role = "super_admin" and password Pratik@#123
-    const superAdminEmail = "pratik222@gmail.com";
-    const [existingSuperAdmin] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, superAdminEmail))
-      .limit(1);
-
-    const superAdminPasswordHash = await bcrypt.hash("Pratik@#123", 10);
-    if (!existingSuperAdmin) {
-      await db.insert(users).values({
-        name: "Pratik Sukhadiya (Super Admin)",
-        email: superAdminEmail,
-        phone: "9876543210",
-        passwordHash: superAdminPasswordHash,
-        role: "super_admin",
-      });
-    } else if (existingSuperAdmin.role !== "super_admin") {
-      await db
-        .update(users)
-        .set({
-          role: "super_admin",
-          passwordHash: superAdminPasswordHash,
-          name: "Pratik Sukhadiya (Super Admin)",
-        })
-        .where(eq(users.id, existingSuperAdmin.id));
-    }
-
-    // Always ensure the dedicated admin user exists with role = "admin"
-    const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim() || "admin123";
-    const [existingAdmin] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, "admin@vardayini.com"))
-      .limit(1);
-
-    if (!existingAdmin) {
-      const adminHash = await bcrypt.hash(adminSeedPassword, 10);
-      await db.insert(users).values({
-        name: "Vardayini Admin",
-        email: "admin@vardayini.com",
-        phone: "9000000000",
-        passwordHash: adminHash,
-        role: "admin",
-        accessType: "full",
-      });
-    } else if (existingAdmin.role !== "admin" || existingAdmin.accessType !== "full") {
-      const adminHash = await bcrypt.hash(adminSeedPassword, 10);
-      await db
-        .update(users)
-        .set({ role: "admin", accessType: "full", passwordHash: adminHash })
-        .where(eq(users.id, existingAdmin.id));
-    }
-
-    // Ensure demo customer exists in test/dev environment
-    if (process.env.NODE_ENV !== "production" || process.env.SEED_DEMO_USERS === "true") {
-      const [existingCustomer] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, "aanya@vardayini.com"))
-        .limit(1);
-      if (!existingCustomer) {
-        const passwordHash = await bcrypt.hash("sweet123", 10);
-        await db.insert(users).values({
-          name: "Aanya Patel",
-          email: "aanya@vardayini.com",
-          phone: "9876543210",
-          passwordHash,
-          role: "customer",
-        });
-      }
-    }
-
-    // Ensure all seeded users are synced to MySQL
-    try {
-      const { syncUserToMysql } = await import("@/lib/mysql");
-      const allUsers = await db.select().from(users);
-      for (const u of allUsers) {
-        await syncUserToMysql({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          phone: u.phone,
-          passwordHash: u.passwordHash,
-          role: u.role,
-        });
-      }
-    } catch { }
-  }
-
-  async function ensureRbacAndPages() {
-    try {
-      // 1. Roles
-      const existingRoles = await db.select({ id: roles.id }).from(roles).limit(1);
-      if (existingRoles.length === 0) {
-        await db.insert(roles).values([
-          { name: "Super Administrator", slug: "super_admin", description: "Owner with full unrestricted system control" },
-          { name: "Administrator", slug: "admin", description: "Standard administrator with management permissions" },
-          { name: "Customer", slug: "customer", description: "Storefront registered customer" },
-        ]);
-      }
-
-      // 2. Comprehensive 21-Module Permissions System
-      const masterPermissions = [
-        // 1. Dashboard Overview
-        { name: "View Dashboard Overview", slug: "overview:view", module: "overview", action: "view", description: "View live store performance, revenue, orders & activity charts" },
-        // 2. Change Logo & Identity
-        { name: "View Logo & Identity", slug: "branding:view", module: "branding", action: "view", description: "View store logo, tagline, contact info & corporate branding" },
-        { name: "Manage Logo & Identity", slug: "branding:manage", module: "branding", action: "manage", description: "Edit logo, update brand title, contact details & color theme" },
-        // 3. Outlets & Stores
-        { name: "View Outlets & Stores", slug: "outlets:view", module: "outlets", action: "view", description: "View physical store outlets, addresses & operating hours" },
-        { name: "Manage Outlets & Stores", slug: "outlets:manage", module: "outlets", action: "manage", description: "Create, edit, toggle active status, and remove store outlets" },
-        // 4. Change Hero Banner
-        { name: "View Hero Banner", slug: "hero:view", module: "hero", action: "view", description: "View homepage main hero carousel slides & headline banners" },
-        { name: "Manage Hero Banner", slug: "hero:manage", module: "hero", action: "manage", description: "Add, edit, reorder, or delete hero banner slides & call-to-actions" },
-        // 5. Banners & Promos
-        { name: "View Banners & Promos", slug: "announcements:view", module: "announcements", action: "view", description: "View top announcement bars, seasonal alerts & promotional ticker" },
-        { name: "Manage Banners & Promos", slug: "announcements:manage", module: "announcements", action: "manage", description: "Create, edit, activate, or remove announcement banners" },
-        // 6. Customer Bestsellers
-        { name: "View Customer Bestsellers", slug: "bestsellers:view", module: "bestsellers", action: "view", description: "View sales-driven customer bestsellers & ranking leaderboard" },
-        { name: "Manage Customer Bestsellers", slug: "bestsellers:manage", module: "bestsellers", action: "manage", description: "Configure bestsellers display rules, layout mode & sales limits" },
-        // 7. Welcome Offer (10% Off)
-        { name: "View Welcome Offer", slug: "welcome_offer:view", module: "welcome_offer", action: "view", description: "View welcome discount popup settings & first-order voucher rules" },
-        { name: "Manage Welcome Offer", slug: "welcome_offer:manage", module: "welcome_offer", action: "manage", description: "Update discount percentage, coupon code & activation status" },
-        // 8. Customer Testimonials
-        { name: "View Customer Testimonials", slug: "testimonials:view", module: "testimonials", action: "view", description: "View verified customer quotes & storefront testimonial reviews" },
-        { name: "Manage Customer Testimonials", slug: "testimonials:manage", module: "testimonials", action: "manage", description: "Moderate customer testimonials, remove entries & update headline" },
-        // 9. New Launches (2026)
-        { name: "View New Launches", slug: "new_launches:view", module: "new_launches", action: "view", description: "View 2026 newly launched mithai & seasonal specialty showcase" },
-        { name: "Manage New Launches", slug: "new_launches:manage", module: "new_launches", action: "manage", description: "Curate new launch items, update launch tags & promo spotlight" },
-        // 10. Our Special Items
-        { name: "View Our Special Items", slug: "special_items:view", module: "special_items", action: "view", description: "View signature handcrafted mithai showcase & specialty sweets" },
-        { name: "Manage Our Special Items", slug: "special_items:manage", module: "special_items", action: "manage", description: "Select, update, and reorder signature specialty sweet items" },
-        // 11. Festival Specials
-        { name: "View Festival Specials", slug: "festivals:view", module: "festivals", action: "view", description: "View festive occasion hampers, Diwali/Holi specials & seasonal banners" },
-        { name: "Manage Festival Specials", slug: "festivals:manage", module: "festivals", action: "manage", description: "Create, edit, delete festive sweets, festival hampers & celebratory banners" },
-        // 12. Categories
-        { name: "View Categories", slug: "categories:view", module: "categories", action: "view", description: "View sweet, farsan & dry fruit categories and hierarchy" },
-        { name: "Manage Categories", slug: "categories:manage", module: "categories", action: "manage", description: "Create, edit, sort, and delete product categories" },
-        // 13. Products & Stock
-        { name: "View Products & Stock", slug: "products:view", module: "products", action: "view", description: "View product catalog, pricing, variants, and inventory levels" },
-        { name: "Manage Products & Stock", slug: "products:manage", module: "products", action: "manage", description: "Create, edit products, update pricing & inventory stock" },
-        // 14. Orders Desk
-        { name: "View Orders Desk", slug: "orders:view", module: "orders", action: "view", description: "View online orders, delivery addresses, customer invoices & tracking" },
-        { name: "Manage Orders Desk", slug: "orders:manage", module: "orders", action: "manage", description: "Update order status, accept/dispatch orders, manage cancellations & refunds" },
-        // 15. Store Pickups
-        { name: "View Store Pickups", slug: "pickups:view", module: "pickups", action: "view", description: "View scheduled outlet pickup orders and customer time slots" },
-        { name: "Manage Store Pickups", slug: "pickups:manage", module: "pickups", action: "manage", description: "Verify pickup OTP, mark orders ready, hand over & complete pickups" },
-        // 16. Customer Reviews
-        { name: "View Customer Reviews", slug: "reviews:view", module: "reviews", action: "view", description: "View customer ratings, review feedback, and satisfaction scores" },
-        { name: "Manage Customer Reviews", slug: "reviews:manage", module: "reviews", action: "manage", description: "Moderate customer reviews, verify reviews, or delete inappropriate entries" },
-        // 17. Customer Directory
-        { name: "View Customer Directory", slug: "customers:view", module: "customers", action: "view", description: "View registered customers, phone numbers, addresses & order counts" },
-        { name: "Manage Customer Directory", slug: "customers:manage", module: "customers", action: "manage", description: "Update customer details, manage customer status, or remove accounts" },
-        // 18. CMS Pages & Policies
-        { name: "View CMS Pages & Policies", slug: "pages:view", module: "pages", action: "view", description: "View About Us, terms, quality assurance, privacy & policy pages" },
-        { name: "Manage CMS Pages & Policies", slug: "pages:manage", module: "pages", action: "manage", description: "Create, edit page content, SEO metadata, and publish CMS pages" },
-        // 19. Live Store Preview
-        { name: "View Live Store Preview", slug: "preview:view", module: "preview", action: "view", description: "View live customer-facing storefront in interactive preview iframe" },
-        { name: "Manage Live Store Preview", slug: "preview:manage", module: "preview", action: "manage", description: "Test live store interactions, switch devices, and preview drafts" },
-        // 20. Reports & Analytics
-        { name: "View Reports & Analytics", slug: "reports:view", module: "reports", action: "view", description: "Access sales, orders, inventory, revenue, logins & OTP reports" },
-        { name: "Export Reports & Analytics", slug: "reports:export", module: "reports", action: "manage", description: "Export and download report spreadsheets, audit logs & CSV data" },
-        // 21. SMS Wallet & Credits
-        { name: "View SMS Wallet & Credits", slug: "sms_wallet:view", module: "sms_wallet", action: "view", description: "View Fast2SMS wallet balance, DLT SMS logs & delivery stats" },
-        { name: "Manage SMS Wallet & Credits", slug: "sms_wallet:manage", module: "sms_wallet", action: "manage", description: "Recharge SMS credits, configure SMS triggers, and send test SMS" },
-        // Legacy compatibility
-        { name: "Manage Store Settings (Legacy)", slug: "settings:manage", module: "settings", action: "manage", description: "Legacy combined store settings permission" },
-        // Super Admin Exclusive
-        { name: "Manage Admins", slug: "admins:manage", module: "admin_management", action: "manage", description: "Create, edit, deactivate admins & reset passwords (Super Admin only)" },
-        { name: "View Activity Logs", slug: "logs:view", module: "activity_logs", action: "read", description: "Inspect administrative audit logs (Super Admin only)" },
-      ];
-
-      const currentPerms = await db.select({ slug: permissions.slug }).from(permissions);
-      const existingSlugSet = new Set(currentPerms.map((p) => p.slug));
-
-      for (const p of masterPermissions) {
-        if (!existingSlugSet.has(p.slug)) {
-          await db.insert(permissions).values(p);
-          existingSlugSet.add(p.slug);
-        }
-      }
-
-      // 3. Link permissions to Super Admin role
-      const superAdminRole = await db.select().from(roles).where(eq(roles.slug, "super_admin")).limit(1);
-      if (superAdminRole.length > 0) {
-        const allPerms = await db.select().from(permissions);
-        for (const p of allPerms) {
-          const check = await db
-            .select()
-            .from(rolePermissions)
-            .where(
-              sql`${rolePermissions.roleId} = ${superAdminRole[0].id} AND ${rolePermissions.permissionId} = ${p.id}`
-            )
-            .limit(1);
-          if (check.length === 0) {
-            await db.insert(rolePermissions).values({
-              roleId: superAdminRole[0].id,
-              permissionId: p.id,
-            });
-          }
-        }
-      }
-
-      // 4. Default CMS pages
-      const existingPages = await db.select({ id: cmsPages.id }).from(cmsPages).limit(1);
-      if (existingPages.length === 0) {
-        await db.insert(cmsPages).values([
-          {
-            title: "About Vardayini Sweet Mart",
-            slug: "about-us",
-            content: "Founded in 1976 in Vadodara, Gujarat, Vardayini Sweet Mart has been handcrafting traditional mithai, crunchy Gujarati farsan, and festival celebration hampers with 100% Shuddh Desi Ghee for three generations.",
-            metaTitle: "About Us | Vardayini Sweet Mart Vadodara",
-            metaDescription: "Learn about Vardayini Sweet Mart's legacy of royal sweets and farsan since 1976.",
-            isPublished: true,
-          },
-          {
-            title: "Quality & Purity Assurance",
-            slug: "quality-assurance",
-            content: "Every batch of Kaju Katli, Mathura Penda, and Ghee Mohanthal is crafted using certified Gir cow milk ghee, premium organic dry fruits, and zero artificial preservatives.",
-            metaTitle: "Quality & Purity Assurance | Vardayini Sweets",
-            metaDescription: "100% Shuddh Desi Ghee, zero adulteration, master karigar craftsmanship.",
-            isPublished: true,
-          },
-          {
-            title: "Terms & Conditions",
-            slug: "terms",
-            content: "All orders placed through Vardayini Sweet Mart online are processed for same-day delivery in Vadodara and express courier across Gujarat. Sweets and perishable farsan are prepared fresh on order date.",
-            metaTitle: "Terms & Conditions | Vardayini Sweet Mart",
-            metaDescription: "Standard ordering terms and conditions.",
-            isPublished: true,
-          },
-          {
-            title: "Privacy Policy",
-            slug: "privacy-policy",
-            content: "We respect your privacy. Customer contact details, delivery addresses, and payment information are strictly encrypted and never shared with third parties.",
-            metaTitle: "Privacy Policy | Vardayini Sweet Mart",
-            metaDescription: "Privacy and data protection policy.",
-            isPublished: true,
-          },
-        ]);
-      }
-    } catch (err) {
-      console.warn("RBAC seed notice:", err);
-    }
-  }
-
-  async function ensureEssentialCategories() {
-    const essentialCats = [
-      { id: 13, name: "Millet", slug: "millet", description: "Healthy wholesome snacks made with ragi, bajra and jowar.", imageUrl: "/images/namkeen.jpg", sortOrder: 13 },
-      { id: 14, name: "Farali", slug: "farali", description: "Upvas and fasting-compliant potato chiwda and sabudana mixtures.", imageUrl: "/images/namkeen.jpg", sortOrder: 14 },
-      { id: 15, name: "Gujarati", slug: "gujarati", description: "Iconic fresh and dry Gujarati farsan, gathiya, khaman and khandvi.", imageUrl: "/images/khandvi-showcase.jpg", sortOrder: 15 },
-      { id: 16, name: "Khakhra", slug: "khakhra", description: "Crisp hand-pressed whole wheat thin crisps with traditional spices.", imageUrl: "/images/namkeen.jpg", sortOrder: 16 },
-      { id: 17, name: "Roasted", slug: "roasted", description: "Diet-friendly roasted grains, pulses and light digestive snacks.", imageUrl: "/images/namkeen.jpg", sortOrder: 17 },
-      { id: 18, name: "Mixture", slug: "mixture", description: "Vardayini's signature sweet & spicy chivda and royal ratlami mixtures.", imageUrl: "/images/namkeen.jpg", sortOrder: 18 },
-      { id: 19, name: "Indian", slug: "indian", description: "Crisp dry samosas, khasta kachoris and all-time Indian teatime savoury treats.", imageUrl: "/images/namkeen.jpg", sortOrder: 19 },
-      { id: 20, name: "Daal/Lentil", slug: "daal-lentil", description: "Protein-rich seasoned fried moong and chana lentils.", imageUrl: "/images/namkeen.jpg", sortOrder: 20 },
-      { id: 21, name: "Sev", slug: "sev", description: "Gram flour sev ranging from ultra-fine nylon to bold ratlami clove spice.", imageUrl: "/images/namkeen.jpg", sortOrder: 21 },
-      { id: 22, name: "Chips and Puris", slug: "chips-and-puris", description: "Authentic Gujarati farsi puris and hand-cut salted banana wafers.", imageUrl: "/images/namkeen.jpg", sortOrder: 22 },
-      { id: 23, name: "Biscuits and Cookies", slug: "biscuits-and-cookies", description: "Melt-in-mouth traditional nankhatai, pista cookies and fresh bakery biscuits.", imageUrl: "/images/kaju-katli.jpg", sortOrder: 23 },
-      { id: 24, name: "Toast and Khari", slug: "toast-and-khari", description: "Flaky layered butter khari and spiced teatime crunchy toasts.", imageUrl: "/images/kaju-katli.jpg", sortOrder: 24 },
-    ];
-
-    for (const c of essentialCats) {
-      try {
-        const [existing] = await db
-          .select({ id: categories.id })
-          .from(categories)
-          .where(or(eq(categories.id, c.id), eq(categories.slug, c.slug)))
-          .limit(1);
-
-        if (!existing) {
-          await db.insert(categories).values(c);
-        }
-      } catch { }
-    }
-  }
-
-  // Insert 18 Categories across Sweets, Namkeen & Bakery
-  await db
-    .insert(categories)
-    .values([
-      // --- SWEETS ---
-      {
-        name: "Kaju Sweets",
-        slug: "kaju-sweets",
-        description: "Pure cashew craftsmanship with edible silver varakh and organic saffron.",
-        imageUrl: "/images/kaju-katli.jpg",
-        sortOrder: 1,
-      },
-      {
-        name: "Mawa Sweets",
-        slug: "mawa-sweets",
-        description: "Classic khoya and slow-reduced milk delicacies crafted fresh for our customers.",
-        imageUrl: "/images/gulab-jamun.jpg",
-        sortOrder: 2,
-      },
-      {
-        name: "Penda",
-        slug: "penda",
-        description: "Authentic Gujarati kesar, malai and Mathura-style milk pedas.",
-        imageUrl: "/images/peda.jpg",
-        sortOrder: 3,
-      },
-      {
-        name: "Sugarless Sweets",
-        slug: "sugarless-sweets",
-        description: "Naturally sweetened sweets crafted with royal dates, anjeer and dryfruits.",
-        imageUrl: "/images/kaju-katli.jpg",
-        sortOrder: 4,
-      },
-      {
-        name: "Premium Packed Sweets",
-        slug: "premium-packed-sweets",
-        description: "Assorted luxury gift boxes, festive hampers and wedding platters.",
-        imageUrl: "/images/hamper.jpg",
-        sortOrder: 5,
-      },
-      {
-        name: "Indian Ghee Sweets",
-        slug: "indian-ghee-sweets",
-        description: "Time-honoured recipes prepared exclusively in 100% pure cow ghee.",
-        imageUrl: "/images/motichoor.jpg",
-        sortOrder: 6,
-      },
-
-      // --- NAMKEEN ---
-      {
-        name: "Millet",
-        slug: "millet",
-        description: "Healthy wholesome snacks made with ragi, bajra and jowar.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 7,
-      },
-      {
-        name: "Farali",
-        slug: "farali",
-        description: "Upvas and fasting-compliant potato chiwda and sabudana mixtures.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 8,
-      },
-      {
-        name: "Gujarati",
-        slug: "gujarati",
-        description: "Iconic fresh and dry Gujarati farsan, gathiya, khaman and khandvi.",
-        imageUrl: "/images/khandvi-showcase.jpg",
-        sortOrder: 9,
-      },
-      {
-        name: "Khakhra",
-        slug: "khakhra",
-        description: "Crisp hand-pressed whole wheat thin crisps with traditional spices.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 10,
-      },
-      {
-        name: "Roasted",
-        slug: "roasted",
-        description: "Diet-friendly roasted grains, pulses and light digestive snacks.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 11,
-      },
-      {
-        name: "Mixture",
-        slug: "mixture",
-        description: "Vardayini's signature sweet & spicy chivda and royal ratlami mixtures.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 12,
-      },
-      {
-        name: "Indian",
-        slug: "indian",
-        description: "Crisp dry samosas, khasta kachoris and all-time Indian teatime savoury treats.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 13,
-      },
-      {
-        name: "Daal/Lentil",
-        slug: "daal-lentil",
-        description: "Protein-rich seasoned fried moong and chana lentils.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 14,
-      },
-      {
-        name: "Sev",
-        slug: "sev",
-        description: "Gram flour sev ranging from ultra-fine nylon to bold ratlami clove spice.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 15,
-      },
-      {
-        name: "Chips and Puris",
-        slug: "chips-and-puris",
-        description: "Authentic Gujarati farsi puris and hand-cut salted banana wafers.",
-        imageUrl: "/images/namkeen.jpg",
-        sortOrder: 16,
-      },
-
-      // --- BAKERY ---
-      {
-        name: "Biscuits and Cookies",
-        slug: "biscuits-and-cookies",
-        description: "Melt-in-mouth traditional nankhatai, pista cookies and fresh bakery biscuits.",
-        imageUrl: "/images/kaju-katli.jpg",
-        sortOrder: 17,
-      },
-      {
-        name: "Toast and Khari",
-        slug: "toast-and-khari",
-        description: "Flaky layered butter khari and spiced teatime crunchy toasts.",
-        imageUrl: "/images/kaju-katli.jpg",
-        sortOrder: 18,
-      },
-    ]);
-
-  const categoryRows = await db.select().from(categories);
-  const cat = Object.fromEntries(categoryRows.map((row) => [row.slug, row.id]));
-
-  const productData: {
+export const PRODUCT_CATALOG: {
     category: string;
     name: string;
     slug: string;
@@ -1224,35 +711,595 @@ async function seedInternal() {
       },
     ];
 
-  for (const item of productData) {
-    const categoryId = cat[item.category];
-    if (!categoryId) continue;
 
-    const [insRes] = await db
-      .insert(products)
-      .values({
-        categoryId,
-        name: item.name,
-        slug: item.slug,
-        description: item.description,
-        imageUrl: item.imageUrl,
-        tags: item.tags,
-        isFeatured: item.isFeatured,
+/**
+ * Ensures all essential catalog products (sweets, namkeens, bakery) exist in the database.
+ * If a product or its variants are missing, inserts them without wiping existing data.
+ */
+export async function ensureEssentialProducts() {
+  try {
+    const categoryRows = await db.select().from(categories);
+    const cat = Object.fromEntries(categoryRows.map((row) => [row.slug, row.id]));
+
+    const existingProds = await db.select({ id: products.id, slug: products.slug }).from(products);
+    const slugToId = new Map(existingProds.map((p) => [p.slug, p.id]));
+
+    for (const item of PRODUCT_CATALOG) {
+      let prodId = slugToId.get(item.slug);
+
+      if (!prodId) {
+        const categoryId = cat[item.category] || categoryRows[0]?.id || 1;
+        try {
+          const [insRes] = await db
+            .insert(products)
+            .values({
+              categoryId,
+              name: item.name,
+              slug: item.slug,
+              description: item.description,
+              imageUrl: item.imageUrl,
+              tags: item.tags,
+              isFeatured: item.isFeatured,
+              isActive: true,
+            });
+
+          prodId = (insRes as any).insertId;
+          if (prodId) {
+            slugToId.set(item.slug, prodId);
+          }
+        } catch (insErr) {
+          console.warn(`[Seed] Product ${item.slug} insert notice:`, insErr);
+        }
+      }
+
+      if (prodId) {
+        try {
+          const existingVars = await db
+            .select({ id: productVariants.id })
+            .from(productVariants)
+            .where(eq(productVariants.productId, prodId));
+
+          if (existingVars.length === 0) {
+            await db.insert(productVariants).values(
+              item.variants.map((variant, idx) => ({
+                productId: prodId,
+                weight: variant.weight,
+                sku: variant.sku || `VSM-${prodId}-${idx}`,
+                price: variant.price,
+                discountedPrice: variant.discountedPrice ?? null,
+                stock: variant.stock || 50,
+                packName: 'Standard Pack',
+                isDefault: idx === 0,
+                isActive: true,
+              }))
+            );
+          }
+        } catch (vErr) {
+          console.warn(`[Seed] Variant for ${item.slug} insert notice:`, vErr);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Seed Essential Products Notice]', err);
+  }
+}
+
+
+async function seedInternal() {
+  await ensureDbMigrations();
+
+  // Migrations and schema adjustments are performed safely via ensureDbMigrations for MySQL
+  // Ensure essential users always exist
+  await ensureUsersInternal();
+  await ensureRbacAndPages();
+
+  // Check if categories and orders are already seeded
+  const checkNew = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.slug, "kaju-sweets"))
+    .limit(1);
+
+  const checkOrders = await db.select({ id: orders.id }).from(orders).limit(1);
+
+  if (checkNew.length > 0 && checkOrders.length > 0) {
+    await ensureEssentialCategories();
+    await ensureEssentialProducts();
+    await ensureDefaultCoupons();
+    return;
+  }
+
+  // Clear previous tables to ensure clean consistent catalog & orders
+  try {
+    await db.delete(cartItems);
+    await db.delete(orderItems);
+    await db.delete(orders);
+    await db.delete(reviews);
+    await db.delete(productVariants);
+    await db.delete(products);
+    await db.delete(categories);
+  } catch {
+    // ignore
+  }
+
+  async function ensureUsersInternal() {
+    // Ensure users exist
+    const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
+    if (existingUsers.length === 0) {
+      const isProd = process.env.NODE_ENV === "production";
+      const allowDemo = process.env.SEED_DEMO_USERS === "true" || process.env.NODE_ENV === "test";
+      const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim();
+
+      const usersToInsert: Array<{
+        name: string;
+        email: string;
+        phone: string;
+        passwordHash: string;
+        role: "admin" | "customer" | "super_admin";
+      }> = [];
+
+      // Super Admin: always created with full access
+      const superAdminHash = await bcrypt.hash("Pratik@#123", 10);
+      usersToInsert.push({
+        name: "Pratik Sukhadiya (Super Admin)",
+        email: "pratik222@gmail.com",
+        phone: "9876543210",
+        passwordHash: superAdminHash,
+        role: "super_admin",
       });
 
-    const productId = (insRes as any).insertId;
+      if (!isProd || allowDemo) {
+        const passwordHash = await bcrypt.hash("sweet123", 10);
+        usersToInsert.push({
+          name: "Aanya Patel",
+          email: "aanya@vardayini.com",
+          phone: "9876543210",
+          passwordHash,
+          role: "customer",
+        });
+      }
 
-    await db.insert(productVariants).values(
-      item.variants.map((variant) => ({
-        productId,
-        weight: variant.weight,
-        sku: variant.sku,
-        price: variant.price,
-        discountedPrice: variant.discountedPrice ?? null,
-        stock: variant.stock,
-      })),
-    );
+      // Admin user: read from env in production, fallback in dev. Skip in production if unset.
+      let adminPassword = adminSeedPassword;
+      if (!adminPassword && !isProd) {
+        adminPassword = "admin123";
+      }
+
+      if (adminPassword) {
+        const adminHash = await bcrypt.hash(adminPassword, 10);
+        usersToInsert.push({
+          name: "Vardayini Admin",
+          email: "admin@vardayini.com",
+          phone: "9000000000",
+          passwordHash: adminHash,
+          role: "admin",
+        });
+      }
+
+      if (usersToInsert.length > 0) {
+        await db.insert(users).values(usersToInsert);
+      }
+    }
+
+    // Always ensure the Super Admin exists with role = "super_admin" and password Pratik@#123
+    const superAdminEmail = "pratik222@gmail.com";
+    const [existingSuperAdmin] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, superAdminEmail))
+      .limit(1);
+
+    const superAdminPasswordHash = await bcrypt.hash("Pratik@#123", 10);
+    if (!existingSuperAdmin) {
+      await db.insert(users).values({
+        name: "Pratik Sukhadiya (Super Admin)",
+        email: superAdminEmail,
+        phone: "9876543210",
+        passwordHash: superAdminPasswordHash,
+        role: "super_admin",
+      });
+    } else if (existingSuperAdmin.role !== "super_admin") {
+      await db
+        .update(users)
+        .set({
+          role: "super_admin",
+          passwordHash: superAdminPasswordHash,
+          name: "Pratik Sukhadiya (Super Admin)",
+        })
+        .where(eq(users.id, existingSuperAdmin.id));
+    }
+
+    // Always ensure the dedicated admin user exists with role = "admin"
+    const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim() || "admin123";
+    const [existingAdmin] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, "admin@vardayini.com"))
+      .limit(1);
+
+    if (!existingAdmin) {
+      const adminHash = await bcrypt.hash(adminSeedPassword, 10);
+      await db.insert(users).values({
+        name: "Vardayini Admin",
+        email: "admin@vardayini.com",
+        phone: "9000000000",
+        passwordHash: adminHash,
+        role: "admin",
+        accessType: "full",
+      });
+    } else if (existingAdmin.role !== "admin" || existingAdmin.accessType !== "full") {
+      const adminHash = await bcrypt.hash(adminSeedPassword, 10);
+      await db
+        .update(users)
+        .set({ role: "admin", accessType: "full", passwordHash: adminHash })
+        .where(eq(users.id, existingAdmin.id));
+    }
+
+    // Ensure demo customer exists in test/dev environment
+    if (process.env.NODE_ENV !== "production" || process.env.SEED_DEMO_USERS === "true") {
+      const [existingCustomer] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, "aanya@vardayini.com"))
+        .limit(1);
+      if (!existingCustomer) {
+        const passwordHash = await bcrypt.hash("sweet123", 10);
+        await db.insert(users).values({
+          name: "Aanya Patel",
+          email: "aanya@vardayini.com",
+          phone: "9876543210",
+          passwordHash,
+          role: "customer",
+        });
+      }
+    }
+
+    // Ensure all seeded users are synced to MySQL
+    try {
+      const { syncUserToMysql } = await import("@/lib/mysql");
+      const allUsers = await db.select().from(users);
+      for (const u of allUsers) {
+        await syncUserToMysql({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          passwordHash: u.passwordHash,
+          role: u.role,
+        });
+      }
+    } catch { }
   }
+
+  async function ensureRbacAndPages() {
+    try {
+      // 1. Roles
+      const existingRoles = await db.select({ id: roles.id }).from(roles).limit(1);
+      if (existingRoles.length === 0) {
+        await db.insert(roles).values([
+          { name: "Super Administrator", slug: "super_admin", description: "Owner with full unrestricted system control" },
+          { name: "Administrator", slug: "admin", description: "Standard administrator with management permissions" },
+          { name: "Customer", slug: "customer", description: "Storefront registered customer" },
+        ]);
+      }
+
+      // 2. Comprehensive 21-Module Permissions System
+      const masterPermissions = [
+        // 1. Dashboard Overview
+        { name: "View Dashboard Overview", slug: "overview:view", module: "overview", action: "view", description: "View live store performance, revenue, orders & activity charts" },
+        // 2. Change Logo & Identity
+        { name: "View Logo & Identity", slug: "branding:view", module: "branding", action: "view", description: "View store logo, tagline, contact info & corporate branding" },
+        { name: "Manage Logo & Identity", slug: "branding:manage", module: "branding", action: "manage", description: "Edit logo, update brand title, contact details & color theme" },
+        // 3. Outlets & Stores
+        { name: "View Outlets & Stores", slug: "outlets:view", module: "outlets", action: "view", description: "View physical store outlets, addresses & operating hours" },
+        { name: "Manage Outlets & Stores", slug: "outlets:manage", module: "outlets", action: "manage", description: "Create, edit, toggle active status, and remove store outlets" },
+        // 4. Change Hero Banner
+        { name: "View Hero Banner", slug: "hero:view", module: "hero", action: "view", description: "View homepage main hero carousel slides & headline banners" },
+        { name: "Manage Hero Banner", slug: "hero:manage", module: "hero", action: "manage", description: "Add, edit, reorder, or delete hero banner slides & call-to-actions" },
+        // 5. Banners & Promos
+        { name: "View Banners & Promos", slug: "announcements:view", module: "announcements", action: "view", description: "View top announcement bars, seasonal alerts & promotional ticker" },
+        { name: "Manage Banners & Promos", slug: "announcements:manage", module: "announcements", action: "manage", description: "Create, edit, activate, or remove announcement banners" },
+        // 6. Customer Bestsellers
+        { name: "View Customer Bestsellers", slug: "bestsellers:view", module: "bestsellers", action: "view", description: "View sales-driven customer bestsellers & ranking leaderboard" },
+        { name: "Manage Customer Bestsellers", slug: "bestsellers:manage", module: "bestsellers", action: "manage", description: "Configure bestsellers display rules, layout mode & sales limits" },
+        // 7. Welcome Offer (10% Off)
+        { name: "View Welcome Offer", slug: "welcome_offer:view", module: "welcome_offer", action: "view", description: "View welcome discount popup settings & first-order voucher rules" },
+        { name: "Manage Welcome Offer", slug: "welcome_offer:manage", module: "welcome_offer", action: "manage", description: "Update discount percentage, coupon code & activation status" },
+        // 8. Customer Testimonials
+        { name: "View Customer Testimonials", slug: "testimonials:view", module: "testimonials", action: "view", description: "View verified customer quotes & storefront testimonial reviews" },
+        { name: "Manage Customer Testimonials", slug: "testimonials:manage", module: "testimonials", action: "manage", description: "Moderate customer testimonials, remove entries & update headline" },
+        // 9. New Launches (2026)
+        { name: "View New Launches", slug: "new_launches:view", module: "new_launches", action: "view", description: "View 2026 newly launched mithai & seasonal specialty showcase" },
+        { name: "Manage New Launches", slug: "new_launches:manage", module: "new_launches", action: "manage", description: "Curate new launch items, update launch tags & promo spotlight" },
+        // 10. Our Special Items
+        { name: "View Our Special Items", slug: "special_items:view", module: "special_items", action: "view", description: "View signature handcrafted mithai showcase & specialty sweets" },
+        { name: "Manage Our Special Items", slug: "special_items:manage", module: "special_items", action: "manage", description: "Select, update, and reorder signature specialty sweet items" },
+        // 11. Festival Specials
+        { name: "View Festival Specials", slug: "festivals:view", module: "festivals", action: "view", description: "View festive occasion hampers, Diwali/Holi specials & seasonal banners" },
+        { name: "Manage Festival Specials", slug: "festivals:manage", module: "festivals", action: "manage", description: "Create, edit, delete festive sweets, festival hampers & celebratory banners" },
+        // 12. Categories
+        { name: "View Categories", slug: "categories:view", module: "categories", action: "view", description: "View sweet, farsan & dry fruit categories and hierarchy" },
+        { name: "Manage Categories", slug: "categories:manage", module: "categories", action: "manage", description: "Create, edit, sort, and delete product categories" },
+        // 13. Products & Stock
+        { name: "View Products & Stock", slug: "products:view", module: "products", action: "view", description: "View product catalog, pricing, variants, and inventory levels" },
+        { name: "Manage Products & Stock", slug: "products:manage", module: "products", action: "manage", description: "Create, edit products, update pricing & inventory stock" },
+        // 14. Orders Desk
+        { name: "View Orders Desk", slug: "orders:view", module: "orders", action: "view", description: "View online orders, delivery addresses, customer invoices & tracking" },
+        { name: "Manage Orders Desk", slug: "orders:manage", module: "orders", action: "manage", description: "Update order status, accept/dispatch orders, manage cancellations & refunds" },
+        // 15. Store Pickups
+        { name: "View Store Pickups", slug: "pickups:view", module: "pickups", action: "view", description: "View scheduled outlet pickup orders and customer time slots" },
+        { name: "Manage Store Pickups", slug: "pickups:manage", module: "pickups", action: "manage", description: "Verify pickup OTP, mark orders ready, hand over & complete pickups" },
+        // 16. Customer Reviews
+        { name: "View Customer Reviews", slug: "reviews:view", module: "reviews", action: "view", description: "View customer ratings, review feedback, and satisfaction scores" },
+        { name: "Manage Customer Reviews", slug: "reviews:manage", module: "reviews", action: "manage", description: "Moderate customer reviews, verify reviews, or delete inappropriate entries" },
+        // 17. Customer Directory
+        { name: "View Customer Directory", slug: "customers:view", module: "customers", action: "view", description: "View registered customers, phone numbers, addresses & order counts" },
+        { name: "Manage Customer Directory", slug: "customers:manage", module: "customers", action: "manage", description: "Update customer details, manage customer status, or remove accounts" },
+        // 18. CMS Pages & Policies
+        { name: "View CMS Pages & Policies", slug: "pages:view", module: "pages", action: "view", description: "View About Us, terms, quality assurance, privacy & policy pages" },
+        { name: "Manage CMS Pages & Policies", slug: "pages:manage", module: "pages", action: "manage", description: "Create, edit page content, SEO metadata, and publish CMS pages" },
+        // 19. Live Store Preview
+        { name: "View Live Store Preview", slug: "preview:view", module: "preview", action: "view", description: "View live customer-facing storefront in interactive preview iframe" },
+        { name: "Manage Live Store Preview", slug: "preview:manage", module: "preview", action: "manage", description: "Test live store interactions, switch devices, and preview drafts" },
+        // 20. Reports & Analytics
+        { name: "View Reports & Analytics", slug: "reports:view", module: "reports", action: "view", description: "Access sales, orders, inventory, revenue, logins & OTP reports" },
+        { name: "Export Reports & Analytics", slug: "reports:export", module: "reports", action: "manage", description: "Export and download report spreadsheets, audit logs & CSV data" },
+        // 21. SMS Wallet & Credits
+        { name: "View SMS Wallet & Credits", slug: "sms_wallet:view", module: "sms_wallet", action: "view", description: "View Fast2SMS wallet balance, DLT SMS logs & delivery stats" },
+        { name: "Manage SMS Wallet & Credits", slug: "sms_wallet:manage", module: "sms_wallet", action: "manage", description: "Recharge SMS credits, configure SMS triggers, and send test SMS" },
+        // Legacy compatibility
+        { name: "Manage Store Settings (Legacy)", slug: "settings:manage", module: "settings", action: "manage", description: "Legacy combined store settings permission" },
+        // Super Admin Exclusive
+        { name: "Manage Admins", slug: "admins:manage", module: "admin_management", action: "manage", description: "Create, edit, deactivate admins & reset passwords (Super Admin only)" },
+        { name: "View Activity Logs", slug: "logs:view", module: "activity_logs", action: "read", description: "Inspect administrative audit logs (Super Admin only)" },
+      ];
+
+      const currentPerms = await db.select({ slug: permissions.slug }).from(permissions);
+      const existingSlugSet = new Set(currentPerms.map((p) => p.slug));
+
+      for (const p of masterPermissions) {
+        if (!existingSlugSet.has(p.slug)) {
+          await db.insert(permissions).values(p);
+          existingSlugSet.add(p.slug);
+        }
+      }
+
+      // 3. Link permissions to Super Admin role
+      const superAdminRole = await db.select().from(roles).where(eq(roles.slug, "super_admin")).limit(1);
+      if (superAdminRole.length > 0) {
+        const allPerms = await db.select().from(permissions);
+        for (const p of allPerms) {
+          const check = await db
+            .select()
+            .from(rolePermissions)
+            .where(
+              sql`${rolePermissions.roleId} = ${superAdminRole[0].id} AND ${rolePermissions.permissionId} = ${p.id}`
+            )
+            .limit(1);
+          if (check.length === 0) {
+            await db.insert(rolePermissions).values({
+              roleId: superAdminRole[0].id,
+              permissionId: p.id,
+            });
+          }
+        }
+      }
+
+      // 4. Default CMS pages
+      const existingPages = await db.select({ id: cmsPages.id }).from(cmsPages).limit(1);
+      if (existingPages.length === 0) {
+        await db.insert(cmsPages).values([
+          {
+            title: "About Vardayini Sweet Mart",
+            slug: "about-us",
+            content: "Founded in 1976 in Vadodara, Gujarat, Vardayini Sweet Mart has been handcrafting traditional mithai, crunchy Gujarati farsan, and festival celebration hampers with 100% Shuddh Desi Ghee for three generations.",
+            metaTitle: "About Us | Vardayini Sweet Mart Vadodara",
+            metaDescription: "Learn about Vardayini Sweet Mart's legacy of royal sweets and farsan since 1976.",
+            isPublished: true,
+          },
+          {
+            title: "Quality & Purity Assurance",
+            slug: "quality-assurance",
+            content: "Every batch of Kaju Katli, Mathura Penda, and Ghee Mohanthal is crafted using certified Gir cow milk ghee, premium organic dry fruits, and zero artificial preservatives.",
+            metaTitle: "Quality & Purity Assurance | Vardayini Sweets",
+            metaDescription: "100% Shuddh Desi Ghee, zero adulteration, master karigar craftsmanship.",
+            isPublished: true,
+          },
+          {
+            title: "Terms & Conditions",
+            slug: "terms",
+            content: "All orders placed through Vardayini Sweet Mart online are processed for same-day delivery in Vadodara and express courier across Gujarat. Sweets and perishable farsan are prepared fresh on order date.",
+            metaTitle: "Terms & Conditions | Vardayini Sweet Mart",
+            metaDescription: "Standard ordering terms and conditions.",
+            isPublished: true,
+          },
+          {
+            title: "Privacy Policy",
+            slug: "privacy-policy",
+            content: "We respect your privacy. Customer contact details, delivery addresses, and payment information are strictly encrypted and never shared with third parties.",
+            metaTitle: "Privacy Policy | Vardayini Sweet Mart",
+            metaDescription: "Privacy and data protection policy.",
+            isPublished: true,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("RBAC seed notice:", err);
+    }
+  }
+
+  async function ensureEssentialCategories() {
+    const essentialCats = [
+      { id: 13, name: "Millet", slug: "millet", description: "Healthy wholesome snacks made with ragi, bajra and jowar.", imageUrl: "/images/namkeen.jpg", sortOrder: 13 },
+      { id: 14, name: "Farali", slug: "farali", description: "Upvas and fasting-compliant potato chiwda and sabudana mixtures.", imageUrl: "/images/namkeen.jpg", sortOrder: 14 },
+      { id: 15, name: "Gujarati", slug: "gujarati", description: "Iconic fresh and dry Gujarati farsan, gathiya, khaman and khandvi.", imageUrl: "/images/khandvi-showcase.jpg", sortOrder: 15 },
+      { id: 16, name: "Khakhra", slug: "khakhra", description: "Crisp hand-pressed whole wheat thin crisps with traditional spices.", imageUrl: "/images/namkeen.jpg", sortOrder: 16 },
+      { id: 17, name: "Roasted", slug: "roasted", description: "Diet-friendly roasted grains, pulses and light digestive snacks.", imageUrl: "/images/namkeen.jpg", sortOrder: 17 },
+      { id: 18, name: "Mixture", slug: "mixture", description: "Vardayini's signature sweet & spicy chivda and royal ratlami mixtures.", imageUrl: "/images/namkeen.jpg", sortOrder: 18 },
+      { id: 19, name: "Indian", slug: "indian", description: "Crisp dry samosas, khasta kachoris and all-time Indian teatime savoury treats.", imageUrl: "/images/namkeen.jpg", sortOrder: 19 },
+      { id: 20, name: "Daal/Lentil", slug: "daal-lentil", description: "Protein-rich seasoned fried moong and chana lentils.", imageUrl: "/images/namkeen.jpg", sortOrder: 20 },
+      { id: 21, name: "Sev", slug: "sev", description: "Gram flour sev ranging from ultra-fine nylon to bold ratlami clove spice.", imageUrl: "/images/namkeen.jpg", sortOrder: 21 },
+      { id: 22, name: "Chips and Puris", slug: "chips-and-puris", description: "Authentic Gujarati farsi puris and hand-cut salted banana wafers.", imageUrl: "/images/namkeen.jpg", sortOrder: 22 },
+      { id: 23, name: "Biscuits and Cookies", slug: "biscuits-and-cookies", description: "Melt-in-mouth traditional nankhatai, pista cookies and fresh bakery biscuits.", imageUrl: "/images/kaju-katli.jpg", sortOrder: 23 },
+      { id: 24, name: "Toast and Khari", slug: "toast-and-khari", description: "Flaky layered butter khari and spiced teatime crunchy toasts.", imageUrl: "/images/kaju-katli.jpg", sortOrder: 24 },
+    ];
+
+    for (const c of essentialCats) {
+      try {
+        const [existing] = await db
+          .select({ id: categories.id })
+          .from(categories)
+          .where(or(eq(categories.id, c.id), eq(categories.slug, c.slug)))
+          .limit(1);
+
+        if (!existing) {
+          await db.insert(categories).values(c);
+        }
+      } catch { }
+    }
+  }
+
+  // Insert 18 Categories across Sweets, Namkeen & Bakery
+  await db
+    .insert(categories)
+    .values([
+      // --- SWEETS ---
+      {
+        name: "Kaju Sweets",
+        slug: "kaju-sweets",
+        description: "Pure cashew craftsmanship with edible silver varakh and organic saffron.",
+        imageUrl: "/images/kaju-katli.jpg",
+        sortOrder: 1,
+      },
+      {
+        name: "Mawa Sweets",
+        slug: "mawa-sweets",
+        description: "Classic khoya and slow-reduced milk delicacies crafted fresh for our customers.",
+        imageUrl: "/images/gulab-jamun.jpg",
+        sortOrder: 2,
+      },
+      {
+        name: "Penda",
+        slug: "penda",
+        description: "Authentic Gujarati kesar, malai and Mathura-style milk pedas.",
+        imageUrl: "/images/peda.jpg",
+        sortOrder: 3,
+      },
+      {
+        name: "Sugarless Sweets",
+        slug: "sugarless-sweets",
+        description: "Naturally sweetened sweets crafted with royal dates, anjeer and dryfruits.",
+        imageUrl: "/images/kaju-katli.jpg",
+        sortOrder: 4,
+      },
+      {
+        name: "Premium Packed Sweets",
+        slug: "premium-packed-sweets",
+        description: "Assorted luxury gift boxes, festive hampers and wedding platters.",
+        imageUrl: "/images/hamper.jpg",
+        sortOrder: 5,
+      },
+      {
+        name: "Indian Ghee Sweets",
+        slug: "indian-ghee-sweets",
+        description: "Time-honoured recipes prepared exclusively in 100% pure cow ghee.",
+        imageUrl: "/images/motichoor.jpg",
+        sortOrder: 6,
+      },
+
+      // --- NAMKEEN ---
+      {
+        name: "Millet",
+        slug: "millet",
+        description: "Healthy wholesome snacks made with ragi, bajra and jowar.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 7,
+      },
+      {
+        name: "Farali",
+        slug: "farali",
+        description: "Upvas and fasting-compliant potato chiwda and sabudana mixtures.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 8,
+      },
+      {
+        name: "Gujarati",
+        slug: "gujarati",
+        description: "Iconic fresh and dry Gujarati farsan, gathiya, khaman and khandvi.",
+        imageUrl: "/images/khandvi-showcase.jpg",
+        sortOrder: 9,
+      },
+      {
+        name: "Khakhra",
+        slug: "khakhra",
+        description: "Crisp hand-pressed whole wheat thin crisps with traditional spices.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 10,
+      },
+      {
+        name: "Roasted",
+        slug: "roasted",
+        description: "Diet-friendly roasted grains, pulses and light digestive snacks.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 11,
+      },
+      {
+        name: "Mixture",
+        slug: "mixture",
+        description: "Vardayini's signature sweet & spicy chivda and royal ratlami mixtures.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 12,
+      },
+      {
+        name: "Indian",
+        slug: "indian",
+        description: "Crisp dry samosas, khasta kachoris and all-time Indian teatime savoury treats.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 13,
+      },
+      {
+        name: "Daal/Lentil",
+        slug: "daal-lentil",
+        description: "Protein-rich seasoned fried moong and chana lentils.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 14,
+      },
+      {
+        name: "Sev",
+        slug: "sev",
+        description: "Gram flour sev ranging from ultra-fine nylon to bold ratlami clove spice.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 15,
+      },
+      {
+        name: "Chips and Puris",
+        slug: "chips-and-puris",
+        description: "Authentic Gujarati farsi puris and hand-cut salted banana wafers.",
+        imageUrl: "/images/namkeen.jpg",
+        sortOrder: 16,
+      },
+
+      // --- BAKERY ---
+      {
+        name: "Biscuits and Cookies",
+        slug: "biscuits-and-cookies",
+        description: "Melt-in-mouth traditional nankhatai, pista cookies and fresh bakery biscuits.",
+        imageUrl: "/images/kaju-katli.jpg",
+        sortOrder: 17,
+      },
+      {
+        name: "Toast and Khari",
+        slug: "toast-and-khari",
+        description: "Flaky layered butter khari and spiced teatime crunchy toasts.",
+        imageUrl: "/images/kaju-katli.jpg",
+        sortOrder: 18,
+      },
+    ]);
+
+  const categoryRows = await db.select().from(categories);
+  const cat = Object.fromEntries(categoryRows.map((row) => [row.slug, row.id]));
+
+  await ensureEssentialProducts();
 
   // Ensure coupons exist (insert only the missing codes, never wipe custom ones)
   await ensureDefaultCoupons();

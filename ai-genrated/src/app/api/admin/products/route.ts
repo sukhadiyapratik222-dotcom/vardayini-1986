@@ -42,19 +42,9 @@ export async function GET(request: Request) {
       isActive: products.isActive,
       categoryId: products.categoryId,
       categoryName: sql<string>`COALESCE(${categories.name}, 'Bakery')`,
-      variantId: productVariants.id,
-      sku: productVariants.sku,
-      weight: productVariants.weight,
-      packName: productVariants.packName,
-      price: productVariants.price,
-      discountedPrice: productVariants.discountedPrice,
-      stock: productVariants.stock,
-      isDefault: productVariants.isDefault,
-      isVariantActive: productVariants.isActive,
     })
     .from(products)
-    .leftJoin(categories, eq(products.categoryId, categories.id))
-    .innerJoin(productVariants, eq(productVariants.productId, products.id));
+    .leftJoin(categories, eq(products.categoryId, categories.id));
 
   // Multi-container persistence: Hydrate from MongoDB Atlas if SQLite cache in /tmp is empty
   if (!rawProducts || rawProducts.length === 0) {
@@ -134,6 +124,7 @@ export async function GET(request: Request) {
   // Attach enriched variants array to each product row
   const items = rawProducts.map((row) => {
     const list = variantsByProduct.get(row.id) ?? [];
+    const defaultVariant = list.find((v) => v.isDefault) || list[0];
     const enrichedVariants = list.map((v) => {
       const sp = (v.discountedPrice !== null && v.discountedPrice !== undefined && v.discountedPrice > 0)
         ? v.discountedPrice
@@ -158,10 +149,16 @@ export async function GET(request: Request) {
 
     return {
       ...row,
-      packName: row.packName || "Standard Pack",
+      variantId: defaultVariant?.id || row.id,
+      sku: defaultVariant?.sku || `VSM-${row.id}`,
+      weight: defaultVariant?.weight || "500g",
+      packName: defaultVariant?.packName || "Standard Pack",
+      price: defaultVariant?.price || 350,
+      discountedPrice: defaultVariant?.discountedPrice || null,
+      stock: defaultVariant?.stock ?? 50,
+      isDefault: defaultVariant ? Boolean(defaultVariant.isDefault) : true,
       isActive: row.isActive !== false,
-      isDefault: Boolean(row.isDefault),
-      isVariantActive: row.isVariantActive !== false,
+      isVariantActive: defaultVariant ? defaultVariant.isActive !== false : true,
       variants: enrichedVariants,
     };
   });
