@@ -367,8 +367,12 @@ export async function syncProductVariantToMysql(variant: {
   price: number;
   discountedPrice?: number | null;
   stock: number;
+  packName?: string;
+  isDefault?: boolean;
+  isActive?: boolean;
 }) {
   try {
+    const { syncProductVariantToMongo } = await import("@/lib/mongodb");
     await syncProductVariantToMongo(variant);
   } catch {}
 
@@ -396,11 +400,31 @@ export async function syncProductVariantToMysql(variant: {
   } catch {}
 }
 
+export async function deleteProductVariantFromMysql(variantId: number) {
+  try {
+    const { deleteProductVariantFromMongo } = await import("@/lib/mongodb");
+    await deleteProductVariantFromMongo(variantId);
+  } catch {}
+
+  try {
+    await dbPool.query("DELETE FROM product_variants WHERE id = ?", [variantId]);
+  } catch {}
+}
+
 export async function updateVariantStockInMysql(
   variantId: number,
-  fields: { stock?: number; price?: number; discountedPrice?: number | null; weight?: string }
+  fields: {
+    stock?: number;
+    price?: number;
+    discountedPrice?: number | null;
+    weight?: string;
+    packName?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+  }
 ) {
   try {
+    const { updateVariantStockInMongo } = await import("@/lib/mongodb");
     await updateVariantStockInMongo(variantId, fields);
   } catch {}
 

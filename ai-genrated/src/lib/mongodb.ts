@@ -360,6 +360,9 @@ export async function syncProductVariantToMongo(variant: {
   price: number;
   discountedPrice?: number | null;
   stock: number;
+  packName?: string;
+  isDefault?: boolean;
+  isActive?: boolean;
 }) {
   try {
     const db = await getMongoDb();
@@ -382,9 +385,27 @@ export async function syncProductVariantToMongo(variant: {
   }
 }
 
+export async function deleteProductVariantFromMongo(variantId: number) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return;
+    await db.collection("product_variants").deleteOne({ id: variantId });
+  } catch (err) {
+    console.warn("[MongoDB] variant delete notice:", err);
+  }
+}
+
 export async function updateVariantStockInMongo(
   variantId: number,
-  fields: { stock?: number; price?: number; discountedPrice?: number | null; weight?: string }
+  fields: {
+    stock?: number;
+    price?: number;
+    discountedPrice?: number | null;
+    weight?: string;
+    packName?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+  }
 ) {
   try {
     const db = await getMongoDb();

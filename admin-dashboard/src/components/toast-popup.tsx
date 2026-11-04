@@ -46,7 +46,7 @@ export function ToastPopup({ toast, onClose }: ToastPopupProps) {
   };
 
   return (
-    <div className="fixed top-6 right-6 z-50 max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="fixed bottom-6 right-6 z-50 max-w-md pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
       <div
         role="button"
         tabIndex={0}

@@ -121,6 +121,7 @@ export async function listProducts(opts: {
   }
   if (opts.tag) conditions.push(like(products.tags, `%${opts.tag}%`));
   if (opts.featured) conditions.push(eq(products.isFeatured, true));
+  conditions.push(or(eq(products.isActive, true), sql`${products.isActive} IS NULL`));
 
   const rows = await db
     .select({
@@ -131,6 +132,7 @@ export async function listProducts(opts: {
       imageUrl: products.imageUrl,
       tags: products.tags,
       isFeatured: products.isFeatured,
+      isActive: products.isActive,
       categoryName: sql<string>`COALESCE(${categories.name}, 'Bakery')`,
       categorySlug: sql<string>`COALESCE(${categories.slug}, 'bakery')`,
     })
@@ -148,13 +150,18 @@ export async function listProducts(opts: {
   }
 
   let result = rows.map((row) => {
-    const list = byProduct.get(row.id) ?? [];
+    const rawList = byProduct.get(row.id) ?? [];
+    const list = rawList
+      .filter((v: any) => v.isActive !== false)
+      .sort((a: any, b: any) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+    const defaultVariant = list.find((v) => v.isDefault);
     const cheapest = [...list].sort((a, b) => unitPrice(a.price, a.discountedPrice) - unitPrice(b.price, b.discountedPrice))[0];
+    const preferred = defaultVariant || cheapest;
     return {
       ...row,
       variants: list,
-      fromPrice: cheapest ? unitPrice(cheapest.price, cheapest.discountedPrice) : 0,
-      comparePrice: cheapest && cheapest.discountedPrice ? cheapest.price : null,
+      fromPrice: preferred ? unitPrice(preferred.price, preferred.discountedPrice) : 0,
+      comparePrice: preferred && preferred.discountedPrice && preferred.price > preferred.discountedPrice ? preferred.price : null,
     };
   });
 
@@ -179,6 +186,7 @@ export async function getProductBySlug(slug: string) {
       imageUrl: products.imageUrl,
       tags: products.tags,
       isFeatured: products.isFeatured,
+      isActive: products.isActive,
       categoryId: products.categoryId,
       categoryName: sql<string>`COALESCE(${categories.name}, 'Bakery')`,
       categorySlug: sql<string>`COALESCE(${categories.slug}, 'bakery')`,
@@ -188,10 +196,13 @@ export async function getProductBySlug(slug: string) {
     .where(eq(products.slug, slug))
     .limit(1);
   if (!product) return null;
-  const variants = await db
+  const rawVariants = await db
     .select()
     .from(productVariants)
     .where(eq(productVariants.productId, product.id));
+  const variants = rawVariants
+    .filter((v: any) => v.isActive !== false)
+    .sort((a: any, b: any) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
   const reviewRows = await db.select().from(reviews).where(eq(reviews.productId, product.id));
   const avg =
     reviewRows.length === 0

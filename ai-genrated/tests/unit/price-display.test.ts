@@ -94,3 +94,4 @@ describe("Product Price Display Logic Verification", () => {
     expect(res.discountBadge).toBeNull();
   });
 });
+

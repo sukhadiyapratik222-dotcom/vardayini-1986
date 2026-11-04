@@ -42,6 +42,7 @@ export const products = mysqlTable("products", {
   imageUrl: text("image_url").notNull(),
   tags: text("tags").notNull(),
   isFeatured: boolean("is_featured").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -55,6 +56,9 @@ export const productVariants = mysqlTable("product_variants", {
   price: int("price").notNull(),
   discountedPrice: int("discounted_price"),
   stock: int("stock").notNull().default(0),
+  packName: varchar("pack_name", { length: 80 }).default("Standard Pack"),
+  isDefault: boolean("is_default").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
 });
 
 export const cartItems = mysqlTable("cart_items", {

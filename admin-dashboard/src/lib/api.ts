@@ -295,6 +295,21 @@ export interface FestivalPageConfig {
   festivalPages?: Record<string, FestivalSpecificPageConfig>;
 }
 
+export interface VariantItem {
+  id?: number;
+  productId?: number;
+  packName?: string;
+  weight: string;
+  sku?: string;
+  price: number;
+  discountedPrice?: number | null;
+  discountPercent?: number;
+  stock: number;
+  isDefault?: boolean;
+  isActive?: boolean;
+  _delete?: boolean;
+}
+
 export interface ProductItem {
   id: number;
   productId?: number;
@@ -304,13 +319,20 @@ export interface ProductItem {
   imageUrl: string;
   tags: string;
   isFeatured: boolean;
+  isActive?: boolean;
   categoryId: number;
   categoryName: string;
   variantId: number;
   sku: string;
   weight: string;
+  packName?: string;
   price: number;
+  discountedPrice?: number | null;
+  discountPercent?: number;
   stock: number;
+  isDefault?: boolean;
+  isVariantActive?: boolean;
+  variants?: VariantItem[];
 }
 
 export interface OrderItem {
@@ -760,6 +782,13 @@ export const api = {
       method: "DELETE",
     });
     return handleResponse<{ success: boolean; deletedId?: number }>(res, "Failed to delete product");
+  },
+
+  async deleteProductVariant(variantId: number): Promise<{ success: boolean; deletedVariantId?: number }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/products?variantId=${variantId}`, {
+      method: "DELETE",
+    });
+    return handleResponse<{ success: boolean; deletedVariantId?: number }>(res, "Failed to delete pack size");
   },
 
   // Orders

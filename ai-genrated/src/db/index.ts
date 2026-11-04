@@ -200,6 +200,7 @@ function initSqliteTables(sqlite: DatabaseSync) {
       image_url TEXT NOT NULL,
       tags TEXT NOT NULL,
       is_featured INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -210,7 +211,10 @@ function initSqliteTables(sqlite: DatabaseSync) {
       sku TEXT NOT NULL UNIQUE,
       price INTEGER NOT NULL,
       discounted_price INTEGER DEFAULT NULL,
-      stock INTEGER NOT NULL DEFAULT 0
+      stock INTEGER NOT NULL DEFAULT 0,
+      pack_name TEXT DEFAULT 'Standard Pack',
+      is_default INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS cart_items (
@@ -616,6 +620,32 @@ function initSqliteTables(sqlite: DatabaseSync) {
     } catch (wishlistErr) {
       console.warn("[Wishlist Migration Notice]", wishlistErr);
     }
+
+    // Migration safeguard: Ensure products table has is_active
+    try {
+      const prodCols = sqlite.prepare("PRAGMA table_info(products)").all() as any[];
+      if (!prodCols.some((c: any) => c.name === "is_active")) {
+        sqlite.exec("ALTER TABLE products ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
+      }
+    } catch (pMigErr) {
+      console.warn("[Products Migration Notice]", pMigErr);
+    }
+
+    // Migration safeguard: Ensure product_variants table has pack_name, is_default, is_active
+    try {
+      const pvCols = sqlite.prepare("PRAGMA table_info(product_variants)").all() as any[];
+      if (!pvCols.some((c: any) => c.name === "pack_name")) {
+        sqlite.exec("ALTER TABLE product_variants ADD COLUMN pack_name TEXT DEFAULT 'Standard Pack'");
+      }
+      if (!pvCols.some((c: any) => c.name === "is_default")) {
+        sqlite.exec("ALTER TABLE product_variants ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0");
+      }
+      if (!pvCols.some((c: any) => c.name === "is_active")) {
+        sqlite.exec("ALTER TABLE product_variants ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
+      }
+    } catch (pvMigErr) {
+      console.warn("[Product Variants Migration Notice]", pvMigErr);
+    }
   } catch (err) {
     console.warn("[Database Init Notice]", err);
   }
@@ -680,17 +710,36 @@ export async function hydrateFromMongoIfNeeded() {
           for (const p of mongoProds) {
             try {
               const res = sqlite.prepare(`
-                INSERT INTO products (id, category_id, name, slug, description, image_url, tags, is_featured)
-                VALUES (null, ?, ?, ?, ?, ?, ?, ?)
-              `).run(p.categoryId || 1, p.name, p.slug, p.description || "", p.imageUrl || "", p.tags || "", p.isFeatured ? 1 : 0);
+                INSERT INTO products (id, category_id, name, slug, description, image_url, tags, is_featured, is_active)
+                VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).run(
+                p.categoryId || 1,
+                p.name,
+                p.slug,
+                p.description || "",
+                p.imageUrl || "",
+                p.tags || "",
+                p.isFeatured ? 1 : 0,
+                p.isActive !== false ? 1 : 0
+              );
 
               const prodId = Number(res.lastInsertRowid);
               const mongoVariants = await mongo.collection("product_variants").find({ productId: p.id }).toArray();
               for (const v of mongoVariants) {
                 sqlite.prepare(`
-                  INSERT INTO product_variants (id, product_id, weight, sku, price, discounted_price, stock)
-                  VALUES (null, ?, ?, ?, ?, ?, ?)
-                `).run(prodId, v.weight, v.sku, v.price, v.discountedPrice ?? null, v.stock || 0);
+                  INSERT INTO product_variants (id, product_id, weight, sku, price, discounted_price, stock, pack_name, is_default, is_active)
+                  VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `).run(
+                  prodId,
+                  v.weight,
+                  v.sku,
+                  v.price,
+                  v.discountedPrice ?? null,
+                  v.stock || 0,
+                  v.packName || "Standard Pack",
+                  v.isDefault ? 1 : 0,
+                  v.isActive !== false ? 1 : 0
+                );
               }
             } catch {}
           }

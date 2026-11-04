@@ -24,3 +24,10 @@ export function calcTotals(subtotal: number, discount: number, freeDelivery = fa
   const total = taxable + tax + deliveryFee;
   return { subtotal, discount: safeDiscount, tax, deliveryFee, total };
 }
+
+export function calculateDiscount(originalPrice: number, sellingPrice: number): number {
+  if (originalPrice > sellingPrice && originalPrice > 0 && sellingPrice >= 0) {
+    return Math.round(((originalPrice - sellingPrice) / originalPrice) * 100);
+  }
+  return 0;
+}

@@ -12,6 +12,9 @@ export type ProductVariantData = {
   price: number;
   discountedPrice: number | null;
   stock: number;
+  packName?: string | null;
+  isDefault?: boolean | null;
+  isActive?: boolean | null;
 };
 
 export type ProductCardData = {
@@ -28,7 +31,8 @@ export type ProductCardData = {
 export function ProductCard({ product }: { product: ProductCardData }) {
   const tags = product.tags.split(",").filter(Boolean);
   const variants = product.variants || [];
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  const defaultIdx = variants.findIndex((v) => v.isDefault);
+  const [selectedIdx, setSelectedIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0);
 
   const currentVariant = variants[selectedIdx] || variants[0];
   const sellingPrice = currentVariant
@@ -51,9 +55,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
   // Requirement 1: Display the selected product pack size clearly (e.g. Standard Pack • 1 kg)
   const currentWeight = currentVariant?.weight || "1 kg";
+  const packName = currentVariant?.packName || "Standard Pack";
   const packSizeText = currentWeight.toLowerCase().includes("pack")
     ? currentWeight
-    : `Standard Pack • ${currentWeight}`;
+    : `${packName} • ${currentWeight}`;
 
   return (
     <article className="mithai-card group flex flex-col justify-between overflow-hidden bg-white p-3 rounded-2xl h-full shadow-sm hover:shadow-md transition-shadow border border-slate-100/90">
@@ -124,7 +129,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                       : "bg-[#f4f7fe] text-[#5e6d82] hover:bg-[#e8eeff] hover:text-[#0b2f8a]"
                   }`}
                 >
-                  {v.weight}
+                  {v.packName && v.packName !== "Standard Pack" ? `${v.packName} (${v.weight})` : v.weight}
                 </button>
               ))}
             </div>

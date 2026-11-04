@@ -10,12 +10,19 @@ type Variant = {
   price: number;
   discountedPrice: number | null;
   stock: number;
+  packName?: string | null;
+  isDefault?: boolean | null;
+  isActive?: boolean | null;
 };
 
 export function VariantPicker({ variants }: { variants: Variant[] }) {
-  const [variantId, setVariantId] = useState(variants[0]?.id);
-  const [qty, setQty] = useState(() => (variants[0]?.stock === 0 ? 0 : 1));
-  const selected = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variants, variantId]);
+  const initialVariant = useMemo(() => variants.find((v) => v.isDefault) || variants[0], [variants]);
+  const [variantId, setVariantId] = useState(initialVariant?.id);
+  const selected = useMemo(
+    () => variants.find((v) => v.id === variantId) ?? initialVariant ?? variants[0],
+    [variants, variantId, initialVariant]
+  );
+  const [qty, setQty] = useState(() => (selected?.stock === 0 ? 0 : 1));
   if (!selected) return null;
   const sellingPrice = unitPrice(selected.price, selected.discountedPrice);
 
@@ -32,9 +39,10 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
 
   // Requirement 1: Display the selected product pack size clearly (e.g. Standard Pack • 1 kg)
   const currentWeight = selected.weight || "1 kg";
+  const packName = selected.packName || "Standard Pack";
   const packSizeText = currentWeight.toLowerCase().includes("pack")
     ? currentWeight
-    : `Standard Pack • ${currentWeight}`;
+    : `${packName} • ${currentWeight}`;
 
   function handleSelectVariant(variant: Variant) {
     setVariantId(variant.id);
@@ -87,7 +95,9 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
               variant.id === selected.id ? "bg-[#6b1d1d] text-[#fff8ee] shadow-sm" : "mithai-card hover:bg-slate-50"
             }`}
           >
-            {variant.weight}
+            {variant.packName && variant.packName !== "Standard Pack"
+              ? `${variant.packName} (${variant.weight})`
+              : variant.weight}
           </button>
         ))}
       </div>

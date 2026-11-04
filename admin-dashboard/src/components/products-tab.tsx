@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ProductItem, InventoryItem, CategoryItem, UiConfig, api } from "@/lib/api";
+import { ProductItem, InventoryItem, CategoryItem, UiConfig, VariantItem, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
 import { TablePagination } from "./table-pagination";
@@ -104,6 +104,32 @@ export const CATEGORY_GROUPS = [
   },
 ];
 
+export const PACK_NAME_PRESETS = [
+  "Standard Pack",
+  "Family Pack",
+  "Premium Pack",
+  "Festive Gift Pack",
+  "Jumbo Pack",
+  "Trial Pack",
+];
+
+export const PACK_SIZE_PRESETS = [
+  "250g",
+  "500g",
+  "1 kg",
+  "2 kg",
+  "200g",
+  "400g",
+];
+
+// Helper to compute discount % safely
+export function calculateDiscount(originalPrice: number, sellingPrice: number): number {
+  if (originalPrice > sellingPrice && originalPrice > 0 && sellingPrice >= 0) {
+    return Math.round(((originalPrice - sellingPrice) / originalPrice) * 100);
+  }
+  return 0;
+}
+
 export function ProductsTab({
   products,
   inventory,
@@ -119,11 +145,9 @@ export function ProductsTab({
   const [stockFilter, setStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">(
     initialStockFilter || "all"
   );
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editPrice, setEditPrice] = useState<number>(0);
-  const [editStock, setEditStock] = useState<number>(0);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -133,17 +157,42 @@ export function ProductsTab({
     }
   }, [initialStockFilter]);
 
+  // Pricing & Pack Sizes Management Modal State
+  const [pricingProduct, setPricingProduct] = useState<ProductItem | null>(null);
+  const [localVariants, setLocalVariants] = useState<VariantItem[]>([]);
+  const [productActive, setProductActive] = useState<boolean>(true);
+  const [variantToDelete, setVariantToDelete] = useState<VariantItem | null>(null);
+
   // New product form
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newCategoryId, setNewCategoryId] = useState(7);
-  const [newWeight, setNewWeight] = useState("500g");
-  const [newPrice, setNewPrice] = useState(350);
-  const [newStock, setNewStock] = useState(50);
   const [newImageUrl, setNewImageUrl] = useState("/images/kaju-katli-showcase.jpg");
   const [newDesc, setNewDesc] = useState("");
   const [newSku, setNewSku] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [newIsActive, setNewIsActive] = useState(true);
+
+  // Add Product Modal - Multiple Pack Sizes List
+  const [newProductPacks, setNewProductPacks] = useState<Array<{
+    packName: string;
+    weight: string;
+    price: number;
+    discountedPrice: number | null;
+    stock: number;
+    isDefault: boolean;
+    isActive: boolean;
+  }>>([
+    {
+      packName: "Standard Pack",
+      weight: "500g",
+      price: 350,
+      discountedPrice: 300,
+      stock: 50,
+      isDefault: true,
+      isActive: true,
+    },
+  ]);
 
   // Edit product photo modal
   const [photoEditItem, setPhotoEditItem] = useState<ProductItem | null>(null);
@@ -152,6 +201,188 @@ export function ProductsTab({
   // Delete product state
   const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Open Pricing & Pack Size Manager for a specific product
+  const handleOpenPricingModal = (product: ProductItem) => {
+    setPricingProduct(product);
+    setProductActive(product.isActive !== false);
+
+    if (product.variants && product.variants.length > 0) {
+      setLocalVariants(
+        product.variants.map((v) => ({
+          ...v,
+          packName: v.packName || "Standard Pack",
+          weight: v.weight || "500g",
+          price: Number(v.price) || 0,
+          discountedPrice: v.discountedPrice !== null && v.discountedPrice !== undefined ? Number(v.discountedPrice) : null,
+          stock: Number(v.stock) || 0,
+          isDefault: Boolean(v.isDefault),
+          isActive: v.isActive !== false,
+        }))
+      );
+    } else {
+      setLocalVariants([
+        {
+          id: product.variantId,
+          productId: product.productId || product.id,
+          packName: product.packName || "Standard Pack",
+          weight: product.weight || "500g",
+          sku: product.sku,
+          price: Number(product.price) || 350,
+          discountedPrice: product.discountedPrice !== null && product.discountedPrice !== undefined ? Number(product.discountedPrice) : null,
+          stock: Number(product.stock) || 50,
+          isDefault: true,
+          isActive: true,
+        },
+      ]);
+    }
+  };
+
+  const handleAddNewPackRow = () => {
+    setLocalVariants((prev) => [
+      ...prev,
+      {
+        packName: "Family Pack",
+        weight: "1 kg",
+        price: 0,
+        discountedPrice: null,
+        stock: 50,
+        isDefault: prev.length === 0,
+        isActive: true,
+      },
+    ]);
+  };
+
+  const handleUpdatePackField = (index: number, field: keyof VariantItem, value: any) => {
+    setLocalVariants((prev) => {
+      const next = [...prev];
+      const item = { ...next[index], [field]: value };
+
+      // If user sets this variant as default, uncheck default on others
+      if (field === "isDefault" && value === true) {
+        return next.map((row, i) => ({
+          ...row,
+          isDefault: i === index,
+        }));
+      }
+
+      next[index] = item;
+      return next;
+    });
+  };
+
+  const handleDeletePackRow = (index: number) => {
+    const item = localVariants[index];
+    if (localVariants.length <= 1) {
+      toast.error("A product must have at least one pack size.");
+      return;
+    }
+    setVariantToDelete(item);
+  };
+
+  const confirmDeletePackRow = async () => {
+    if (!variantToDelete) return;
+    const item = variantToDelete;
+
+    if (item.id) {
+      setSaving(true);
+      try {
+        await api.deleteProductVariant(item.id);
+        toast.success(`Pack size (${item.weight}) removed from store.`);
+        setLocalVariants((prev) => prev.filter((v) => v.id !== item.id));
+        setVariantToDelete(null);
+        onRefresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete pack size");
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setLocalVariants((prev) => prev.filter((v) => v !== item));
+      setVariantToDelete(null);
+      toast.success("Pack size row removed.");
+    }
+  };
+
+  const handleSavePricingAndPacks = async () => {
+    if (!pricingProduct) return;
+
+    // Validate pack sizes
+    if (localVariants.length === 0) {
+      toast.error("Please add at least one pack size for this product.");
+      return;
+    }
+
+    for (let i = 0; i < localVariants.length; i++) {
+      const v = localVariants[i];
+      if (!v.weight?.trim()) {
+        toast.error(`Pack size ${i + 1}: Please specify a weight (e.g. 500g, 1 kg)`);
+        return;
+      }
+      if (v.price < 0 || isNaN(v.price)) {
+        toast.error(`Pack size ${i + 1} (${v.weight}): Original Price (MRP) cannot be negative or invalid`);
+        return;
+      }
+      if (v.discountedPrice !== null && v.discountedPrice !== undefined) {
+        if (v.discountedPrice < 0 || isNaN(v.discountedPrice)) {
+          toast.error(`Pack size ${i + 1} (${v.weight}): Selling price cannot be negative`);
+          return;
+        }
+        if (v.discountedPrice > v.price) {
+          toast.error(`Pack size ${i + 1} (${v.weight}): Selling price (₹${v.discountedPrice}) cannot exceed Original MRP (₹${v.price})`);
+          return;
+        }
+      }
+      if (v.stock < 0 || isNaN(v.stock)) {
+        toast.error(`Pack size ${i + 1} (${v.weight}): Stock quantity cannot be negative`);
+        return;
+      }
+    }
+
+    // Ensure at least one pack is marked default
+    const hasDefault = localVariants.some((v) => v.isDefault);
+    const variantsPayload = localVariants.map((v, i) => ({
+      ...v,
+      isDefault: hasDefault ? Boolean(v.isDefault) : i === 0,
+    }));
+
+    setSaving(true);
+    try {
+      const pId = pricingProduct.productId || pricingProduct.id;
+      await api.updateProduct({
+        productId: pId,
+        isActive: productActive,
+        variants: variantsPayload,
+      });
+
+      const storeShopUrl = `${getPublicStoreUrl()}/shop`;
+      toast.success(`Pricing & pack sizes for "${pricingProduct.name}" updated successfully!`, storeShopUrl);
+      setPricingProduct(null);
+      onRefresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update pricing & pack sizes.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleProductStatus = async (item: ProductItem) => {
+    const nextStatus = item.isActive === false;
+    setSaving(true);
+    try {
+      const pId = item.productId || item.id;
+      await api.updateProduct({
+        productId: pId,
+        isActive: nextStatus,
+      });
+      toast.success(`"${item.name}" is now ${nextStatus ? "Active (Visible in store)" : "Inactive (Hidden from store)"}`);
+      onRefresh();
+    } catch (err) {
+      toast.error("Failed to update product status.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDeleteProduct = async () => {
     if (!productToDelete) return;
@@ -173,21 +404,18 @@ export function ProductsTab({
   const displayedCategoryGroups = useMemo(() => {
     const categoryMap = new Map<string, { id?: number; name: string }>();
 
-    // Seeded/standard category names
     for (const grp of CATEGORY_GROUPS) {
       for (const item of grp.items) {
         categoryMap.set(item.name.toLowerCase(), { id: item.id, name: item.name });
       }
     }
 
-    // Dynamic categories passed from props
     for (const c of categories) {
       if (c.name && !categoryMap.has(c.name.toLowerCase())) {
         categoryMap.set(c.name.toLowerCase(), { id: c.id, name: c.name });
       }
     }
 
-    // Any category present in loaded products
     for (const p of products) {
       if (p.categoryName && !categoryMap.has(p.categoryName.toLowerCase())) {
         categoryMap.set(p.categoryName.toLowerCase(), { id: p.categoryId, name: p.categoryName });
@@ -231,19 +459,19 @@ export function ProductsTab({
     return groups;
   }, [categories, products]);
 
-  // Helper to find which group a category name belongs to
   const getCategoryGroup = (catName: string) => {
     const dept = getDepartmentForCategory(catName);
     return displayedCategoryGroups.find((g) => g.group === dept);
   };
 
+  // Filter products by search, department, category, stock, and active status
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const matchesSearch =
         p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(search.toLowerCase());
-      
-      // Check department filter
+        p.sku?.toLowerCase().includes(search.toLowerCase()) ||
+        (p.variants && p.variants.some((v) => v.packName?.toLowerCase().includes(search.toLowerCase()) || v.weight?.toLowerCase().includes(search.toLowerCase())));
+
       let matchesDept = true;
       if (departmentFilter !== "all") {
         matchesDept = getDepartmentForCategory(p.categoryName || "") === departmentFilter;
@@ -260,40 +488,21 @@ export function ProductsTab({
         matchesStock = p.stock > 0;
       }
 
-      return matchesSearch && matchesDept && matchesCat && matchesStock;
+      let matchesStatus = true;
+      if (statusFilter === "active") {
+        matchesStatus = p.isActive !== false;
+      } else if (statusFilter === "inactive") {
+        matchesStatus = p.isActive === false;
+      }
+
+      return matchesSearch && matchesDept && matchesCat && matchesStock && matchesStatus;
     });
-  }, [products, search, departmentFilter, categoryFilter, stockFilter]);
+  }, [products, search, departmentFilter, categoryFilter, stockFilter, statusFilter]);
 
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
-
-  const handleStartEdit = (p: ProductItem) => {
-    setEditingId(p.variantId);
-    setEditPrice(p.price);
-    setEditStock(p.stock);
-  };
-
-  const handleSaveEdit = async (variantId: number, productId: number) => {
-    setSaving(true);
-    try {
-      await api.updateProduct({
-        variantId,
-        productId,
-        price: Math.max(0, editPrice),
-        stock: Math.max(0, editStock),
-      });
-      setEditingId(null);
-      const storeShopUrl = `${getPublicStoreUrl()}/shop`;
-      toast.success("Product price and stock updated successfully!", storeShopUrl);
-      onRefresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update product. Please check database connection.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleUpdateProductPhoto = async (productId: number, imageUrl: string) => {
     setSaving(true);
@@ -319,25 +528,69 @@ export function ProductsTab({
       toast.error("Please enter a product title");
       return;
     }
+
+    if (newProductPacks.length === 0) {
+      toast.error("Please add at least one pack size");
+      return;
+    }
+
+    // Validate packs
+    for (let i = 0; i < newProductPacks.length; i++) {
+      const p = newProductPacks[i];
+      if (!p.weight?.trim()) {
+        toast.error(`Pack ${i + 1}: Please enter a weight (e.g. 250g, 500g)`);
+        return;
+      }
+      if (p.price < 0 || isNaN(p.price)) {
+        toast.error(`Pack ${i + 1}: MRP must be a positive integer`);
+        return;
+      }
+      if (p.discountedPrice !== null && p.discountedPrice !== undefined) {
+        if (p.discountedPrice < 0) {
+          toast.error(`Pack ${i + 1}: Selling price cannot be negative`);
+          return;
+        }
+        if (p.discountedPrice > p.price) {
+          toast.error(`Pack ${i + 1}: Selling price cannot exceed MRP`);
+          return;
+        }
+      }
+      if (p.stock < 0) {
+        toast.error(`Pack ${i + 1}: Stock quantity cannot be negative`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       await api.createProduct({
         name: newTitle.trim(),
         categoryId: newCategoryId,
-        weight: newWeight,
-        price: Math.max(0, Number(newPrice)),
-        stock: Math.max(0, Number(newStock)),
         imageUrl: newImageUrl,
         description: newDesc,
         isFeatured,
+        isActive: newIsActive,
         sku: newSku.trim() || undefined,
-      });
+        variants: newProductPacks,
+      } as any);
+
       setShowAddModal(false);
       const createdTitle = newTitle.trim();
       setNewTitle("");
       setNewSku("");
+      setNewProductPacks([
+        {
+          packName: "Standard Pack",
+          weight: "500g",
+          price: 350,
+          discountedPrice: 300,
+          stock: 50,
+          isDefault: true,
+          isActive: true,
+        },
+      ]);
       const storeShopUrl = `${getPublicStoreUrl()}/shop`;
-      toast.success(`"${createdTitle}" added to catalog!`, storeShopUrl);
+      toast.success(`"${createdTitle}" added with ${newProductPacks.length} pack size(s)!`, storeShopUrl);
       onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create product. Check database connection.");
@@ -352,17 +605,17 @@ export function ProductsTab({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#0b2f8a]/10 shadow-sm">
         <div>
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#0b2f8a]">
-            Products & Inventory Catalog
+            Products & Pricing Management
           </h2>
           <p className="text-xs text-[#5e6d82] mt-1">
-            Real-time stock control, quick pricing adjustments, and catalogue publishing.
+            Manage multiple pack sizes, live MRP and selling prices, automatic discount calculations, and real-time inventory.
           </p>
         </div>
 
         {!isReadOnly && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-5 py-2.5 rounded-xl font-bold text-xs btn-primary shadow-sm hover:shadow-md transition self-start sm:self-auto"
+            className="px-5 py-2.5 rounded-xl font-bold text-xs btn-primary shadow-sm hover:shadow-md transition self-start sm:self-auto cursor-pointer"
           >
             + Add New Sweet / Farsan
           </button>
@@ -380,7 +633,7 @@ export function ProductsTab({
               setDepartmentFilter("all");
               setCategoryFilter("all");
             }}
-            className={`p-3 rounded-2xl border transition flex items-center justify-between text-left ${
+            className={`p-3 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
               departmentFilter === "all"
                 ? "bg-purple-50/80 border-2 border-purple-500 shadow-xs"
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
@@ -401,74 +654,48 @@ export function ProductsTab({
                   <span className={`w-1.5 h-1.5 rounded-[2px] ${departmentFilter === "all" ? "bg-purple-600" : "bg-rose-500"}`} />
                 </div>
               </div>
-              <span
-                className={`text-xs font-bold truncate ${
-                  departmentFilter === "all" ? "text-purple-700" : "text-slate-800"
-                }`}
-              >
-                All Items
+              <span className={`text-xs font-bold truncate ${departmentFilter === "all" ? "text-purple-700 font-extrabold" : "text-slate-800"}`}>
+                All Catalogs
               </span>
             </div>
             <span
               className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-mono shrink-0 ${
-                departmentFilter === "all"
-                  ? "bg-purple-600 text-white"
-                  : "bg-slate-100 text-slate-600"
+                departmentFilter === "all" ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-600"
               }`}
             >
               {products.length}
             </span>
           </button>
 
-          {/* Department Group Cards: Sweets, Namkeen, Bakery */}
           {displayedCategoryGroups.map((grp) => {
-            const count = products.filter((p) =>
-              getDepartmentForCategory(p.categoryName || "") === grp.group
+            const count = products.filter(
+              (p) => getDepartmentForCategory(p.categoryName || "") === grp.group
             ).length;
             const isSelected = departmentFilter === grp.group;
-
-            const deptImages: Record<string, string> = {
-              Sweets: "/images/kaju-katli-showcase.jpg",
-              Namkeen: "/images/khaman-showcase.jpg",
-              Bakery: "/images/hamper.jpg",
-            };
 
             return (
               <button
                 key={grp.group}
                 type="button"
                 onClick={() => {
-                  setDepartmentFilter(isSelected ? "all" : grp.group);
+                  setDepartmentFilter(grp.group);
                   setCategoryFilter("all");
-                  setCurrentPage(1);
                 }}
-                className={`p-3 rounded-2xl border transition flex items-center justify-between text-left ${
+                className={`p-3 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
                   isSelected
                     ? "bg-purple-50/80 border-2 border-purple-500 shadow-xs"
                     : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-2xs bg-slate-100">
-                    <img
-                      src={deptImages[grp.group] || "/images/kaju-katli-showcase.jpg"}
-                      alt={grp.group}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span
-                    className={`text-xs font-bold truncate ${
-                      isSelected ? "text-purple-700 font-extrabold" : "text-slate-800"
-                    }`}
-                  >
+                  <span className="text-xl">{grp.icon}</span>
+                  <span className={`text-xs font-bold truncate ${isSelected ? "text-purple-700 font-extrabold" : "text-slate-800"}`}>
                     {grp.group}
                   </span>
                 </div>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-mono shrink-0 ${
-                    isSelected
-                      ? "bg-purple-600 text-white"
-                      : "bg-slate-100 text-slate-600"
+                    isSelected ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {count}
@@ -483,7 +710,7 @@ export function ProductsTab({
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search by sweet name, farsan, or SKU..."
+              placeholder="Search by sweet name, farsan, SKU, or pack size..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -494,7 +721,7 @@ export function ProductsTab({
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-white border border-slate-200/80 px-3 py-2 rounded-xl shadow-2xs shrink-0">
-            <span className="text-[11px] text-slate-400 font-medium">Table Length:</span>
+            <span className="text-[11px] text-slate-400 font-medium">Page Size:</span>
             <select
               value={pageSize}
               onChange={(e) => {
@@ -503,9 +730,9 @@ export function ProductsTab({
               }}
               className="bg-transparent font-bold text-[#0b2f8a] outline-none cursor-pointer"
             >
-              <option value={10}>10 records</option>
-              <option value={25}>25 records</option>
-              <option value={50}>50 records (Max)</option>
+              <option value={10}>10 items</option>
+              <option value={25}>25 items</option>
+              <option value={50}>50 items</option>
             </select>
           </div>
 
@@ -515,134 +742,185 @@ export function ProductsTab({
               setCategoryFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-4 py-2.5 text-[#182230] focus:border-[#0b2f8a] outline-none shadow-sm min-w-[220px]"
+            className="text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-4 py-2.5 text-[#182230] focus:border-[#0b2f8a] outline-none shadow-sm min-w-[200px]"
           >
-            <option value="all">All Specific Categories ({filtered.length} shown)</option>
-            {displayedCategoryGroups.filter(
-              (grp) => departmentFilter === "all" || departmentFilter === grp.group
-            ).map((grp) => (
-              <optgroup key={grp.group} label={`${grp.icon} ${grp.group}`}>
-                {grp.items.map((cat) => {
-                  const count = products.filter((p) => p.categoryName?.toLowerCase() === cat.name.toLowerCase()).length;
-                  return (
-                    <option key={cat.id || cat.name} value={cat.name}>
-                      {cat.name} ({count})
-                    </option>
-                  );
-                })}
-              </optgroup>
-            ))}
+            <option value="all">All Specific Categories ({filtered.length})</option>
+            {displayedCategoryGroups
+              .filter((grp) => departmentFilter === "all" || departmentFilter === grp.group)
+              .map((grp) => (
+                <optgroup key={grp.group} label={`${grp.icon} ${grp.group}`}>
+                  {grp.items.map((cat) => {
+                    const count = products.filter((p) => p.categoryName?.toLowerCase() === cat.name.toLowerCase()).length;
+                    return (
+                      <option key={cat.id || cat.name} value={cat.name}>
+                        {cat.name} ({count})
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              ))}
           </select>
         </div>
 
-        {/* Stock Status Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
-            Stock Status:
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setStockFilter("all");
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-              stockFilter === "all"
-                ? "bg-[#0b2f8a] text-white shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            All Stock ({products.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStockFilter("in_stock");
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-              stockFilter === "in_stock"
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
-            }`}
-          >
-            <span>✓ In Stock</span>
-            <span className="text-[10px] font-mono opacity-90">
-              ({products.filter((p) => p.stock > 0).length})
+        {/* Dual Filter Row: Status (Active/Inactive) & Stock Filter */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          {/* Status Filter */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 p-1 rounded-xl">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+              Status:
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStockFilter("low_stock");
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-              stockFilter === "low_stock"
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60"
-            }`}
-          >
-            <span>⚠️ Low Stock (≤10)</span>
-            <span className="text-[10px] font-mono opacity-90">
-              ({products.filter((p) => p.stock > 0 && p.stock <= 10).length})
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStockFilter("out_of_stock");
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-              stockFilter === "out_of_stock"
-                ? "bg-cyan-600 text-white shadow-xs"
-                : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200/60"
-            }`}
-          >
-            <span>🚫 Out of Stock</span>
-            <span className="text-[10px] font-mono opacity-90">
-              ({products.filter((p) => p.stock <= 0).length})
-            </span>
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("all");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                statusFilter === "all" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              All Status
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("active");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
+                statusFilter === "active" ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 hover:bg-emerald-100/50"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Active ({products.filter((p) => p.isActive !== false).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("inactive");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
+                statusFilter === "inactive" ? "bg-rose-600 text-white shadow-xs" : "text-rose-700 hover:bg-rose-100/50"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+              Inactive ({products.filter((p) => p.isActive === false).length})
+            </button>
+          </div>
 
-          {stockFilter !== "all" && (
+          {/* Stock Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              Stock:
+            </span>
             <button
               type="button"
               onClick={() => {
                 setStockFilter("all");
                 setCurrentPage(1);
               }}
-              className="text-[11px] font-semibold text-[#0b2f8a] hover:underline ml-2"
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                stockFilter === "all" ? "bg-[#0b2f8a] text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
             >
-              Reset Stock Filter
+              All Stock
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                setStockFilter("in_stock");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
+                stockFilter === "in_stock"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+              }`}
+            >
+              <span>✓ In Stock</span>
+              <span className="text-[10px] font-mono">({products.filter((p) => p.stock > 0).length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStockFilter("low_stock");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
+                stockFilter === "low_stock"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60"
+              }`}
+            >
+              <span>⚠️ Low Stock</span>
+              <span className="text-[10px] font-mono">({products.filter((p) => p.stock > 0 && p.stock <= 10).length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStockFilter("out_of_stock");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
+                stockFilter === "out_of_stock"
+                  ? "bg-cyan-600 text-white shadow-xs"
+                  : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200/60"
+              }`}
+            >
+              <span>🚫 Out of Stock</span>
+              <span className="text-[10px] font-mono">({products.filter((p) => p.stock <= 0).length})</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Products Table */}
+      {/* Products & Pricing Table */}
       <div className="rounded-2xl bg-white border border-[#0b2f8a]/10 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-[#182230]">
             <thead className="bg-[#0b2f8a]/5 text-[11px] uppercase tracking-wider text-[#0b2f8a] font-bold border-b border-[#0b2f8a]/10">
               <tr>
-                <th className="py-3.5 px-4">Item</th>
+                <th className="py-3.5 px-4">Product Name</th>
                 <th className="py-3.5 px-4">Category</th>
-                <th className="py-3.5 px-4">Weight / SKU</th>
-                <th className="py-3.5 px-4">Price (₹)</th>
-                <th className="py-3.5 px-4">Stock</th>
-                <th className="py-3.5 px-4">Badge</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Pack Sizes & Variants</th>
+                <th className="py-3.5 px-4">Price & MRP</th>
+                <th className="py-3.5 px-4">Availability</th>
+                <th className="py-3.5 px-4 text-right">Pricing Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#0b2f8a]/8">
               {paginatedProducts.map((item) => {
-                const isEditing = editingId === item.variantId;
-                const isLow = item.stock <= 20;
+                const variantsList = item.variants && item.variants.length > 0
+                  ? item.variants
+                  : [
+                      {
+                        id: item.variantId,
+                        packName: item.packName || "Standard Pack",
+                        weight: item.weight || "500g",
+                        price: item.price,
+                        discountedPrice: item.discountedPrice,
+                        stock: item.stock,
+                        isDefault: true,
+                        isActive: true,
+                      },
+                    ];
+
+                const primaryVariant = variantsList.find((v) => v.isDefault) || variantsList[0];
+                const originalPrice = primaryVariant?.price || item.price;
+                const sellingPrice = (primaryVariant?.discountedPrice !== null && primaryVariant?.discountedPrice !== undefined && primaryVariant.discountedPrice > 0)
+                  ? primaryVariant.discountedPrice
+                  : (item.discountedPrice !== null && item.discountedPrice !== undefined && item.discountedPrice > 0 ? item.discountedPrice : originalPrice);
+
+                const hasDiscount = Boolean(originalPrice > sellingPrice && sellingPrice >= 0);
+                const discountPct = hasDiscount ? calculateDiscount(originalPrice, sellingPrice) : 0;
+                const isOutOfStock = (primaryVariant?.stock ?? item.stock) <= 0;
+                const isActive = item.isActive !== false;
 
                 return (
                   <tr key={`${item.id}-${item.variantId}`} className="hover:bg-[#0b2f8a]/[0.02] transition">
+                    {/* Item Thumbnail & Name */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         <button
@@ -651,8 +929,8 @@ export function ProductsTab({
                             setPhotoEditItem(item);
                             setEditImageUrl(item.imageUrl);
                           }}
-                          className="relative h-11 w-11 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-[#0b2f8a]/15 group cursor-pointer shadow-xs hover:ring-2 hover:ring-[#0b2f8a]/40 transition"
-                          title="Click to change photo / upload file"
+                          className="relative h-12 w-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-[#0b2f8a]/15 group cursor-pointer shadow-xs hover:ring-2 hover:ring-[#0b2f8a]/40 transition"
+                          title="Click to change photo"
                         >
                           <img
                             src={item.imageUrl}
@@ -664,18 +942,24 @@ export function ProductsTab({
                           </div>
                         </button>
                         <div>
-                          <p className="font-bold text-[#182230] truncate max-w-xs">{item.name}</p>
-                          <p className="text-[10px] text-[#5e6d82] font-mono">{item.sku}</p>
+                          <p className="font-bold text-[#182230] max-w-xs leading-snug">{item.name}</p>
+                          <p className="text-[10px] text-[#5e6d82] font-mono mt-0.5">{primaryVariant?.sku || item.sku}</p>
+                          {item.isFeatured && (
+                            <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#fbf3db] text-[#b89130] border border-[#dfb755]/30">
+                              ★ Featured
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
 
+                    {/* Category */}
                     <td className="py-3.5 px-4">
                       {(() => {
                         const grp = getCategoryGroup(item.categoryName);
                         return (
                           <div className="flex flex-col gap-0.5">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold w-fit border ${grp?.badgeColor || "bg-[#0b2f8a]/10 text-[#0b2f8a] border-[#0b2f8a]/15"}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit border ${grp?.badgeColor || "bg-[#0b2f8a]/10 text-[#0b2f8a] border-[#0b2f8a]/15"}`}>
                               {item.categoryName}
                             </span>
                             <span className="text-[9px] text-[#5e6d82] flex items-center gap-1 font-medium pl-1">
@@ -687,109 +971,135 @@ export function ProductsTab({
                       })()}
                     </td>
 
-                    <td className="py-3.5 px-4 font-medium text-[#5e6d82]">
-                      {item.weight}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#0b2f8a]">
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          min={0}
-                          value={editPrice}
-                          onChange={(e) => setEditPrice(Number(e.target.value))}
-                          className="w-20 px-2 py-1 rounded bg-white border border-[#0b2f8a] text-[#0b2f8a] outline-none"
-                        />
-                      ) : (
-                        <span>₹{item.price}</span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono">
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          min={0}
-                          value={editStock}
-                          onChange={(e) => setEditStock(Number(e.target.value))}
-                          className="w-20 px-2 py-1 rounded bg-white border border-[#0b2f8a] text-[#182230] outline-none"
-                        />
-                      ) : (
-                        <span
-                          className={`font-semibold ${
-                            isLow ? "text-rose-600 font-bold" : "text-emerald-700"
+                    {/* Product Status (Active / Inactive) */}
+                    <td className="py-3.5 px-4">
+                      {!isReadOnly ? (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleProductStatus(item)}
+                          disabled={saving}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                            isActive
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                              : "bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200"
                           }`}
+                          title={isActive ? "Click to deactivate (hide from store)" : "Click to activate (show in store)"}
                         >
-                          {item.stock} {isLow && "⚠️"}
+                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          <span>{isActive ? "Active" : "Inactive"}</span>
+                        </button>
+                      ) : (
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-300"}`}>
+                          {isActive ? "Active" : "Inactive"}
                         </span>
                       )}
                     </td>
 
+                    {/* Pack Sizes & Variants */}
                     <td className="py-3.5 px-4">
-                      <div className="flex flex-col gap-1 items-start">
-                        {item.isFeatured && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fbf3db] text-[#b89130] border border-[#dfb755]/30">
-                            ★ Featured
+                      <div className="flex flex-col gap-1 max-w-[200px]">
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-700">
+                          <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px]">
+                            {variantsList.length} Pack{variantsList.length > 1 ? "s" : ""}
                           </span>
-                        )}
-                        {config?.specialItems?.productIds?.includes(item.productId || item.id) && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                            ⭐ Special
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {variantsList.map((v, idx) => (
+                            <span
+                              key={v.id || idx}
+                              className={`text-[9px] px-1.5 py-0.5 rounded-md border font-medium ${
+                                v.isDefault
+                                  ? "bg-[#0b2f8a]/10 text-[#0b2f8a] border-[#0b2f8a]/20 font-bold"
+                                  : "bg-slate-50 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              {v.packName ? `${v.packName} (${v.weight})` : v.weight}
+                              {v.isDefault && " ★"}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Price & Auto-calculated Discount */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-mono font-bold text-sm text-[#0b2f8a]">
+                            ₹{sellingPrice}
                           </span>
-                        )}
-                        {!item.isFeatured && !config?.specialItems?.productIds?.includes(item.productId || item.id) && (
-                          <span className="text-[#5e6d82] text-[11px]">-</span>
+                          {hasDiscount && (
+                            <span className="text-[11px] text-[#5e6d82] line-through font-medium">
+                              ₹{originalPrice}
+                            </span>
+                          )}
+                        </div>
+                        {hasDiscount && discountPct > 0 ? (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded w-fit mt-0.5">
+                            {discountPct}% OFF
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-slate-400 font-medium mt-0.5">
+                            MRP Price
+                          </span>
                         )}
                       </div>
                     </td>
 
+                    {/* Stock & Availability */}
+                    <td className="py-3.5 px-4 font-mono">
+                      <div className="flex flex-col gap-0.5">
+                        <span
+                          className={`font-semibold text-xs ${
+                            isOutOfStock
+                              ? "text-rose-600 font-bold"
+                              : primaryVariant?.stock && primaryVariant.stock <= 10
+                              ? "text-amber-600 font-bold"
+                              : "text-emerald-700"
+                          }`}
+                        >
+                          {primaryVariant?.stock ?? item.stock} in stock
+                        </span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded w-fit ${
+                          isOutOfStock ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        }`}>
+                          {isOutOfStock ? "Out of Stock" : "In Stock"}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Actions */}
                     <td className="py-3.5 px-4 text-right">
-                      {isEditing ? (
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => handleSaveEdit(item.variantId, item.productId || item.id)}
-                            disabled={saving}
-                            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px]"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="px-2 py-1 rounded bg-slate-100 text-slate-600 text-[11px]"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ) : isReadOnly ? (
-                        <div className="flex items-center justify-end">
-                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                            👁️ View Only
-                          </span>
-                        </div>
+                      {isReadOnly ? (
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                          👁️ View Only
+                        </span>
                       ) : (
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPricingModal(item)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0b2f8a] hover:bg-[#072163] transition shadow-xs flex items-center gap-1 cursor-pointer"
+                            title="Manage multiple pack sizes and price rules"
+                          >
+                            <span>🏷️</span>
+                            <span>Edit Pricing & Packs</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
                               setPhotoEditItem(item);
                               setEditImageUrl(item.imageUrl);
                             }}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-1"
-                            title="Upload or pick new photo"
+                            className="px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
+                            title="Update photo"
                           >
-                            <span>📷</span>
-                            <span>Photo</span>
-                          </button>
-                          <button
-                            onClick={() => handleStartEdit(item)}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#0b2f8a] bg-[#0b2f8a]/5 hover:bg-[#0b2f8a]/10 transition"
-                          >
-                            Edit Price/Stock
+                            📷
                           </button>
                           <button
                             type="button"
                             onClick={() => setProductToDelete(item)}
-                            className="px-2 py-1 rounded-lg text-[11px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition cursor-pointer"
+                            className="px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition cursor-pointer"
                             title="Delete product"
                           >
                             🗑️
@@ -804,7 +1114,7 @@ export function ProductsTab({
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-[#5e6d82]">
-                    No mithai or farsan items found matching your filter.
+                    No mithai or farsan items found matching your filters.
                   </td>
                 </tr>
               )}
@@ -824,35 +1134,355 @@ export function ProductsTab({
         />
       </div>
 
-      {/* Add Product Modal */}
+      {/* ========================================================================= */}
+      {/* MODAL 1: Product Price & Multiple Pack Size Management Modal             */}
+      {/* ========================================================================= */}
+      {pricingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-[#0b2f8a]/20 shadow-2xl p-5 sm:p-6 w-full max-w-4xl space-y-5 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                  <img src={pricingProduct.imageUrl} alt={pricingProduct.name} className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h3 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-[#0b2f8a]">
+                    Price & Pack Size Management
+                  </h3>
+                  <p className="text-xs text-[#5e6d82] flex items-center gap-2 mt-0.5">
+                    <span className="font-semibold text-slate-800">{pricingProduct.name}</span>
+                    <span>•</span>
+                    <span className="text-slate-500 font-mono">{pricingProduct.categoryName}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Product Active/Inactive Toggle */}
+              <div className="flex items-center gap-3 self-end sm:self-auto">
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+                  <label htmlFor="modal-product-active" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                    Product Status:
+                  </label>
+                  <input
+                    type="checkbox"
+                    id="modal-product-active"
+                    checked={productActive}
+                    onChange={(e) => setProductActive(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#0b2f8a] cursor-pointer"
+                  />
+                  <span className={`text-xs font-bold ${productActive ? "text-emerald-700" : "text-rose-600"}`}>
+                    {productActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setPricingProduct(null)}
+                  className="text-slate-400 hover:text-slate-700 text-lg font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Explanatory Banner */}
+            <div className="bg-blue-50/70 border border-blue-200/70 rounded-2xl p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+              <span className="text-base">💡</span>
+              <div className="space-y-0.5">
+                <p className="font-bold">Multiple Pack Sizes & Automatic Discount System</p>
+                <p className="text-blue-800/90 text-[11px] leading-relaxed">
+                  Add multiple weights (e.g. 250 g, 500 g, 1 kg, 2 kg). The storefront will display the selected pack clearly, calculate discounts automatically via <code className="font-mono bg-blue-100/70 px-1 rounded">((MRP - Selling Price) / MRP) × 100</code>, and update prices immediately upon pack selection.
+                </p>
+              </div>
+            </div>
+
+            {/* Pack Sizes Table */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-sm text-[#182230] flex items-center gap-2">
+                  <span>📦</span>
+                  <span>Configured Pack Sizes ({localVariants.length})</span>
+                </h4>
+
+                <button
+                  type="button"
+                  onClick={handleAddNewPackRow}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0b2f8a] bg-[#0b2f8a]/8 hover:bg-[#0b2f8a]/15 transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>+</span>
+                  <span>Add Pack Size</span>
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="py-3 px-3">Default</th>
+                        <th className="py-3 px-3">Pack Name</th>
+                        <th className="py-3 px-3">Pack Size (Weight)</th>
+                        <th className="py-3 px-3">Original MRP (₹)</th>
+                        <th className="py-3 px-3">Selling Price (₹)</th>
+                        <th className="py-3 px-3">Discount Badge</th>
+                        <th className="py-3 px-3">Stock & Status</th>
+                        <th className="py-3 px-3 text-right">Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {localVariants.map((variant, index) => {
+                        const original = Number(variant.price) || 0;
+                        const selling = variant.discountedPrice !== null && variant.discountedPrice !== undefined
+                          ? Number(variant.discountedPrice)
+                          : original;
+
+                        const isDiscounted = original > selling && selling >= 0;
+                        const discountPct = isDiscounted ? calculateDiscount(original, selling) : 0;
+                        const hasError = selling > original;
+
+                        return (
+                          <tr key={index} className="hover:bg-slate-50/60 transition">
+                            {/* Default Radio */}
+                            <td className="py-3 px-3 text-center">
+                              <input
+                                type="radio"
+                                name="default-pack-radio"
+                                checked={Boolean(variant.isDefault)}
+                                onChange={() => handleUpdatePackField(index, "isDefault", true)}
+                                className="w-4 h-4 text-[#0b2f8a] cursor-pointer"
+                                title="Set as default pack size"
+                              />
+                            </td>
+
+                            {/* Pack Name Input */}
+                            <td className="py-3 px-3">
+                              <input
+                                type="text"
+                                list={`pack-presets-${index}`}
+                                value={variant.packName || ""}
+                                onChange={(e) => handleUpdatePackField(index, "packName", e.target.value)}
+                                placeholder="Standard Pack"
+                                className="w-32 sm:w-36 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-800 outline-none focus:border-[#0b2f8a]"
+                              />
+                              <datalist id={`pack-presets-${index}`}>
+                                {PACK_NAME_PRESETS.map((p) => (
+                                  <option key={p} value={p} />
+                                ))}
+                              </datalist>
+                            </td>
+
+                            {/* Pack Size / Weight */}
+                            <td className="py-3 px-3">
+                              <input
+                                type="text"
+                                list={`weight-presets-${index}`}
+                                value={variant.weight || ""}
+                                onChange={(e) => handleUpdatePackField(index, "weight", e.target.value)}
+                                placeholder="500g, 1 kg"
+                                className="w-24 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-semibold text-slate-800 outline-none focus:border-[#0b2f8a]"
+                              />
+                              <datalist id={`weight-presets-${index}`}>
+                                {PACK_SIZE_PRESETS.map((w) => (
+                                  <option key={w} value={w} />
+                                ))}
+                              </datalist>
+                            </td>
+
+                            {/* Original MRP */}
+                            <td className="py-3 px-3">
+                              <div className="relative">
+                                <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono text-xs">₹</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={variant.price === 0 ? "" : variant.price}
+                                  onChange={(e) => handleUpdatePackField(index, "price", Math.max(0, Number(e.target.value)))}
+                                  placeholder="0"
+                                  className="w-24 pl-6 pr-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold text-slate-800 outline-none focus:border-[#0b2f8a]"
+                                />
+                              </div>
+                            </td>
+
+                            {/* Selling Price */}
+                            <td className="py-3 px-3">
+                              <div className="relative">
+                                <span className="absolute left-2.5 top-1.5 text-[#0b2f8a] font-mono text-xs font-bold">₹</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={variant.discountedPrice === null ? "" : variant.discountedPrice}
+                                  onChange={(e) => {
+                                    const val = e.target.value.trim() === "" ? null : Math.max(0, Number(e.target.value));
+                                    handleUpdatePackField(index, "discountedPrice", val);
+                                  }}
+                                  placeholder={String(variant.price || 0)}
+                                  className={`w-24 pl-6 pr-2 py-1.5 rounded-lg border text-xs font-mono font-bold outline-none ${
+                                    hasError
+                                      ? "border-rose-400 text-rose-600 bg-rose-50/50"
+                                      : "border-slate-200 text-[#0b2f8a] focus:border-[#0b2f8a]"
+                                  }`}
+                                />
+                              </div>
+                            </td>
+
+                            {/* Auto Calculated Discount Badge */}
+                            <td className="py-3 px-3">
+                              {hasError ? (
+                                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md inline-block">
+                                  ⚠️ &gt; MRP
+                                </span>
+                              ) : isDiscounted && discountPct > 0 ? (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                  <span>🏷️</span>
+                                  <span>{discountPct}% OFF</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-md inline-block">
+                                  No Discount
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Stock & Active Switch */}
+                            <td className="py-3 px-3">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={variant.stock}
+                                  onChange={(e) => handleUpdatePackField(index, "stock", Math.max(0, Number(e.target.value)))}
+                                  placeholder="50"
+                                  className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-medium text-slate-800 outline-none focus:border-[#0b2f8a]"
+                                  title="Stock units available"
+                                />
+                                <span
+                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                    variant.stock > 0
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                      : "bg-rose-50 text-rose-700 border-rose-200"
+                                  }`}
+                                >
+                                  {variant.stock > 0 ? "In Stock" : "OOS"}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Delete Action */}
+                            <td className="py-3 px-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePackRow(index)}
+                                className="px-2 py-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer font-bold"
+                                title="Delete this pack size"
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
+              <p className="text-xs text-slate-500">
+                ⭐ Radio button selects which pack size is selected by default on customer website.
+              </p>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setPricingProduct(null)}
+                  disabled={saving}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#182230] font-semibold text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSavePricingAndPacks}
+                  disabled={saving}
+                  className="px-6 py-2.5 rounded-xl btn-primary font-bold text-xs shadow-md hover:shadow-lg transition cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? "Saving Changes..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: Delete Pack Size Confirmation Dialog                             */}
+      {/* ========================================================================= */}
+      {variantToDelete && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-rose-200 shadow-2xl p-5 w-full max-w-sm space-y-3">
+            <h4 className="font-bold text-sm text-rose-600 flex items-center gap-2">
+              <span>⚠️</span> Delete Pack Size?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to delete the <strong>{variantToDelete.packName || "Pack"} ({variantToDelete.weight})</strong>?
+              This pack will be removed from customer selection.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setVariantToDelete(null)}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeletePackRow}
+                disabled={saving}
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                {saving ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: Add New Sweet or Farsan Item with Initial Pack Sizes              */}
+      {/* ========================================================================= */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-[#0b2f8a]/15 shadow-2xl p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-[#0b2f8a]/15 shadow-2xl p-5 sm:p-6 w-full max-w-2xl space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#0b2f8a]/10">
               <h3 className="font-[family-name:var(--font-display)] text-xl font-bold text-[#0b2f8a]">
                 Add New Mithai or Farsan Item
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-700 text-lg font-bold"
+                className="text-slate-400 hover:text-slate-700 text-lg font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleCreateProduct} className="space-y-4 text-xs">
+              {/* Product Name */}
               <div>
                 <label className="block text-[#182230] font-semibold mb-1">Product Title</label>
                 <input
                   type="text"
-                  placeholder="e.g. Kesar Peda, Fafda Jalebi Combo"
+                  placeholder="e.g. Kesar Peda, Fafda Jalebi Combo, Royal Kaju Katli"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none focus:border-[#0b2f8a]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Category & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[#182230] font-semibold mb-1">Category</label>
                   <select
@@ -873,54 +1503,196 @@ export function ProductsTab({
                 </div>
 
                 <div>
-                  <label className="block text-[#182230] font-semibold mb-1">Weight / Pack</label>
-                  <input
-                    type="text"
-                    placeholder="250g, 500g, 1kg"
-                    value={newWeight}
-                    onChange={(e) => setNewWeight(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none"
-                  />
+                  <label className="block text-[#182230] font-semibold mb-1">Product Status</label>
+                  <select
+                    value={newIsActive ? "active" : "inactive"}
+                    onChange={(e) => setNewIsActive(e.target.value === "active")}
+                    className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none font-semibold"
+                  >
+                    <option value="active">Active (Visible in Store)</option>
+                    <option value="inactive">Inactive (Hidden from Store)</option>
+                  </select>
                 </div>
               </div>
 
+              {/* SKU */}
               <div>
                 <label className="block text-[#182230] font-semibold mb-1">
                   SKU Code <span className="text-slate-400 font-normal">(Optional — auto-generated if left blank)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. VSM-BIS-500G"
+                  placeholder="e.g. VSM-KAJU-500G"
                   value={newSku}
                   onChange={(e) => setNewSku(e.target.value)}
                   className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none font-mono"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#182230] font-semibold mb-1">Price (₹)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(Number(e.target.value))}
-                    className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#0b2f8a] outline-none font-mono font-bold"
-                  />
+              {/* Initial Pack Sizes Section */}
+              <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs text-[#0b2f8a] uppercase tracking-wider">
+                    Pack Sizes & Pricing Rules
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewProductPacks((prev) => [
+                        ...prev,
+                        {
+                          packName: "Family Pack",
+                          weight: "1 kg",
+                          price: 700,
+                          discountedPrice: 600,
+                          stock: 50,
+                          isDefault: false,
+                          isActive: true,
+                        },
+                      ]);
+                    }}
+                    className="text-[11px] font-bold text-[#0b2f8a] hover:underline cursor-pointer"
+                  >
+                    + Add Another Pack Size
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-[#182230] font-semibold mb-1">Stock Quantity</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newStock}
-                    onChange={(e) => setNewStock(Number(e.target.value))}
-                    className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none font-mono"
-                  />
+                <div className="space-y-2">
+                  {newProductPacks.map((pack, idx) => {
+                    const original = Number(pack.price) || 0;
+                    const selling = pack.discountedPrice !== null && pack.discountedPrice !== undefined
+                      ? Number(pack.discountedPrice)
+                      : original;
+                    const isDiscounted = original > selling && selling >= 0;
+                    const discPct = isDiscounted ? calculateDiscount(original, selling) : 0;
+
+                    return (
+                      <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <div>
+                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Pack Name</label>
+                            <input
+                              type="text"
+                              value={pack.packName}
+                              onChange={(e) => {
+                                const next = [...newProductPacks];
+                                next[idx].packName = e.target.value;
+                                setNewProductPacks(next);
+                              }}
+                              placeholder="Standard Pack"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Weight / Size</label>
+                            <input
+                              type="text"
+                              value={pack.weight}
+                              onChange={(e) => {
+                                const next = [...newProductPacks];
+                                next[idx].weight = e.target.value;
+                                setNewProductPacks(next);
+                              }}
+                              placeholder="500g, 1 kg"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">MRP Price (₹)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={pack.price}
+                              onChange={(e) => {
+                                const next = [...newProductPacks];
+                                next[idx].price = Math.max(0, Number(e.target.value));
+                                setNewProductPacks(next);
+                              }}
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Selling Price (₹)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={pack.discountedPrice === null ? "" : pack.discountedPrice}
+                              onChange={(e) => {
+                                const next = [...newProductPacks];
+                                next[idx].discountedPrice = e.target.value.trim() === "" ? null : Math.max(0, Number(e.target.value));
+                                setNewProductPacks(next);
+                              }}
+                              placeholder={String(pack.price)}
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold text-[#0b2f8a]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+                          <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-1 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="new-product-default"
+                                checked={pack.isDefault}
+                                onChange={() => {
+                                  const next = newProductPacks.map((item, i) => ({
+                                    ...item,
+                                    isDefault: i === idx,
+                                  }));
+                                  setNewProductPacks(next);
+                                }}
+                                className="w-3.5 h-3.5 text-[#0b2f8a]"
+                              />
+                              <span className="text-slate-600 font-medium">Default Pack</span>
+                            </label>
+
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-slate-500">Stock:</span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={pack.stock}
+                                onChange={(e) => {
+                                  const next = [...newProductPacks];
+                                  next[idx].stock = Math.max(0, Number(e.target.value));
+                                  setNewProductPacks(next);
+                                }}
+                                className="w-16 px-1.5 py-0.5 rounded border border-slate-200 text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {isDiscounted && discPct > 0 ? (
+                              <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold text-[10px]">
+                                {discPct}% OFF
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-[10px]">No Discount</span>
+                            )}
+
+                            {newProductPacks.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setNewProductPacks(newProductPacks.filter((_, i) => i !== idx))}
+                                className="text-rose-500 hover:text-rose-700 text-xs font-bold px-1"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* Photo */}
               <div>
                 <ImagePickerField
                   label="Product Photo"
@@ -931,6 +1703,7 @@ export function ProductsTab({
                 />
               </div>
 
+              {/* Description */}
               <div>
                 <label className="block text-[#182230] font-semibold mb-1">Description</label>
                 <textarea
@@ -942,31 +1715,33 @@ export function ProductsTab({
                 />
               </div>
 
+              {/* Featured toggle */}
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="featured-check"
                   checked={isFeatured}
                   onChange={(e) => setIsFeatured(e.target.checked)}
-                  className="rounded text-[#0b2f8a]"
+                  className="rounded text-[#0b2f8a] cursor-pointer"
                 />
-                <label htmlFor="featured-check" className="text-[#182230] font-medium">
+                <label htmlFor="featured-check" className="text-[#182230] font-medium cursor-pointer">
                   Feature on Homepage Showcase
                 </label>
               </div>
 
+              {/* Footer */}
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#0b2f8a]/10">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#182230] font-medium"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#182230] font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl btn-primary font-bold shadow-md"
+                  className="px-5 py-2 rounded-xl btn-primary font-bold shadow-md cursor-pointer"
                 >
                   {saving ? "Adding..." : "Add to Store"}
                 </button>
@@ -975,7 +1750,10 @@ export function ProductsTab({
           </div>
         </div>
       )}
-      {/* Modal: Change Existing Product Photo */}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: Change Product Photo Modal                                       */}
+      {/* ========================================================================= */}
       {photoEditItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-[#0b2f8a]/15 shadow-2xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
@@ -991,7 +1769,7 @@ export function ProductsTab({
               <button
                 type="button"
                 onClick={() => setPhotoEditItem(null)}
-                className="text-slate-400 hover:text-slate-700 text-sm font-bold"
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -999,61 +1777,61 @@ export function ProductsTab({
 
             <div className="space-y-4">
               <ImagePickerField
-                label="Select Photo or Upload File"
+                label="New Product Image"
                 value={editImageUrl}
                 onChange={(url) => setEditImageUrl(url)}
-                helperText="Upload a photo from your computer, choose from photos library, or paste image URL."
-                presetFilter="Mithai"
+                helperText="Upload a fresh photograph or pick from existing catalog pictures."
+                presetFilter={getDepartmentForCategory(photoEditItem.categoryName || "") as any}
               />
-            </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setPhotoEditItem(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={saving || !editImageUrl}
-                onClick={() =>
-                  handleUpdateProductPhoto(
-                    photoEditItem.productId || photoEditItem.id,
-                    editImageUrl
-                  )
-                }
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-md disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save Photo"}
-              </button>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setPhotoEditItem(null)}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#182230] text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleUpdateProductPhoto(photoEditItem.productId || photoEditItem.id, editImageUrl)}
+                  disabled={saving || !editImageUrl}
+                  className="px-5 py-2 rounded-xl btn-primary text-xs font-bold shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Update Photo"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Product Confirmation Modal */}
+      {/* ========================================================================= */}
+      {/* MODAL 5: Delete Entire Product Confirmation Dialog                        */}
+      {/* ========================================================================= */}
       {productToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="fixed inset-0" onClick={() => !isDeleting && setProductToDelete(null)} aria-hidden />
-          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-rose-200 overflow-hidden">
-            <div className="px-6 pt-6 pb-4 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 border border-rose-100">
-                <span className="text-2xl">🗑️</span>
-              </div>
-              <h3 className="font-bold text-[#182230] text-lg">Delete Product?</h3>
-              <p className="mt-1 text-sm text-[#5e6d82]">
-                Permanently delete <span className="font-bold text-rose-600">{productToDelete.name}</span> and its SKUs from the catalog and MySQL database.
-                This cannot be undone.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-rose-200 shadow-2xl p-6 w-full max-w-sm space-y-4">
+            <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-lg">
+              ⚠️
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#182230]">
+                Delete Product Permanently?
+              </h3>
+              <p className="text-xs text-[#5e6d82] leading-relaxed">
+                Are you sure you want to permanently delete <strong>{productToDelete.name}</strong> and all its pack sizes? This action cannot be undone.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-rose-100 bg-rose-50/30">
+
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setProductToDelete(null)}
                 disabled={isDeleting}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#182230] text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
@@ -1061,9 +1839,9 @@ export function ProductsTab({
                 type="button"
                 onClick={handleDeleteProduct}
                 disabled={isDeleting}
-                className="rounded-xl bg-rose-600 px-5 py-2 text-xs font-bold text-white hover:bg-rose-700 transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer disabled:opacity-50"
               >
-                {isDeleting ? "Deleting..." : "Yes, Delete"}
+                {isDeleting ? "Deleting..." : "Permanently Delete"}
               </button>
             </div>
           </div>
