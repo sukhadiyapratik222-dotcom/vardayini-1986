@@ -354,15 +354,22 @@ export function NewProductMotionShowcase({
                   {/* Price & Add to Cart Action */}
                   <div className="pt-2 flex items-center justify-between gap-4">
                     <div>
-                      <span className="text-2xl sm:text-3xl font-bold text-[#182230]">
-                        {formatInr(heroPrice)}
-                      </span>
-                      {heroVariant?.discountedPrice && (
-                        <span className="ml-2 text-xs text-slate-400 line-through">
-                          {formatInr(heroVariant.price)}
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <span className="text-2xl sm:text-3xl font-bold text-[#182230]">
+                          {formatInr(heroPrice)}
                         </span>
-                      )}
-                      <p className="text-[11px] text-emerald-700 font-medium">✓ In Stock &amp; Freshly Packed</p>
+                        {heroVariant?.discountedPrice && heroVariant.price > heroPrice && (
+                          <span className="text-xs sm:text-sm text-slate-400 line-through">
+                            {formatInr(heroVariant.price)}
+                          </span>
+                        )}
+                        {heroVariant?.discountedPrice && heroVariant.price > heroPrice && (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-emerald-700 border border-emerald-200">
+                            {Math.round(((heroVariant.price - heroPrice) / heroVariant.price) * 100)}% OFF
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5">✓ In Stock &amp; Freshly Packed</p>
                     </div>
 
                     <Magnetic>

@@ -287,18 +287,23 @@ export function WarmCreamHomepage({
 
                   {/* Price & Purchase Action */}
                   <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-2">
-                    <div className="flex items-baseline justify-between">
-                      <div>
+                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                      <div className="flex items-baseline gap-2 flex-wrap">
                         <span className="text-base sm:text-lg font-bold text-[#24142e]">
                           {formatInr(displayPrice)}
                         </span>
-                        {primaryVariant?.discountedPrice && (
-                          <span className="ml-1.5 text-xs text-slate-500 line-through">
+                        {primaryVariant?.discountedPrice && primaryVariant.price > displayPrice && (
+                          <span className="text-xs text-slate-500 line-through">
                             {formatInr(primaryVariant.price)}
                           </span>
                         )}
+                        {primaryVariant?.discountedPrice && primaryVariant.price > displayPrice && (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/70">
+                            {Math.round(((primaryVariant.price - displayPrice) / primaryVariant.price) * 100)}% OFF
+                          </span>
+                        )}
                       </div>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded shrink-0">
                         100% Desi Ghee
                       </span>
                     </div>

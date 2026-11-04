@@ -31,10 +31,29 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
 
   const currentVariant = variants[selectedIdx] || variants[0];
-  const currentPrice = currentVariant
+  const sellingPrice = currentVariant
     ? unitPrice(currentVariant.price, currentVariant.discountedPrice)
     : product.fromPrice;
-  const currentCompare = currentVariant?.discountedPrice ? currentVariant.price : null;
+
+  // Requirements 3 & 5: Show original price with strikethrough ONLY when strictly greater than selling price.
+  // If original price and selling price are identical (or original is less/null), hide original price and discount badge.
+  const rawOriginalPrice = currentVariant?.discountedPrice
+    ? currentVariant.price
+    : product.comparePrice || null;
+
+  const hasDiscount = Boolean(rawOriginalPrice && rawOriginalPrice > sellingPrice);
+  const originalPrice = hasDiscount ? rawOriginalPrice : null;
+
+  // Requirement 4: Calculate the discount percentage automatically
+  const discountPercent = hasDiscount && originalPrice
+    ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+    : 0;
+
+  // Requirement 1: Display the selected product pack size clearly (e.g. Standard Pack • 1 kg)
+  const currentWeight = currentVariant?.weight || "1 kg";
+  const packSizeText = currentWeight.toLowerCase().includes("pack")
+    ? currentWeight
+    : `Standard Pack • ${currentWeight}`;
 
   return (
     <article className="mithai-card group flex flex-col justify-between overflow-hidden bg-white p-3 rounded-2xl h-full shadow-sm hover:shadow-md transition-shadow border border-slate-100/90">
@@ -90,16 +109,16 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
       {/* Weight Selector Tabs & Price */}
       <div className="mt-3 space-y-2 pt-2 border-t border-[#0b2f8a]/6">
-        {/* Uniform Variant Container: keeps all card heights identical */}
-        <div className="min-h-[26px] flex items-center">
-          {variants.length > 1 ? (
-            <div className="flex flex-wrap gap-1">
+        {/* Pack Size Pill and Variant Selector */}
+        <div className="space-y-1.5 min-h-[48px] flex flex-col justify-center">
+          {variants.length > 1 && (
+            <div className="flex flex-wrap items-center gap-1">
               {variants.map((v, i) => (
                 <button
                   key={v.id}
                   type="button"
                   onClick={() => setSelectedIdx(i)}
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                  className={`rounded-full px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold transition cursor-pointer ${
                     selectedIdx === i
                       ? "bg-[#0b2f8a] text-white shadow-2xs"
                       : "bg-[#f4f7fe] text-[#5e6d82] hover:bg-[#e8eeff] hover:text-[#0b2f8a]"
@@ -109,25 +128,40 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                 </button>
               ))}
             </div>
-          ) : (
-            <span className="text-[10px] font-medium text-slate-500 bg-slate-50 border border-slate-200/70 rounded-full px-2 py-0.5">
-              Standard Pack • {currentVariant?.weight || "Per Pack"}
-            </span>
           )}
+
+          {/* Requirement 1: Display selected product pack size clearly */}
+          <div className="flex items-center">
+            <span className="text-[10px] sm:text-[11px] font-medium text-slate-600 bg-slate-50 border border-slate-200/80 rounded-full px-2.5 py-0.5 inline-flex items-center shadow-2xs">
+              {packSizeText}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base sm:text-lg font-bold text-[#182230]">
-              {formatInr(currentPrice)}
+        {/* Requirements 2, 3, 4, 5, 6, 7, 8: Price Display Section */}
+        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {/* Prominent Current Selling Price */}
+            <span className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-[#182230]">
+              {formatInr(sellingPrice)}
             </span>
-            {currentCompare && (
-              <span className="text-[11px] text-[#5e6d82] line-through">
-                {formatInr(currentCompare)}
+
+            {/* Original Price with Strikethrough: Only when greater than selling price */}
+            {hasDiscount && originalPrice && (
+              <span className="text-[11px] sm:text-xs text-[#5e6d82] line-through font-medium">
+                {formatInr(originalPrice)}
+              </span>
+            )}
+
+            {/* Automatic Discount Percentage Badge: Hidden if prices are identical */}
+            {hasDiscount && discountPercent > 0 && (
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-emerald-700 border border-emerald-200/70 shadow-2xs">
+                {discountPercent}% OFF
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium text-[#0b2f8a]/80">
+
+          <span className="text-[10px] font-medium text-[#0b2f8a]/80 shrink-0">
             {currentVariant?.weight || "Per Pack"}
           </span>
         </div>

@@ -17,7 +17,24 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
   const [qty, setQty] = useState(() => (variants[0]?.stock === 0 ? 0 : 1));
   const selected = useMemo(() => variants.find((v) => v.id === variantId) ?? variants[0], [variants, variantId]);
   if (!selected) return null;
-  const unit = unitPrice(selected.price, selected.discountedPrice);
+  const sellingPrice = unitPrice(selected.price, selected.discountedPrice);
+
+  // Requirements 3 & 5: Show original price with strikethrough ONLY when greater than selling price.
+  // If original price and selling price are identical, hide the original price and discount badge.
+  const rawOriginalPrice = selected.discountedPrice ? selected.price : null;
+  const hasDiscount = Boolean(rawOriginalPrice && rawOriginalPrice > sellingPrice);
+  const originalPrice = hasDiscount ? rawOriginalPrice : null;
+
+  // Requirement 4: Calculate the discount percentage automatically
+  const discountPercent = hasDiscount && originalPrice
+    ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+    : 0;
+
+  // Requirement 1: Display the selected product pack size clearly (e.g. Standard Pack • 1 kg)
+  const currentWeight = selected.weight || "1 kg";
+  const packSizeText = currentWeight.toLowerCase().includes("pack")
+    ? currentWeight
+    : `Standard Pack • ${currentWeight}`;
 
   function handleSelectVariant(variant: Variant) {
     setVariantId(variant.id);
@@ -32,12 +49,34 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
 
   return (
     <div className="mt-6 space-y-4">
-      <p className="flex items-baseline gap-2">
-        <span className="text-3xl font-semibold">{formatInr(unit)}</span>
-        {selected.discountedPrice ? (
-          <span className="text-sm text-[#2a1a12]/45 line-through">{formatInr(selected.price)}</span>
-        ) : null}
-      </p>
+      {/* Requirement 1: Display selected product pack size clearly */}
+      <div className="flex items-center">
+        <span className="text-xs sm:text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200/80 rounded-full px-3 py-1 inline-flex items-center gap-1.5 shadow-2xs">
+          {packSizeText}
+        </span>
+      </div>
+
+      {/* Requirements 2, 3, 4, 5, 6, 7, 8: Price Display Section */}
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
+        {/* Prominent Current Selling Price */}
+        <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#182230]">
+          {formatInr(sellingPrice)}
+        </span>
+
+        {/* Strikethrough Original Price: Only when greater than selling price */}
+        {hasDiscount && originalPrice && (
+          <span className="text-sm sm:text-base md:text-lg text-[#5e6d82] line-through font-medium">
+            {formatInr(originalPrice)}
+          </span>
+        )}
+
+        {/* Automatic Discount Percentage Badge: Hidden if identical */}
+        {hasDiscount && discountPercent > 0 && (
+          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs sm:text-sm font-bold text-emerald-700 border border-emerald-200/70 shadow-2xs">
+            {discountPercent}% OFF
+          </span>
+        )}
+      </div>
       <div className="flex flex-wrap gap-2">
         {variants.map((variant) => (
           <button

@@ -162,7 +162,7 @@ export function ProductOptionsModal({
                       <span className="block text-xs font-semibold text-[#3b1e54]">
                         {formatInr(vPrice)}
                       </span>
-                      {v.discountedPrice && (
+                      {v.discountedPrice && v.price > vPrice && (
                         <span className="block text-[10px] text-slate-500 line-through">
                           {formatInr(v.price)}
                         </span>
