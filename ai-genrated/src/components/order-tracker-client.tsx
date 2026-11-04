@@ -82,6 +82,21 @@ interface OrderTrackingData {
   items: OrderItem[];
 }
 
+function formatAddressString(raw?: string | null): string {
+  if (!raw) return "Vadodara, Gujarat";
+  const str = String(raw).trim();
+  if (str.startsWith("{")) {
+    try {
+      const snap = JSON.parse(str);
+      const parts = [snap.line1, snap.city, snap.state, snap.pincode].filter(Boolean);
+      return parts.length > 0 ? parts.join(", ") : str;
+    } catch {
+      return str;
+    }
+  }
+  return str;
+}
+
 export function OrderTrackerClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -782,7 +797,7 @@ export function OrderTrackerClient() {
                   <div className="pt-1">
                     <span className="text-slate-500 block text-[11px]">Address Summary</span>
                     <p className="font-medium text-slate-700 mt-0.5 leading-snug">
-                      {orderData.recipient.addressDisplay}
+                      {formatAddressString(orderData.recipient.addressDisplay)}
                     </p>
                   </div>
                 </div>

@@ -34,28 +34,34 @@ function maskAddress(snapshotRaw?: string | null): {
   state: string;
   pincode: string;
   maskedSummary: string;
+  fullAddress: string;
 } {
   const result = {
     city: "Vadodara",
     state: "Gujarat",
     pincode: "",
     maskedSummary: "Vadodara Hub Dispatch, Gujarat",
+    fullAddress: "Vadodara, Gujarat",
   };
 
   if (!snapshotRaw) return result;
 
   try {
-    const snap = JSON.parse(snapshotRaw);
+    const snap = typeof snapshotRaw === "string" ? JSON.parse(snapshotRaw) : snapshotRaw;
     if (snap && typeof snap === "object") {
       result.city = snap.city || "Vadodara";
       result.state = snap.state || "Gujarat";
       result.pincode = snap.pincode || "";
+      const line1 = snap.line1 ? `${snap.line1}, ` : "";
       const locality = snap.city || "Vadodara";
       const pin = snap.pincode ? ` - ${snap.pincode}` : "";
       result.maskedSummary = `******, ${locality}, ${result.state}${pin}`;
+      result.fullAddress = `${line1}${locality}, ${result.state}${pin}`.trim();
     }
   } catch {
-    result.maskedSummary = "Local Delivery Address, Vadodara, Gujarat";
+    const rawClean = typeof snapshotRaw === "string" && !snapshotRaw.startsWith("{") ? snapshotRaw : "Vadodara, Gujarat";
+    result.maskedSummary = rawClean;
+    result.fullAddress = rawClean;
   }
 
   return result;
@@ -496,7 +502,7 @@ export async function GET(request: Request) {
           city: addr.city,
           state: addr.state,
           pincode: addr.pincode,
-          addressDisplay: isOwner ? (orderRow.addressSnapshot || addr.maskedSummary) : addr.maskedSummary,
+          addressDisplay: isOwner ? addr.fullAddress : addr.maskedSummary,
         },
         timeline,
         currentStepIndex,

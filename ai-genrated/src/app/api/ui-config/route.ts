@@ -28,12 +28,12 @@ const HeroPhotoSchema = z.object({
   category: z.string().optional(),
   active: z.boolean(),
   order: z.number(),
-}).strict();
+}).passthrough();
 
 const HeroSettingsSchema = z.object({
   autoScroll: z.boolean().optional(),
   intervalSeconds: z.number().positive().optional(),
-}).strict();
+}).passthrough();
 
 const AnnouncementSectionSchema = z.object({
   enabled: z.boolean().optional(),
@@ -41,7 +41,7 @@ const AnnouncementSectionSchema = z.object({
   text: z.string().optional(),
   linkText: z.string().optional(),
   linkUrl: z.string().optional(),
-}).strict();
+}).passthrough();
 
 const StoreInfoSchema = z.object({
   name: z.string().optional(),
@@ -53,7 +53,7 @@ const StoreInfoSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   hours: z.string().optional(),
-}).strict();
+}).passthrough();
 
 const PromotionsSchema = z.object({
   couponCode: z.string().optional(),
@@ -62,7 +62,7 @@ const PromotionsSchema = z.object({
   freeDeliveryThreshold: z.number().nonnegative().optional(),
   description: z.string().optional(),
   isActive: z.boolean().optional(),
-}).strict();
+}).passthrough();
 
 const LogoSchema = z.object({
   type: z.enum(["crest", "image"]).optional(),
@@ -73,7 +73,7 @@ const LogoSchema = z.object({
   imageUrl: z.string().optional(),
   brandName: z.string().optional(),
   brandSubtitle: z.string().optional(),
-}).strict();
+}).passthrough();
 
 const HeroContentSchema = z.object({
   badgeEst: z.string().optional(),
@@ -93,7 +93,7 @@ const HeroContentSchema = z.object({
   stat2Label: z.string().optional(),
   stat3Value: z.string().optional(),
   stat3Label: z.string().optional(),
-}).strict();
+}).passthrough();
 
 const HeritageBannerSchema = z.object({
   enabled: z.boolean().optional(),
@@ -107,7 +107,7 @@ const HeritageBannerSchema = z.object({
   button2Text: z.string().optional(),
   button2Link: z.string().optional(),
   bannerImage: z.string().optional(),
-}).strict();
+}).passthrough();
 
 const SpecialItemsSchema = z.object({
   enabled: z.boolean().optional(),
@@ -117,7 +117,7 @@ const SpecialItemsSchema = z.object({
   productIds: z.array(z.number()).optional(),
   linkText: z.string().optional(),
   linkUrl: z.string().optional(),
-}).strict();
+}).passthrough();
 
 const FestivalHeroSchema = z.object({
   badgeText: z.string().optional(),
@@ -138,7 +138,7 @@ const FestivalHeroSchema = z.object({
     text: z.string().optional(),
     code: z.string().optional(),
   }).optional(),
-}).strict().optional();
+}).passthrough().optional();
 
 const FestivalSectionItemSchema = z.object({
   id: z.string(),
@@ -159,7 +159,7 @@ const FestivalTrustPerkSchema = z.object({
   icon: z.string(),
   title: z.string(),
   description: z.string(),
-}).strict();
+}).passthrough();
 
 const FestivalCorporateGiftingSchema = z.object({
   enabled: z.boolean().optional(),
@@ -170,7 +170,7 @@ const FestivalCorporateGiftingSchema = z.object({
   whatsappText: z.string().optional(),
   phoneNumber: z.string().optional(),
   phoneLabel: z.string().optional(),
-}).strict().optional();
+}).passthrough().optional();
 
 const FestivalProductSchema = z.object({
   id: z.number(),
@@ -309,13 +309,13 @@ const UiConfigUpdateSchema = z.object({
   heritageBanner: HeritageBannerSchema.optional(),
   specialItems: SpecialItemsSchema.optional(),
   festivalPage: FestivalPageSchema.optional(),
-  browseByCategory: BrowseByCategorySchema,
-  bestsellersSection: BestsellersSectionSchema,
-  welcomeOffer: WelcomeOfferSchema,
-  testimonialsSection: TestimonialsSectionSchema,
-  newLaunchPage: NewLaunchPageSchema,
-  culinaryPillars: CulinaryPillarsSchema,
-}).strict();
+  browseByCategory: BrowseByCategorySchema.optional(),
+  bestsellersSection: BestsellersSectionSchema.optional(),
+  welcomeOffer: WelcomeOfferSchema.optional(),
+  testimonialsSection: TestimonialsSectionSchema.optional(),
+  newLaunchPage: NewLaunchPageSchema.optional(),
+  culinaryPillars: CulinaryPillarsSchema.optional(),
+}).passthrough();
 
 function deepMerge(target: any, source: any): any {
   const output = { ...target };
@@ -341,7 +341,21 @@ function deepMerge(target: any, source: any): any {
 export async function GET() {
   try {
     const raw = await fs.readFile(CONFIG_PATH, "utf-8");
-    const data = JSON.parse(raw);
+    let data = JSON.parse(raw);
+
+    // Merge MongoDB Atlas stored custom settings if present
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const doc = await mongo.collection("settings").findOne({ key: "ui_config" });
+        if (doc?.value && typeof doc.value === "object") {
+          data = deepMerge(data, doc.value);
+        }
+      }
+    } catch (mErr) {
+      console.warn("[UI Config] MongoDB read notice:", mErr);
+    }
 
     // Attach dynamic live sales rankings to bestsellersSection
     try {
@@ -528,7 +542,11 @@ export async function PUT(req: Request) {
 
     const updated = deepMerge(currentData, normalizedBody);
 
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(updated, null, 2), "utf-8");
+    try {
+      await fs.writeFile(CONFIG_PATH, JSON.stringify(updated, null, 2), "utf-8");
+    } catch (fsErr) {
+      console.warn("[UI Config] Local filesystem write notice (expected on Vercel):", fsErr);
+    }
 
     // Also sync to MongoDB settings collection if available
     try {
