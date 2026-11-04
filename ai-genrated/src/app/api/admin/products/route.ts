@@ -43,6 +43,39 @@ export async function GET(request: Request) {
     .leftJoin(categories, eq(products.categoryId, categories.id))
     .innerJoin(productVariants, eq(productVariants.productId, products.id));
 
+    // Multi-container persistence: Hydrate from MongoDB Atlas if SQLite cache in /tmp is empty
+  if (!allProducts || allProducts.length === 0) {
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const mProducts = await mongo.collection("products").find({}).toArray();
+        if (mProducts && mProducts.length > 0) {
+          const items = mProducts.map((p: any) => ({
+            id: p.id || 1,
+            name: p.name || "Mithai",
+            slug: p.slug || "mithai",
+            description: p.description || "",
+            imageUrl: p.imageUrl || "/images/kaju-katli.jpg",
+            tags: p.tags || "",
+            isFeatured: Boolean(p.isFeatured),
+            categoryId: p.categoryId || 1,
+            categoryName: p.categoryName || "Sweets",
+            variantId: p.variants?.[0]?.id || p.id || 1,
+            sku: p.variants?.[0]?.sku || ("VSM-" + p.id),
+            weight: p.variants?.[0]?.weight || "500g",
+            price: p.variants?.[0]?.price || 350,
+            discountedPrice: p.variants?.[0]?.discountedPrice || null,
+            stock: p.variants?.[0]?.stock ?? 50,
+          }));
+          return NextResponse.json({ items });
+        }
+      }
+    } catch (mErr) {
+      console.warn("[AdminProducts] MongoDB fallback notice:", mErr);
+    }
+  }
+
   return NextResponse.json({ items: allProducts });
 }
 

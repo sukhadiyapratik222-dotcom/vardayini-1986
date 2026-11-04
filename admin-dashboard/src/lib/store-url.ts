@@ -18,7 +18,12 @@ export const STORE_URL_CONFIG_ERROR =
   "for example https://vardayini-1986.vercel.app, then redeploy.";
 
 function normalise(url: string): string {
-  return url.trim().replace(/\/+$/, "");
+  let u = url.trim().replace(/\/+$/, "");
+  // If user configured URL with trailing /api or /api/, strip it to prevent duplicate /api/api/...
+  if (u.endsWith("/api")) {
+    u = u.slice(0, -4).replace(/\/+$/, "");
+  }
+  return u;
 }
 
 /**
@@ -31,11 +36,19 @@ export function getStoreApiBase(): string {
   const configured = process.env.STORE_API_URL || process.env.NEXT_PUBLIC_STORE_API;
   if (configured && configured.trim()) {
     const norm = normalise(configured);
-    // If running on Vercel or production and configured points to localhost, fall back to deployed store
-    if ((isVercel || process.env.NODE_ENV === "production") && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
+    const isLocal = norm.includes("localhost") || norm.includes("127.0.0.1");
+    const isSelfAdmin =
+      norm.includes("uiti") ||
+      norm.includes("witl3rg43") ||
+      norm.includes("admin-dashboard");
+
+    // If running on Vercel or production and configured points to localhost or the dashboard itself, fall back to deployed store
+    if ((isVercel || process.env.NODE_ENV === "production") && (isLocal || isSelfAdmin)) {
       return PROD_DEFAULT_STORE_URL;
     }
-    return norm;
+    if (!isSelfAdmin) {
+      return norm;
+    }
   }
 
   // On Vercel, localhost:9449 does not exist in serverless containers - always use live deployed storefront
@@ -55,10 +68,18 @@ export function getPublicStoreUrl(): string {
   const configured = process.env.NEXT_PUBLIC_STORE_API || process.env.STORE_API_URL;
   if (configured && configured.trim()) {
     const norm = normalise(configured);
-    if ((isVercel || process.env.NODE_ENV === "production") && (norm.includes("localhost") || norm.includes("127.0.0.1"))) {
+    const isLocal = norm.includes("localhost") || norm.includes("127.0.0.1");
+    const isSelfAdmin =
+      norm.includes("uiti") ||
+      norm.includes("witl3rg43") ||
+      norm.includes("admin-dashboard");
+
+    if ((isVercel || process.env.NODE_ENV === "production") && (isLocal || isSelfAdmin)) {
       return PROD_DEFAULT_STORE_URL;
     }
-    return norm;
+    if (!isSelfAdmin) {
+      return norm;
+    }
   }
 
   if (isVercel || process.env.NODE_ENV === "production") {

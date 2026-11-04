@@ -29,9 +29,32 @@ export async function GET(request: Request) {
     .innerJoin(products, eq(productVariants.productId, products.id))
     .orderBy(asc(productVariants.stock));
 
+  let finalVariants = rows;
+  if (!finalVariants || finalVariants.length === 0) {
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const mProducts = await mongo.collection("products").find({}).toArray();
+        if (mProducts && mProducts.length > 0) {
+          finalVariants = mProducts.map((p: any) => ({
+            id: p.variants?.[0]?.id || p.id || 1,
+            sku: p.variants?.[0]?.sku || ("VSM-" + p.id),
+            weight: p.variants?.[0]?.weight || "500g",
+            stock: p.variants?.[0]?.stock ?? 25,
+            price: p.variants?.[0]?.price || 350,
+            name: p.name || "Authentic Mithai",
+          }));
+        }
+      }
+    } catch (mErr) {
+      console.warn("[AdminInventory] MongoDB fallback notice:", mErr);
+    }
+  }
+
   return NextResponse.json({
-    variants: rows,
-    lowStock: rows.filter((row) => row.stock <= 20),
+    variants: finalVariants,
+    lowStock: finalVariants.filter((row) => row.stock <= 20),
   });
 }
 

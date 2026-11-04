@@ -315,7 +315,7 @@ const UiConfigUpdateSchema = z.object({
   testimonialsSection: TestimonialsSectionSchema.optional(),
   newLaunchPage: NewLaunchPageSchema.optional(),
   culinaryPillars: CulinaryPillarsSchema.optional(),
-}).passthrough();
+}).strict();
 
 function deepMerge(target: any, source: any): any {
   const output = { ...target };

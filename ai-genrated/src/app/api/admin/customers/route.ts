@@ -26,8 +26,33 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. Fetch all users
-    const allUsers = await db.select().from(users);
+    // 1. Fetch all users with MongoDB Atlas hydration fallback
+    let allUsers = await db.select().from(users);
+    if (!allUsers || allUsers.length === 0) {
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          const mUsers = await mongo.collection("users").find({}).toArray();
+          if (mUsers && mUsers.length > 0) {
+            allUsers = mUsers.map((u: any) => ({
+              id: u.id || 1,
+              name: u.name || "Customer",
+              email: u.email || "",
+              phone: u.phone || "",
+              role: u.role || "customer",
+              status: u.status || "active",
+              passwordHash: u.passwordHash || "",
+              mustChangePassword: Boolean(u.mustChangePassword),
+              accessType: u.accessType || "full",
+              createdAt: u.createdAt || new Date().toISOString(),
+            }));
+          }
+        }
+      } catch (mErr) {
+        console.warn("[AdminCustomers] MongoDB fallback notice:", mErr);
+      }
+    }
 
     // 2. Fetch all addresses and orders to aggregate customer stats
     const allAddresses = await db.select().from(addresses);
