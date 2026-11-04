@@ -121,6 +121,7 @@ export async function listProducts(opts: {
   }
   if (opts.tag) conditions.push(like(products.tags, `%${opts.tag}%`));
   if (opts.featured) conditions.push(eq(products.isFeatured, true));
+  conditions.push(or(eq(products.isArchived, false), sql`${products.isArchived} IS NULL`, sql`${products.isArchived} = 0`));
   conditions.push(or(eq(products.isActive, true), sql`${products.isActive} IS NULL`, sql`${products.isActive} = 1`));
 
   const rows = await db
@@ -133,6 +134,7 @@ export async function listProducts(opts: {
       tags: products.tags,
       isFeatured: products.isFeatured,
       isActive: products.isActive,
+      isArchived: products.isArchived,
       categoryName: sql<string>`COALESCE(${categories.name}, 'Bakery')`,
       categorySlug: sql<string>`COALESCE(${categories.slug}, 'bakery')`,
     })
@@ -201,6 +203,7 @@ export async function getProductBySlug(slug: string) {
       tags: products.tags,
       isFeatured: products.isFeatured,
       isActive: products.isActive,
+      isArchived: products.isArchived,
       categoryId: products.categoryId,
       categoryName: sql<string>`COALESCE(${categories.name}, 'Bakery')`,
       categorySlug: sql<string>`COALESCE(${categories.slug}, 'bakery')`,
@@ -209,7 +212,7 @@ export async function getProductBySlug(slug: string) {
     .leftJoin(categories, eq(products.categoryId, categories.id))
     .where(eq(products.slug, slug))
     .limit(1);
-  if (!product) return null;
+  if (!product || product.isArchived) return null;
   const rawVariants = await db
     .select()
     .from(productVariants)

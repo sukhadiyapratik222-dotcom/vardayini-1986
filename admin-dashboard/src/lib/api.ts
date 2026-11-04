@@ -320,6 +320,7 @@ export interface ProductItem {
   tags: string;
   isFeatured: boolean;
   isActive?: boolean;
+  isArchived?: boolean;
   categoryId: number;
   categoryName: string;
   variantId: number;
@@ -777,11 +778,20 @@ export const api = {
     return handleResponse<Record<string, unknown>>(res, "Failed to update product");
   },
 
-  async deleteProduct(productId: number): Promise<{ success: boolean; deletedId?: number }> {
-    const res = await fetch(`${PROXY_BASE}/api/admin/products?id=${productId}`, {
+  async deleteProduct(productId: number, forceArchive?: boolean): Promise<{ success: boolean; deletedId?: number; archived?: boolean; message?: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/products?id=${productId}${forceArchive ? '&archive=true' : ''}`, {
       method: "DELETE",
     });
-    return handleResponse<{ success: boolean; deletedId?: number }>(res, "Failed to delete product");
+    return handleResponse<{ success: boolean; deletedId?: number; archived?: boolean; message?: string }>(res, "Failed to delete/archive product");
+  },
+
+  async unarchiveProduct(productId: number): Promise<{ success: boolean }> {
+    const res = await this.updateProduct({
+      productId,
+      isArchived: false,
+      isActive: true,
+    });
+    return { success: Boolean(res?.success ?? true) };
   },
 
   async deleteProductVariant(variantId: number): Promise<{ success: boolean; deletedVariantId?: number }> {
@@ -896,13 +906,18 @@ export const api = {
     }
   },
 
-  async updateStock(id: number, stock: number): Promise<Record<string, unknown>> {
+  async updateStock(
+    id: number,
+    stock?: number,
+    action?: "set" | "add" | "remove",
+    amount?: number
+  ): Promise<Record<string, unknown>> {
     const res = await fetch(`${PROXY_BASE}/api/admin/inventory`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id, stock }),
+      body: JSON.stringify({ id, stock, action, amount }),
     });
     return handleResponse<Record<string, unknown>>(res, "Failed to update stock");
   },

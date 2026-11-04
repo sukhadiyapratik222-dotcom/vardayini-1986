@@ -145,7 +145,7 @@ export function ProductsTab({
   const [stockFilter, setStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">(
     initialStockFilter || "all"
   );
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "archived">("all");
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -201,6 +201,7 @@ export function ProductsTab({
   // Delete product state
   const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [addSubmitted, setAddSubmitted] = useState(false);
 
   // Open Pricing & Pack Size Manager for a specific product
   const handleOpenPricingModal = (product: ProductItem) => {
@@ -239,13 +240,17 @@ export function ProductsTab({
   };
 
   const handleAddNewPackRow = () => {
+    const lastVar = localVariants[localVariants.length - 1];
+    const defaultPrice = lastVar ? (lastVar.price > 0 ? Math.round(lastVar.price * 1.8) : 350) : 350;
+    const defaultDiscounted = lastVar && lastVar.discountedPrice ? Math.round(lastVar.discountedPrice * 1.8) : Math.round(defaultPrice * 0.9);
+
     setLocalVariants((prev) => [
       ...prev,
       {
         packName: "Family Pack",
         weight: "1 kg",
-        price: 0,
-        discountedPrice: null,
+        price: defaultPrice,
+        discountedPrice: defaultDiscounted,
         stock: 50,
         isDefault: prev.length === 0,
         isActive: true,
@@ -384,19 +389,47 @@ export function ProductsTab({
     }
   };
 
-  const handleDeleteProduct = async () => {
+  const handleDeleteProduct = async (forceArchive = false) => {
     if (!productToDelete) return;
     setIsDeleting(true);
     try {
       const pId = productToDelete.productId || productToDelete.id;
-      await api.deleteProduct(pId);
-      toast.success(`"${productToDelete.name}" permanently deleted`);
+      const res = await api.deleteProduct(pId, forceArchive);
+      if (res.archived) {
+        toast.success(`"${productToDelete.name}" safely archived and hidden from customer store (historical orders preserved).`);
+      } else {
+        toast.success(`"${productToDelete.name}" permanently deleted.`);
+      }
       setProductToDelete(null);
       onRefresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete product");
+      toast.error(err instanceof Error ? err.message : "Failed to remove product");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleRestoreProduct = async (product: ProductItem) => {
+    setSaving(true);
+    try {
+      const pId = product.productId || product.id;
+      await api.unarchiveProduct(pId);
+      toast.success(`"${product.name}" restored to store catalog!`);
+      onRefresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to restore product");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleQuickStockAdjust = async (variantId: number, delta: number) => {
+    try {
+      await api.updateStock(variantId, undefined, delta > 0 ? "add" : "remove", Math.abs(delta));
+      toast.success(`Stock updated (${delta > 0 ? `+${delta}` : delta} units)`);
+      onRefresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update stock");
     }
   };
 
@@ -464,6 +497,16 @@ export function ProductsTab({
     return displayedCategoryGroups.find((g) => g.group === dept);
   };
 
+  // Top Inventory Dashboard Metrics
+  const inventoryMetrics = useMemo(() => {
+    const total = products.length;
+    const active = products.filter((p) => p.isActive !== false && !p.isArchived).length;
+    const lowStock = products.filter((p) => p.stock > 0 && p.stock < 5 && !p.isArchived).length;
+    const outOfStock = products.filter((p) => p.stock <= 0 && !p.isArchived).length;
+    const archived = products.filter((p) => p.isArchived === true).length;
+    return { total, active, lowStock, outOfStock, archived };
+  }, [products]);
+
   // Filter products by search, department, category, stock, and active status
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -483,16 +526,23 @@ export function ProductsTab({
       if (stockFilter === "out_of_stock") {
         matchesStock = p.stock <= 0;
       } else if (stockFilter === "low_stock") {
-        matchesStock = p.stock > 0 && p.stock <= 10;
+        matchesStock = p.stock > 0 && p.stock < 5;
       } else if (stockFilter === "in_stock") {
-        matchesStock = p.stock > 0;
+        matchesStock = p.stock >= 5;
       }
 
       let matchesStatus = true;
       if (statusFilter === "active") {
-        matchesStatus = p.isActive !== false;
+        matchesStatus = p.isActive !== false && !p.isArchived;
       } else if (statusFilter === "inactive") {
-        matchesStatus = p.isActive === false;
+        matchesStatus = p.isActive === false && !p.isArchived;
+      } else if (statusFilter === "archived") {
+        matchesStatus = p.isArchived === true;
+      } else {
+        // 'all' shows non-archived by default, unless searched
+        if (p.isArchived && !search.trim()) {
+          matchesStatus = false;
+        }
       }
 
       return matchesSearch && matchesDept && matchesCat && matchesStock && matchesStatus;
@@ -620,6 +670,127 @@ export function ProductsTab({
             + Add New Sweet / Farsan
           </button>
         )}
+      </div>
+
+      {/* 5. Inventory Dashboard Metric Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {/* Total Products */}
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter("all");
+            setStockFilter("all");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+            statusFilter === "all" && stockFilter === "all"
+              ? "bg-[#0b2f8a]/5 border-[#0b2f8a] ring-2 ring-[#0b2f8a]/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Products</span>
+            <span className="text-base">📦</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#0b2f8a] mt-1 font-mono">
+            {inventoryMetrics.total}
+          </div>
+          <span className="text-[10px] text-slate-400 font-medium">All shop items</span>
+        </button>
+
+        {/* Active Products */}
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter("active");
+            setStockFilter("all");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+            statusFilter === "active"
+              ? "bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Active</span>
+            <span className="text-base">🟢</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-1 font-mono">
+            {inventoryMetrics.active}
+          </div>
+          <span className="text-[10px] text-emerald-600/80 font-medium">Live in customer store</span>
+        </button>
+
+        {/* Low-Stock Products (< 5) */}
+        <button
+          type="button"
+          onClick={() => {
+            setStockFilter("low_stock");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+            stockFilter === "low_stock"
+              ? "bg-amber-50/80 border-amber-500 ring-2 ring-amber-500/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Low Stock</span>
+            <span className="text-base">⚠️</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-amber-700 mt-1 font-mono">
+            {inventoryMetrics.lowStock}
+          </div>
+          <span className="text-[10px] text-amber-600/80 font-medium">&lt; 5 units remaining</span>
+        </button>
+
+        {/* Out-of-Stock Products (= 0) */}
+        <button
+          type="button"
+          onClick={() => {
+            setStockFilter("out_of_stock");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+            stockFilter === "out_of_stock"
+              ? "bg-rose-50/80 border-rose-500 ring-2 ring-rose-500/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700">Out of Stock</span>
+            <span className="text-base">🚫</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-rose-700 mt-1 font-mono">
+            {inventoryMetrics.outOfStock}
+          </div>
+          <span className="text-[10px] text-rose-600/80 font-medium">0 units available</span>
+        </button>
+
+        {/* Archived Products */}
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter("archived");
+            setStockFilter("all");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border text-left transition cursor-pointer col-span-2 sm:col-span-1 ${
+            statusFilter === "archived"
+              ? "bg-slate-100 border-slate-600 ring-2 ring-slate-600/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Archived</span>
+            <span className="text-base">📁</span>
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-700 mt-1 font-mono">
+            {inventoryMetrics.archived}
+          </div>
+          <span className="text-[10px] text-slate-500 font-medium">Preserved order items</span>
+        </button>
       </div>
 
       {/* Department Tabs & Search / Filter Bar */}
@@ -805,7 +976,20 @@ export function ProductsTab({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-              Inactive ({products.filter((p) => p.isActive === false).length})
+              Inactive ({products.filter((p) => p.isActive === false && !p.isArchived).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("archived");
+                setCurrentPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
+                statusFilter === "archived" ? "bg-slate-700 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200/50"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              Archived ({products.filter((p) => p.isArchived === true).length})
             </button>
           </div>
 
@@ -1053,7 +1237,7 @@ export function ProductsTab({
                           className={`font-semibold text-xs ${
                             isOutOfStock
                               ? "text-rose-600 font-bold"
-                              : primaryVariant?.stock && primaryVariant.stock <= 10
+                              : (primaryVariant?.stock ?? item.stock) < 5
                               ? "text-amber-600 font-bold"
                               : "text-emerald-700"
                           }`}
@@ -1061,9 +1245,17 @@ export function ProductsTab({
                           {primaryVariant?.stock ?? item.stock} in stock
                         </span>
                         <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded w-fit ${
-                          isOutOfStock ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          isOutOfStock
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : (primaryVariant?.stock ?? item.stock) < 5
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                         }`}>
-                          {isOutOfStock ? "Out of Stock" : "In Stock"}
+                          {isOutOfStock
+                            ? "Out of Stock"
+                            : (primaryVariant?.stock ?? item.stock) < 5
+                            ? `Low Stock (${primaryVariant?.stock ?? item.stock} left)`
+                            : "In Stock"}
                         </span>
                       </div>
                     </td>
@@ -1076,15 +1268,28 @@ export function ProductsTab({
                         </span>
                       ) : (
                         <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenPricingModal(item)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0b2f8a] hover:bg-[#072163] transition shadow-xs flex items-center gap-1 cursor-pointer"
-                            title="Manage multiple pack sizes and price rules"
-                          >
-                            <span>🏷️</span>
-                            <span>Edit Pricing & Packs</span>
-                          </button>
+                          {item.isArchived ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRestoreProduct(item)}
+                              disabled={saving}
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition border border-slate-300 flex items-center gap-1 cursor-pointer"
+                              title="Restore archived product to active catalog"
+                            >
+                              <span>♻️</span>
+                              <span>Restore</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPricingModal(item)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0b2f8a] hover:bg-[#072163] transition shadow-xs flex items-center gap-1 cursor-pointer"
+                              title="Manage multiple pack sizes and price rules"
+                            >
+                              <span>🏷️</span>
+                              <span>Edit Pricing & Packs</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => {
@@ -1294,13 +1499,20 @@ export function ProductsTab({
                                 <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono text-xs">₹</span>
                                 <input
                                   type="number"
-                                  min={0}
+                                  min={1}
                                   value={variant.price === 0 ? "" : variant.price}
                                   onChange={(e) => handleUpdatePackField(index, "price", Math.max(0, Number(e.target.value)))}
-                                  placeholder="0"
-                                  className="w-24 pl-6 pr-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold text-slate-800 outline-none focus:border-[#0b2f8a]"
+                                  placeholder="350"
+                                  className={`w-24 pl-6 pr-2 py-1.5 rounded-lg border text-xs font-mono font-bold text-slate-800 outline-none focus:border-[#0b2f8a] ${
+                                    variant.price <= 0 || (selling > variant.price && variant.price > 0)
+                                      ? "border-rose-400 bg-rose-50/20"
+                                      : "border-slate-200"
+                                  }`}
                                 />
                               </div>
+                              {variant.price <= 0 && (
+                                <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Required (&gt; ₹0)</span>
+                              )}
                             </td>
 
                             {/* Selling Price */}
@@ -1309,20 +1521,26 @@ export function ProductsTab({
                                 <span className="absolute left-2.5 top-1.5 text-[#0b2f8a] font-mono text-xs font-bold">₹</span>
                                 <input
                                   type="number"
-                                  min={0}
+                                  min={1}
                                   value={variant.discountedPrice === null ? "" : variant.discountedPrice}
                                   onChange={(e) => {
                                     const val = e.target.value.trim() === "" ? null : Math.max(0, Number(e.target.value));
                                     handleUpdatePackField(index, "discountedPrice", val);
                                   }}
-                                  placeholder={String(variant.price || 0)}
+                                  placeholder={String(variant.price || 300)}
                                   className={`w-24 pl-6 pr-2 py-1.5 rounded-lg border text-xs font-mono font-bold outline-none ${
-                                    hasError
+                                    hasError || selling <= 0
                                       ? "border-rose-400 text-rose-600 bg-rose-50/50"
                                       : "border-slate-200 text-[#0b2f8a] focus:border-[#0b2f8a]"
                                   }`}
                                 />
                               </div>
+                              {selling <= 0 && (
+                                <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Must be &gt; ₹0</span>
+                              )}
+                              {hasError && (
+                                <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Cannot exceed MRP</span>
+                              )}
                             </td>
 
                             {/* Auto Calculated Discount Badge */}
@@ -1477,8 +1695,22 @@ export function ProductsTab({
                   placeholder="e.g. Kesar Peda, Fafda Jalebi Combo, Royal Kaju Katli"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full rounded-xl bg-white border border-[#0b2f8a]/15 p-2.5 text-[#182230] outline-none focus:border-[#0b2f8a]"
+                  className={`w-full rounded-xl bg-white border p-2.5 text-[#182230] outline-none focus:border-[#0b2f8a] ${
+                    (addSubmitted && !newTitle.trim()) || (newTitle.trim() && products.some((p) => p.name.toLowerCase() === newTitle.trim().toLowerCase()))
+                      ? "border-rose-400 bg-rose-50/20"
+                      : "border-[#0b2f8a]/15"
+                  }`}
                 />
+                {addSubmitted && !newTitle.trim() && (
+                  <span className="text-[11px] text-rose-600 font-semibold block mt-1">
+                    ⚠️ Product title is required.
+                  </span>
+                )}
+                {newTitle.trim() && products.some((p) => p.name.toLowerCase() === newTitle.trim().toLowerCase()) && (
+                  <span className="text-[11px] text-rose-600 font-semibold block mt-1">
+                    ⚠️ A product named &ldquo;{newTitle.trim()}&rdquo; already exists. Please choose a unique name.
+                  </span>
+                )}
               </div>
 
               {/* Category & Status */}
@@ -1808,25 +2040,53 @@ export function ProductsTab({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 5: Delete Entire Product Confirmation Dialog                        */}
+      {/* MODAL 5: Delete / Archive Product Confirmation Dialog                     */}
       {/* ========================================================================= */}
       {productToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl border border-rose-200 shadow-2xl p-6 w-full max-w-sm space-y-4">
-            <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-lg">
-              ⚠️
+          <div className="bg-white rounded-2xl border border-rose-200 shadow-2xl p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-lg shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#182230]">
+                  Remove Product Confirmation
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Review available stock and order preservation rules.
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#182230]">
-                Delete Product Permanently?
-              </h3>
-              <p className="text-xs text-[#5e6d82] leading-relaxed">
-                Are you sure you want to permanently delete <strong>{productToDelete.name}</strong> and all its pack sizes? This action cannot be undone.
-              </p>
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Product Name:</span>
+                <span className="font-bold text-slate-900">{productToDelete.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Available Stock:</span>
+                <span className={`font-mono font-bold ${
+                  (productToDelete.stock || 0) <= 0
+                    ? "text-rose-600"
+                    : (productToDelete.stock || 0) < 5
+                    ? "text-amber-600"
+                    : "text-emerald-700"
+                }`}>
+                  {productToDelete.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) ?? productToDelete.stock ?? 0} units across {productToDelete.variants?.length || 1} pack size(s)
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Category:</span>
+                <span className="text-slate-700 font-medium">{productToDelete.categoryName || "Sweets / Farsan"}</span>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+              <strong>🛡️ Order History Safeguard:</strong> If this product has ever been purchased in customer orders, it will be automatically <em>archived</em> to preserve order history, customer receipts, and inventory tracking, while removing it from customer view.
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setProductToDelete(null)}
@@ -1837,11 +2097,21 @@ export function ProductsTab({
               </button>
               <button
                 type="button"
-                onClick={handleDeleteProduct}
+                onClick={() => handleDeleteProduct(true)}
+                disabled={isDeleting}
+                className="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                title="Archive product (preserves order history, hides from store)"
+              >
+                {isDeleting ? "Processing..." : "Archive Product"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteProduct(false)}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer disabled:opacity-50"
+                title="Delete product permanently if no order history exists"
               >
-                {isDeleting ? "Deleting..." : "Permanently Delete"}
+                {isDeleting ? "Deleting..." : "Delete Product"}
               </button>
             </div>
           </div>

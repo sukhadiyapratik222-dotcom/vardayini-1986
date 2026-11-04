@@ -201,6 +201,7 @@ function initSqliteTables(sqlite: DatabaseSync) {
       tags TEXT NOT NULL,
       is_featured INTEGER NOT NULL DEFAULT 0,
       is_active INTEGER NOT NULL DEFAULT 1,
+      is_archived INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -621,11 +622,14 @@ function initSqliteTables(sqlite: DatabaseSync) {
       console.warn("[Wishlist Migration Notice]", wishlistErr);
     }
 
-    // Migration safeguard: Ensure products table has is_active
+    // Migration safeguard: Ensure products table has is_active and is_archived
     try {
       const prodCols = sqlite.prepare("PRAGMA table_info(products)").all() as any[];
       if (!prodCols.some((c: any) => c.name === "is_active")) {
         sqlite.exec("ALTER TABLE products ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
+      }
+      if (!prodCols.some((c: any) => c.name === "is_archived")) {
+        sqlite.exec("ALTER TABLE products ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0");
       }
     } catch (pMigErr) {
       console.warn("[Products Migration Notice]", pMigErr);
@@ -655,7 +659,15 @@ function initSqliteTables(sqlite: DatabaseSync) {
 export async function hydrateFromMongoIfNeeded() {
   if (globalForDb.__isHydrated) return;
   if (isTestEnvironment) {
-    globalForDb.__isHydrated = true;
+            // Ensure all 52 catalog products exist and are synced to Atlas
+        try {
+          const { ensureEssentialProducts } = await import("@/db/seed");
+          await ensureEssentialProducts();
+        } catch (eProdErr) {
+          console.warn("[Hydration ensureEssentialProducts Notice]", eProdErr);
+        }
+
+        globalForDb.__isHydrated = true;
     return;
   }
   if (!globalForDb.__hydratePromise) {

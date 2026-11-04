@@ -43,6 +43,7 @@ export const products = mysqlTable("products", {
   tags: text("tags").notNull(),
   isFeatured: boolean("is_featured").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  isArchived: boolean("is_archived").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

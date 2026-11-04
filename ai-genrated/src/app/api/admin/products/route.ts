@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { products, productVariants, categories, cartItems, wishlistItems, reviews } from "@/db/schema";
+import { products, productVariants, categories, cartItems, wishlistItems, reviews, orderItems, activityLogs } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
 import { requireAdmin } from "@/lib/auth";
 import { readJsonSafe, parsePositiveInt, parseNonNegativeInt } from "@/lib/validation";
@@ -14,6 +14,18 @@ import {
 } from "@/lib/mysql";
 
 export const dynamic = "force-dynamic";
+
+function isValidImage(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const clean = url.trim();
+  if (clean.startsWith("data:image/")) return true;
+  if (clean.startsWith("/images/") || clean.startsWith("images/")) return true;
+  if (/^https?:\/\//i.test(clean)) {
+    return /\.(jpg|jpeg|png|webp|svg|gif|avif)(\?.*)?$/i.test(clean) || clean.includes("blob.vercel-storage.com") || clean.includes("cloudinary.com") || clean.includes("unsplash.com") || clean.includes("images.unsplash.com");
+  }
+  return /\.(jpg|jpeg|png|webp|svg|gif|avif)$/i.test(clean);
+}
+
 
 export async function GET(request: Request) {
   await ensureSeeded();
@@ -40,6 +52,7 @@ export async function GET(request: Request) {
       tags: products.tags,
       isFeatured: products.isFeatured,
       isActive: products.isActive,
+      isArchived: products.isArchived,
       categoryId: products.categoryId,
       categoryName: sql<string>`COALESCE(${categories.name}, 'Bakery')`,
     })
@@ -158,6 +171,7 @@ export async function GET(request: Request) {
       stock: defaultVariant?.stock ?? 50,
       isDefault: defaultVariant ? Boolean(defaultVariant.isDefault) : true,
       isActive: row.isActive !== false,
+      isArchived: Boolean(row.isArchived),
       isVariantActive: defaultVariant ? defaultVariant.isActive !== false : true,
       variants: enrichedVariants,
     };
@@ -194,8 +208,31 @@ export async function POST(request: Request) {
     variants: rawVariants,
   } = body;
 
-  if (!name || typeof name !== "string" || !categoryId) {
-    return NextResponse.json({ error: "Name and category are required" }, { status: 400 });
+  const trimmedName = typeof name === "string" ? name.trim() : "";
+  if (!trimmedName || !categoryId) {
+    return NextResponse.json({ error: "Product name and category are required" }, { status: 400 });
+  }
+
+  // Validate product name uniqueness (case-insensitive)
+  const [existingByName] = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(sql`LOWER(${products.name}) = LOWER(${trimmedName})`)
+    .limit(1);
+
+  if (existingByName) {
+    return NextResponse.json(
+      { error: `A product with the name "${trimmedName}" already exists. Please choose a unique name.` },
+      { status: 400 }
+    );
+  }
+
+  // Validate product image format
+  if (imageUrl && !isValidImage(imageUrl)) {
+    return NextResponse.json(
+      { error: "Invalid product image format. Supported formats: JPG, PNG, WEBP, SVG or local image path." },
+      { status: 400 }
+    );
   }
 
   let resolvedCatId = Number(categoryId);
@@ -250,10 +287,10 @@ export async function POST(request: Request) {
   if (Array.isArray(rawVariants) && rawVariants.length > 0) {
     for (let i = 0; i < rawVariants.length; i++) {
       const v = rawVariants[i];
-      const validPrice = parseNonNegativeInt(v.price);
+      const validPrice = parsePositiveInt(v.price);
       if (validPrice === null) {
         return NextResponse.json(
-          { error: `Variant ${i + 1}: Price must be a finite, non-negative integer` },
+          { error: `Variant ${i + 1}: Original Price (MRP) must be greater than zero` },
           { status: 400 }
         );
       }
@@ -302,9 +339,9 @@ export async function POST(request: Request) {
     }
   } else {
     // Validate single price
-    const validPrice = parseNonNegativeInt(price);
+    const validPrice = parsePositiveInt(price);
     if (validPrice === null) {
-      return NextResponse.json({ error: "Price must be a finite, non-negative integer" }, { status: 400 });
+      return NextResponse.json({ error: "Price must be greater than zero" }, { status: 400 });
     }
 
     // Validate single discountedPrice if provided
@@ -457,6 +494,36 @@ export async function POST(request: Request) {
       }
     } catch (mysqlErr) {
       console.warn("MySQL product create sync notice:", mysqlErr);
+    }
+
+    // Activity Log
+    try {
+      await db.insert(activityLogs).values({
+        userId: auth.user.id,
+        userName: auth.user.name,
+        userEmail: auth.user.email,
+        userRole: auth.user.role,
+        action: "create_product",
+        module: "products",
+        details: JSON.stringify({
+          productId: result.product.id,
+          productName: result.product.name,
+          categoryId: result.product.categoryId,
+          variantsCount: result.variants.length,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+
+    // Synchronize to MongoDB Atlas
+    try {
+      const { syncProductToMongo } = await import("@/lib/mongodb");
+      await syncProductToMongo({
+        ...result.product,
+        variants: result.variants,
+      });
+    } catch (mErr) {
+      console.warn("MongoDB product create sync notice:", mErr);
     }
 
     return NextResponse.json({
@@ -701,7 +768,39 @@ export async function PUT(request: Request) {
         }
       });
 
-      return NextResponse.json({ success: true });
+      // Activity Log
+    try {
+      await db.insert(activityLogs).values({
+        userId: auth.user.id,
+        userName: auth.user.name,
+        userEmail: auth.user.email,
+        userRole: auth.user.role,
+        action: "update_product",
+        module: "products",
+        details: JSON.stringify({
+          productId: targetProductId,
+          updatedFields: Object.keys(body),
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+
+    // Sync to MongoDB Atlas
+    try {
+      const { syncProductToMongo } = await import("@/lib/mongodb");
+      const [freshProduct] = await db.select().from(products).where(eq(products.id, targetProductId)).limit(1);
+      const freshVariants = await db.select().from(productVariants).where(eq(productVariants.productId, targetProductId));
+      if (freshProduct) {
+        await syncProductToMongo({
+          ...freshProduct,
+          variants: freshVariants,
+        });
+      }
+    } catch (mErr) {
+      console.warn("MongoDB product update sync notice:", mErr);
+    }
+
+    return NextResponse.json({ success: true });
     }
 
     // Single variant & product update mode
@@ -761,6 +860,12 @@ export async function PUT(request: Request) {
         if (categoryId !== undefined) updateData.categoryId = Number(categoryId);
         if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
         if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+        if (body.isArchived !== undefined) {
+          updateData.isArchived = Boolean(body.isArchived);
+          if (body.isArchived === false) {
+            updateData.isActive = true;
+          }
+        }
 
         if (Object.keys(updateData).length > 0) {
           await tx.update(products).set(updateData).where(eq(products.id, existingProduct.id));
@@ -883,16 +988,123 @@ export async function DELETE(request: Request) {
   try { await db.delete(wishlistItems).where(eq(wishlistItems.productId, id)); } catch { }
   try { await db.delete(reviews).where(eq(reviews.productId, id)); } catch { }
 
-  // Delete variants first, then product
+  // Check order history before deleting
+  let hasOrders = false;
+  if (variantIds.length > 0) {
+    const [matchingOrderItem] = await db
+      .select({ id: orderItems.id })
+      .from(orderItems)
+      .where(inArray(orderItems.variantId, variantIds))
+      .limit(1);
+    if (matchingOrderItem) hasOrders = true;
+  }
+  if (!hasOrders) {
+    const [matchingOrderByName] = await db
+      .select({ id: orderItems.id })
+      .from(orderItems)
+      .where(eq(orderItems.productName, existingProduct.name))
+      .limit(1);
+    if (matchingOrderByName) hasOrders = true;
+  }
+
+  const isArchiveRequested = url.searchParams.get("archive") === "true" || (body as any)?.archive === true;
+
+  if (hasOrders || isArchiveRequested) {
+    // Soft archive: Preserve order history, hide from customer-facing storefront
+    await db.transaction(async (tx) => {
+      await tx
+        .update(products)
+        .set({ isArchived: true, isActive: false })
+        .where(eq(products.id, id));
+
+      await tx
+        .update(productVariants)
+        .set({ isActive: false })
+        .where(eq(productVariants.productId, id));
+
+      if (variantIds.length > 0) {
+        try {
+          await tx.delete(cartItems).where(inArray(cartItems.variantId, variantIds));
+        } catch {}
+      }
+    });
+
+    // Log to activity logs
+    try {
+      await db.insert(activityLogs).values({
+        userId: auth.user.id,
+        userName: auth.user.name,
+        userEmail: auth.user.email,
+        userRole: auth.user.role,
+        action: "archive_product",
+        module: "products",
+        details: JSON.stringify({
+          productId: id,
+          productName: existingProduct.name,
+          reason: hasOrders
+            ? "Product has existing order history; archived safely to preserve customer orders"
+            : "Admin requested product archiving",
+          archivedAt: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+
+    // Sync archive state to MongoDB
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        await mongo.collection("products").updateOne({ id: id }, { $set: { isArchived: true, isActive: false } });
+        await mongo.collection("product_variants").updateMany({ productId: id }, { $set: { isActive: false } });
+      }
+    } catch {}
+
+    return NextResponse.json({
+      success: true,
+      archived: true,
+      message: `Product "${existingProduct.name}" has previous order history and has been safely archived instead of permanently deleted. It is now hidden from the customer store.`,
+      productId: id,
+    });
+  }
+
+  // No order history: permanently delete product and variants
   await db.delete(productVariants).where(eq(productVariants.productId, id));
   await db.delete(products).where(eq(products.id, id));
+
+  // Log to activity logs
+  try {
+    await db.insert(activityLogs).values({
+      userId: auth.user.id,
+      userName: auth.user.name,
+      userEmail: auth.user.email,
+      userRole: auth.user.role,
+      action: "delete_product",
+      module: "products",
+      details: JSON.stringify({
+        productId: id,
+        productName: existingProduct.name,
+        deletedAt: new Date().toISOString(),
+      }),
+    });
+  } catch {}
 
   // Synchronize deletion to MySQL & Mongo
   try {
     await deleteProductFromMysql(id);
+    const { getMongoDb } = await import("@/lib/mongodb");
+    const mongo = await getMongoDb();
+    if (mongo) {
+      await mongo.collection("products").deleteOne({ id: id });
+      await mongo.collection("product_variants").deleteMany({ productId: id });
+    }
   } catch (mysqlErr) {
-    console.warn("MySQL product delete sync notice:", mysqlErr);
+    console.warn("MySQL/Mongo product delete sync notice:", mysqlErr);
   }
 
-  return NextResponse.json({ success: true, deletedId: id });
+  return NextResponse.json({
+    success: true,
+    archived: false,
+    message: `Product "${existingProduct.name}" permanently deleted.`,
+    deletedId: id,
+  });
 }

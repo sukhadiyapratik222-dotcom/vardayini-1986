@@ -319,6 +319,9 @@ export async function syncProductToMongo(product: {
   imageUrl: string;
   tags?: string | null;
   isFeatured?: boolean;
+  isActive?: boolean;
+  isArchived?: boolean;
+  variants?: any[];
 }) {
   try {
     const db = await getMongoDb();
@@ -336,6 +339,27 @@ export async function syncProductToMongo(product: {
       },
       { upsert: true }
     );
+
+    if (product.variants && Array.isArray(product.variants)) {
+      for (const v of product.variants) {
+        if (v && v.sku) {
+          await db.collection("product_variants").updateOne(
+            { sku: v.sku },
+            {
+              $set: {
+                ...v,
+                productId: product.id || v.productId,
+                updatedAt: new Date(),
+              },
+              $setOnInsert: {
+                createdAt: new Date(),
+              },
+            },
+            { upsert: true }
+          );
+        }
+      }
+    }
   } catch (err) {
     console.warn("[MongoDB] product sync notice:", err);
   }

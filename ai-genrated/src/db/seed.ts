@@ -743,12 +743,19 @@ export async function ensureEssentialProducts() {
               isActive: true,
             });
 
-          prodId = (insRes as any).insertId;
-          if (prodId) {
-            slugToId.set(item.slug, prodId);
-          }
+          prodId = (insRes as any)?.insertId;
         } catch (insErr) {
           console.warn(`[Seed] Product ${item.slug} insert notice:`, insErr);
+        }
+
+        if (!prodId) {
+          const [created] = await db.select({ id: products.id }).from(products).where(eq(products.slug, item.slug)).limit(1);
+          if (created) {
+            prodId = created.id;
+          }
+        }
+        if (prodId) {
+          slugToId.set(item.slug, prodId);
         }
       }
 
@@ -773,6 +780,21 @@ export async function ensureEssentialProducts() {
                 isActive: true,
               }))
             );
+          }
+
+          // Sync product and variants to MongoDB Atlas
+          try {
+            const { syncProductToMongo } = await import("@/lib/mongodb");
+            const [pRow] = await db.select().from(products).where(eq(products.id, prodId)).limit(1);
+            const vRows = await db.select().from(productVariants).where(eq(productVariants.productId, prodId));
+            if (pRow) {
+              await syncProductToMongo({
+                ...pRow,
+                variants: vRows,
+              });
+            }
+          } catch (mSyncErr) {
+            console.warn(`[Seed MongoDB Sync Notice ${item.slug}]`, mSyncErr);
           }
         } catch (vErr) {
           console.warn(`[Seed] Variant for ${item.slug} insert notice:`, vErr);
