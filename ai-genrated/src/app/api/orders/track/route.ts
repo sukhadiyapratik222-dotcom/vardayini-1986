@@ -29,7 +29,29 @@ function maskName(name?: string | null): string {
   return `${parts[0]} ${parts[1][0]?.toUpperCase() || ""}.`;
 }
 
-function maskAddress(snapshotRaw?: string | null): {
+export function parseAddressSnapshot(raw?: any): any {
+  if (!raw) return null;
+  let target = raw;
+  for (let i = 0; i < 3; i++) {
+    if (typeof target === "string") {
+      const trimmed = target.trim();
+      if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        try {
+          target = JSON.parse(trimmed);
+        } catch {
+          break;
+        }
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  return target;
+}
+
+export function maskAddress(snapshotRaw?: string | null): {
   city: string;
   state: string;
   pincode: string;
@@ -47,21 +69,27 @@ function maskAddress(snapshotRaw?: string | null): {
   if (!snapshotRaw) return result;
 
   try {
-    const snap = typeof snapshotRaw === "string" ? JSON.parse(snapshotRaw) : snapshotRaw;
+    const snap = parseAddressSnapshot(snapshotRaw);
     if (snap && typeof snap === "object") {
       result.city = snap.city || "Vadodara";
       result.state = snap.state || "Gujarat";
       result.pincode = snap.pincode || "";
-      const line1 = snap.line1 ? `${snap.line1}, ` : "";
+      const rawLine1 = (snap.line1 || snap.address || snap.street || "").trim();
+      const line1 = rawLine1.replace(/,\s*/g, ", ").trim();
       const locality = snap.city || "Vadodara";
+      const state = snap.state || "Gujarat";
       const pin = snap.pincode ? ` - ${snap.pincode}` : "";
-      result.maskedSummary = `******, ${locality}, ${result.state}${pin}`;
-      result.fullAddress = `${line1}${locality}, ${result.state}${pin}`.trim();
+      
+      const linePrefix = line1 ? `${line1}, ` : "";
+      result.maskedSummary = `******, ${locality}, ${state}${pin}`;
+      result.fullAddress = `${linePrefix}${locality}, ${state}${pin}`.trim();
+    } else if (typeof snapshotRaw === "string" && !snapshotRaw.includes("{")) {
+      result.maskedSummary = snapshotRaw.trim();
+      result.fullAddress = snapshotRaw.trim();
     }
   } catch {
-    const rawClean = typeof snapshotRaw === "string" && !snapshotRaw.startsWith("{") ? snapshotRaw : "Vadodara, Gujarat";
-    result.maskedSummary = rawClean;
-    result.fullAddress = rawClean;
+    result.maskedSummary = "Vadodara Hub Dispatch, Gujarat";
+    result.fullAddress = "Vadodara, Gujarat";
   }
 
   return result;

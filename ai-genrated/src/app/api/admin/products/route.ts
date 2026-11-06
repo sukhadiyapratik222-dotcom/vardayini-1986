@@ -296,10 +296,10 @@ export async function POST(request: Request) {
       }
       let validDiscountedPrice: number | null = null;
       if (v.discountedPrice !== undefined && v.discountedPrice !== null) {
-        validDiscountedPrice = parseNonNegativeInt(v.discountedPrice);
+        validDiscountedPrice = parsePositiveInt(v.discountedPrice);
         if (validDiscountedPrice === null) {
           return NextResponse.json(
-            { error: `Variant ${i + 1}: Discounted price must be a finite, non-negative integer` },
+            { error: `Variant ${i + 1}: Selling price must be a positive integer greater than zero` },
             { status: 400 }
           );
         }
@@ -617,25 +617,25 @@ export async function PUT(request: Request) {
         const v = variants[i];
         if (v._delete) continue;
 
-        const validPrice = parseNonNegativeInt(v.price);
+        const validPrice = parsePositiveInt(v.price);
         if (validPrice === null) {
           return NextResponse.json(
-            { error: `Pack ${i + 1}: Price must be a finite, non-negative integer` },
+            { error: `Pack ${i + 1}: Original Price (MRP) must be a positive integer greater than zero` },
             { status: 400 }
           );
         }
 
         if (v.discountedPrice !== undefined && v.discountedPrice !== null) {
-          const validDiscountedPrice = parseNonNegativeInt(v.discountedPrice);
+          const validDiscountedPrice = parsePositiveInt(v.discountedPrice);
           if (validDiscountedPrice === null) {
             return NextResponse.json(
-              { error: `Pack ${i + 1}: Discounted price must be a finite, non-negative integer` },
+              { error: `Pack ${i + 1}: Selling price must be a positive integer greater than zero` },
               { status: 400 }
             );
           }
           if (validDiscountedPrice > validPrice) {
             return NextResponse.json(
-              { error: `Pack ${i + 1}: Discounted price cannot exceed base price` },
+              { error: `Pack ${i + 1}: Selling price cannot exceed Original MRP` },
               { status: 400 }
             );
           }
@@ -806,9 +806,9 @@ export async function PUT(request: Request) {
     // Single variant & product update mode
     const varUpdateData: any = {};
     if (price !== undefined) {
-      const validPrice = parseNonNegativeInt(price);
+      const validPrice = parsePositiveInt(price);
       if (validPrice === null) {
-        return NextResponse.json({ error: "Price must be a finite, non-negative integer" }, { status: 400 });
+        return NextResponse.json({ error: "Original Price (MRP) must be a positive integer greater than zero" }, { status: 400 });
       }
       varUpdateData.price = validPrice;
     }
@@ -817,13 +817,13 @@ export async function PUT(request: Request) {
       if (discountedPrice === null) {
         varUpdateData.discountedPrice = null;
       } else {
-        const validDiscountedPrice = parseNonNegativeInt(discountedPrice);
+        const validDiscountedPrice = parsePositiveInt(discountedPrice);
         if (validDiscountedPrice === null) {
-          return NextResponse.json({ error: "Discounted price must be a finite, non-negative integer" }, { status: 400 });
+          return NextResponse.json({ error: "Selling price must be a positive integer greater than zero" }, { status: 400 });
         }
         const basePrice = varUpdateData.price !== undefined ? varUpdateData.price : existingVariant?.price;
         if (basePrice !== undefined && validDiscountedPrice > basePrice) {
-          return NextResponse.json({ error: "Discounted price cannot exceed base price" }, { status: 400 });
+          return NextResponse.json({ error: "Selling price cannot exceed Original MRP" }, { status: 400 });
         }
         varUpdateData.discountedPrice = validDiscountedPrice;
       }

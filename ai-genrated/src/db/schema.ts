@@ -19,6 +19,11 @@ export const users = mysqlTable("users", {
   status: varchar("status", { length: 20 }).notNull().default("active"),
   mustChangePassword: boolean("must_change_password").notNull().default(false),
   accessType: varchar("access_type", { length: 20 }).notNull().default("full"),
+  storeId: int("store_id"),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  twoFactorSecret: text("two_factor_secret"),
+  twoFactorMethod: varchar("two_factor_method", { length: 20 }).notNull().default("totp"),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -282,6 +287,8 @@ export const roles = mysqlTable("roles", {
   name: varchar("name", { length: 80 }).notNull(),
   slug: varchar("slug", { length: 80 }).notNull().unique(),
   description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  isSystem: boolean("is_system").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -325,8 +332,50 @@ export const activityLogs = mysqlTable("activity_logs", {
   userRole: varchar("user_role", { length: 40 }),
   action: varchar("action", { length: 80 }).notNull(),
   module: varchar("module", { length: 80 }).notNull(),
+  recordId: int("record_id"),
+  previousValue: text("previous_value"),
+  updatedValue: text("updated_value"),
   details: text("details"),
   ipAddress: varchar("ip_address", { length: 60 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const approvalRequests = mysqlTable("approval_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  requesterId: int("requester_id").notNull(),
+  requesterName: varchar("requester_name", { length: 120 }).notNull(),
+  requestType: varchar("request_type", { length: 80 }).notNull(),
+  module: varchar("module", { length: 80 }).notNull(),
+  recordId: int("record_id"),
+  description: text("description").notNull(),
+  payload: text("payload"),
+  status: varchar("status", { length: 40 }).notNull().default("pending"),
+  reviewerId: int("reviewer_id"),
+  reviewerName: varchar("reviewer_name", { length: 120 }),
+  reviewNote: text("review_note"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const adminSessions = mysqlTable("admin_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  ipAddress: varchar("ip_address", { length: 60 }),
+  userAgent: text("user_agent"),
+  expiresAt: timestamp("expires_at").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const loginHistory = mysqlTable("login_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id"),
+  email: varchar("email", { length: 160 }).notNull(),
+  ipAddress: varchar("ip_address", { length: 60 }),
+  userAgent: text("user_agent"),
+  status: varchar("status", { length: 40 }).notNull().default("success"),
+  reason: text("reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

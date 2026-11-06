@@ -179,6 +179,11 @@ function initSqliteTables(sqlite: DatabaseSync) {
       status TEXT NOT NULL DEFAULT 'active',
       must_change_password INTEGER NOT NULL DEFAULT 0,
       access_type TEXT NOT NULL DEFAULT 'full',
+      store_id INTEGER DEFAULT NULL,
+      two_factor_enabled INTEGER NOT NULL DEFAULT 0,
+      two_factor_secret TEXT DEFAULT NULL,
+      two_factor_method TEXT NOT NULL DEFAULT 'totp',
+      last_login_at TEXT DEFAULT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -374,6 +379,8 @@ function initSqliteTables(sqlite: DatabaseSync) {
       name TEXT NOT NULL,
       slug TEXT NOT NULL UNIQUE,
       description TEXT DEFAULT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      is_system INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -411,8 +418,50 @@ function initSqliteTables(sqlite: DatabaseSync) {
       user_role TEXT DEFAULT NULL,
       action TEXT NOT NULL,
       module TEXT NOT NULL,
+      record_id INTEGER DEFAULT NULL,
+      previous_value TEXT DEFAULT NULL,
+      updated_value TEXT DEFAULT NULL,
       details TEXT DEFAULT NULL,
       ip_address TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS approval_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      requester_id INTEGER NOT NULL,
+      requester_name TEXT NOT NULL,
+      request_type TEXT NOT NULL,
+      module TEXT NOT NULL,
+      record_id INTEGER DEFAULT NULL,
+      description TEXT NOT NULL,
+      payload TEXT DEFAULT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      reviewer_id INTEGER DEFAULT NULL,
+      reviewer_name TEXT DEFAULT NULL,
+      review_note TEXT DEFAULT NULL,
+      reviewed_at TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      ip_address TEXT DEFAULT NULL,
+      user_agent TEXT DEFAULT NULL,
+      expires_at TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS login_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER DEFAULT NULL,
+      email TEXT NOT NULL,
+      ip_address TEXT DEFAULT NULL,
+      user_agent TEXT DEFAULT NULL,
+      status TEXT NOT NULL DEFAULT 'success',
+      reason TEXT DEFAULT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -633,6 +682,57 @@ function initSqliteTables(sqlite: DatabaseSync) {
       }
     } catch (pMigErr) {
       console.warn("[Products Migration Notice]", pMigErr);
+    }
+
+    // Migration safeguard: Ensure users table has RBAC & 2FA columns
+    try {
+      const uCols = sqlite.prepare("PRAGMA table_info(users)").all() as any[];
+      if (!uCols.some((c: any) => c.name === "store_id")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN store_id INTEGER DEFAULT NULL");
+      }
+      if (!uCols.some((c: any) => c.name === "two_factor_enabled")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER NOT NULL DEFAULT 0");
+      }
+      if (!uCols.some((c: any) => c.name === "two_factor_secret")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN two_factor_secret TEXT DEFAULT NULL");
+      }
+      if (!uCols.some((c: any) => c.name === "two_factor_method")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN two_factor_method TEXT NOT NULL DEFAULT 'totp'");
+      }
+      if (!uCols.some((c: any) => c.name === "last_login_at")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN last_login_at TEXT DEFAULT NULL");
+      }
+    } catch (uMigErr) {
+      console.warn("[Users RBAC Migration Notice]", uMigErr);
+    }
+
+    // Migration safeguard: Ensure roles table has is_active and is_system
+    try {
+      const rCols = sqlite.prepare("PRAGMA table_info(roles)").all() as any[];
+      if (!rCols.some((c: any) => c.name === "is_active")) {
+        sqlite.exec("ALTER TABLE roles ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
+      }
+      if (!rCols.some((c: any) => c.name === "is_system")) {
+        sqlite.exec("ALTER TABLE roles ADD COLUMN is_system INTEGER NOT NULL DEFAULT 0");
+      }
+    } catch (rMigErr) {
+      console.warn("[Roles Migration Notice]", rMigErr);
+    }
+
+    // Migration safeguard: Ensure activity_logs table has record_id, previous_value, updated_value
+    try {
+      const actCols = sqlite.prepare("PRAGMA table_info(activity_logs)").all() as any[];
+      if (!actCols.some((c: any) => c.name === "record_id")) {
+        sqlite.exec("ALTER TABLE activity_logs ADD COLUMN record_id INTEGER DEFAULT NULL");
+      }
+      if (!actCols.some((c: any) => c.name === "previous_value")) {
+        sqlite.exec("ALTER TABLE activity_logs ADD COLUMN previous_value TEXT DEFAULT NULL");
+      }
+      if (!actCols.some((c: any) => c.name === "updated_value")) {
+        sqlite.exec("ALTER TABLE activity_logs ADD COLUMN updated_value TEXT DEFAULT NULL");
+      }
+    } catch (actMigErr) {
+      console.warn("[ActivityLogs Migration Notice]", actMigErr);
     }
 
     // Migration safeguard: Ensure product_variants table has pack_name, is_default, is_active

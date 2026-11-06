@@ -1,8 +1,9 @@
+import { checkUserPermission } from "@/lib/rbac";
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { users, adminPermissions, activityLogs } from "@/db/schema";
+import { users, roles, rolePermissions, permissions as permissionsTable, adminPermissions, activityLogs, adminSessions, loginHistory } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
 
 import { NextResponse } from "next/server";
@@ -234,24 +235,43 @@ export async function getAuthUser(req?: Request) {
   }
 
   let permissionsList: string[] = [];
-  if (user.role === "admin" && user.accessType === "custom") {
+  if (user.role === "super_admin" || user.email === "pratik222@gmail.com") {
+    permissionsList = ["*"];
+  } else {
     try {
-      const permRows = await db
+      // 1. Fetch permissions from user's assigned role
+      const [userRoleRow] = await db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(eq(roles.slug, user.role))
+        .limit(1);
+
+      if (userRoleRow) {
+        const rolePermRows = await db
+          .select({ slug: permissionsTable.slug })
+          .from(rolePermissions)
+          .innerJoin(permissionsTable, eq(rolePermissions.permissionId, permissionsTable.id))
+          .where(eq(rolePermissions.roleId, userRoleRow.id));
+        permissionsList.push(...rolePermRows.map((r) => r.slug));
+      }
+
+      // 2. Fetch direct adminPermissions
+      const directPermRows = await db
         .select({ slug: adminPermissions.permissionSlug })
         .from(adminPermissions)
         .where(eq(adminPermissions.userId, user.id));
-      permissionsList = permRows.map((r) => r.slug).filter((s) => s && s !== "*");
-    } catch {
-      permissionsList = [];
+      permissionsList.push(...directPermRows.map((r) => r.slug));
+
+      // Legacy fallback for admin with full access
+      if (user.role === "admin" && user.accessType === "full") {
+        permissionsList.push("*");
+      }
+    } catch (permErr) {
+      console.warn("[getAuthUser] Perm fetch notice:", permErr);
     }
-  } else if (
-    user.role === "super_admin" ||
-    user.email === "pratik222@gmail.com" ||
-    user.email === "admin@vardayini.com" ||
-    (user.role === "admin" && user.accessType === "full")
-  ) {
-    permissionsList = ["*"];
   }
+
+  const uniquePerms = Array.from(new Set(permissionsList));
 
   return {
     id: user.id,
@@ -259,10 +279,11 @@ export async function getAuthUser(req?: Request) {
     email: user.email,
     phone: user.phone,
     role: user.role,
+    storeId: (user as any).storeId ?? null,
     status: user.status || "active",
     mustChangePassword: Boolean(user.mustChangePassword),
     accessType: user.accessType || "full",
-    permissions: permissionsList,
+    permissions: uniquePerms,
   };
 }
 
@@ -319,12 +340,22 @@ export async function logActivity(options: {
   userRole?: string | null;
   action: string;
   module: string;
+  recordId?: number | null;
+  previousValue?: any;
+  updatedValue?: any;
   details?: string | null;
   ipAddress?: string | null;
   req?: Request;
 }) {
   try {
     const ip = options.ipAddress || (options.req ? getClientIp(options.req) : "127.0.0.1");
+    const prevStr = options.previousValue
+      ? (typeof options.previousValue === "object" ? JSON.stringify(options.previousValue) : String(options.previousValue))
+      : null;
+    const nextStr = options.updatedValue
+      ? (typeof options.updatedValue === "object" ? JSON.stringify(options.updatedValue) : String(options.updatedValue))
+      : null;
+
     await db.insert(activityLogs).values({
       userId: options.userId ?? null,
       userName: options.userName ?? null,
@@ -332,6 +363,9 @@ export async function logActivity(options: {
       userRole: options.userRole ?? null,
       action: options.action,
       module: options.module,
+      recordId: options.recordId ?? null,
+      previousValue: prevStr,
+      updatedValue: nextStr,
       details: options.details ?? null,
       ipAddress: ip,
     });
@@ -368,6 +402,7 @@ export async function requireSuperAdmin(req?: Request): Promise<RequireSuperAdmi
           email: "pratik222@gmail.com",
           phone: "9876543210",
           role: "super_admin",
+          storeId: null,
           status: "active",
           mustChangePassword: false,
           accessType: "full",
@@ -450,6 +485,7 @@ export async function requireAdmin(
           email: "pratik222@gmail.com",
           phone: "9876543210",
           role: "super_admin",
+          storeId: null,
           status: "active",
           mustChangePassword: false,
           accessType: "full",
@@ -478,7 +514,7 @@ export async function requireAdmin(
     };
   }
 
-  if (user.role !== "admin" && user.role !== "super_admin" && user.email !== "pratik222@gmail.com") {
+  if (user.role === "customer" && user.email !== "pratik222@gmail.com") {
     return {
       error: NextResponse.json(
         { error: "Forbidden: Admin access required" },
@@ -487,68 +523,17 @@ export async function requireAdmin(
     };
   }
 
-  // Super Admin has all permissions
+  // Super Admin has unrestricted access to everything
   if (user.role === "super_admin" || user.email === "pratik222@gmail.com") {
     return { user };
   }
 
-  // Admin with full access has all permissions except super admin management
-  if (
-    user.email === "admin@vardayini.com" ||
-    (user.role === "admin" && user.accessType !== "custom")
-  ) {
-    if (requiredPermission === "admins:manage" || requiredPermission === "logs:view") {
-      return {
-        error: NextResponse.json(
-          { error: "Forbidden: Super Admin access required" },
-          { status: 403 }
-        ),
-      };
-    }
-    return { user };
-  }
-
-  // If Admin has custom access and a specific permission is required
-  if (
-    requiredPermission &&
-    user.role === "admin" &&
-    user.accessType === "custom"
-  ) {
-    const userPerms = Array.isArray(user.permissions) ? user.permissions : [];
-    const parts = requiredPermission.split(":");
-    const moduleName = parts[0];
-    const action = parts[1] || "manage";
-    const isViewAction = action === "view" || action === "read";
-
-    // Manage or write grants both view and manage.
-    // View grants only view/read.
-    const hasPerm =
-      userPerms.includes("*") ||
-      userPerms.includes(requiredPermission) ||
-      userPerms.includes(`${moduleName}:manage`) ||
-      userPerms.includes(`${moduleName}:write`) ||
-      userPerms.includes(moduleName) ||
-      (isViewAction && (
-        userPerms.includes(`${moduleName}:view`) ||
-        userPerms.includes(`${moduleName}:read`)
-      )) ||
-      // Legacy settings:manage backward compatibility
-      ((moduleName === "branding" ||
-        moduleName === "hero" ||
-        moduleName === "announcements" ||
-        moduleName === "bestsellers" ||
-        moduleName === "welcome_offer" ||
-        moduleName === "testimonials" ||
-        moduleName === "new_launches" ||
-        moduleName === "special_items" ||
-        moduleName === "sms_wallet" ||
-        moduleName === "settings") &&
-        userPerms.includes("settings:manage")) ||
-      // Legacy products:manage backward compatibility
-      ((moduleName === "special_items" || moduleName === "categories") &&
-        userPerms.includes("products:manage"));
+  // If a specific granular permission is required, enforce RBAC check
+  if (requiredPermission) {
+    const hasPerm = checkUserPermission(user.role, user.permissions, requiredPermission);
 
     if (!hasPerm) {
+      const moduleName = requiredPermission.split(":")[0] || "admin";
       if (req) {
         logActivity({
           userId: user.id,
@@ -556,8 +541,8 @@ export async function requireAdmin(
           userEmail: user.email,
           userRole: user.role,
           action: "PERMISSION_DENIED",
-          module: moduleName || "admin",
-          details: `Denied access to permission ${requiredPermission}`,
+          module: moduleName,
+          details: `Access denied to permission ${requiredPermission}`,
           req,
         });
       }

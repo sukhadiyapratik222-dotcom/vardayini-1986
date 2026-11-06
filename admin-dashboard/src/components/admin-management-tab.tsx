@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { AdminItem, PermissionOption, api } from "@/lib/api";
+import { RolesPermissionsView } from "./roles-permissions-view";
+import { ApprovalsView } from "./approvals-view";
+import { SecuritySessionsView } from "./security-sessions-view";
 import { toast } from "@/lib/toast";
 
 export interface SystemModuleDefinition {
@@ -491,6 +494,9 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [activeSubTab, setActiveSubTab] = useState<"admins" | "roles" | "approvals" | "security">("admins");
+  const [availableStores, setAvailableStores] = useState<{ id: number; name: string; city?: string }[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<any[]>([]);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -506,6 +512,8 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
   const [addAccessType, setAddAccessType] = useState<"full" | "custom">("full");
   const [addSelectedPermissions, setAddSelectedPermissions] = useState<string[]>([]);
   const [addForceChange, setAddForceChange] = useState(true);
+  const [addRole, setAddRole] = useState("staff");
+  const [addStoreId, setAddStoreId] = useState<number | null>(null);
   const [submittingAdd, setSubmittingAdd] = useState(false);
 
   // Edit Form state
@@ -516,6 +524,8 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
   const [editAccessType, setEditAccessType] = useState<"full" | "custom">("full");
   const [editSelectedPermissions, setEditSelectedPermissions] = useState<string[]>([]);
   const [editForceChange, setEditForceChange] = useState(false);
+  const [editRole, setEditRole] = useState("staff");
+  const [editStoreId, setEditStoreId] = useState<number | null>(null);
   const [submittingEdit, setSubmittingEdit] = useState(false);
 
   // Reset Password state
@@ -531,6 +541,8 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
       const data = await api.getAdmins();
       setAdmins(data.admins || []);
       setPermissions(data.availablePermissions || []);
+      if (data.availableStores) setAvailableStores(data.availableStores);
+      if (data.availableRoles) setAvailableRoles(data.availableRoles);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to load administrators");
     } finally {
@@ -596,7 +608,8 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
         email: addEmail.trim().toLowerCase(),
         phone: addPhone.trim() || undefined,
         password: addPassword,
-        role: "admin",
+        role: addRole,
+        storeId: addStoreId,
         accessType: addAccessType,
         permissions:
           addAccessType === "custom"
@@ -627,6 +640,8 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
     setEditName(admin.name);
     setEditEmail(admin.email);
     setEditPhone(admin.phone || "");
+    setEditRole(admin.role || "staff");
+    setEditStoreId(admin.storeId ?? null);
     setEditStatus((admin.status as "active" | "inactive") || "active");
     setEditAccessType((admin.accessType as "full" | "custom") || "full");
     // Strip '*' so custom permissions only contain actual module slugs
@@ -647,8 +662,10 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
         name: editName.trim(),
         email: editEmail.trim().toLowerCase(),
         phone: editPhone.trim() || undefined,
+        role: targetAdmin.role === "super_admin" ? "super_admin" : editRole,
+        storeId: editStoreId,
         status: targetAdmin.role === "super_admin" ? "active" : editStatus,
-        accessType: targetAdmin.role === "super_admin" ? "full" : editAccessType,
+        accessType: targetAdmin.role === "super_admin" || editRole === "super_admin" ? "full" : editAccessType,
         permissions:
           targetAdmin.role === "super_admin" || editAccessType === "full"
             ? []
@@ -745,8 +762,9 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
 
   // Handle Quick Toggle Status
   const handleToggleStatus = async (admin: AdminItem) => {
-    if (admin.role === "super_admin") {
-      toast.error("Super Admin account cannot be deactivated.");
+    const activeSuperCount = admins.filter((a) => a.role === "super_admin" && a.status === "active").length;
+    if (admin.role === "super_admin" && activeSuperCount <= 1) {
+      toast.error("Cannot deactivate the last active Super Admin account.");
       return;
     }
     const newStatus = admin.status === "active" ? "inactive" : "active";
@@ -791,9 +809,12 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
   // Handle Delete Admin
   const handleDeleteSubmit = async () => {
     if (!deletingAdmin) return;
+    const activeSuperCount = admins.filter((a) => a.role === "super_admin" && a.status === "active").length;
     if (deletingAdmin.role === "super_admin") {
-      toast.error("Super Admin account cannot be deleted.");
-      return;
+      if (activeSuperCount <= 1) {
+        toast.error("Cannot delete the last active Super Admin account.");
+        return;
+      }
     }
     const targetAdmin = deletingAdmin;
     setSubmittingDelete(true);
@@ -875,6 +896,81 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
         </div>
       </div>
 
+      {/* RBAC Sub-navigation Tabs */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("admins")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeSubTab === "admins"
+              ? "bg-white text-[#0b2f8a] shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>👥</span>
+          <span>Admins Directory</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-50 text-[#0b2f8a] font-bold">
+            {admins.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("roles")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeSubTab === "roles"
+              ? "bg-white text-[#0b2f8a] shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>🛡️</span>
+          <span>Dynamic Roles &amp; Permissions</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-50 text-purple-700 font-bold">
+            78 Matrix
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("approvals")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeSubTab === "approvals"
+              ? "bg-white text-[#0b2f8a] shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>⚖️</span>
+          <span>Approval Queue</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-700 font-bold">
+            Governance
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("security")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeSubTab === "security"
+              ? "bg-white text-[#0b2f8a] shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>🔒</span>
+          <span>Security, 2FA &amp; Active Sessions</span>
+        </button>
+      </div>
+
+      {activeSubTab === "roles" && <RolesPermissionsView />}
+      {activeSubTab === "approvals" && (
+        <ApprovalsView currentUserId={currentUserId} currentUserRole={currentUserRole} />
+      )}
+      {activeSubTab === "security" && (
+        <SecuritySessionsView currentUserId={currentUserId} currentUserRole={currentUserRole} />
+      )}
+
+      {activeSubTab === "admins" && (
+        <>
+
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#0b2f8a]/10 shadow-sm">
         <div className="relative flex-1 max-w-md">
@@ -953,6 +1049,17 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
                 {filteredAdmins.map((admin) => {
                   const isSuperAdmin = admin.role === "super_admin";
                   const isCurrent = currentUserId === admin.id;
+                  const activeSuperCount = admins.filter((a) => a.role === "super_admin" && a.status === "active").length;
+                  const isLastSuperAdmin = isSuperAdmin && activeSuperCount <= 1;
+                  const roleLabel = admin.roleName || (
+                    admin.role === "super_admin" ? "Super Admin" :
+                    admin.role === "store_admin" ? "Store Admin" :
+                    admin.role === "inventory_admin" ? "Inventory Admin" :
+                    admin.role === "order_manager" ? "Order Manager" :
+                    admin.role === "customer_support" ? "Customer Support" :
+                    admin.role === "staff" ? "Staff" : admin.role
+                  );
+                  const storeLabel = admin.storeName || (admin.storeId ? `Store #${admin.storeId}` : "🌐 All Stores");
 
                   return (
                     <tr
@@ -995,15 +1102,18 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
 
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col gap-1 items-start">
-                          {isSuperAdmin ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#dfb755]/20 text-[#b89130] border border-[#dfb755]/40">
-                              👑 Super Admin (Owner)
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                              isSuperAdmin
+                                ? "bg-[#dfb755]/20 text-[#b89130] border border-[#dfb755]/40"
+                                : "bg-[#0b2f8a]/10 text-[#0b2f8a] border border-[#0b2f8a]/20"
+                            }`}>
+                              {isSuperAdmin ? "👑 " : "🛡️ "}{roleLabel}
                             </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0b2f8a]/10 text-[#0b2f8a]">
-                              🛡️ Staff Admin
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                              {storeLabel}
                             </span>
-                          )}
+                          </div>
 
                           <span className="text-[11px] text-gray-500 font-medium">
                             {isSuperAdmin || admin.accessType === "full"
@@ -1080,13 +1190,22 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
                       </td>
 
                       <td className="py-3.5 px-4">
-                        {admin.mustChangePassword ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                            ⚠️ Forced PW Change Pending
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-[11px]">Normal</span>
-                        )}
+                        <div className="flex flex-col gap-1 items-start">
+                          {admin.twoFactorEnabled ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              🔒 2FA Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-500 border border-slate-200">
+                              2FA Off
+                            </span>
+                          )}
+                          {admin.mustChangePassword && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                              ⚠️ Forced PW Reset
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-4 text-gray-500 text-[11px] whitespace-nowrap">
@@ -1120,7 +1239,7 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
                             <span>Reset PW</span>
                           </button>
 
-                          {!isSuperAdmin ? (
+                          {!isLastSuperAdmin ? (
                             <button
                               onClick={() => setDeletingAdmin(admin)}
                               className="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 font-semibold text-[11px] transition flex items-center gap-1"
@@ -1131,10 +1250,10 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
                             </button>
                           ) : (
                             <span
-                              className="px-2 py-1 text-[10px] text-gray-400 font-semibold cursor-not-allowed"
-                              title="Owner account is permanent and cannot be deleted"
+                              className="px-2 py-1 text-[10px] text-amber-700 bg-amber-50 rounded border border-amber-200 font-bold cursor-not-allowed"
+                              title="Last active Super Admin is protected and cannot be deleted"
                             >
-                              🔒 Immutable
+                              🔒 Last Super Admin
                             </span>
                           )}
                         </div>
@@ -1147,6 +1266,9 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
           </div>
         )}
       </div>
+
+        </>
+      )}
 
       {/* ADD ADMINISTRATOR MODAL */}
       {isAddModalOpen && (
@@ -1236,6 +1358,63 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
                     onChange={(e) => setAddPassword(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/30 focus:border-[#0b2f8a]"
                   />
+                </div>
+              </div>
+
+              {/* Role Selection & Store Scoping */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Assigned Role *
+                  </label>
+                  <select
+                    value={addRole}
+                    onChange={(e) => {
+                      const r = e.target.value;
+                      setAddRole(r);
+                      if (r === "super_admin") {
+                        setAddAccessType("full");
+                        setAddStoreId(null);
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium text-xs focus:outline-none focus:border-[#0b2f8a]"
+                  >
+                    <optgroup label="System Roles">
+                      <option value="super_admin">👑 Super Admin (Full unconstrained system control)</option>
+                      <option value="store_admin">🏬 Store Admin (Store branch & operations)</option>
+                      <option value="inventory_admin">📦 Inventory Admin (Stock, batches & pricing)</option>
+                      <option value="order_manager">📑 Order Manager (Orders, dispatch & tracking)</option>
+                      <option value="customer_support">🎧 Customer Support (Refunds, complaints & customers)</option>
+                      <option value="staff">👥 Staff (Store counter, view & print orders)</option>
+                    </optgroup>
+                    {availableRoles && availableRoles.filter(r => !["super_admin", "store_admin", "inventory_admin", "order_manager", "customer_support", "staff"].includes(r.slug)).length > 0 && (
+                      <optgroup label="Custom Roles">
+                        {availableRoles.filter(r => !["super_admin", "store_admin", "inventory_admin", "order_manager", "customer_support", "staff"].includes(r.slug)).map(r => (
+                          <option key={r.id} value={r.slug}>{r.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Store Assignment (Record Scope)
+                  </label>
+                  <select
+                    disabled={addRole === "super_admin"}
+                    value={addStoreId === null ? "" : addStoreId}
+                    onChange={(e) => setAddStoreId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium text-xs focus:outline-none focus:border-[#0b2f8a] disabled:bg-slate-100 disabled:opacity-60"
+                  >
+                    <option value="">🌐 All Stores / Central Unrestricted</option>
+                    {availableStores && availableStores.map(s => (
+                      <option key={s.id} value={s.id}>📍 {s.name} ({s.city})</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {addRole === "super_admin" ? "Super Admin has global unconstrained access to all stores." : "Restricts admin data access to their assigned sweet mart outlet."}
+                  </p>
                 </div>
               </div>
 
@@ -1411,6 +1590,61 @@ export function AdminManagementTab({ currentUserId, currentUserRole, onLogout }:
                     className="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0b2f8a]/30 focus:border-[#0b2f8a]"
                   />
                 </div>
+
+                              {/* Role Selection & Store Scoping */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Assigned Role
+                  </label>
+                  <select
+                    disabled={editingAdmin.role === "super_admin"}
+                    value={editRole}
+                    onChange={(e) => {
+                      const r = e.target.value;
+                      setEditRole(r);
+                      if (r === "super_admin") {
+                        setEditAccessType("full");
+                        setEditStoreId(null);
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium text-xs focus:outline-none focus:border-[#0b2f8a] disabled:bg-slate-100 disabled:opacity-60"
+                  >
+                    <optgroup label="System Roles">
+                      <option value="super_admin">👑 Super Admin</option>
+                      <option value="store_admin">🏬 Store Admin</option>
+                      <option value="inventory_admin">📦 Inventory Admin</option>
+                      <option value="order_manager">📑 Order Manager</option>
+                      <option value="customer_support">🎧 Customer Support</option>
+                      <option value="staff">👥 Staff</option>
+                    </optgroup>
+                    {availableRoles && availableRoles.filter(r => !["super_admin", "store_admin", "inventory_admin", "order_manager", "customer_support", "staff"].includes(r.slug)).length > 0 && (
+                      <optgroup label="Custom Roles">
+                        {availableRoles.filter(r => !["super_admin", "store_admin", "inventory_admin", "order_manager", "customer_support", "staff"].includes(r.slug)).map(r => (
+                          <option key={r.id} value={r.slug}>{r.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Assigned Store (Record Scope)
+                  </label>
+                  <select
+                    disabled={editingAdmin.role === "super_admin" || editRole === "super_admin"}
+                    value={editStoreId === null ? "" : editStoreId}
+                    onChange={(e) => setEditStoreId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium text-xs focus:outline-none focus:border-[#0b2f8a] disabled:bg-slate-100 disabled:opacity-60"
+                  >
+                    <option value="">🌐 All Stores / Central Unrestricted</option>
+                    {availableStores && availableStores.map(s => (
+                      <option key={s.id} value={s.id}>📍 {s.name} ({s.city})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
                 {editingAdmin.role !== "super_admin" ? (
                   <div>

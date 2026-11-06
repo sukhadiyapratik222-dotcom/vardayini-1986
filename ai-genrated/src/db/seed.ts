@@ -1,3 +1,4 @@
+import { SYSTEM_ROLES, ALL_PERMISSIONS } from "@/lib/rbac";
 import bcrypt from "bcryptjs";
 import { eq, like, or, sql } from "drizzle-orm";
 import { db, ensureDbMigrations } from "@/db";
@@ -995,14 +996,29 @@ async function seedInternal() {
 
   async function ensureRbacAndPages() {
     try {
-      // 1. Roles
-      const existingRoles = await db.select({ id: roles.id }).from(roles).limit(1);
-      if (existingRoles.length === 0) {
-        await db.insert(roles).values([
-          { name: "Super Administrator", slug: "super_admin", description: "Owner with full unrestricted system control" },
-          { name: "Administrator", slug: "admin", description: "Standard administrator with management permissions" },
-          { name: "Customer", slug: "customer", description: "Storefront registered customer" },
-        ]);
+      // 1. Seed System Roles & Hierarchy
+      for (const r of SYSTEM_ROLES) {
+        const [existing] = await db.select().from(roles).where(eq(roles.slug, r.slug)).limit(1);
+        if (!existing) {
+          await db.insert(roles).values({
+            name: r.name,
+            slug: r.slug,
+            description: r.description,
+            isActive: true,
+            isSystem: r.isSystem,
+          });
+        }
+      }
+      // Also ensure standard legacy admin role exists for backward compatibility
+      const [existingAdminRole] = await db.select().from(roles).where(eq(roles.slug, "admin")).limit(1);
+      if (!existingAdminRole) {
+        await db.insert(roles).values({
+          name: "Administrator",
+          slug: "admin",
+          description: "Standard administrator with assigned permissions",
+          isActive: true,
+          isSystem: false,
+        });
       }
 
       // 2. Comprehensive 21-Module Permissions System
@@ -1086,23 +1102,53 @@ async function seedInternal() {
         }
       }
 
-      // 3. Link permissions to Super Admin role
-      const superAdminRole = await db.select().from(roles).where(eq(roles.slug, "super_admin")).limit(1);
-      if (superAdminRole.length > 0) {
-        const allPerms = await db.select().from(permissions);
-        for (const p of allPerms) {
-          const check = await db
+      // Seed all 78 granular module-action RBAC permissions
+      for (const p of ALL_PERMISSIONS) {
+        if (!existingSlugSet.has(p.slug)) {
+          await db.insert(permissions).values({
+            name: p.name,
+            slug: p.slug,
+            module: p.module,
+            action: p.action,
+            description: p.description,
+          });
+          existingSlugSet.add(p.slug);
+        }
+      }
+
+      // 3. Link permissions to System Roles
+      const allDbPerms = await db.select().from(permissions);
+      const permBySlug = new Map(allDbPerms.map((p) => [p.slug, p.id]));
+
+      for (const sysRole of SYSTEM_ROLES) {
+        const [dbRole] = await db.select().from(roles).where(eq(roles.slug, sysRole.slug)).limit(1);
+        if (!dbRole) continue;
+
+        const targetPermIds: number[] = [];
+        if (sysRole.slug === "super_admin" || sysRole.defaultPermissions.includes("*")) {
+          targetPermIds.push(...allDbPerms.map((p) => p.id));
+        } else {
+          for (const slug of sysRole.defaultPermissions) {
+            const pid = permBySlug.get(slug);
+            if (pid) targetPermIds.push(pid);
+          }
+        }
+
+        for (const pid of targetPermIds) {
+          const [hasLink] = await db
             .select()
             .from(rolePermissions)
             .where(
-              sql`${rolePermissions.roleId} = ${superAdminRole[0].id} AND ${rolePermissions.permissionId} = ${p.id}`
+              sql`${rolePermissions.roleId} = ${dbRole.id} AND ${rolePermissions.permissionId} = ${pid}`
             )
             .limit(1);
-          if (check.length === 0) {
-            await db.insert(rolePermissions).values({
-              roleId: superAdminRole[0].id,
-              permissionId: p.id,
-            });
+          if (!hasLink) {
+            try {
+              await db.insert(rolePermissions).values({
+                roleId: dbRole.id,
+                permissionId: pid,
+              });
+            } catch {}
           }
         }
       }

@@ -1149,11 +1149,21 @@ export const api = {
   },
 
   // RBAC: Administrator Management (Super Admin)
-  async getAdmins(): Promise<{ admins: AdminItem[]; availablePermissions: PermissionOption[] }> {
+  async getAdmins(): Promise<{
+    admins: AdminItem[];
+    availablePermissions: PermissionOption[];
+    availableStores?: { id: number; name: string; city?: string }[];
+    availableRoles?: any[];
+  }> {
     const res = await fetch(`${PROXY_BASE}/api/admin/admins`, {
       cache: "no-store",
     });
-    return handleResponse<{ admins: AdminItem[]; availablePermissions: PermissionOption[] }>(
+    return handleResponse<{
+      admins: AdminItem[];
+      availablePermissions: PermissionOption[];
+      availableStores?: { id: number; name: string; city?: string }[];
+      availableRoles?: any[];
+    }>(
       res,
       "Failed to load administrators"
     );
@@ -1165,6 +1175,7 @@ export const api = {
     phone?: string;
     password: string;
     role?: string;
+    storeId?: number | null;
     accessType?: "full" | "custom";
     permissions?: string[];
     mustChangePassword?: boolean;
@@ -1182,6 +1193,8 @@ export const api = {
     name?: string;
     email?: string;
     phone?: string;
+    role?: string;
+    storeId?: number | null;
     status?: "active" | "inactive";
     accessType?: "full" | "custom";
     permissions?: string[];
@@ -1209,6 +1222,136 @@ export const api = {
       body: JSON.stringify({ adminId, newPassword }),
     });
     return handleResponse<{ success: boolean; temporaryPassword?: string }>(res, "Failed to reset password");
+  },
+
+  // Dynamic Role Management
+  async getRoles(): Promise<{ roles: RoleItem[] }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/roles`, { cache: "no-store" });
+    return handleResponse<{ roles: RoleItem[] }>(res, "Failed to load roles");
+  },
+
+  async createRole(payload: {
+    name: string;
+    slug?: string;
+    description?: string;
+    permissions: string[];
+  }): Promise<{ success: boolean; role: RoleItem }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/roles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<{ success: boolean; role: RoleItem }>(res, "Failed to create role");
+  },
+
+  async updateRole(payload: {
+    id: number;
+    name?: string;
+    description?: string;
+    isActive?: boolean;
+    permissions?: string[];
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/roles`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<{ success: boolean; message: string }>(res, "Failed to update role");
+  },
+
+  async deleteRole(id: number): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/roles?id=${id}`, {
+      method: "DELETE",
+    });
+    return handleResponse<{ success: boolean; message: string }>(res, "Failed to delete role");
+  },
+
+  // Granular Module-Wise Permissions (78 items)
+  async getPermissions(): Promise<{
+    modules: any[];
+    actions: any[];
+    grouped: any[];
+    allPermissions: any[];
+  }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/permissions`, { cache: "no-store" });
+    return handleResponse<any>(res, "Failed to load permissions matrix");
+  },
+
+  // Approval Workflow
+  async getApprovals(status?: string): Promise<{ approvals: ApprovalItem[]; pendingCount: number }> {
+    const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+    const res = await fetch(`${PROXY_BASE}/api/admin/approvals${qs}`, { cache: "no-store" });
+    return handleResponse<{ approvals: ApprovalItem[]; pendingCount: number }>(res, "Failed to load approvals");
+  },
+
+  async submitApproval(payload: {
+    requestType: string;
+    module: string;
+    recordId?: number;
+    description: string;
+    payload?: any;
+  }): Promise<{ success: boolean; message: string; id: number }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/approvals`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<any>(res, "Failed to submit approval request");
+  },
+
+  async reviewApproval(payload: {
+    id: number;
+    status: "approved" | "rejected";
+    reviewNote?: string;
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/approvals`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<{ success: boolean; message: string }>(res, "Failed to review approval request");
+  },
+
+  // Security: Active Sessions & Login History
+  async getActiveSessions(): Promise<{ sessions: SessionItem[] }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/security/sessions`, { cache: "no-store" });
+    return handleResponse<{ sessions: SessionItem[] }>(res, "Failed to load active sessions");
+  },
+
+  async revokeSession(id: number): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/security/sessions?id=${id}`, {
+      method: "DELETE",
+    });
+    return handleResponse<{ success: boolean; message: string }>(res, "Failed to revoke session");
+  },
+
+  async getSecurityHistory(): Promise<{ history: SecurityHistoryItem[] }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/security/history`, { cache: "no-store" });
+    return handleResponse<{ history: SecurityHistoryItem[] }>(res, "Failed to load security history");
+  },
+
+  // Security: 2FA TOTP
+  async getTwoFactorStatus(): Promise<{
+    enabled: boolean;
+    method: string;
+    secret: string;
+    otpAuthUrl: string | null;
+  }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/security/2fa`, { cache: "no-store" });
+    return handleResponse<any>(res, "Failed to load 2FA settings");
+  },
+
+  async updateTwoFactor(payload: {
+    action: "enable" | "disable";
+    secret?: string;
+    token?: string;
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/security/2fa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<{ success: boolean; message: string }>(res, "Failed to update 2FA");
   },
 
   // RBAC: Audit Activity Logs (Super Admin)
@@ -1562,10 +1705,15 @@ export interface AdminItem {
   email: string;
   phone?: string | null;
   role: "super_admin" | "admin" | string;
+  roleName?: string;
+  storeId?: number | null;
+  storeName?: string;
+  twoFactorEnabled?: boolean;
   status: "active" | "inactive";
   mustChangePassword?: boolean;
   accessType?: "full" | "custom";
   permissions?: string[];
+  lastLoginAt?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -1644,4 +1792,57 @@ export interface ReportProductSaleItem {
   totalRevenue: number;
   totalOrdersPlaced: number;
   avgSellingPrice: number;
+}
+
+export interface RoleItem {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  isActive: boolean;
+  isSystem: boolean;
+  permissions: string[];
+  userCount: number;
+  createdAt: string;
+}
+
+export interface ApprovalItem {
+  id: number;
+  requesterId: number;
+  requesterName: string;
+  requestType: string;
+  module: string;
+  recordId?: number | null;
+  description: string;
+  payload?: any;
+  status: "pending" | "approved" | "rejected";
+  reviewerId?: number | null;
+  reviewerName?: string | null;
+  reviewNote?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+}
+
+export interface SessionItem {
+  id: number;
+  userId: number;
+  userName?: string | null;
+  userEmail?: string | null;
+  userRole?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  expiresAt: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SecurityHistoryItem {
+  id: number;
+  userId?: number | null;
+  email: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  status: string;
+  reason?: string | null;
+  createdAt: string;
 }

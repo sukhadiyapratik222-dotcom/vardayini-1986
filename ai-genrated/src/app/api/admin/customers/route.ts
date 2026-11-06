@@ -45,8 +45,13 @@ export async function GET(request: Request) {
               passwordHash: u.passwordHash || "",
               mustChangePassword: Boolean(u.mustChangePassword),
               accessType: u.accessType || "full",
-              createdAt: u.createdAt || new Date().toISOString(),
-            }));
+              storeId: u.storeId || null,
+              twoFactorEnabled: Boolean(u.twoFactorEnabled),
+              twoFactorSecret: u.twoFactorSecret || null,
+              twoFactorMethod: u.twoFactorMethod || "totp",
+              lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt) : null,
+              createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
+            })) as any;
           }
         }
       } catch (mErr) {

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { and, eq, inArray, or, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, getSqliteDb } from "@/db";
-import { users, adminPermissions, permissions as permissionsTable, addresses, cartItems, wishlistItems, reviews, orders } from "@/db/schema";
+import { users, stores, roles, rolePermissions, adminPermissions, permissions as permissionsTable, addresses, cartItems, wishlistItems, reviews, orders } from "@/db/schema";
 import { requireSuperAdmin, logActivity } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -83,10 +83,13 @@ export async function GET(req: Request) {
         status: users.status,
         mustChangePassword: users.mustChangePassword,
         accessType: users.accessType,
+        storeId: users.storeId,
+        twoFactorEnabled: users.twoFactorEnabled,
+        lastLoginAt: users.lastLoginAt,
         createdAt: users.createdAt,
       })
       .from(users)
-      .where(or(eq(users.role, "admin"), eq(users.role, "super_admin")));
+      .where(ne(users.role, "customer"));
 
     // Fetch custom permissions for custom-access admins
     const customAdminIds = adminRows
@@ -108,17 +111,52 @@ export async function GET(req: Request) {
     }
 
     const availablePermissions = await db.select().from(permissionsTable);
+    const availableStores = await db.select({ id: stores.id, name: stores.name, city: stores.city }).from(stores);
+    const availableRoles = await db.select().from(roles);
 
-    const admins = adminRows.map((a) => ({
-      ...a,
-      mustChangePassword: Boolean(a.mustChangePassword),
-      permissions:
-        a.role === "super_admin" || a.accessType === "full"
-          ? ["*"]
-          : permsMap.get(a.id) || [],
-    }));
+    // Map role permissions for all roles
+    const allRolePermRows = await db
+      .select({ roleId: rolePermissions.roleId, slug: permissionsTable.slug })
+      .from(rolePermissions)
+      .innerJoin(permissionsTable, eq(rolePermissions.permissionId, permissionsTable.id));
 
-    return NextResponse.json({ admins, availablePermissions });
+    const rolePermMap = new Map<number, string[]>();
+    for (const rp of allRolePermRows) {
+      const list = rolePermMap.get(rp.roleId) || [];
+      list.push(rp.slug);
+      rolePermMap.set(rp.roleId, list);
+    }
+    const roleBySlug = new Map(availableRoles.map((r) => [r.slug, r]));
+
+    const admins = adminRows.map((a) => {
+      let perms: string[] = [];
+      if (a.role === "super_admin") {
+        perms = ["*"];
+      } else {
+        const rObj = roleBySlug.get(a.role);
+        if (rObj) {
+          perms.push(...(rolePermMap.get(rObj.id) || []));
+        }
+        perms.push(...(permsMap.get(a.id) || []));
+        if (a.role === "admin" && a.accessType === "full") {
+          perms = ["*"];
+        }
+      }
+
+      return {
+        ...a,
+        mustChangePassword: Boolean(a.mustChangePassword),
+        twoFactorEnabled: Boolean(a.twoFactorEnabled),
+        permissions: Array.from(new Set(perms)),
+      };
+    });
+
+    return NextResponse.json({
+      admins,
+      availablePermissions,
+      availableStores,
+      availableRoles,
+    });
   } catch (err) {
     console.error("[GetAdmins] Error:", err);
     return NextResponse.json({ error: "Failed to fetch admin accounts" }, { status: 500 });
@@ -137,7 +175,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, email, phone, password, accessType = "full", permissions = [] } = body;
+    const { name, email, phone, password, role = "admin", storeId = null, accessType = "full", permissions = [] } = body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "Admin name is required" }, { status: 400 });
@@ -170,17 +208,18 @@ export async function POST(req: Request) {
     const sqlite = getSqliteDb();
 
     const insertResult = sqlite.prepare(`
-      INSERT INTO users (name, email, phone, password_hash, role, status, must_change_password, access_type, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO users (name, email, phone, password_hash, role, status, must_change_password, access_type, store_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `).run(
       name.trim(),
       cleanEmail,
       (phone || "9000000000").trim(),
       passwordHash,
-      "admin",
+      role.trim() || "admin",
       "active",
       1,
-      accessType === "custom" ? "custom" : "full"
+      accessType === "custom" ? "custom" : "full",
+      storeId ? Number(storeId) : null
     );
 
     const newAdminId = Number(insertResult.lastInsertRowid);
@@ -320,13 +359,22 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
 
-    // Privilege escalation protection: Super Admin cannot be deactivated or altered into regular admin
+    // Prevent suspension or demotion of the last active Super Admin
     if (target.role === "super_admin") {
-      if (status && status !== "active") {
-        return NextResponse.json(
-          { error: "Super Admin account cannot be deactivated." },
-          { status: 403 }
-        );
+      const isDemoting = body.role && body.role !== "super_admin";
+      const isSuspending = status && status === "inactive";
+      if (isDemoting || isSuspending) {
+        const activeSuperAdmins = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.role, "super_admin"), eq(users.status, "active")));
+
+        if (activeSuperAdmins.length <= 1) {
+          return NextResponse.json(
+            { error: "Cannot delete, suspend, or demote the only active Super Admin." },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -361,6 +409,19 @@ export async function PUT(req: Request) {
 
     if (accessType && ["full", "custom"].includes(accessType) && target.role !== "super_admin") {
       updateFields.accessType = accessType;
+    }
+
+    if (body.role && typeof body.role === "string" && target.role !== "super_admin") {
+      updateFields.role = body.role.trim();
+    }
+
+    if (body.storeId !== undefined) {
+      updateFields.storeId = body.storeId ? Number(body.storeId) : null;
+    }
+
+    if (body.password && typeof body.password === "string" && body.password.length >= 6) {
+      updateFields.passwordHash = await bcrypt.hash(body.password, 10);
+      updateFields.mustChangePassword = 1;
     }
 
     if (typeof mustChangePassword === "boolean") {
@@ -495,12 +556,19 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
 
-    // Crucial rule: Super Admin CANNOT be deleted
+    // Crucial rule: The last active Super Admin CANNOT be deleted
     if (target.role === "super_admin") {
-      return NextResponse.json(
-        { error: "Forbidden: Super Admin account cannot be deleted." },
-        { status: 403 }
-      );
+      const activeSuperAdmins = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.role, "super_admin"), eq(users.status, "active")));
+
+      if (activeSuperAdmins.length <= 1) {
+        return NextResponse.json(
+          { error: "Cannot delete or suspend the only active Super Admin." },
+          { status: 400 }
+        );
+      }
     }
 
     if (target.id === auth.user.id) {

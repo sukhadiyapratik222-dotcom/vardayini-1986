@@ -177,6 +177,9 @@ describe("Product Add, Remove & Inventory Validation Tests", () => {
 
       // Simulate existing order for this variant
       const [orderRes] = await db.insert(orders).values({
+        addressSnapshot: "Vadodara",
+        deliverySlot: "Standard",
+        paymentMethod: "cod",
         orderNumber: `VSM-TEST-${Date.now()}`,
         status: "delivered",
         subtotal: 550,
@@ -186,15 +189,14 @@ describe("Product Add, Remove & Inventory Validation Tests", () => {
       const orderId = Number((orderRes as any).insertId);
 
       await db.insert(orderItems).values({
+        imageUrl: "",
         orderId,
-        productId: prodId,
         variantId: varId,
         productName: testName,
         variantWeight: "500g",
         unitPrice: 550,
         quantity: 1,
-        totalPrice: 550,
-      });
+      } as any);
 
       // Now attempt delete
       const delReq = buildRequest({

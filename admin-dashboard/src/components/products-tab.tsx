@@ -241,8 +241,10 @@ export function ProductsTab({
 
   const handleAddNewPackRow = () => {
     const lastVar = localVariants[localVariants.length - 1];
-    const defaultPrice = lastVar ? (lastVar.price > 0 ? Math.round(lastVar.price * 1.8) : 350) : 350;
-    const defaultDiscounted = lastVar && lastVar.discountedPrice ? Math.round(lastVar.discountedPrice * 1.8) : Math.round(defaultPrice * 0.9);
+    const defaultPrice = lastVar ? (lastVar.price > 0 ? Math.max(100, Math.round(lastVar.price * 1.8)) : 350) : 350;
+    const defaultDiscounted = lastVar && lastVar.discountedPrice && lastVar.discountedPrice > 0
+      ? Math.max(90, Math.round(lastVar.discountedPrice * 1.8))
+      : Math.max(90, Math.round(defaultPrice * 0.9));
 
     setLocalVariants((prev) => [
       ...prev,
@@ -324,13 +326,13 @@ export function ProductsTab({
         toast.error(`Pack size ${i + 1}: Please specify a weight (e.g. 500g, 1 kg)`);
         return;
       }
-      if (v.price < 0 || isNaN(v.price)) {
-        toast.error(`Pack size ${i + 1} (${v.weight}): Original Price (MRP) cannot be negative or invalid`);
+      if (!v.price || v.price <= 0 || isNaN(v.price)) {
+        toast.error(`Pack size ${i + 1} (${v.weight}): Original Price (MRP) must be greater than zero`);
         return;
       }
       if (v.discountedPrice !== null && v.discountedPrice !== undefined) {
-        if (v.discountedPrice < 0 || isNaN(v.discountedPrice)) {
-          toast.error(`Pack size ${i + 1} (${v.weight}): Selling price cannot be negative`);
+        if (v.discountedPrice <= 0 || isNaN(v.discountedPrice)) {
+          toast.error(`Pack size ${i + 1} (${v.weight}): Selling price must be greater than zero`);
           return;
         }
         if (v.discountedPrice > v.price) {
@@ -591,13 +593,13 @@ export function ProductsTab({
         toast.error(`Pack ${i + 1}: Please enter a weight (e.g. 250g, 500g)`);
         return;
       }
-      if (p.price < 0 || isNaN(p.price)) {
-        toast.error(`Pack ${i + 1}: MRP must be a positive integer`);
+      if (!p.price || p.price <= 0 || isNaN(p.price)) {
+        toast.error(`Pack ${i + 1}: Original Price (MRP) must be greater than zero`);
         return;
       }
       if (p.discountedPrice !== null && p.discountedPrice !== undefined) {
-        if (p.discountedPrice < 0) {
-          toast.error(`Pack ${i + 1}: Selling price cannot be negative`);
+        if (p.discountedPrice <= 0) {
+          toast.error(`Pack ${i + 1}: Selling price must be greater than zero`);
           return;
         }
         if (p.discountedPrice > p.price) {
