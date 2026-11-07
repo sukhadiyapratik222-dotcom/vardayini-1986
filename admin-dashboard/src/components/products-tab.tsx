@@ -1502,8 +1502,8 @@ export function ProductsTab({
                                 <input
                                   type="number"
                                   min={1}
-                                  value={variant.price === 0 ? "" : variant.price}
-                                  onChange={(e) => handleUpdatePackField(index, "price", Math.max(0, Number(e.target.value)))}
+                                  value={!variant.price || variant.price <= 0 ? "" : variant.price}
+                                  onChange={(e) => handleUpdatePackField(index, "price", e.target.value.trim() === "" ? 0 : Math.max(0, Number(e.target.value)))}
                                   placeholder="350"
                                   className={`w-24 pl-6 pr-2 py-1.5 rounded-lg border text-xs font-mono font-bold text-slate-800 outline-none focus:border-[#0b2f8a] ${
                                     variant.price <= 0 || (selling > variant.price && variant.price > 0)
@@ -1524,7 +1524,7 @@ export function ProductsTab({
                                 <input
                                   type="number"
                                   min={1}
-                                  value={variant.discountedPrice === null ? "" : variant.discountedPrice}
+                                  value={variant.discountedPrice === null || variant.discountedPrice === undefined || variant.discountedPrice <= 0 ? "" : variant.discountedPrice}
                                   onChange={(e) => {
                                     const val = e.target.value.trim() === "" ? null : Math.max(0, Number(e.target.value));
                                     handleUpdatePackField(index, "discountedPrice", val);

@@ -6,16 +6,19 @@ import { buildRequest, setGuestCart, getTestFixtures, mockCookieStore } from "..
 import { db } from "@/db";
 import { coupons, productVariants } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
+import { eq } from "drizzle-orm";
 
 describe("Coupon Validation & Application Logic", () => {
   let variantId: number;
   let variantPrice: number;
+  let productId: number;
 
   beforeEach(async () => {
     await ensureSeeded();
     const fixtures = await getTestFixtures();
     variantId = fixtures.variantKK250.id;
     variantPrice = fixtures.variantKK250.discountedPrice || fixtures.variantKK250.price; // 289
+    productId = fixtures.variantKK250.productId;
 
     mockCookieStore.clear();
     setGuestCart("coupon-test-session");
@@ -44,16 +47,22 @@ describe("Coupon Validation & Application Logic", () => {
     it("verifies percent rounding on FESTIVE10", async () => {
       // Create cart line with subtotal that yields fractional discount
       // E.g. Subtotal 505 -> 10% is 50.5, must round to 51
+      const customSku = `CUSTOM-${Date.now()}`;
       const [varRes] = await db
         .insert(productVariants)
         .values({
-          productId: 1,
+          productId,
           weight: "Custom",
-          sku: `CUSTOM-${Date.now()}`,
+          sku: customSku,
           price: 505,
           stock: 10,
         });
-      const customVariantId = (varRes as any).insertId;
+      const [foundVar] = await db
+        .select({ id: productVariants.id })
+        .from(productVariants)
+        .where(eq(productVariants.sku, customSku))
+        .limit(1);
+      const customVariantId = foundVar?.id || (varRes as any)?.insertId || Number((varRes as any)?.lastInsertRowid);
 
       await clearCartForIdentity();
       await addToCart(customVariantId, 1);

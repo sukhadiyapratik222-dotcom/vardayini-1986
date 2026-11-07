@@ -1,6 +1,7 @@
 import {
   boolean,
   decimal,
+  index,
   int,
   mysqlTable,
   text,
@@ -101,6 +102,9 @@ export const addresses = mysqlTable("addresses", {
   pincode: varchar("pincode", { length: 12 }).notNull(),
   phone: varchar("phone", { length: 20 }).notNull(),
   gstin: varchar("gstin", { length: 20 }),
+  latitude: decimal("latitude", { precision: 10, scale: 6 }),
+  longitude: decimal("longitude", { precision: 10, scale: 6 }),
+  addressType: varchar("address_type", { length: 20 }).notNull().default("home"),
 });
 
 export const orders = mysqlTable("orders", {
@@ -141,6 +145,8 @@ export const orders = mysqlTable("orders", {
   returnStatus: varchar("return_status", { length: 40 }).notNull().default("none"),
   refundStatus: varchar("refund_status", { length: 40 }).notNull().default("none"),
   refundAmount: int("refund_amount").notNull().default(0),
+  distanceKm: decimal("distance_km", { precision: 6, scale: 2 }),
+  assignedStoreId: int("assigned_store_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -264,6 +270,12 @@ export const stores = mysqlTable("stores", {
   slotIntervalMinutes: int("slot_interval_minutes").notNull().default(60),
   slotCapacity: int("slot_capacity").notNull().default(10),
   prepTimeMinutes: int("prep_time_minutes").notNull().default(45),
+  pickupRadiusKm: decimal("pickup_radius_km", { precision: 5, scale: 2 }).notNull().default("10.00"),
+  deliveryEnabled: boolean("delivery_enabled").notNull().default(true),
+  weeklyOff: varchar("weekly_off", { length: 30 }).default(""),
+  deliveryCharge: int("delivery_charge").notNull().default(49),
+  minOrderAmount: int("min_order_amount").notNull().default(0),
+  freeDeliveryThreshold: int("free_delivery_threshold").notNull().default(799),
   isActive: boolean("is_active").notNull().default(true),
   pickupEnabled: boolean("pickup_enabled").notNull().default(true),
   holidays: text("holidays"),
@@ -424,3 +436,29 @@ export const smsLogs = mysqlTable("sms_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+
+export const serviceablePincodes = mysqlTable(
+  "serviceable_pincodes",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pincode: varchar("pincode", { length: 12 }).notNull(),
+    storeId: int("store_id").references(() => stores.id),
+    city: varchar("city", { length: 80 }).notNull().default("Vadodara"),
+    state: varchar("state", { length: 80 }).notNull().default("Gujarat"),
+    deliveryEnabled: boolean("delivery_enabled").notNull().default(true),
+    deliveryCharge: int("delivery_charge").notNull().default(49),
+    minimumOrder: int("minimum_order").notNull().default(0),
+    estimatedDeliveryTime: varchar("estimated_delivery_time", { length: 100 }).notNull().default("Today by 6:30 PM"),
+    isExpress: boolean("is_express").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("idx_serv_pincode").on(table.pincode), index("idx_serv_store_id").on(table.storeId)]
+);
+
+export const unserviceablePincodeLogs = mysqlTable("unserviceable_pincode_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  pincode: varchar("pincode", { length: 12 }).notNull(),
+  ipAddress: varchar("ip_address", { length: 64 }),
+  source: varchar("source", { length: 40 }).default("checkout"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

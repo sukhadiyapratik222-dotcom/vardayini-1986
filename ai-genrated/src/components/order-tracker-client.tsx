@@ -87,7 +87,7 @@ export function formatAddressString(raw?: any): string {
   let target = raw;
 
   // Unwrap any JSON string layers
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     if (typeof target === "string") {
       const trimmed = target.trim();
       if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
@@ -105,13 +105,15 @@ export function formatAddressString(raw?: any): string {
   }
 
   if (target && typeof target === "object") {
-    const rawLine = (target.line1 || target.address || target.street || "").trim();
+    const rawLine = (target.line1 || target.address || target.street || target.addressLine1 || "").trim();
     const line1 = rawLine.replace(/,\s*/g, ", ").trim();
+    const line2 = (target.line2 || target.addressLine2 || "").trim();
+    const landmark = target.landmark ? `Near ${target.landmark}` : "";
     const city = (target.city || "").trim();
     const state = (target.state || "").trim();
     const pincode = (target.pincode || "").trim();
 
-    const parts = [line1, city, state].filter(Boolean);
+    const parts = [line1, line2, landmark, city, state].filter(Boolean);
     if (parts.length > 0) {
       return pincode ? `${parts.join(", ")} - ${pincode}` : parts.join(", ");
     }
@@ -120,20 +122,20 @@ export function formatAddressString(raw?: any): string {
 
   const s = String(raw).trim();
   // If string contains raw JSON tokens like {"name":...}, extract cleanly
-  if (s.includes("{") && s.includes("line1")) {
+  if (s.includes("{")) {
     try {
-      const lineMatch = s.match(/"line1"\s*:\s*"([^"]+)"/);
+      const lineMatch = s.match(/"(?:line1|address|street)"\s*:\s*"([^"]+)"/);
       const cityMatch = s.match(/"city"\s*:\s*"([^"]+)"/);
       const stateMatch = s.match(/"state"\s*:\s*"([^"]+)"/);
       const pinMatch = s.match(/"pincode"\s*:\s*"([^"]+)"/);
-      const parts = [lineMatch?.[1], cityMatch?.[1], stateMatch?.[1]].filter(Boolean);
+      const parts = [lineMatch?.[1]?.replace(/,\s*/g, ", "), cityMatch?.[1], stateMatch?.[1]].filter(Boolean);
       if (parts.length > 0) {
         return pinMatch?.[1] ? `${parts.join(", ")} - ${pinMatch[1]}` : parts.join(", ");
       }
     } catch {}
   }
 
-  return s.startsWith("{") ? "Vadodara, Gujarat" : s;
+  return (s.startsWith("{") || s.includes('"line1"')) ? "Vadodara, Gujarat" : s;
 }
 
 export function OrderTrackerClient() {

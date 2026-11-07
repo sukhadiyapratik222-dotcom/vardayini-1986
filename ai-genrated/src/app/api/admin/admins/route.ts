@@ -359,22 +359,21 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
 
-    // Prevent suspension or demotion of the last active Super Admin
+    // Super Admin Immunity Protection
     if (target.role === "super_admin") {
-      const isDemoting = body.role && body.role !== "super_admin";
       const isSuspending = status && status === "inactive";
-      if (isDemoting || isSuspending) {
-        const activeSuperAdmins = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(and(eq(users.role, "super_admin"), eq(users.status, "active")));
-
-        if (activeSuperAdmins.length <= 1) {
-          return NextResponse.json(
-            { error: "Cannot delete, suspend, or demote the only active Super Admin." },
-            { status: 400 }
-          );
-        }
+      if (isSuspending) {
+        return NextResponse.json(
+          { error: "Super Admin cannot be deactivated." },
+          { status: 403 }
+        );
+      }
+      const isDemoting = body.role && body.role !== "super_admin";
+      if (isDemoting) {
+        return NextResponse.json(
+          { error: "Super Admin role cannot be demoted." },
+          { status: 403 }
+        );
       }
     }
 
@@ -556,19 +555,12 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Admin account not found" }, { status: 404 });
     }
 
-    // Crucial rule: The last active Super Admin CANNOT be deleted
+    // Crucial rule: Super Admin CANNOT be deleted
     if (target.role === "super_admin") {
-      const activeSuperAdmins = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.role, "super_admin"), eq(users.status, "active")));
-
-      if (activeSuperAdmins.length <= 1) {
-        return NextResponse.json(
-          { error: "Cannot delete or suspend the only active Super Admin." },
-          { status: 400 }
-        );
-      }
+      return NextResponse.json(
+        { error: "Super Admin account is immune and cannot be deleted." },
+        { status: 403 }
+      );
     }
 
     if (target.id === auth.user.id) {

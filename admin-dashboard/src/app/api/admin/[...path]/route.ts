@@ -48,3 +48,16 @@ export async function HEAD(req: NextRequest, ctx: RouteContext) {
   return storeHead(req, { params: wrappedParams });
 }
 
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, x-admin-key, x-admin-role, x-admin-email, cookie, x-api-key, accept",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+

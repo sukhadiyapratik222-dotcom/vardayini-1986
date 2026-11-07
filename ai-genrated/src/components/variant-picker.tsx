@@ -26,15 +26,17 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
   if (!selected) return null;
   const sellingPrice = unitPrice(selected.price, selected.discountedPrice);
 
-  // Requirements 3 & 5: Show original price with strikethrough ONLY when greater than selling price.
-  // If original price and selling price are identical, hide the original price and discount badge.
-  const rawOriginalPrice = selected.discountedPrice ? selected.price : null;
-  const hasDiscount = Boolean(rawOriginalPrice && rawOriginalPrice > sellingPrice);
-  const originalPrice = hasDiscount ? rawOriginalPrice : null;
+  // Requirements 3 & 5: Show original price with strikethrough ONLY when strictly greater than selling price.
+  // If original price and selling price are identical, hide the original price and discount badge completely.
+  const rawOriginalPrice = (selected as any).originalPrice || (selected as any).mrp || (selected.discountedPrice ? selected.price : null);
+  const numSelling = Number(sellingPrice);
+  const numOriginal = rawOriginalPrice ? Number(rawOriginalPrice) : null;
+  const hasDiscount = Boolean(numOriginal && !isNaN(numOriginal) && numOriginal > numSelling);
+  const originalPrice = hasDiscount ? numOriginal : null;
 
   // Requirement 4: Calculate the discount percentage automatically
   const discountPercent = hasDiscount && originalPrice
-    ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+    ? Math.round(((originalPrice - numSelling) / originalPrice) * 100)
     : 0;
 
   // Requirement 1: Display the selected product pack size clearly (e.g. Standard Pack • 1 kg)

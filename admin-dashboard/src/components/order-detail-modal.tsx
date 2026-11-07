@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   api,
+  formatAddressSnapshot,
   FullOrderDetail,
   OrderItem,
   OrderStatusHistoryItem,
@@ -721,18 +722,7 @@ export function OrderDetailModal({
                         <div>
                           <span className="text-slate-500 block font-medium">Shipping Address:</span>
                           <p className="font-semibold text-slate-800 leading-snug">
-                            {[
-                              order.parsedAddress?.line1 || order.parsedAddress?.addressLine1,
-                              order.parsedAddress?.line2 || order.parsedAddress?.addressLine2,
-                              order.parsedAddress?.landmark && `Near ${order.parsedAddress.landmark}`,
-                              order.parsedAddress?.city,
-                              order.parsedAddress?.state,
-                              order.parsedAddress?.pincode,
-                            ]
-                              .filter(Boolean)
-                              .join(", ") ||
-                              order.addressSnapshot ||
-                              "Address on file"}
+                            {formatAddressSnapshot(order.parsedAddress || order.addressSnapshot)}
                           </p>
                         </div>
 

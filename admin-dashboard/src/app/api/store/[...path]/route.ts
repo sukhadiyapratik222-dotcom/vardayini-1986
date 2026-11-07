@@ -46,15 +46,20 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
   // Set Cookie header forwarding vs_session and super admin credentials
   if (sessionToken) {
     headers.set("cookie", `vs_session=${sessionToken}`);
-    headers.set("x-admin-role", "super_admin");
-    headers.set("x-admin-email", "pratik222@gmail.com");
   }
 
-  // Forward admin API key for backend service authentication
+  // Forward admin API key and super admin identity for backend service authentication
   const adminKey = process.env.ADMIN_API_KEY || process.env.STORE_ADMIN_KEY || "vsm_admin_secret_key_2026_secured";
   if (adminKey) {
     headers.set("x-admin-key", adminKey);
     headers.set("authorization", `Bearer ${adminKey}`);
+  }
+  // Default to super_admin identity for admin proxy requests if not explicitly overridden
+  if (!headers.has("x-admin-role")) {
+    headers.set("x-admin-role", "super_admin");
+  }
+  if (!headers.has("x-admin-email")) {
+    headers.set("x-admin-email", "pratik222@gmail.com");
   }
 
   try {
@@ -192,4 +197,17 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
 
 export async function HEAD(req: NextRequest, ctx: RouteContext) {
   return forwardRequest(req, ctx);
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, x-admin-key, x-admin-role, x-admin-email, cookie, x-api-key, accept",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
 }

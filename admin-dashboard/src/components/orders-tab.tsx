@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { OrderItem, api } from "@/lib/api";
+import { OrderItem, api, formatAddressSnapshot } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { TablePagination } from "./table-pagination";
 import { OrderDetailModal } from "./order-detail-modal";
@@ -37,14 +37,7 @@ const ALL_STATUSES = [
 
 /** Parse the JSON address snapshot into a human-readable string */
 function parseAddress(raw: string | null | undefined): string {
-  if (!raw) return "";
-  try {
-    const p = typeof raw === "string" ? JSON.parse(raw) : raw;
-    if (p && typeof p === "object") {
-      return [p.line1, p.city, p.state, p.pincode].filter(Boolean).join(", ");
-    }
-  } catch { /* not JSON */ }
-  return raw;
+  return formatAddressSnapshot(raw);
 }
 
 export function getOrderCustomerName(o: OrderItem): string {

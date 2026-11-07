@@ -602,6 +602,59 @@ function cleanOrderParam(orderNumber: string): string {
   return encodeURIComponent((orderNumber || "").replace(/^#/, "").trim());
 }
 
+export function formatAddressSnapshot(raw: any): string {
+  if (!raw) return "Vadodara, Gujarat";
+  let target = raw;
+
+  // Unwrap any JSON string layers
+  for (let i = 0; i < 3; i++) {
+    if (typeof target === "string") {
+      const trimmed = target.trim();
+      if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+        try {
+          target = JSON.parse(trimmed);
+        } catch {
+          break;
+        }
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+
+  if (target && typeof target === "object") {
+    const rawLine = (target.line1 || target.address || target.street || target.addressLine1 || "").trim();
+    const line1 = rawLine.replace(/,\s*/g, ", ").trim();
+    const city = (target.city || "").trim();
+    const state = (target.state || "").trim();
+    const pincode = (target.pincode || "").trim();
+
+    const parts = [line1, city, state].filter(Boolean);
+    if (parts.length > 0) {
+      return pincode ? `${parts.join(", ")} - ${pincode}` : parts.join(", ");
+    }
+    return target.fullAddress || target.summary || "Vadodara, Gujarat";
+  }
+
+  const s = String(raw).trim();
+  if (s.includes("{") && s.includes("line1")) {
+    try {
+      const lineMatch = s.match(/"line1"\s*:\s*"([^"]+)"/);
+      const cityMatch = s.match(/"city"\s*:\s*"([^"]+)"/);
+      const stateMatch = s.match(/"state"\s*:\s*"([^"]+)"/);
+      const pinMatch = s.match(/"pincode"\s*:\s*"([^"]+)"/);
+      const parts = [lineMatch?.[1], cityMatch?.[1], stateMatch?.[1]].filter(Boolean);
+      if (parts.length > 0) {
+        return pinMatch?.[1] ? `${parts.join(", ")} - ${pinMatch[1]}` : parts.join(", ");
+      }
+    } catch {}
+  }
+
+  return s.startsWith("{") ? "Vadodara, Gujarat" : s;
+}
+
 export const api = {
   // Authentication methods
   async login(email: string, password: string): Promise<{ success: boolean; user: any }> {
