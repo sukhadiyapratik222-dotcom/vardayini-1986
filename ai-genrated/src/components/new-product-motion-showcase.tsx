@@ -124,37 +124,43 @@ export function NewProductMotionShowcase({
   // Filter products based on active tab
   const filteredProducts = products.filter((p) => {
     if (activeTab === "all") return true;
+    const catSlug = (p.categorySlug || "").toLowerCase();
+    const pTags = (p.tags || "").toLowerCase();
+    const pName = (p.name || "").toLowerCase();
+
     if (activeTab === "sweets") {
       return (
-        p.categorySlug.includes("kaju") ||
-        p.categorySlug.includes("mawa") ||
-        p.categorySlug.includes("penda") ||
-        p.categorySlug.includes("ghee")
+        catSlug.includes("kaju") ||
+        catSlug.includes("mawa") ||
+        catSlug.includes("penda") ||
+        catSlug.includes("ghee") ||
+        catSlug.includes("sweet")
       );
     }
     if (activeTab === "farsan") {
       return (
-        p.categorySlug.includes("namkeen") ||
-        p.categorySlug.includes("khakhra") ||
-        p.categorySlug.includes("sev") ||
-        p.categorySlug.includes("farali") ||
-        p.categorySlug.includes("roasted") ||
-        p.categorySlug.includes("millet")
+        catSlug.includes("namkeen") ||
+        catSlug.includes("khakhra") ||
+        catSlug.includes("sev") ||
+        catSlug.includes("farali") ||
+        catSlug.includes("roasted") ||
+        catSlug.includes("millet") ||
+        catSlug.includes("farsan")
       );
     }
     if (activeTab === "sugarless") {
-      return p.categorySlug.includes("sugarless") || p.tags.toLowerCase().includes("sugarless");
+      return catSlug.includes("sugarless") || pTags.includes("sugarless");
     }
     if (activeTab === "hampers") {
-      return p.categorySlug.includes("packed") || p.name.toLowerCase().includes("hamper") || p.name.toLowerCase().includes("box");
+      return catSlug.includes("packed") || pName.includes("hamper") || pName.includes("box");
     }
     return true;
   });
 
   // Flagship Hero Product (First featured sweet or default to first product)
-  const heroProduct = products.find((p) => p.name.toLowerCase().includes("kaju katli")) || products[0];
+  const heroProduct = (products || []).find((p) => (p.name || "").toLowerCase().includes("kaju katli")) || products?.[0];
   const [heroVariantIdx, setHeroVariantIdx] = useState(0);
-  const heroVariant = heroProduct?.variants[heroVariantIdx] || heroProduct?.variants[0];
+  const heroVariant = heroProduct?.variants?.[heroVariantIdx] || heroProduct?.variants?.[0];
   const heroPrice = heroVariant
     ? unitPrice(heroVariant.price, heroVariant.discountedPrice)
     : heroProduct?.fromPrice || 0;
@@ -336,7 +342,7 @@ export function NewProductMotionShowcase({
                   </div>
 
                   {/* Variant Selector Tabs */}
-                  {heroProduct.variants.length > 0 && (
+                  {heroProduct?.variants && heroProduct.variants.length > 0 && (
                     <div className="space-y-1.5">
                       <p className="text-xs font-semibold text-slate-700">Select Packaging Weight:</p>
                       <div className="flex flex-wrap gap-2">
@@ -429,7 +435,7 @@ export function NewProductMotionShowcase({
         {/* Infinite Marquee Track */}
         <div className="relative w-full overflow-hidden">
           <div className="animate-marquee gap-5 py-2">
-            {[...products, ...products].slice(0, 16).map((product, idx) => (
+            {[...(products || []), ...(products || [])].slice(0, 16).map((product, idx) => (
               <button
                 key={`${product.id}-${idx}`}
                 type="button"

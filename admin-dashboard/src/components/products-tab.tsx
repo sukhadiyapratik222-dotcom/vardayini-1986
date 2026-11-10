@@ -17,7 +17,18 @@ interface ProductsTabProps {
   onRefresh: () => void;
 }
 
-export function getDepartmentForCategory(categoryNameOrSlug: string): "Sweets" | "Namkeen" | "Bakery" {
+export function getDepartmentForCategory(categoryNameOrSlug: string, categoryId?: number): "Sweets" | "Namkeen" | "Bakery" {
+  // Direct category ID mapping
+  if (categoryId === 23 || categoryId === 24) {
+    return "Bakery";
+  }
+  if (categoryId && [9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(categoryId)) {
+    return "Namkeen";
+  }
+  if (categoryId && [1, 2, 3, 4, 5, 6, 7, 8, 10].includes(categoryId)) {
+    return "Sweets";
+  }
+
   const s = (categoryNameOrSlug || "").toLowerCase();
 
   // Namkeen keywords & slugs
@@ -209,18 +220,23 @@ export function ProductsTab({
     setProductActive(product.isActive !== false);
 
     if (product.variants && product.variants.length > 0) {
-      setLocalVariants(
-        product.variants.map((v) => ({
-          ...v,
-          packName: v.packName || "Standard Pack",
-          weight: v.weight || "500g",
-          price: Number(v.price) || 0,
-          discountedPrice: v.discountedPrice !== null && v.discountedPrice !== undefined ? Number(v.discountedPrice) : null,
-          stock: Number(v.stock) || 0,
-          isDefault: Boolean(v.isDefault),
-          isActive: v.isActive !== false,
-        }))
-      );
+      const vars = product.variants.map((v) => ({
+        ...v,
+        packName: v.packName || "Standard Pack",
+        weight: v.weight || "500g",
+        price: Number(v.price) > 0 ? Number(v.price) : Number(product.price) || 350,
+        discountedPrice: v.discountedPrice !== null && v.discountedPrice !== undefined && Number(v.discountedPrice) > 0
+          ? Number(v.discountedPrice)
+          : null,
+        stock: Number(v.stock) >= 0 ? Number(v.stock) : 50,
+        isDefault: Boolean(v.isDefault),
+        isActive: v.isActive !== false,
+      }));
+      // Ensure at least one variant is selected as default
+      if (!vars.some((v) => v.isDefault)) {
+        vars[0].isDefault = true;
+      }
+      setLocalVariants(vars);
     } else {
       setLocalVariants([
         {
@@ -229,9 +245,11 @@ export function ProductsTab({
           packName: product.packName || "Standard Pack",
           weight: product.weight || "500g",
           sku: product.sku,
-          price: Number(product.price) || 350,
-          discountedPrice: product.discountedPrice !== null && product.discountedPrice !== undefined ? Number(product.discountedPrice) : null,
-          stock: Number(product.stock) || 50,
+          price: Number(product.price) > 0 ? Number(product.price) : 350,
+          discountedPrice: product.discountedPrice !== null && product.discountedPrice !== undefined && Number(product.discountedPrice) > 0
+            ? Number(product.discountedPrice)
+            : null,
+          stock: Number(product.stock) >= 0 ? Number(product.stock) : 50,
           isDefault: true,
           isActive: true,
         },
@@ -241,16 +259,27 @@ export function ProductsTab({
 
   const handleAddNewPackRow = () => {
     const lastVar = localVariants[localVariants.length - 1];
-    const defaultPrice = lastVar ? (lastVar.price > 0 ? Math.max(100, Math.round(lastVar.price * 1.8)) : 350) : 350;
-    const defaultDiscounted = lastVar && lastVar.discountedPrice && lastVar.discountedPrice > 0
-      ? Math.max(90, Math.round(lastVar.discountedPrice * 1.8))
+    const defaultPrice = lastVar && Number(lastVar.price) > 0 ? Math.round(Number(lastVar.price) * 1.8) : 350;
+    const defaultDiscounted = lastVar && lastVar.discountedPrice && Number(lastVar.discountedPrice) > 0
+      ? Math.round(Number(lastVar.discountedPrice) * 1.8)
       : Math.max(90, Math.round(defaultPrice * 0.9));
+
+    const existingWeights = localVariants.map((v) => (v.weight || "").toLowerCase().replace(/\s+/g, ""));
+    let nextWeight = "1 kg";
+    let nextPackName = "Family Pack";
+    if (existingWeights.includes("1kg")) {
+      nextWeight = "2 kg";
+      nextPackName = "Jumbo Pack";
+    } else if (existingWeights.includes("500g") && !existingWeights.includes("250g")) {
+      nextWeight = "250g";
+      nextPackName = "Trial Pack";
+    }
 
     setLocalVariants((prev) => [
       ...prev,
       {
-        packName: "Family Pack",
-        weight: "1 kg",
+        packName: nextPackName,
+        weight: nextWeight,
         price: defaultPrice,
         discountedPrice: defaultDiscounted,
         stock: 50,
@@ -296,7 +325,13 @@ export function ProductsTab({
       try {
         await api.deleteProductVariant(item.id);
         toast.success(`Pack size (${item.weight}) removed from store.`);
-        setLocalVariants((prev) => prev.filter((v) => v.id !== item.id));
+        setLocalVariants((prev) => {
+          const filteredList = prev.filter((v) => v.id !== item.id);
+          if (item.isDefault && filteredList.length > 0 && !filteredList.some((v) => v.isDefault)) {
+            filteredList[0].isDefault = true;
+          }
+          return filteredList;
+        });
         setVariantToDelete(null);
         onRefresh();
       } catch (err) {
@@ -305,7 +340,13 @@ export function ProductsTab({
         setSaving(false);
       }
     } else {
-      setLocalVariants((prev) => prev.filter((v) => v !== item));
+      setLocalVariants((prev) => {
+        const filteredList = prev.filter((v) => v !== item);
+        if (item.isDefault && filteredList.length > 0 && !filteredList.some((v) => v.isDefault)) {
+          filteredList[0].isDefault = true;
+        }
+        return filteredList;
+      });
       setVariantToDelete(null);
       toast.success("Pack size row removed.");
     }
@@ -484,7 +525,7 @@ export function ProductsTab({
     ];
 
     for (const item of categoryMap.values()) {
-      const dept = getDepartmentForCategory(item.name);
+      const dept = getDepartmentForCategory(item.name, item.id);
       const targetGroup = groups.find((g) => g.group === dept);
       if (targetGroup) {
         targetGroup.items.push(item);
@@ -494,8 +535,8 @@ export function ProductsTab({
     return groups;
   }, [categories, products]);
 
-  const getCategoryGroup = (catName: string) => {
-    const dept = getDepartmentForCategory(catName);
+  const getCategoryGroup = (catName: string, catId?: number) => {
+    const dept = getDepartmentForCategory(catName, catId);
     return displayedCategoryGroups.find((g) => g.group === dept);
   };
 
@@ -519,7 +560,7 @@ export function ProductsTab({
 
       let matchesDept = true;
       if (departmentFilter !== "all") {
-        matchesDept = getDepartmentForCategory(p.categoryName || "") === departmentFilter;
+        matchesDept = getDepartmentForCategory(p.categoryName || "", p.categoryId) === departmentFilter;
       }
 
       const matchesCat = categoryFilter === "all" || p.categoryName?.toLowerCase() === categoryFilter.toLowerCase();
@@ -551,10 +592,20 @@ export function ProductsTab({
     });
   }, [products, search, departmentFilter, categoryFilter, stockFilter, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  // Auto-clamp currentPage if filtered list changes
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const start = (safeCurrentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
-  }, [filtered, currentPage, pageSize]);
+  }, [filtered, safeCurrentPage, pageSize]);
 
   const handleUpdateProductPhoto = async (productId: number, imageUrl: string) => {
     setSaving(true);
@@ -805,6 +856,7 @@ export function ProductsTab({
             onClick={() => {
               setDepartmentFilter("all");
               setCategoryFilter("all");
+              setCurrentPage(1);
             }}
             className={`p-3 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
               departmentFilter === "all"
@@ -842,7 +894,7 @@ export function ProductsTab({
 
           {displayedCategoryGroups.map((grp) => {
             const count = products.filter(
-              (p) => getDepartmentForCategory(p.categoryName || "") === grp.group
+              (p) => getDepartmentForCategory(p.categoryName || "", p.categoryId) === grp.group
             ).length;
             const isSelected = departmentFilter === grp.group;
 
@@ -853,6 +905,7 @@ export function ProductsTab({
                 onClick={() => {
                   setDepartmentFilter(grp.group);
                   setCategoryFilter("all");
+                  setCurrentPage(1);
                 }}
                 className={`p-3 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
                   isSelected
@@ -1142,7 +1195,7 @@ export function ProductsTab({
                     {/* Category */}
                     <td className="py-3.5 px-4">
                       {(() => {
-                        const grp = getCategoryGroup(item.categoryName);
+                        const grp = getCategoryGroup(item.categoryName, item.categoryId);
                         return (
                           <div className="flex flex-col gap-0.5">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit border ${grp?.badgeColor || "bg-[#0b2f8a]/10 text-[#0b2f8a] border-[#0b2f8a]/15"}`}>
@@ -1443,22 +1496,30 @@ export function ProductsTab({
                           ? Number(variant.discountedPrice)
                           : original;
 
-                        const isDiscounted = original > selling && selling >= 0;
+                        const isDiscounted = original > selling && selling > 0;
                         const discountPct = isDiscounted ? calculateDiscount(original, selling) : 0;
                         const hasError = selling > original;
+                        const isInvalidPrice = original <= 0 || selling <= 0;
 
                         return (
                           <tr key={index} className="hover:bg-slate-50/60 transition">
                             {/* Default Radio */}
                             <td className="py-3 px-3 text-center">
-                              <input
-                                type="radio"
-                                name="default-pack-radio"
-                                checked={Boolean(variant.isDefault)}
-                                onChange={() => handleUpdatePackField(index, "isDefault", true)}
-                                className="w-4 h-4 text-[#0b2f8a] cursor-pointer"
-                                title="Set as default pack size"
-                              />
+                              <label className="inline-flex items-center gap-1 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="default-pack-radio"
+                                  checked={Boolean(variant.isDefault)}
+                                  onChange={() => handleUpdatePackField(index, "isDefault", true)}
+                                  className="w-4 h-4 text-[#0b2f8a] cursor-pointer"
+                                  title="Set as default pack size"
+                                />
+                                {variant.isDefault && (
+                                  <span className="text-[9px] font-bold text-[#0b2f8a] bg-[#0b2f8a]/10 px-1 rounded">
+                                    ★ Default
+                                  </span>
+                                )}
+                              </label>
                             </td>
 
                             {/* Pack Name Input */}
@@ -1486,13 +1547,18 @@ export function ProductsTab({
                                 value={variant.weight || ""}
                                 onChange={(e) => handleUpdatePackField(index, "weight", e.target.value)}
                                 placeholder="500g, 1 kg"
-                                className="w-24 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-semibold text-slate-800 outline-none focus:border-[#0b2f8a]"
+                                className={`w-24 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-semibold text-slate-800 outline-none focus:border-[#0b2f8a] ${
+                                  !variant.weight?.trim() ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                                }`}
                               />
                               <datalist id={`weight-presets-${index}`}>
                                 {PACK_SIZE_PRESETS.map((w) => (
                                   <option key={w} value={w} />
                                 ))}
                               </datalist>
+                              {!variant.weight?.trim() && (
+                                <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Required</span>
+                              )}
                             </td>
 
                             {/* Original MRP */}
@@ -1529,7 +1595,7 @@ export function ProductsTab({
                                     const val = e.target.value.trim() === "" ? null : Math.max(0, Number(e.target.value));
                                     handleUpdatePackField(index, "discountedPrice", val);
                                   }}
-                                  placeholder={String(variant.price || 300)}
+                                  placeholder={String(variant.price > 0 ? variant.price : 300)}
                                   className={`w-24 pl-6 pr-2 py-1.5 rounded-lg border text-xs font-mono font-bold outline-none ${
                                     hasError || selling <= 0
                                       ? "border-rose-400 text-rose-600 bg-rose-50/50"
@@ -1547,7 +1613,11 @@ export function ProductsTab({
 
                             {/* Auto Calculated Discount Badge */}
                             <td className="py-3 px-3">
-                              {hasError ? (
+                              {isInvalidPrice ? (
+                                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md inline-block">
+                                  ⚠️ Enter Price
+                                </span>
+                              ) : hasError ? (
                                 <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md inline-block">
                                   ⚠️ &gt; MRP
                                 </span>
@@ -1557,8 +1627,8 @@ export function ProductsTab({
                                   <span>{discountPct}% OFF</span>
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-md inline-block">
-                                  No Discount
+                                <span className="text-[10px] text-slate-500 font-medium px-2 py-0.5 bg-slate-50 border border-slate-200/60 rounded-md inline-block">
+                                  MRP Price (No Discount)
                                 </span>
                               )}
                             </td>
@@ -1592,8 +1662,13 @@ export function ProductsTab({
                               <button
                                 type="button"
                                 onClick={() => handleDeletePackRow(index)}
-                                className="px-2 py-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer font-bold"
-                                title="Delete this pack size"
+                                disabled={localVariants.length <= 1}
+                                className={`px-2 py-1 rounded font-bold text-xs transition ${
+                                  localVariants.length <= 1
+                                    ? "text-slate-300 cursor-not-allowed"
+                                    : "text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                                }`}
+                                title={localVariants.length <= 1 ? "At least one pack size is required" : "Delete this pack size"}
                               >
                                 ✕
                               </button>
@@ -1837,31 +1912,47 @@ export function ProductsTab({
                             <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">MRP Price (₹)</label>
                             <input
                               type="number"
-                              min={0}
-                              value={pack.price}
+                              min={1}
+                              value={pack.price <= 0 ? "" : pack.price}
                               onChange={(e) => {
                                 const next = [...newProductPacks];
-                                next[idx].price = Math.max(0, Number(e.target.value));
+                                next[idx].price = e.target.value.trim() === "" ? 0 : Math.max(0, Number(e.target.value));
                                 setNewProductPacks(next);
                               }}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold"
+                              placeholder="350"
+                              className={`w-full px-2 py-1.5 rounded-lg border text-xs font-mono font-bold ${
+                                pack.price <= 0 ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                              }`}
                             />
+                            {pack.price <= 0 && (
+                              <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Required (&gt; ₹0)</span>
+                            )}
                           </div>
 
                           <div>
                             <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Selling Price (₹)</label>
                             <input
                               type="number"
-                              min={0}
-                              value={pack.discountedPrice === null ? "" : pack.discountedPrice}
+                              min={1}
+                              value={pack.discountedPrice === null || pack.discountedPrice === 0 ? "" : pack.discountedPrice}
                               onChange={(e) => {
                                 const next = [...newProductPacks];
                                 next[idx].discountedPrice = e.target.value.trim() === "" ? null : Math.max(0, Number(e.target.value));
                                 setNewProductPacks(next);
                               }}
-                              placeholder={String(pack.price)}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold text-[#0b2f8a]"
+                              placeholder={String(pack.price > 0 ? pack.price : 300)}
+                              className={`w-full px-2 py-1.5 rounded-lg border text-xs font-mono font-bold ${
+                                selling <= 0 || selling > original
+                                  ? "border-rose-400 text-rose-600 bg-rose-50/50"
+                                  : "border-slate-200 text-[#0b2f8a]"
+                              }`}
                             />
+                            {selling <= 0 && (
+                              <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Must be &gt; ₹0</span>
+                            )}
+                            {selling > original && original > 0 && (
+                              <span className="text-[9px] text-rose-600 font-semibold block mt-0.5">Cannot exceed MRP</span>
+                            )}
                           </div>
                         </div>
 
@@ -1901,12 +1992,22 @@ export function ProductsTab({
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {isDiscounted && discPct > 0 ? (
+                            {original <= 0 || selling <= 0 ? (
+                              <span className="text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded font-bold text-[10px]">
+                                ⚠️ Enter Price
+                              </span>
+                            ) : selling > original ? (
+                              <span className="text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded font-bold text-[10px]">
+                                ⚠️ &gt; MRP
+                              </span>
+                            ) : isDiscounted && discPct > 0 ? (
                               <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold text-[10px]">
                                 {discPct}% OFF
                               </span>
                             ) : (
-                              <span className="text-slate-400 text-[10px]">No Discount</span>
+                              <span className="text-slate-500 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded font-medium text-[10px]">
+                                MRP Price
+                              </span>
                             )}
 
                             {newProductPacks.length > 1 && (

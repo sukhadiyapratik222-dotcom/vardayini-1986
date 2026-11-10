@@ -4,7 +4,20 @@ import { loadCartLines } from "@/lib/cart";
 export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
-  const cart = await loadCartLines();
+  let cart;
+  try {
+    cart = await loadCartLines();
+  } catch (err) {
+    console.error("[CartPage] loadCartLines error:", err);
+    cart = {
+      lines: [],
+      totals: { subtotal: 0, discount: 0, tax: 0, deliveryFee: 0, total: 0 },
+      couponCode: null,
+      couponLabel: null,
+      user: null,
+    };
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-3 sm:px-4 py-6 sm:py-10">
       <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">Your box</p>
