@@ -243,10 +243,6 @@ export function CulinaryExperienceSection() {
                   <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#a31d31] text-white shadow-md shadow-[#a31d31]/25 ring-4 ring-[#dfb755]/25 group-hover:ring-[#dfb755]/60 group-hover:scale-105 transition-all duration-300">
                     <IconComponent className="w-7 h-7 sm:w-8 sm:h-8" />
                   </div>
-                  {/* Subtle numbered badge on hover */}
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#dfb755] text-[10px] font-bold text-slate-900 shadow-sm opacity-90">
-                    {index + 1}
-                  </span>
                 </div>
 
                 {/* Pillar Title */}

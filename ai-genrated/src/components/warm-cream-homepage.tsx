@@ -12,6 +12,7 @@ import { ShopByCategoryStrip } from "@/components/shop-by-category-strip";
 import { LuxuryBestsellersSection } from "@/components/luxury-bestsellers-section";
 import { OurStoryHeritageSection } from "@/components/our-story-heritage-section";
 import { FestivalCollectionsSection } from "@/components/festival-collections-section";
+import { CulinaryExperienceSection } from "@/components/culinary-experience-section";
 import { Magnetic } from "@/components/core/magnetic";
 import { OutletsSection } from "@/components/outlets-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
@@ -162,6 +163,11 @@ export function WarmCreamHomepage({
           5. FESTIVAL BANNER & 4 COLLECTIONS (Raksha Bandhan / Diwali)
          ───────────────────────────────────────────────────────────── */}
       <FestivalCollectionsSection />
+
+      {/* ─────────────────────────────────────────────────────────────
+          5.5 ELEVATING THE CULINARY EXPERIENCE PILLARS (Cleaned Medallions)
+         ───────────────────────────────────────────────────────────── */}
+      {uiConfig?.culinaryPillars?.enabled !== false && <CulinaryExperienceSection />}
 
       {/* ─────────────────────────────────────────────────────────────
           6. FRESH DAILY SPECIALS: Pack Size Variety Grid
