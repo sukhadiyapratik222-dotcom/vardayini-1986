@@ -3,7 +3,6 @@ import { ProductCard } from "@/components/product-card";
 import { listCategories, listProducts, CATEGORY_GROUPS } from "@/lib/products";
 import { ShopDepartmentSidebar } from "@/components/shop-department-sidebar";
 import { ShowingDropdown } from "@/components/showing-dropdown";
-import { ShopDeliveryBanner } from "@/components/shop-delivery-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -152,9 +151,6 @@ export default async function ShopPage({
           </>
         )}
       </div>
-
-      {/* Live Delivery Location & Shipping Speed Banner */}
-      <ShopDeliveryBanner />
 
       {/* Main Page Title Header & Search Bar */}
       <div className="mt-3 flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 border-b border-[#0b2f8a]/10 pb-4 sm:pb-6 w-full">
