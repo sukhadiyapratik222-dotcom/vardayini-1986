@@ -396,5 +396,127 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM GLASSMORPHISM & ARTISAN MOTION STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --vsm-primary: #0b2f8a;
+  --vsm-purple-navy: #140638;
+  --vsm-secondary: #7a1c1c;
+  --vsm-olive: #22381f;
+  --vsm-gold: #dfb755;
+  --vsm-amber: #f59e0b;
+  --vsm-cream: #faf6ee;
+}
+
+/* Frosted glass sticky header */
+.glass-header-frosted {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* Hero dark glass text overlay */
+.glass-overlay-panel {
+  background: rgba(20, 6, 56, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+/* Glass badges */
+.glass-badge {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Gold shimmer button sweep */
+.gold-shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.gold-shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: 0.75s ease;
+}
+
+.gold-shimmer-btn:hover::after {
+  left: 140%;
+}
+
+/* Wishlist heart pop animation */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.4); }
+  75% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.animate-heart-pop {
+  animation: heart-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Ken Burns slow zoom */
+@keyframes ken-burns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 8s ease-out forwards;
+}
+
+/* Slow floating loop for festive decor */
+@keyframes slow-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+.animate-slow-float {
+  animation: slow-float 4.5s ease-in-out infinite;
+}
+
+/* Slow floating delayed */
+@keyframes slow-float-delayed {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(-2deg); }
+}
+
+.animate-slow-float-delayed {
+  animation: slow-float-delayed 5s ease-in-out infinite 1s;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ken-burns,
+  .animate-slow-float,
+  .animate-slow-float-delayed,
+  .gold-shimmer-btn::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
 
 

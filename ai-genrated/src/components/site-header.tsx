@@ -368,8 +368,8 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
         </div>
       )}
 
-      {/* 2. MAIN HEADER BAR (Brand Logo + Search + Utilities) */}
-      <div className="bg-[#fdfcfa]/98 border-b border-[#0b2f8a]/10 backdrop-blur-md">
+      {/* 2. MAIN HEADER BAR (Brand Logo + Search + Utilities with Frosted Glass) */}
+      <div className="glass-header-frosted transition-all duration-300">
         <div className="mx-auto max-w-7xl px-2.5 sm:px-6 lg:px-8">
           <div className="flex h-14 sm:h-20 items-center justify-between gap-1.5 sm:gap-6">
             {/* Left: Brand Crest & Logo */}
