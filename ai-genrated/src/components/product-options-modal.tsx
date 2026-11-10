@@ -71,6 +71,11 @@ export function ProductOptionsModal({
         setErrorMsg(data?.error || "Could not add to cart");
         return;
       }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("cart-updated", { detail: { count: data.count } })
+        );
+      }
       onAddToCartSuccess?.(productName);
       onClose();
     } catch {

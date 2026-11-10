@@ -39,6 +39,11 @@ export function AddToCartButton({
       }
       setStatus("done");
       setMessage("Added to your mithai box");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("cart-updated", { detail: { count: data.count } })
+        );
+      }
       router.refresh();
       setTimeout(() => setStatus("idle"), 1200);
     } catch {

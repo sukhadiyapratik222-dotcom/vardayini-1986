@@ -103,3 +103,4 @@ if (!indexContent.includes('pickup_radius_km')) {
 
 fs.writeFileSync(indexPath, indexContent, 'utf-8');
 console.log('Successfully updated db/index.ts');
+

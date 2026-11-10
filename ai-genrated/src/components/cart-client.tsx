@@ -38,6 +38,10 @@ export function CartClient({ initial }: { initial: CartState }) {
         return;
       }
       setCart((prev) => ({ ...prev, lines: data.items, totals: data.totals }));
+      if (typeof window !== "undefined") {
+        const newCount = (data.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
+        window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+      }
       router.refresh();
     } catch {
       setError("Failed to update item quantity");
@@ -58,6 +62,10 @@ export function CartClient({ initial }: { initial: CartState }) {
         return;
       }
       setCart((prev) => ({ ...prev, lines: data.items, totals: data.totals }));
+      if (typeof window !== "undefined") {
+        const newCount = (data.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
+        window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+      }
       router.refresh();
     } catch {
       setError("Failed to remove item");

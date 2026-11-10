@@ -93,3 +93,4 @@ if (!seedContent.includes('// Ensure Serviceable Pincodes exist')) {
 
 fs.writeFileSync(seedPath, seedContent, 'utf-8');
 console.log('Successfully updated seed.ts');
+

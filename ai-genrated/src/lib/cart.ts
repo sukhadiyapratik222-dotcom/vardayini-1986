@@ -64,21 +64,17 @@ export async function loadCartLines() {
           }
         }
 
-        // Clean up any local rows that are no longer in MongoDB
+        // Clean up local rows that were removed remotely in MongoDB only when mongoItems has a valid non-empty list
         const mongoVariantIds = mongoItems.map((m) => m.variantId);
-        const placeholders = mongoVariantIds.map(() => "?").join(",");
-        sqlite
-          .prepare(
-            user
-              ? `DELETE FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id NOT IN (${placeholders})`
-              : `DELETE FROM cart_items WHERE session_id = ? AND variant_id NOT IN (${placeholders})`
-          )
-          .run(...(user ? [user.id, sessionId, ...mongoVariantIds] : [sessionId, ...mongoVariantIds]));
-      } else if (mongoItems && mongoItems.length === 0) {
-        if (user) {
-          sqlite.prepare("DELETE FROM cart_items WHERE user_id = ? OR session_id = ?").run(user.id, sessionId);
-        } else {
-          sqlite.prepare("DELETE FROM cart_items WHERE session_id = ?").run(sessionId);
+        if (mongoVariantIds.length > 0) {
+          const placeholders = mongoVariantIds.map(() => "?").join(",");
+          sqlite
+            .prepare(
+              user
+                ? `DELETE FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id NOT IN (${placeholders})`
+                : `DELETE FROM cart_items WHERE session_id = ? AND variant_id NOT IN (${placeholders})`
+            )
+            .run(...(user ? [user.id, sessionId, ...mongoVariantIds] : [sessionId, ...mongoVariantIds]));
         }
       }
     } catch (mErr) {

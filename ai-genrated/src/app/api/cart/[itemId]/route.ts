@@ -48,7 +48,7 @@ async function ownedItem(itemId: number) {
     try {
       const { getMongoCartItems } = await import("@/lib/mongodb");
       const mItems = await getMongoCartItems({ userId: user?.id, sessionId });
-      const found = mItems.find((m) => m.variantId === itemId);
+      const found = mItems ? mItems.find((m) => m.variantId === itemId) : undefined;
       if (found) {
         const { getSqliteDb } = await import("@/db");
         const sqlite = getSqliteDb();
@@ -124,7 +124,11 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
   }
 
   const cart = await loadCartLines();
-  return Response.json({ items: cart.lines, totals: cart.totals });
+  return Response.json({
+    items: cart.lines,
+    totals: cart.totals,
+    count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+  });
 }
 
 export const PATCH = PUT;
@@ -147,5 +151,9 @@ export async function DELETE(_request: Request, context: { params: Promise<{ ite
     await removeMongoCartItem({ userId: user?.id, sessionId, variantId: item.variantId });
   } catch {}
   const cart = await loadCartLines();
-  return Response.json({ items: cart.lines, totals: cart.totals });
+  return Response.json({
+    items: cart.lines,
+    totals: cart.totals,
+    count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+  });
 }

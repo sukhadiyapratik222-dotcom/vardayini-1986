@@ -170,7 +170,13 @@ export function NewProductMotionShowcase({
         body: JSON.stringify({ productVariantId: variantId, quantity: qty }),
       });
       if (res.ok) {
+        const data = await res.json().catch(() => null);
         setAddedToast({ show: true, name: productName });
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("cart-updated", { detail: { count: data?.count } })
+          );
+        }
         setTimeout(() => setAddedToast(null), 3000);
       }
     } catch (e) {

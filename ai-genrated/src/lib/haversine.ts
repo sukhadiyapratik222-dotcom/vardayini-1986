@@ -129,3 +129,4 @@ export function rankStoresByDistance<T extends {
   results.sort((a, b) => a.distanceKm - b.distanceKm);
   return results;
 }
+

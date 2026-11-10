@@ -63,3 +63,4 @@ export const unserviceablePincodeLogs = mysqlTable("unserviceable_pincode_logs",
 
 fs.writeFileSync(schemaPath, schemaContent, 'utf-8');
 console.log('Successfully updated schema.ts');
+

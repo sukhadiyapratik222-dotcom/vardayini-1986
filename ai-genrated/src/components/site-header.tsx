@@ -241,10 +241,32 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
       .then((res) => res.json())
       .then((data) => setUser(data.user))
       .catch(() => setUser(null));
-    fetch("/api/cart")
-      .then((res) => res.json())
-      .then((data) => setCount(data.count || 0))
-      .catch(() => setCount(0));
+
+    const fetchCart = () => {
+      fetch("/api/cart")
+        .then((res) => res.json())
+        .then((data) => {
+          if (typeof data.count === "number") {
+            setCount(data.count);
+          }
+        })
+        .catch(() => setCount(0));
+    };
+
+    fetchCart();
+
+    const handleCartUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<{ count?: number }>;
+      if (typeof customEvent.detail?.count === "number") {
+        setCount(customEvent.detail.count);
+      } else {
+        fetchCart();
+      }
+    };
+
+    window.addEventListener("cart-updated", handleCartUpdated);
+    window.addEventListener("focus", fetchCart);
+
     if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
       setCurrentSearch(window.location.search);
@@ -253,6 +275,11 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
         setTimeout(() => setQuery(q), 0);
       }
     }
+
+    return () => {
+      window.removeEventListener("cart-updated", handleCartUpdated);
+      window.removeEventListener("focus", fetchCart);
+    };
   }, [pathname]);
 
   // Click outside to close sweets dropdown

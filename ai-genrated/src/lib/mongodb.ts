@@ -714,7 +714,7 @@ export async function getMongoCartItems(identity: {
 }) {
   try {
     const db = await getMongoDb();
-    if (!db) return [];
+    if (!db) return null;
     const col = db.collection("cart_items");
     const orConditions: any[] = [];
     if (identity.userId && identity.userId > 0) {
@@ -728,7 +728,7 @@ export async function getMongoCartItems(identity: {
     return await col.find({ $or: orConditions }).toArray();
   } catch (err) {
     console.warn("[MongoDB] getMongoCartItems notice:", err);
-    return [];
+    return null;
   }
 }
 
