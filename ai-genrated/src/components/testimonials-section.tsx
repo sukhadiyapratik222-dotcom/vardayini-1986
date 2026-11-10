@@ -301,7 +301,7 @@ export function TestimonialsSection({
   return (
     <section
       id="testimonials"
-      className={`py-14 sm:py-24 bg-[#faf6ee] border-t border-[#3b1e54]/10 relative overflow-hidden ${className}`}
+      className={`py-14 sm:py-24 bg-gradient-to-b from-[#fcfbf9] via-white to-[#fcfbf9] border-t border-slate-200/80 relative overflow-hidden ${className}`}
     >
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         {/* Section Header */}

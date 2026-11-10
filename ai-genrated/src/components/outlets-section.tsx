@@ -292,29 +292,33 @@ export function OutletsSection({
   const selectedOutlet = outletsList.find((s) => s.id === activeTab) || outletsList[0];
 
   return (
-    <section className="section_contact14 py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-[#faf6ee] via-white to-[#faf6ee]">
-      <div className="padding-global mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="section_contact14 relative py-14 sm:py-20 lg:py-24 bg-gradient-to-b from-[#140638] via-[#1a0a40] to-[#0c0324] text-white border-t-2 border-[#dfb755]/30 overflow-hidden select-none">
+      {/* Decorative Golden Ambient Glow Elements */}
+      <div className="pointer-events-none absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#dfb755]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[#dfb755]/10 blur-3xl" />
+
+      <div className="padding-global relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="container-large">
           <div className="padding-section-large">
             {/* Header with Title & Outlets Selector */}
             <div className="contact14_component">
               <div className="margin-bottom margin-xxlarge mb-8 sm:mb-10">
                 <div className="max-width-large max-w-3xl">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#b45309]/10 text-[#b45309] text-xs font-bold tracking-wider uppercase">
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#dfb755]/20 text-[#f5c518] border border-[#dfb755]/40 text-xs font-bold tracking-wider uppercase shadow-xs">
                     📍 Heritage Counters &amp; Outlets
                   </span>
-                  <div className="margin-bottom margin-small mt-2">
-                    <h2 className="heading-style-h2 font-[family-name:var(--font-display)] text-2xl sm:text-4xl lg:text-5xl font-bold text-[#24142e] tracking-tight">
+                  <div className="margin-bottom margin-small mt-3">
+                    <h2 className="heading-style-h2 font-[family-name:var(--font-display)] text-2xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
                       {title}
                     </h2>
                   </div>
-                  <p className="mt-1.5 sm:mt-2 text-xs sm:text-base text-slate-600 leading-relaxed">
+                  <p className="mt-2 text-xs sm:text-base text-slate-300 leading-relaxed">
                     {subtitle}
                   </p>
                 </div>
 
                 {/* Outlet Selection Tabs (User chooses manually) */}
-                <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-1.5 sm:gap-2.5 border-b border-amber-900/10 pb-3 sm:pb-4">
+                <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-white/15 pb-4">
                   {outletsList.map((outlet) => {
                     const isSelected = activeTab === outlet.id;
                     return (
@@ -322,21 +326,23 @@ export function OutletsSection({
                         key={outlet.id}
                         type="button"
                         onClick={() => setActiveTab(outlet.id)}
-                        className={`rounded-full px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${
+                        className={`rounded-full px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${
                           isSelected
-                            ? 'bg-[#3b1e54] text-white shadow-md font-bold scale-[1.02]'
-                            : 'bg-white text-slate-700 hover:bg-amber-50 hover:text-[#3b1e54] border border-slate-200 font-medium'
+                            ? 'bg-[#dfb755] text-[#140638] font-bold shadow-lg shadow-[#dfb755]/30 border border-[#f5c518] scale-[1.02]'
+                            : 'bg-white/10 text-white/90 hover:bg-white/20 border border-white/20 backdrop-blur-md font-medium'
                         }`}
                       >
                         <span className="text-xs sm:text-sm">📍</span>
                         <span className="truncate max-w-[150px] sm:max-w-none">{outlet.name.replace(/ – /g, ' · ').replace(/\(.*?\)/g, '').trim()}</span>
                         {outlet.isComingSoon ? (
-                          <span className="rounded-full bg-amber-500/20 text-[#b45309] px-2 py-0.5 text-[9.5px] sm:text-[10px] font-bold shrink-0">
+                          <span className={`rounded-full px-2 py-0.5 text-[9.5px] sm:text-[10px] font-bold shrink-0 ${
+                            isSelected ? 'bg-[#140638]/20 text-[#140638]' : 'bg-amber-400/20 text-amber-300'
+                          }`}>
                             Coming Soon
                           </span>
                         ) : (
                           <span className={`rounded-full px-2 py-0.5 text-[9.5px] sm:text-[10px] font-bold shrink-0 ${
-                            isSelected ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700'
+                            isSelected ? 'bg-[#140638]/20 text-[#140638]' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
                           }`}>
                             Open
                           </span>
@@ -430,7 +436,7 @@ export function OutletContactCard({ outlet }: OutletContactCardProps) {
     : (outlet.mapUrl || outlet.directionsUrl || `https://maps.google.com/maps?q=${encodeURIComponent(placeQuery)}`);
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl border border-amber-900/10 bg-white p-3.5 sm:p-8 lg:p-10 shadow-xl transition hover:shadow-2xl">
+    <div className="rounded-2xl sm:rounded-3xl border border-[#dfb755]/30 bg-white p-3.5 sm:p-8 lg:p-10 shadow-2xl transition hover:shadow-2xl">
       {/* Outlet Title Bar */}
       <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2.5 border-b border-amber-900/10 pb-3 sm:pb-4">
         <div className="min-w-0">
