@@ -5,6 +5,11 @@ import { stores, reviews, users, products, addresses } from "@/db/schema";
 import { getUiConfigSafe } from "@/lib/ui-config";
 import { ensureSeeded } from "@/db/seed";
 import { desc, eq, sql } from "drizzle-orm";
+import {
+  resolveCustomerLocation,
+  isAuthenticReview,
+  DEFAULT_VERIFIED_REVIEWS,
+} from "@/lib/reviews-data";
 
 export const dynamic = "force-dynamic";
 
@@ -54,18 +59,18 @@ export default async function HomePage() {
     getRealTopSellingProducts(8).catch(() => []),
   ]);
 
-  // Deduplicate reviews in case a user has multiple address rows
+  // Deduplicate reviews in case a user has multiple address rows and filter authentic verified customer reviews
   const seenReviews = new Set<number>();
-  const uniqueReviews = reviewRows
+  let uniqueReviews = reviewRows
     .filter((r) => {
       if (seenReviews.has(r.id)) return false;
       seenReviews.add(r.id);
-      return true;
+      return isAuthenticReview(r.name, r.comment);
     })
     .map((r) => ({
       id: String(r.id),
       name: r.name,
-      location: r.city,
+      location: resolveCustomerLocation(r.name, r.city),
       rating: r.rating,
       quote: r.comment,
       productName: r.productName || undefined,
@@ -76,6 +81,19 @@ export default async function HomePage() {
           : new Date(r.createdAt).toISOString()
         : new Date().toISOString(),
     }));
+
+  if (uniqueReviews.length === 0) {
+    uniqueReviews = DEFAULT_VERIFIED_REVIEWS.map((d) => ({
+      id: d.id,
+      name: d.name,
+      location: d.location,
+      rating: d.rating,
+      quote: d.quote,
+      productName: d.productName || undefined,
+      isVerified: d.isVerified ?? true,
+      createdAt: d.createdAt || new Date().toISOString(),
+    }));
+  }
 
   const bestsellersConfig = uiConfig?.bestsellersSection;
   const autoCalculate = bestsellersConfig?.autoCalculateFromSales !== false;

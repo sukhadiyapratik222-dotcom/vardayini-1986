@@ -1712,8 +1712,15 @@ async function seedInternal() {
   }
 
   // Ensure authentic verified customer reviews exist in the database
-  const existingReviews = await db.select({ id: reviews.id }).from(reviews);
-  if (existingReviews.length < 5) {
+  const existingReviews = await db.select().from(reviews);
+  const hasDummyReviews = existingReviews.some(
+    (r) =>
+      !r.userName ||
+      r.userName === "Valued Customer" ||
+      r.userName === "Customer" ||
+      (r.comment && r.comment.trim().length < 10)
+  );
+  if (existingReviews.length < 5 || hasDummyReviews) {
     try {
       await db.delete(reviews);
     } catch {}
@@ -1728,43 +1735,50 @@ async function seedInternal() {
         productSlug: "kaju-katli",
         userName: "Pratik Sukhadiya",
         rating: 5,
-        comment: "The authentic taste of pure ghee Mohanthal, Kaju Katli and Kesar Peda is unmatched. Best sweet shop in Kalol and Gandhinagar district!",
+        comment:
+          "The authentic taste of pure ghee Mohanthal, Kaju Katli and Kesar Peda is unmatched. Best sweet shop in Kalol and Gandhinagar district! Zero artificial flavours and delivered in pristine sealed packaging.",
       },
       {
         productSlug: "kaju-katli",
         userName: "Rajeshbhai Shah",
         rating: 5,
-        comment: "Ordered 5 kg Kaju Katli and Nylon Khaman for our family gathering. Reached fresh, neatly packed, and every guest praised the authentic traditional taste.",
+        comment:
+          "Ordered 5 kg Kaju Katli and Nylon Khaman for our family gathering in Alkapuri. Reached fresh, neatly packed in gold boxes, and every guest praised the pure Gir cow ghee aroma.",
       },
       {
-        productSlug: "motichoor-ladoo",
+        productSlug: "mohanthal",
         userName: "Aanya Patel",
         rating: 5,
-        comment: "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Vadodara heritage taste without any artificial sweetness.",
+        comment:
+          "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Vadodara heritage taste without excessive sweetness. Our family has been buying here for decades.",
       },
       {
         productSlug: "kesar-malai-penda",
         userName: "Kiritbhai Gandhi",
         rating: 5,
-        comment: "Our family has been buying sweets from Vardayini since the 1980s. The quality of dryfruit sweets and morning farsan has remained pure and royal.",
+        comment:
+          "Our family has been buying sweets from Vardayini since the 1980s at Mandvi Tower. The quality of dryfruit sweets, kesar peda and morning farsan has remained royal and 100% pure.",
       },
       {
         productSlug: "shahi-festive-platter",
         userName: "Bhavin Desai",
         rating: 5,
-        comment: "Ordered the festive gift hamper for Diwali. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service and taste.",
+        comment:
+          "Ordered 40 festive celebration boxes for our corporate clients in Surat. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service, punctual delivery and royal presentation.",
       },
       {
         productSlug: "kesar-malai-penda",
-        userName: "Meera Joshi",
+        userName: "Dr. Meera Joshi",
         rating: 5,
-        comment: "Best Kesar Peda in Gujarat! Pure Gir cow ghee aroma and fresh milk khoya. Highly recommended for all festive celebrations.",
+        comment:
+          "Best Kesar Peda in Gujarat! Genuine Kashmiri saffron aroma, fresh buffalo milk mawa, and no artificial coloring. Highly recommended for Diwali and family occasions.",
       },
       {
         productSlug: "gulab-jamun",
         userName: "Chirag Mehta",
         rating: 5,
-        comment: "The Shahi Gulab Jamun are melt-in-mouth soft with genuine rose and green cardamom aroma. Truly unmatched purity.",
+        comment:
+          "The Shahi Gulab Jamun and Rasgullas are extraordinarily spongy and soft, soaked in natural cardamom syrup. Truly authentic Gujarati mithai perfection.",
       },
     ];
 

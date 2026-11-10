@@ -3,102 +3,16 @@
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 
-export interface CustomerReview {
-  id: string;
-  name: string;
-  location: string;
-  rating: number;
-  quote: string;
-  avatarUrl?: string;
-  productName?: string;
-  isVerified?: boolean;
-  createdAt?: string;
-}
+import {
+  type CustomerReview,
+  DEFAULT_VERIFIED_REVIEWS,
+  getAvatarForName,
+  getInitials,
+  isAuthenticReview,
+  resolveCustomerLocation,
+} from "@/lib/reviews-data";
 
-const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
-  {
-    id: "review-1",
-    name: "Pratik Sukhadiya",
-    location: "Kalol, Gujarat",
-    rating: 5,
-    quote:
-      "The authentic taste of pure ghee Mohanthal, Kaju Katli and Kesar Peda is unmatched. Best sweet shop in Kalol and Gandhinagar district!",
-    avatarUrl: "/images/avatars/rajesh.svg",
-    productName: "Kaju Katli (Royal Silver Foil)",
-    isVerified: true,
-  },
-  {
-    id: "review-2",
-    name: "Rajeshbhai Shah",
-    location: "Ahmedabad",
-    rating: 5,
-    quote:
-      "Ordered 5 kg Kaju Katli and Nylon Khaman for our family gathering. Reached fresh, neatly packed, and every guest praised the authentic traditional taste.",
-    avatarUrl: "/images/avatars/rajesh.svg",
-    productName: "Kaju Katli (Royal Silver Foil)",
-    isVerified: true,
-  },
-  {
-    id: "review-3",
-    name: "Aanya Patel",
-    location: "Alkapuri, Vadodara",
-    rating: 5,
-    quote:
-      "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Vadodara heritage taste without any artificial sweetness.",
-    avatarUrl: "/images/avatars/ananya.svg",
-    productName: "Motichoor Ladoo (Pure Desi Ghee)",
-    isVerified: true,
-  },
-  {
-    id: "review-4",
-    name: "Kiritbhai Gandhi",
-    location: "Raopura, Vadodara",
-    rating: 5,
-    quote:
-      "Our family has been buying sweets from Vardayini since the 1980s. The quality of dryfruit sweets and morning farsan has remained pure and royal.",
-    avatarUrl: "/images/avatars/rajesh.svg",
-    productName: "Kesar Malai Penda",
-    isVerified: true,
-  },
-  {
-    id: "review-5",
-    name: "Bhavin Desai",
-    location: "Surat",
-    rating: 5,
-    quote:
-      "Ordered the festive gift hamper for Diwali. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service and taste.",
-    avatarUrl: "/images/avatars/rajesh.svg",
-    productName: "Shahi Royal Festive Platter",
-    isVerified: true,
-  },
-  {
-    id: "review-6",
-    name: "Meera Joshi",
-    location: "Race Course, Vadodara",
-    rating: 5,
-    quote:
-      "Best Kesar Peda in Gujarat! Pure Gir cow ghee aroma and fresh milk khoya. Highly recommended for all festive celebrations.",
-    avatarUrl: "/images/avatars/meera.svg",
-    productName: "Kesar Malai Penda",
-    isVerified: true,
-  },
-];
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }
-  return (name[0] || "C").toUpperCase();
-}
-
-function getAvatarForName(name: string): string | null {
-  const lower = name.toLowerCase();
-  if (lower.includes("ananya")) return "/images/avatars/ananya.svg";
-  if (lower.includes("rajesh")) return "/images/avatars/rajesh.svg";
-  if (lower.includes("meera")) return "/images/avatars/meera.svg";
-  return null;
-}
+export type { CustomerReview };
 
 export interface TestimonialsSectionConfig {
   enabled?: boolean;
@@ -192,20 +106,24 @@ export function TestimonialsSection({
         if (res.ok && isMounted) {
           const data = await res.json();
           if (Array.isArray(data.reviews) && data.reviews.length > 0) {
-            const mapped: CustomerReview[] = data.reviews.map((r: any) => ({
-              id: String(r.id),
-              name: r.name || r.userName || "Customer",
-              location: r.city || "Gujarat",
-              rating: r.rating || 5,
-              quote: r.comment,
-              avatarUrl: getAvatarForName(r.name || r.userName) || undefined,
-              productName: r.productName || undefined,
-              isVerified: r.isVerified ?? true,
-              createdAt: r.createdAt || new Date().toISOString(),
-            }));
-            setReviewsList(mapped);
-            setTotalCount(data.totalCount || mapped.length);
-            setAvgRating(data.averageRating || "5.0");
+            const mapped: CustomerReview[] = data.reviews
+              .filter((r: any) => isAuthenticReview(r.name || r.userName, r.comment))
+              .map((r: any) => ({
+                id: String(r.id),
+                name: r.name || r.userName,
+                location: resolveCustomerLocation(r.name || r.userName, r.city),
+                rating: r.rating || 5,
+                quote: r.comment,
+                avatarUrl: getAvatarForName(r.name || r.userName) || undefined,
+                productName: r.productName || undefined,
+                isVerified: r.isVerified ?? true,
+                createdAt: r.createdAt || new Date().toISOString(),
+              }));
+            if (mapped.length > 0) {
+              setReviewsList(mapped);
+              setTotalCount(data.totalCount || mapped.length);
+              setAvgRating(data.averageRating || "5.0");
+            }
           }
         }
       } catch (e) {
@@ -220,8 +138,13 @@ export function TestimonialsSection({
 
   async function handleReviewSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!reviewComment.trim() || reviewComment.trim().length < 5) {
-      setSubmitError("Please write at least 5 characters in your review comment.");
+    const cleanName = reviewerName.trim();
+    if (!cleanName || cleanName.length < 2 || cleanName.toLowerCase() === "valued customer") {
+      setSubmitError("Please enter your full name to post a verified customer review.");
+      return;
+    }
+    if (!reviewComment.trim() || reviewComment.trim().length < 8) {
+      setSubmitError("Please write at least 8 characters in your review comment.");
       return;
     }
 
@@ -233,8 +156,8 @@ export function TestimonialsSection({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userName: reviewerName.trim() || "Customer",
-          city: reviewerCity.trim() || "Gujarat",
+          userName: cleanName,
+          city: reviewerCity.trim() || "Vadodara",
           rating: reviewRating,
           comment: reviewComment.trim(),
         }),
@@ -258,10 +181,11 @@ export function TestimonialsSection({
       const nowIso = new Date().toISOString();
       const newReview: CustomerReview = {
         id: String(data.review?.id || `client-${Date.now()}`),
-        name: reviewerName.trim() || "Customer",
-        location: reviewerCity.trim() || "Gujarat",
+        name: cleanName,
+        location: resolveCustomerLocation(cleanName, reviewerCity.trim() || "Vadodara"),
         rating: reviewRating,
         quote: reviewComment.trim(),
+        avatarUrl: getAvatarForName(cleanName) || undefined,
         isVerified: true,
         createdAt: nowIso,
       };
