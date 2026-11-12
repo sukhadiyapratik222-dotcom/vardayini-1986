@@ -160,6 +160,11 @@ export default function AdminDashboardPage() {
   const [productStockFilter, setProductStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">("all");
 
   const handleTabChange = useCallback((tab: string) => {
+    if (tab === "testimonials-manager") {
+      setActiveTab("overview");
+      setIsMobileSidebarOpen(false);
+      return;
+    }
     if (tab === "out_of_stock") {
       setProductStockFilter("out_of_stock");
       setActiveTab("products");
@@ -865,12 +870,6 @@ export default function AdminDashboardPage() {
       label: "Welcome Offer (10% Off)",
       icon: "🎁",
       badge: "Promo",
-    },
-    {
-      id: "testimonials-manager",
-      label: "Customer Testimonials",
-      icon: "💬",
-      badge: "Verified",
     },
     {
       id: "new-launches",
@@ -1608,14 +1607,6 @@ export default function AdminDashboardPage() {
                   <WelcomeOfferTab config={config} onRefresh={loadData} />
                 ) : (
                   <AccessRestrictedCard moduleName="Welcome Offer (10% Off)" currentUser={currentUser} />
-                )
-              )}
-
-              {activeTab === "testimonials-manager" && (
-                isModulePermitted("testimonials-manager") ? (
-                  <TestimonialsTab config={config} onRefresh={loadData} currentUser={currentUser} />
-                ) : (
-                  <AccessRestrictedCard moduleName="Customer Testimonials" currentUser={currentUser} />
                 )
               )}
 
