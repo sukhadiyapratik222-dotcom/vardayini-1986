@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function TrackOrderPage() {
   return (
-    <main className="min-h-screen bg-[#faf8f5] py-8 sm:py-12 px-3 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl space-y-8">
+    <main className="min-h-screen bg-[#faf8f5] py-5 sm:py-8 px-3 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-6">
         <Breadcrumbs items={[{ label: "Track Order" }]} />
 
         <Suspense

@@ -286,12 +286,12 @@ export function OrderTrackerClient() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* 1. Header Banner & Search Box */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b2f8a] via-[#09256e] to-[#06184a] p-6 sm:p-10 text-white shadow-xl">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b2f8a] via-[#09256e] to-[#06184a] p-6 sm:p-8 text-white shadow-xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#dfb755]/20 via-transparent to-transparent pointer-events-none" />
 
-        <div className="relative z-10 max-w-2xl space-y-4">
+        <div className="relative z-10 max-w-4xl space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#dfb755]/20 px-3 py-1 border border-[#dfb755]/30 text-[11px] font-bold uppercase tracking-wider text-[#dfb755]">
             <span>🚚</span>
             <span>Live Dispatch Tracker · ઓર્ડર ટ્રેકિંગ</span>

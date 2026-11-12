@@ -167,7 +167,7 @@ export function PickupCamClient({ initialData, token }: Props) {
 
       {/* Top Banner / Breadcrumb */}
       <div className="border-b border-amber-200/60 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/80 backdrop-blur-md sticky top-0 z-30 shadow-xs">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
           <Link
             href="/"
             className="flex items-center gap-2 text-xs font-bold text-[#0b2f8a] hover:text-[#dfb755] transition"
@@ -190,7 +190,7 @@ export function PickupCamClient({ initialData, token }: Props) {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
         {/* Main Hero Header Card */}
         <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#071c54] via-[#0b2f8a] to-[#143d99] text-white shadow-xl border border-white/20">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-[#dfb755]/10 blur-3xl pointer-events-none" />

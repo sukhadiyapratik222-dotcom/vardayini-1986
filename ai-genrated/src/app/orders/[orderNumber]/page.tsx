@@ -269,7 +269,7 @@ export default async function OrderPage({
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Vadodara"))}`;
 
   return (
-    <main className="mx-auto max-w-3xl px-3 sm:px-4 py-6 sm:py-10">
+    <main className="mx-auto max-w-5xl px-3 sm:px-6 py-6 sm:py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">
