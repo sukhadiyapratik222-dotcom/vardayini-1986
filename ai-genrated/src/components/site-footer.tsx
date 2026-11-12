@@ -9,6 +9,48 @@ export interface SiteFooterProps {
 
 export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
   const [uiConfig, setUiConfig] = useState<any>(initialConfig || null);
+  const [currentTheme, setCurrentTheme] = useState<"warm-cream" | "classic">("warm-cream");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const readTheme = () => {
+      try {
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const urlTheme = params.get("ui") || params.get("theme");
+          if (urlTheme === "classic" || urlTheme === "warm-cream") {
+            setCurrentTheme(urlTheme);
+            return;
+          }
+        }
+        const saved = localStorage.getItem("vsm_ui_design_theme");
+        if (saved === "classic" || saved === "warm-cream") {
+          setCurrentTheme(saved);
+        }
+      } catch {}
+    };
+
+    readTheme();
+    window.addEventListener("vsm_ui_theme_change", readTheme);
+    window.addEventListener("storage", readTheme);
+    return () => {
+      window.removeEventListener("vsm_ui_theme_change", readTheme);
+      window.removeEventListener("storage", readTheme);
+    };
+  }, []);
+
+  const handleToggleUi = () => {
+    const nextTheme = currentTheme === "warm-cream" ? "classic" : "warm-cream";
+    setCurrentTheme(nextTheme);
+    try {
+      localStorage.setItem("vsm_ui_design_theme", nextTheme);
+      window.dispatchEvent(new Event("vsm_ui_theme_change"));
+      if (typeof window !== "undefined" && window.location.pathname !== "/") {
+        window.location.href = `/?ui=${nextTheme}`;
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     fetch("/api/ui-config", { cache: "no-store" })
@@ -247,12 +289,37 @@ export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
       {/* Gold Divider Line */}
       <div className="gold-line" />
 
-      {/* Bottom Copyright Bar */}
+      {/* Bottom Copyright Bar with Change UI Button */}
       <div className="mx-auto flex max-w-7xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 py-5 text-xs text-white/60">
         <p>
           © {uiConfig?.storeInfo?.established || "1976"} – {new Date().getFullYear()}{" "}
           {uiConfig?.storeInfo?.name || "Vardayini Sweet Mart"}. All rights reserved.
         </p>
+
+        {/* Change UI Button */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleToggleUi}
+            className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-[#dfb755]/50 hover:border-[#dfb755] text-white text-[11px] font-semibold shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
+            title="Toggle between 2026 Warm Cream Edition and Classic Royal Navy UI"
+            aria-label="Change Homepage UI Design"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#dfb755] text-[#071c54] text-[10px] font-bold shadow-xs transition-transform group-hover:rotate-180 duration-300">
+              ⚡
+            </span>
+            <span>
+              UI:{" "}
+              <strong className="text-[#dfb755]">
+                {mounted && currentTheme === "classic" ? "Classic Royal Navy" : "2026 Warm Cream"}
+              </strong>
+            </span>
+            <span className="ml-1 text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full border border-white/10 group-hover:text-white transition">
+              Change UI ⇄
+            </span>
+          </button>
+        </div>
+
         <p className="text-center sm:text-right">
           Handcrafted with pure devotion in {uiConfig?.storeInfo?.city || "Gujarat"}.
         </p>

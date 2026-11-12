@@ -82,14 +82,31 @@ export function HomePageClient({
 
   useEffect(() => {
     setMounted(true);
-    try {
-      const saved = localStorage.getItem("vsm_ui_design_theme");
-      if (saved === "classic" || saved === "warm-cream") {
-        setUiDesign(saved);
-      }
-    } catch {
-      // LocalStorage unavailable
-    }
+    const syncTheme = () => {
+      try {
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const urlTheme = params.get("ui") || params.get("theme");
+          if (urlTheme === "classic" || urlTheme === "warm-cream") {
+            setUiDesign(urlTheme);
+            localStorage.setItem("vsm_ui_design_theme", urlTheme);
+            return;
+          }
+        }
+        const saved = localStorage.getItem("vsm_ui_design_theme");
+        if (saved === "classic" || saved === "warm-cream") {
+          setUiDesign(saved);
+        }
+      } catch {}
+    };
+
+    syncTheme();
+    window.addEventListener("vsm_ui_theme_change", syncTheme);
+    window.addEventListener("storage", syncTheme);
+    return () => {
+      window.removeEventListener("vsm_ui_theme_change", syncTheme);
+      window.removeEventListener("storage", syncTheme);
+    };
   }, []);
 
   function toggleUiDesign() {
@@ -97,6 +114,7 @@ export function HomePageClient({
     setUiDesign(next);
     try {
       localStorage.setItem("vsm_ui_design_theme", next);
+      window.dispatchEvent(new Event("vsm_ui_theme_change"));
     } catch {
       // ignore
     }
