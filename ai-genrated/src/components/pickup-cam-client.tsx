@@ -199,26 +199,28 @@ export function PickupCamClient({ initialData, token }: Props) {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dfb755]/20 border border-[#dfb755]/40 text-[#dfb755] text-xs font-bold tracking-wider uppercase">
                 <span>🎥</span>
-                <span>Store Pickup Order Preparation</span>
+                <span>{data.fulfillmentType === "delivery" ? "Doorstep Express Delivery · Live Preparation" : "Store Pickup Order Preparation"}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-serif">
                 Watch Your Order Being Prepared
               </h1>
               <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
-                Every sweet is rolled with 100% Shuddh Desi Ghee in our Vadodara kitchen. Follow live milestones, inspect your freshly packed box, and collect with OTP.
+                {data.fulfillmentType === "delivery"
+                  ? "Every sweet is handcrafted with 100% Shuddh Desi Ghee in our Vadodara kitchen and sealed in aroma-lock insulated packaging for express doorstep delivery."
+                  : "Every sweet is rolled with 100% Shuddh Desi Ghee in our Vadodara kitchen. Follow live milestones, inspect your freshly packed box, and collect with OTP."}
               </p>
             </div>
 
             {/* Order Identity Badge */}
             <div className="shrink-0 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 sm:text-right">
               <span className="text-[10px] uppercase tracking-widest text-[#dfb755] font-bold block">
-                Pickup Order #
+                {data.fulfillmentType === "delivery" ? "Delivery Order #" : "Pickup Order #"}
               </span>
               <span className="font-mono text-xl sm:text-2xl font-black text-white">
                 {data.orderNumber}
               </span>
               <span className="block text-[11px] text-white/70 mt-1">
-                📅 {data.pickupDate} • {data.pickupSlot}
+                {data.fulfillmentType === "delivery" ? "🚚 Vadodara Express Fleet" : `📅 ${data.pickupDate} • ${data.pickupSlot}`}
               </span>
             </div>
           </div>
@@ -243,8 +245,27 @@ export function PickupCamClient({ initialData, token }: Props) {
           </div>
         </section>
 
-        {/* Counter Pickup OTP Highlight Box */}
-        {data.pickupOtp && (
+        {/* Counter Pickup OTP or Express Delivery Badge */}
+        {data.fulfillmentType === "delivery" ? (
+          <section className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 border border-emerald-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800 text-2xl">
+                🚚
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-sm text-[#071c54]">Express Doorstep Delivery Across Vadodara</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    EXPRESS FLEET
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Your sweets are freshly prepared, packed in food-grade insulated boxes, and dispatched with tamper-evident seals.
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : data.pickupOtp ? (
           <section className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-2 border-dashed border-[#dfb755] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfb755]/20 text-2xl">
@@ -279,7 +300,7 @@ export function PickupCamClient({ initialData, token }: Props) {
               </button>
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* Mode 2: Optional Live Stream Camera Feed */}
         {showLiveStream && (

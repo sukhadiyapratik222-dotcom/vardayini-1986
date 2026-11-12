@@ -233,13 +233,15 @@ export default async function OrderPage({
   }
 
   let kitchenCamUrl: string | null = null;
-  if (isPickup) {
-    try {
-      const { getOrCreatePickupTrackingToken } = await import("@/lib/kitchen-cam");
-      const token = await getOrCreatePickupTrackingToken(order.id, order.orderNumber, "pickup");
-      kitchenCamUrl = `/pickup-cam/${token}`;
-    } catch {}
-  }
+  try {
+    const { getOrCreatePickupTrackingToken } = await import("@/lib/kitchen-cam");
+    const token = await getOrCreatePickupTrackingToken(
+      order.id,
+      order.orderNumber,
+      isPickup ? "pickup" : "delivery"
+    );
+    kitchenCamUrl = `/pickup-cam/${token}`;
+  } catch {}
 
   const statusHeading =
     order.status === "cancelled"

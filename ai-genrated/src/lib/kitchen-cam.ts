@@ -394,6 +394,8 @@ export async function getCustomerTrackingDataByToken(token: string) {
   const currentStageKey = mapOrderStatusToStageKey(order.status);
   const currentStageIdx = STAGE_ORDER.indexOf(currentStageKey);
 
+  const isDelivery = order.fulfillmentType === "delivery";
+
   // 7. Assemble 5-stage timeline
   const stagesMeta: Record<
     PickupTimelineStage["key"],
@@ -417,18 +419,32 @@ export async function getCustomerTrackingDataByToken(token: string) {
       description:
         "Freshly weighed and packed in food-grade, vacuum-sealed heritage boxes with oxygen scavengers.",
     },
-    ready_for_pickup: {
-      label: "Ready at Store Counter",
-      title: "Waiting for You at Vardayini Counter",
-      description:
-        "Your order is packed and placed in our fresh pickup counter. Present your 6-digit OTP to the store attendant to collect.",
-    },
-    completed: {
-      label: "Collected & Completed",
-      title: "Handover Verified",
-      description:
-        "OTP verified and sweets handed over. Enjoy the authentic taste of 1976 heritage sweets!",
-    },
+    ready_for_pickup: isDelivery
+      ? {
+          label: "Out for Express Dispatch",
+          title: "Handed over to Express Delivery Fleet",
+          description:
+            "Your packed mithai box is dispatched and on its way to your doorstep across Vadodara.",
+        }
+      : {
+          label: "Ready at Store Counter",
+          title: "Waiting for You at Vardayini Counter",
+          description:
+            "Your order is packed and placed in our fresh pickup counter. Present your 6-digit OTP to the store attendant to collect.",
+        },
+    completed: isDelivery
+      ? {
+          label: "Delivered to Doorstep",
+          title: "Doorstep Delivery Verified",
+          description:
+            "Handed over to customer safely. Enjoy authentic Gujarati sweets!",
+        }
+      : {
+          label: "Collected & Completed",
+          title: "Handover Verified",
+          description:
+            "OTP verified and sweets handed over. Enjoy the authentic taste of 1976 heritage sweets!",
+        },
   };
 
   const timeline: PickupTimelineStage[] = STAGE_ORDER.map((key, idx) => {

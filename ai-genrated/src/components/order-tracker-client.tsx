@@ -13,6 +13,7 @@ interface TimelineStep {
   time?: string | null;
   completed: boolean;
   current: boolean;
+  media?: any[];
 }
 
 interface OrderItem {
@@ -63,6 +64,8 @@ interface OrderTrackingData {
   deliveredAt?: string | null;
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  kitchenCamToken?: string | null;
+  kitchenCamUrl?: string | null;
   pickupDetails?: PickupDetails | null;
   courier?: {
     name?: string | null;
@@ -441,13 +444,22 @@ export function OrderTrackerClient() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 text-right sm:text-right">
-                <div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-start sm:justify-end text-left sm:text-right">
+                <div className="mr-1">
                   <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Box Value</p>
-                  <p className="text-2xl font-black text-[#6b1d1d] font-[family-name:var(--font-display)]">
+                  <p className="text-xl sm:text-2xl font-black text-[#6b1d1d] font-sans">
                     {formatInr(orderData.total)}
                   </p>
                 </div>
+                {orderData.kitchenCamUrl ? (
+                  <Link
+                    href={orderData.kitchenCamUrl}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#dfb755] to-[#c89d38] px-3.5 py-2 text-xs font-bold text-[#071c54] shadow-sm hover:brightness-105 active:scale-95 transition"
+                  >
+                    <span className="flex h-2 w-2 rounded-full bg-rose-600 animate-ping" />
+                    <span>🎥 Live Kitchen Cam</span>
+                  </Link>
+                ) : null}
                 <Link
                   href={`/orders/${orderData.orderNumber}`}
                   className="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 text-xs font-semibold text-[#0b2f8a] transition"
@@ -468,16 +480,17 @@ export function OrderTrackerClient() {
               <div className="relative">
                 {/* Horizontal Desktop View */}
                 <div className="hidden md:grid grid-cols-5 gap-2 relative">
-                  {/* Connecting track line behind circles */}
-                  <div className="absolute top-5 left-8 right-8 h-1 bg-slate-200 -z-0" />
-                  <div
-                    className="absolute top-5 left-8 h-1 bg-gradient-to-r from-[#dfb755] to-emerald-500 transition-all duration-500 -z-0"
-                    style={{
-                      width: orderData.isCancelled
-                        ? "100%"
-                        : `${Math.min(100, Math.max(0, (orderData.currentStepIndex / 4) * 100))}%`,
-                    }}
-                  />
+                  {/* Connecting track line behind circles from column 1 center (10%) to column 5 center (90%) */}
+                  <div className="absolute top-[22px] -translate-y-1/2 left-[10%] right-[10%] h-1 bg-slate-200 z-0 overflow-hidden rounded-full">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 via-[#dfb755] to-emerald-500 transition-all duration-700 rounded-full"
+                      style={{
+                        width: orderData.isCancelled
+                          ? "100%"
+                          : `${Math.min(100, Math.max(0, (orderData.currentStepIndex / (orderData.timeline.length - 1 || 4)) * 100))}%`,
+                      }}
+                    />
+                  </div>
 
                   {orderData.timeline.map((step, idx) => {
                     const isDone = step.completed;
@@ -597,6 +610,77 @@ export function OrderTrackerClient() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Live Kitchen Cam & Preparation Updates Section */}
+          <div className="rounded-3xl border border-[#dfb755]/40 bg-gradient-to-br from-[#faf8f5] via-white to-[#f7f2e7] p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-900/10">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-3 w-3 rounded-full bg-rose-600 animate-ping" />
+                <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-[#6b1d1d]">
+                  Live Kitchen Cam & Preparation Stream
+                </h3>
+              </div>
+              {orderData.kitchenCamUrl ? (
+                <Link
+                  href={orderData.kitchenCamUrl}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#dfb755] to-[#c89d38] px-4 py-2 text-xs font-black text-[#071c54] shadow-md hover:brightness-105 active:scale-95 transition w-fit"
+                >
+                  <span>🎥</span>
+                  <span>Watch Order Prepared Live →</span>
+                </Link>
+              ) : null}
+            </div>
+
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+              Every mithai batch is hand-simmered with 100% Shuddh Desi Ghee in our Vadodara kitchen. Follow live preparation milestones, halwai photos, and aroma-lock packaging seals.
+            </p>
+
+            {/* Media Gallery / Stage Updates */}
+            {orderData.timeline.some((s) => s.media && s.media.length > 0) ? (
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {orderData.timeline.flatMap((s) => (s.media || []).map((m: any) => (
+                  <div key={m.id} className="group relative rounded-2xl overflow-hidden border border-amber-900/10 bg-white shadow-2xs hover:shadow-md transition">
+                    <div className="relative h-28 sm:h-36 w-full">
+                      <Image src={m.fileUrl} alt={m.caption || s.title} fill className="object-cover group-hover:scale-105 transition duration-300" />
+                    </div>
+                    <div className="p-2 bg-white/95 text-[11px]">
+                      <span className="font-bold text-[#6b1d1d] block truncate">{s.title}</span>
+                      <span className="text-[10px] text-stone-500 block truncate">{m.caption || s.title}</span>
+                    </div>
+                  </div>
+                )))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-amber-300/80 bg-amber-50/50 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-900 text-xl">
+                    🍲
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#6b1d1d]">
+                      {orderData.status === "preparing"
+                        ? "Kitchen Karahi is Active — Fresh Mithai Rolling in Desi Ghee"
+                        : orderData.status === "packed"
+                        ? "Quality Seal Applied — Your Sweets Box is Packed"
+                        : "Order Received — Halwais Prepping Batch"}
+                    </h4>
+                    <p className="text-xs text-stone-600 mt-0.5">
+                      Our kitchen staff captures photos as each batch is simmered, tested, and sealed.
+                    </p>
+                  </div>
+                </div>
+                {orderData.kitchenCamUrl ? (
+                  <Link
+                    href={orderData.kitchenCamUrl}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white hover:bg-amber-100/60 px-4 py-2 text-xs font-bold text-[#0b2f8a] shadow-2xs transition shrink-0"
+                  >
+                    <span>View Live Stream</span>
+                    <span>↗</span>
+                  </Link>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {/* Dispatch, Courier & Destination Grid OR Your Pickup Details */}

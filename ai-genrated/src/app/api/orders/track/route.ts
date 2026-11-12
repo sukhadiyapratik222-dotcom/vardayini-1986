@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db, ensureDbMigrations } from "@/db";
-import { orderItems, orders, stores, orderStatusHistory } from "@/db/schema";
+import { orderItems, orders, stores, orderStatusHistory, orderMedia } from "@/db/schema";
 import { getAuthUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,7 @@ interface TimelineStep {
   time?: string | null;
   completed: boolean;
   current: boolean;
+  media?: any[];
 }
 
 function maskPhone(phone?: string | null): string {
@@ -282,6 +283,62 @@ export async function GET(request: Request) {
       } catch {}
     }
 
+    // 5b. Fetch media uploaded by kitchen for this order
+    const mediaByStage: Record<string, any[]> = {
+      order_received: [],
+      confirmed: [],
+      preparing: [],
+      kitchen: [],
+      packed: [],
+      ready_for_pickup: [],
+      shipped: [],
+      completed: [],
+      delivered: [],
+    };
+    if (orderRow.id) {
+      try {
+        const mRows = await db
+          .select()
+          .from(orderMedia)
+          .where(and(eq(orderMedia.orderId, orderRow.id), eq(orderMedia.hidden, false)))
+          .orderBy(orderMedia.createdAt);
+        for (const m of mRows) {
+          const item = {
+            id: m.id,
+            stage: m.stage,
+            fileUrl: m.fileUrl,
+            mediaType: m.mediaType,
+            caption: m.caption,
+            uploadedBy: m.uploadedBy,
+            createdAt: m.createdAt,
+          };
+          if (!mediaByStage[m.stage]) mediaByStage[m.stage] = [];
+          mediaByStage[m.stage].push(item);
+          if (m.stage === "preparing") mediaByStage["kitchen"]?.push(item);
+          if (m.stage === "order_received") mediaByStage["confirmed"]?.push(item);
+          if (m.stage === "ready_for_pickup") mediaByStage["shipped"]?.push(item);
+          if (m.stage === "completed") mediaByStage["delivered"]?.push(item);
+        }
+      } catch {}
+    }
+
+    // 5c. Generate or fetch private Kitchen Cam tracking token
+    let kitchenCamToken: string | null = null;
+    let kitchenCamUrl: string | null = null;
+    try {
+      const { getOrCreatePickupTrackingToken } = await import("@/lib/kitchen-cam");
+      kitchenCamToken = await getOrCreatePickupTrackingToken(
+        orderRow.id,
+        orderRow.orderNumber,
+        isPickup ? "pickup" : "delivery"
+      );
+      if (kitchenCamToken) {
+        kitchenCamUrl = `/pickup-cam/${kitchenCamToken}`;
+      }
+    } catch (camErr) {
+      console.warn("[Order Track] Kitchen cam token fetch notice:", camErr);
+    }
+
     // Check if requester is logged in as the order owner
     const authUser = await getAuthUser();
     const isOwner = Boolean(
@@ -373,6 +430,7 @@ export async function GET(request: Request) {
           time: createdDateStr,
           completed: currentStepIndex >= 0,
           current: currentStepIndex === 0,
+          media: mediaByStage["confirmed"] || [],
         },
         {
           key: "preparing",
@@ -381,6 +439,7 @@ export async function GET(request: Request) {
           time: currentStepIndex >= 1 ? "In Progress / Handcrafted" : "Scheduled",
           completed: currentStepIndex >= 1,
           current: currentStepIndex === 1,
+          media: mediaByStage["preparing"] || [],
         },
         {
           key: "ready_for_pickup",
@@ -391,6 +450,7 @@ export async function GET(request: Request) {
           time: currentStepIndex >= 2 ? readyTimeStr : "Estimated Soon",
           completed: currentStepIndex >= 2,
           current: currentStepIndex === 2,
+          media: mediaByStage["ready_for_pickup"] || [],
         },
         {
           key: "picked_up",
@@ -401,6 +461,7 @@ export async function GET(request: Request) {
           time: currentStepIndex >= 3 ? pickupTimeStr : "Awaiting Pickup",
           completed: currentStepIndex >= 3,
           current: currentStepIndex === 3,
+          media: mediaByStage["completed"] || [],
         },
       ];
     } else {
@@ -425,6 +486,7 @@ export async function GET(request: Request) {
           time: createdDateStr,
           completed: currentStepIndex >= 0,
           current: currentStepIndex === 0,
+          media: mediaByStage["confirmed"] || [],
         },
         {
           key: "kitchen",
@@ -433,6 +495,7 @@ export async function GET(request: Request) {
           time: currentStepIndex >= 1 ? "In Progress / Prepared" : "Scheduled",
           completed: currentStepIndex >= 1,
           current: currentStepIndex === 1,
+          media: mediaByStage["kitchen"] || [],
         },
         {
           key: "packed",
@@ -441,6 +504,7 @@ export async function GET(request: Request) {
           time: currentStepIndex >= 2 ? "Sealed & Labeled" : "Pending Packing",
           completed: currentStepIndex >= 2,
           current: currentStepIndex === 2,
+          media: mediaByStage["packed"] || [],
         },
         {
           key: "shipped",
@@ -451,6 +515,7 @@ export async function GET(request: Request) {
           time: currentStepIndex >= 3 ? "On the Way" : "Estimated Dispatch",
           completed: currentStepIndex >= 3,
           current: currentStepIndex === 3,
+          media: mediaByStage["shipped"] || [],
         },
         {
           key: "delivered",
@@ -466,6 +531,7 @@ export async function GET(request: Request) {
             : orderRow.deliverySlot || "Expected Soon",
           completed: currentStepIndex >= 4,
           current: currentStepIndex === 4,
+          media: mediaByStage["delivered"] || [],
         },
       ];
     }
@@ -477,6 +543,8 @@ export async function GET(request: Request) {
         orderNumber: orderRow.orderNumber,
         status: orderRow.status,
         fulfillmentType: isPickup ? "pickup" : "delivery",
+        kitchenCamToken,
+        kitchenCamUrl,
         isCancelled,
         total: orderRow.total,
         subtotal: orderRow.subtotal,
