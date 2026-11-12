@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,9 +53,11 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
   const [pincodeResult, setPincodeResult] = useState<DeliveryCheckResult | null>(null);
   const [pincodeError, setPincodeError] = useState("");
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     try {
       const savedLoc = localStorage.getItem("vsm_delivery_location");
       const savedPin = localStorage.getItem("vsm_delivery_pincode");
@@ -63,6 +66,24 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
       }
     } catch {}
   }, []);
+
+  // Lock body scroll and listen for Escape key when delivery modal is open
+  useEffect(() => {
+    if (showDeliveryModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setShowDeliveryModal(false);
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [showDeliveryModal]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -525,128 +546,153 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
       {/* ─────────────────────────────────────────────────────────────
           Full Delivery Options & Express Availability Modal
          ───────────────────────────────────────────────────────────── */}
-      {showDeliveryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-xl rounded-2xl bg-[#140638] border border-[#f5c518]/50 shadow-[0_25px_60px_rgba(0,0,0,0.8)] p-3.5 sm:p-6 text-left text-white max-h-[92vh] overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => setShowDeliveryModal(false)}
-              className="absolute top-4 right-4 text-white/60 hover:text-white min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
-              aria-label="Close modal"
+      {/* ─────────────────────────────────────────────────────────────
+          Full Delivery Options & Express Availability Modal (Portaled)
+         ───────────────────────────────────────────────────────────── */}
+      {mounted &&
+        showDeliveryModal &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delivery Options and Coverage"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setShowDeliveryModal(false)}
+          >
+            <div
+              className="relative w-full max-w-xl max-h-[86vh] rounded-3xl bg-[#140638] border-2 border-[#f5c518]/60 shadow-[0_25px_70px_rgba(0,0,0,0.95)] p-4 sm:p-6 text-left text-white overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
             >
-              ✕
-            </button>
-
-            <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-[#f5c518]">
-              <span>🚚</span>
-              <span>Vardayini Sweets Delivery Services</span>
-            </div>
-            <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-white mb-2">
-              Delivery Options &amp; Coverage
-            </h3>
-            <p className="text-xs text-white/70 mb-5 leading-relaxed">
-              We handcraft every batch in Vadodara using 100% Shuddh Desi Ghee. Here is how we deliver to your doorstep:
-            </p>
-
-            <div className="space-y-3">
-              {/* Option 1: Same-Day Delivery */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
-                    <span>⚡</span>
-                    <span>Same-Day Fresh Delivery</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f5c518] text-[#140638]">
-                    Vadodara &amp; Suburbs
-                  </span>
-                </div>
-                <p className="text-xs text-white/80 leading-relaxed mb-2">
-                  Orders placed before <strong>2:00 PM</strong> are freshly packed warm and delivered by <strong>6:30 PM today</strong>. Available for PIN codes <strong>390xxx</strong> and <strong>391xxx</strong>.
-                </p>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2 border-t border-white/10 text-white/60">
-                  <span>Slot choices: 5:00–7:00 PM or 7:00–9:00 PM</span>
-                  <span className="text-[#f5c518] font-semibold">FREE on orders over ₹799</span>
-                </div>
-              </div>
-
-              {/* Option 2: Next-Day Express */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
+              {/* Pinned Modal Header: Always visible with title and close button */}
+              <div className="pb-3 border-b border-white/10 flex items-start justify-between gap-3 shrink-0">
+                <div className="min-w-0 pr-2">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#f5c518] mb-1">
                     <span>🚚</span>
-                    <span>Next-Day Express Dispatch</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-[#f5c518]">
-                    Across Gujarat
-                  </span>
+                    <span>Vardayini Sweets Delivery Services</span>
+                  </div>
+                  <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    Delivery Options &amp; Coverage
+                  </h3>
+                  <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                    Handcrafted in Vadodara with 100% Shuddh Desi Ghee. Express delivery options to your doorstep:
+                  </p>
                 </div>
-                <p className="text-xs text-white/80 leading-relaxed mb-2">
-                  Delivered in <strong>24–36 hours</strong> via Blue Dart Express in insulated vacuum packaging with ice gel packs. Available for Ahmedabad, Surat, Anand, Rajkot, Bhavnagar, Bharuch, and all Gujarat PIN codes (<strong>36/37/38/39xxxx</strong>).
-                </p>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2 border-t border-white/10 text-white/60">
-                  <span>Dispatched same day if ordered before 3:00 PM</span>
-                  <span className="text-[#f5c518] font-semibold">FREE on orders over ₹799</span>
+
+                <button
+                  type="button"
+                  onClick={() => setShowDeliveryModal(false)}
+                  className="text-white/70 hover:text-white h-9 w-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer shrink-0"
+                  aria-label="Close modal"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable Options List */}
+              <div className="flex-1 overflow-y-auto py-3.5 space-y-3 pr-1">
+                {/* Option 1: Same-Day Delivery */}
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
+                      <span>⚡</span>
+                      <span>Same-Day Fresh Delivery</span>
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#f5c518] text-[#140638]">
+                      Vadodara &amp; Suburbs
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/80 leading-relaxed mb-2">
+                    Orders placed before <strong>2:00 PM</strong> are freshly packed warm and delivered by <strong>6:30 PM today</strong>. Available for PIN codes <strong>390xxx</strong> and <strong>391xxx</strong>.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2 border-t border-white/10 text-white/60">
+                    <span>Slot choices: 5:00–7:00 PM or 7:00–9:00 PM</span>
+                    <span className="text-[#f5c518] font-semibold">FREE on orders over ₹799</span>
+                  </div>
+                </div>
+
+                {/* Option 2: Next-Day Express */}
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
+                      <span>🚚</span>
+                      <span>Next-Day Express Dispatch</span>
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-[#f5c518]">
+                      Across Gujarat
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/80 leading-relaxed mb-2">
+                    Delivered in <strong>24–36 hours</strong> via Blue Dart Express in insulated vacuum packaging with ice gel packs. Available for Ahmedabad, Surat, Anand, Rajkot, Bhavnagar, Bharuch, and all Gujarat PIN codes (<strong>36/37/38/39xxxx</strong>).
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2 border-t border-white/10 text-white/60">
+                    <span>Dispatched same day if ordered before 3:00 PM</span>
+                    <span className="text-[#f5c518] font-semibold">FREE on orders over ₹799</span>
+                  </div>
+                </div>
+
+                {/* Option 3: Pan-India Delivery */}
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
+                      <span>📦</span>
+                      <span>Pan-India Air Courier (2–3 Days)</span>
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-[#f5c518]">
+                      All Over India
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/80 leading-relaxed mb-2">
+                    Shipped in food-grade vacuum-sealed tin boxes with oxygen scavengers and tamper-evident thermal seals. Delivered to your doorstep anywhere in India within <strong>2 to 3 business days</strong>.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2 border-t border-white/10 text-white/60">
+                    <span>Safe for transit • 15+ Days fresh retention</span>
+                    <span className="text-[#f5c518] font-semibold">FREE on orders over ₹799</span>
+                  </div>
+                </div>
+
+                {/* Option 4: Store Pickup */}
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
+                      <span>🏬</span>
+                      <span>Instant In-Store Pickup (Free)</span>
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500 text-white">
+                      Ready in 30 Mins
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/80 leading-relaxed mb-2">
+                    Skip the delivery queue and collect your order directly from any of our 3 Vadodara heritage counters:
+                  </p>
+                  <ul className="text-[11px] text-white/70 space-y-1 list-disc list-inside">
+                    <li>Mandvi Heritage Flagship (Near Mandvi Gate, Vadodara)</li>
+                    <li>Alkapuri Express Counter (RC Dutt Road, Alkapuri)</li>
+                    <li>Karelibaug Royal Outlet (Opp. Mahalaxmi Temple, Karelibaug)</li>
+                  </ul>
+                  <div className="flex items-center justify-between text-[11px] pt-2 mt-2 border-t border-white/10 text-white/60">
+                    <span>Open 8:00 AM – 10:00 PM daily</span>
+                    <span className="text-emerald-400 font-semibold">Always ₹0 Free</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Option 3: Pan-India Delivery */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
-                    <span>📦</span>
-                    <span>Pan-India Air Courier (2–3 Days)</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-[#f5c518]">
-                    All Over India
-                  </span>
-                </div>
-                <p className="text-xs text-white/80 leading-relaxed mb-2">
-                  Shipped in food-grade vacuum-sealed tin boxes with oxygen scavengers and tamper-evident thermal seals. Delivered to your doorstep anywhere in India within <strong>2 to 3 business days</strong>.
-                </p>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2 border-t border-white/10 text-white/60">
-                  <span>Safe for transit • 15+ Days fresh retention</span>
-                  <span className="text-[#f5c518] font-semibold">FREE on orders over ₹799</span>
-                </div>
-              </div>
-
-              {/* Option 4: Store Pickup */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/15 hover:border-[#f5c518]/50 transition">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-bold text-sm text-[#f5c518] flex items-center gap-1.5">
-                    <span>🏬</span>
-                    <span>Instant In-Store Pickup (Free)</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">
-                    Ready in 30 Mins
-                  </span>
-                </div>
-                <p className="text-xs text-white/80 leading-relaxed mb-2">
-                  Skip the delivery queue and collect your order directly from any of our 3 Vadodara heritage counters:
-                </p>
-                <ul className="text-[11px] text-white/70 space-y-1 list-disc list-inside">
-                  <li>Mandvi Heritage Flagship (Near Mandvi Gate, Vadodara)</li>
-                  <li>Alkapuri Express Counter (RC Dutt Road, Alkapuri)</li>
-                  <li>Karelibaug Royal Outlet (Opp. Mahalaxmi Temple, Karelibaug)</li>
-                </ul>
-                <div className="flex items-center justify-between text-[11px] pt-2 mt-2 border-t border-white/10 text-white/60">
-                  <span>Open 8:00 AM – 10:00 PM daily</span>
-                  <span className="text-emerald-400 font-semibold">Always ₹0 Free</span>
-                </div>
+              {/* Pinned Modal Footer: Always visible */}
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
+                <span className="text-[11px] text-white/60 hidden sm:inline">
+                  All sweets vacuum-sealed with insulated fresh-lock packs.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowDeliveryModal(false)}
+                  className="w-full sm:w-auto bg-[#f5c518] text-[#140638] font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl hover:brightness-105 active:scale-95 transition cursor-pointer shadow-md ml-auto"
+                >
+                  Got It, Thanks!
+                </button>
               </div>
             </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowDeliveryModal(false)}
-                className="bg-[#f5c518] text-[#140638] font-bold text-xs px-5 py-2.5 rounded-xl hover:brightness-105 active:scale-95 transition cursor-pointer"
-              >
-                Got It, Thanks!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </section>
   );
 }

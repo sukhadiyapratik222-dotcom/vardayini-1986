@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { formatInr, unitPrice } from "@/lib/money";
@@ -41,8 +42,30 @@ export function ProductOptionsModal({
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  if (!product) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (product) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [product, onClose]);
+
+  if (!product || !mounted) return null;
 
   const variants = product.variants || [];
   const currentVariant = variants[selectedIdx] || variants[0];
@@ -85,15 +108,15 @@ export function ProductOptionsModal({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl z-10 border border-[#3b1e54]/10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg max-h-[88vh] overflow-y-auto rounded-3xl bg-white shadow-2xl z-10 border border-[#3b1e54]/10 animate-in zoom-in-95 duration-200">
         {/* Close Button */}
         <button
           type="button"
@@ -238,6 +261,7 @@ export function ProductOptionsModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

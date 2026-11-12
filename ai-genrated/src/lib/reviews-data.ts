@@ -163,3 +163,4 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
     isVerified: true,
   },
 ];
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 
 import {
@@ -89,6 +90,7 @@ export function TestimonialsSection({
 
   // Modal State for Submitting Real Reviews
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reviewerName, setReviewerName] = useState("");
   const [reviewerCity, setReviewerCity] = useState("Vadodara");
@@ -96,6 +98,27 @@ export function TestimonialsSection({
   const [reviewComment, setReviewComment] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setIsModalOpen(false);
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [isModalOpen]);
 
   // Fetch real verified reviews from database API
   useEffect(() => {
@@ -356,10 +379,21 @@ export function TestimonialsSection({
         )}
       </div>
 
-      {/* Write a Review Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-neutral-100 relative">
+      {/* Write a Review Modal (Portaled) */}
+      {mounted &&
+        isModalOpen &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Write a Customer Review"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            onClick={() => setIsModalOpen(false)}
+          >
+            <div
+              className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-neutral-100 relative animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
               <div>
                 <h3 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-neutral-900">
@@ -475,7 +509,8 @@ export function TestimonialsSection({
               </form>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
