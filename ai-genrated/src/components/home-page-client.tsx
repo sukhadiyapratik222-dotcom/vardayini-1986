@@ -35,6 +35,7 @@ import { OutletsSection } from "@/components/outlets-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { CustomerBestsellersSection } from "@/components/customer-bestsellers-section";
 import { BrowseByCategorySection } from "@/components/browse-by-category-section";
+import { KitchenCamHomepageSection } from "@/components/kitchen-cam-homepage-section";
 
 interface CategoryItem {
   id: number;
@@ -295,6 +296,9 @@ export function HomePageClient({
           initialReviews={reviews}
         />
       )}
+
+      {/* Live Kitchen Cam Section */}
+      <KitchenCamHomepageSection />
 
       {/* Outlets & Store Locations */}
       <OutletsSection initialStores={stores} />

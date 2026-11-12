@@ -17,6 +17,7 @@ import { Magnetic } from "@/components/core/magnetic";
 import { OutletsSection } from "@/components/outlets-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { WelcomeOfferBanner } from "@/components/welcome-offer-banner";
+import { KitchenCamHomepageSection } from "@/components/kitchen-cam-homepage-section";
 import type { SpecialItemsConfig } from "@/components/home-page-client";
 
 interface CategoryData {
@@ -374,6 +375,11 @@ export function WarmCreamHomepage({
           initialReviews={reviews}
         />
       )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          9.5. LIVE KITCHEN CAM & FRESH COUNTER PROMISE
+         ───────────────────────────────────────────────────────────── */}
+      <KitchenCamHomepageSection />
 
       {/* ─────────────────────────────────────────────────────────────
           10. OUR OUTLETS & STORES (section_contact14)

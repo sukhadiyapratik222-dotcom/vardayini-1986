@@ -462,3 +462,54 @@ export const unserviceablePincodeLogs = mysqlTable("unserviceable_pincode_logs",
   source: varchar("source", { length: 40 }).default("checkout"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const trackingTokens = mysqlTable("tracking_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("order_id")
+    .notNull()
+    .references(() => orders.id),
+  orderNumber: varchar("order_number", { length: 40 }).notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull().default("pickup"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const orderMedia = mysqlTable("order_media", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("order_id")
+    .notNull()
+    .references(() => orders.id),
+  orderNumber: varchar("order_number", { length: 40 }).notNull(),
+  stage: varchar("stage", { length: 40 }).notNull(), // order_received | preparing | packed | ready_for_pickup | completed
+  fileUrl: text("file_url").notNull(),
+  mediaType: varchar("media_type", { length: 20 }).notNull().default("image"), // image | video
+  sizeBytes: int("size_bytes").notNull().default(0),
+  caption: text("caption"),
+  uploadedBy: varchar("uploaded_by", { length: 80 }).notNull().default("Kitchen Staff"),
+  hidden: boolean("hidden").notNull().default(false),
+  deleteAfter: timestamp("delete_after"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const kitchenCameras = mysqlTable("kitchen_cameras", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  streamUrl: text("stream_url").notNull(),
+  isPublic: boolean("is_public").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  storeId: int("store_id").references(() => stores.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const kitchenSettings = mysqlTable("kitchen_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  mode: varchar("mode", { length: 20 }).notNull().default("recorded"), // recorded | live | both
+  homepageSectionEnabled: boolean("homepage_section_enabled").notNull().default(true),
+  workingHoursStart: varchar("working_hours_start", { length: 10 }).notNull().default("07:00"),
+  workingHoursEnd: varchar("working_hours_end", { length: 10 }).notNull().default("20:30"),
+  retentionDays: int("retention_days").notNull().default(15),
+  requireReadyPhoto: boolean("require_ready_photo").notNull().default(true),
+  blurFacesNotice: boolean("blur_faces_notice").notNull().default(true),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

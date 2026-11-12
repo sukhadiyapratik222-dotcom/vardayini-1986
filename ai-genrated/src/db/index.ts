@@ -576,6 +576,53 @@ function initSqliteTables(sqlite: DatabaseSync) {
       status TEXT NOT NULL DEFAULT 'Delivered',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS tracking_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      order_number TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      fulfillment_type TEXT NOT NULL DEFAULT 'pickup',
+      expires_at TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS order_media (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      order_number TEXT NOT NULL,
+      stage TEXT NOT NULL,
+      file_url TEXT NOT NULL,
+      media_type TEXT NOT NULL DEFAULT 'image',
+      size_bytes INTEGER DEFAULT 0,
+      caption TEXT DEFAULT NULL,
+      uploaded_by TEXT DEFAULT 'Kitchen Staff',
+      hidden INTEGER DEFAULT 0,
+      delete_after TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS kitchen_cameras (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      stream_url TEXT NOT NULL,
+      is_public INTEGER DEFAULT 1,
+      is_active INTEGER DEFAULT 1,
+      store_id INTEGER DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS kitchen_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      mode TEXT NOT NULL DEFAULT 'recorded',
+      homepage_section_enabled INTEGER DEFAULT 1,
+      working_hours_start TEXT DEFAULT '07:00',
+      working_hours_end TEXT DEFAULT '20:30',
+      retention_days INTEGER DEFAULT 15,
+      require_ready_photo INTEGER DEFAULT 1,
+      blur_faces_notice INTEGER DEFAULT 1,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `;
   try {
     sqlite.exec(ddl);

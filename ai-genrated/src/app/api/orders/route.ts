@@ -861,9 +861,23 @@ export async function POST(request: Request) {
     console.warn("[Orders API] MongoDB order sync notice:", mSyncErr);
   }
 
+  // For Store Pickup Orders: Generate unique private Live Kitchen Cam tracking token
+  let kitchenCamToken: string | null = null;
+  let kitchenCamUrl: string | null = null;
+  if (fulfillmentType === "pickup") {
+    try {
+      const { getOrCreatePickupTrackingToken } = await import("@/lib/kitchen-cam");
+      kitchenCamToken = await getOrCreatePickupTrackingToken(createdOrder.id, createdOrder.orderNumber, "pickup");
+      kitchenCamUrl = `/pickup-cam/${kitchenCamToken}`;
+    } catch (err) {
+      console.warn("Failed to generate kitchen cam token:", err);
+    }
+  }
+
   const { guestTokenHash: _discardHash, ...orderWithoutHash } = createdOrder;
   return Response.json({
     order: orderWithoutHash,
     ...(rawGuestToken ? { guestToken: rawGuestToken } : {}),
+    ...(kitchenCamToken ? { kitchenCamToken, kitchenCamUrl } : {}),
   });
 }

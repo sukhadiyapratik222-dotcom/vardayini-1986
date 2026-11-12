@@ -232,6 +232,15 @@ export default async function OrderPage({
     pickupStore = store || null;
   }
 
+  let kitchenCamUrl: string | null = null;
+  if (isPickup) {
+    try {
+      const { getOrCreatePickupTrackingToken } = await import("@/lib/kitchen-cam");
+      const token = await getOrCreatePickupTrackingToken(order.id, order.orderNumber, "pickup");
+      kitchenCamUrl = `/pickup-cam/${token}`;
+    } catch {}
+  }
+
   const statusHeading =
     order.status === "cancelled"
       ? "Order Cancelled"
@@ -269,6 +278,15 @@ export default async function OrderPage({
           </h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {kitchenCamUrl && (
+            <Link
+              href={kitchenCamUrl}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#dfb755] to-[#c89d38] px-4 py-2 text-xs font-bold text-[#071c54] shadow-md hover:brightness-105 transition"
+            >
+              <span>🎥</span>
+              <span>Watch Order Prepared Live →</span>
+            </Link>
+          )}
           <Link
             href={`/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
             target="_blank"
@@ -345,6 +363,34 @@ export default async function OrderPage({
               )}
             </div>
           </div>
+
+          {kitchenCamUrl && (
+            <div className="mt-5 pt-4 border-t border-[#6b1d1d]/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/80 p-4 rounded-2xl border border-[#dfb755]/50 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#dfb755]/30 to-[#b89130]/20 text-xl shadow-xs">
+                  🎥
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-[#071c54]">Live Kitchen Cam &amp; Order Prep</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      LIVE / UPDATES
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Watch our Halwais handcraft your sweets and view photos of your freshly packed box.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={kitchenCamUrl}
+                className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0b2f8a] hover:bg-[#071c54] text-white text-xs font-bold shadow-sm transition"
+              >
+                <span>Watch Prep Live</span>
+                <span>→</span>
+              </Link>
+            </div>
+          )}
 
           <div className="mt-5 pt-4 border-t border-[#6b1d1d]/10 flex flex-wrap items-center justify-between gap-3">
             <div className="flex gap-2">

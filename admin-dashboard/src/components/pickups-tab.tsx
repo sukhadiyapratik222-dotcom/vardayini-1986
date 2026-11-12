@@ -235,15 +235,27 @@ export function PickupsTab() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={loadData}
-          disabled={loading || Boolean(transitioningOrderId)}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 text-xs font-bold transition disabled:opacity-50"
-        >
-          <span className={loading ? "animate-spin" : ""}>🔄</span>
-          <span>Refresh Pickups</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <a
+            href="http://localhost:9449/kitchen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs"
+            title="Open phone-friendly Kitchen Staff Portal for photo uploads"
+          >
+            <span>🎥</span>
+            <span>Kitchen Staff Portal ↗</span>
+          </a>
+          <button
+            type="button"
+            onClick={loadData}
+            disabled={loading || Boolean(transitioningOrderId)}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 text-xs font-bold transition disabled:opacity-50"
+          >
+            <span className={loading ? "animate-spin" : ""}>🔄</span>
+            <span>Refresh Pickups</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Stats Counter Grid */}
@@ -635,6 +647,29 @@ export function PickupsTab() {
                         <span>📋</span>
                         <span>Audit Timeline ({o.history?.length || 0})</span>
                       </button>
+
+                      {/* Prep Slip & Kitchen Staff Quick Actions */}
+                      <a
+                        href={`http://localhost:9449/kitchen/slip/${encodeURIComponent(o.orderNumber)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1.5 text-xs font-semibold transition"
+                        title="Print Kitchen Preparation Slip"
+                      >
+                        <span>🖨️</span>
+                        <span>Prep Slip</span>
+                      </a>
+
+                      <a
+                        href={`http://localhost:9449/kitchen?order=${encodeURIComponent(o.orderNumber)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1.5 text-xs font-semibold transition"
+                        title="Upload prep photos or manage kitchen stages"
+                      >
+                        <span>📷</span>
+                        <span>Kitchen Cam</span>
+                      </a>
                     </div>
 
                     {/* Expand Items Toggle */}
