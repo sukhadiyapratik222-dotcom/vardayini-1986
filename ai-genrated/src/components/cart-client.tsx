@@ -141,50 +141,92 @@ export function CartClient({ initial }: { initial: CartState }) {
         ) : null}
         {lines.map((line) => {
           const safeImage = line.imageUrl && line.imageUrl.trim() ? line.imageUrl : "/images/kaju-katli.jpg";
+          const lineTotal = line.lineTotal || (line.unit * line.quantity);
           return (
-            <article key={line.id} className="mithai-card flex flex-col sm:flex-row gap-3 sm:gap-4 rounded-2xl sm:rounded-3xl p-3 sm:p-4">
-              <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-                <div className="relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl sm:rounded-2xl shrink-0 bg-slate-50">
-                  <Image src={safeImage} alt={line.name || "Item"} fill className="object-cover" />
+            <article
+              key={line.id}
+              className="mithai-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-amber-900/10 shadow-xs hover:shadow-md transition"
+            >
+              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                <div className="relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl sm:rounded-2xl shrink-0 bg-amber-50/50 border border-amber-900/10 shadow-2xs">
+                  <Image
+                    src={safeImage}
+                    alt={line.name || "Item"}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 80px, 96px"
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <Link href={`/shop/${line.slug || ""}`} className="font-[family-name:var(--font-display)] text-lg sm:text-2xl text-[#6b1d1d] font-bold hover:underline line-clamp-1">
+                <div className="flex-1 min-w-0 pr-2">
+                  <Link
+                    href={`/shop/${line.slug || ""}`}
+                    className="font-[family-name:var(--font-display)] text-lg sm:text-xl text-[#6b1d1d] font-bold hover:underline line-clamp-1 block"
+                  >
                     {line.name}
                   </Link>
-                  <p className="text-xs sm:text-sm text-[#2a1a12]/60">{line.weight}</p>
-                  <p className="mt-0.5 sm:mt-1 font-semibold text-sm sm:text-base text-[#182230]">{formatInr(line.unit)}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {line.weight ? (
+                      <span className="inline-block text-xs font-medium text-stone-600 bg-stone-100/90 rounded-md px-2 py-0.5">
+                        {line.weight}
+                      </span>
+                    ) : null}
+                    <span className="text-xs text-stone-500 font-medium">
+                      Unit: {formatInr(line.unit)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-5 shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-amber-900/10">
+                {/* Stepper */}
+                <div className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50/90 p-1 shadow-2xs">
                   <button
                     type="button"
                     aria-label="Decrease quantity"
                     disabled={loading}
                     onClick={() => updateQty(line.id, line.quantity - 1)}
-                    className="min-h-[36px] min-w-[36px] h-9 w-9 sm:min-h-[44px] sm:min-w-[44px] sm:h-11 sm:w-11 rounded-full border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center font-bold text-base disabled:opacity-50 transition cursor-pointer shadow-xs"
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 text-stone-700 border border-stone-200/80 flex items-center justify-center font-bold text-sm sm:text-base disabled:opacity-40 transition cursor-pointer active:scale-95 shadow-xs"
                   >
                     −
                   </button>
-                  <span className="font-bold text-xs sm:text-sm min-w-[20px] text-center">{line.quantity}</span>
+                  <span className="font-bold text-xs sm:text-sm px-3 min-w-[34px] text-center text-stone-900 tabular-nums">
+                    {line.quantity}
+                  </span>
                   <button
                     type="button"
                     aria-label="Increase quantity"
                     disabled={loading}
                     onClick={() => updateQty(line.id, line.quantity + 1)}
-                    className="min-h-[36px] min-w-[36px] h-9 w-9 sm:min-h-[44px] sm:min-w-[44px] sm:h-11 sm:w-11 rounded-full border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center font-bold text-base disabled:opacity-50 transition cursor-pointer shadow-xs"
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 text-stone-700 border border-stone-200/80 flex items-center justify-center font-bold text-sm sm:text-base disabled:opacity-40 transition cursor-pointer active:scale-95 shadow-xs"
                   >
                     +
                   </button>
                 </div>
+
+                {/* Line Total Price */}
+                <div className="text-right min-w-[80px] sm:min-w-[100px]">
+                  <p className="font-bold text-base sm:text-lg text-[#6b1d1d] tabular-nums">
+                    {formatInr(lineTotal)}
+                  </p>
+                  {line.quantity > 1 ? (
+                    <p className="text-[11px] sm:text-xs text-stone-500 font-medium">
+                      {formatInr(line.unit)} each
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Delete / Remove Action */}
                 <button
                   type="button"
                   disabled={loading}
                   onClick={() => remove(line.id)}
-                  className="text-xs font-semibold text-[#c45c26] hover:text-[#9e3a10] min-h-[36px] sm:min-h-[44px] px-2.5 flex items-center disabled:opacity-50 cursor-pointer transition"
+                  aria-label={`Remove ${line.name} from cart`}
+                  title="Remove item"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-rose-200 bg-rose-50/80 hover:bg-rose-100 hover:border-rose-300 text-rose-600 hover:text-rose-700 flex items-center justify-center transition cursor-pointer disabled:opacity-50 shrink-0 shadow-2xs group"
                 >
-                  Remove
+                  <svg className="w-4 h-4 transition group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               </div>
             </article>
