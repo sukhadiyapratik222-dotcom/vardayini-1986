@@ -138,7 +138,18 @@ export default async function CustomerInvoicePage({ params }: PageProps) {
 
   const safeSeller = invoice.sellerSnapshot ? JSON.parse(invoice.sellerSnapshot) : SELLER_DETAILS;
   const safeBuyer = invoice.buyerSnapshot ? JSON.parse(invoice.buyerSnapshot) : null;
-  const safeItems = invoice.itemsSnapshot ? JSON.parse(invoice.itemsSnapshot) : [];
+  let safeItems = invoice.itemsSnapshot ? JSON.parse(invoice.itemsSnapshot) : [];
+  if (!Array.isArray(safeItems) || safeItems.length === 0) {
+    try {
+      const dbItems = await db
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.orderId, order.id));
+      if (dbItems && dbItems.length > 0) {
+        safeItems = dbItems;
+      }
+    } catch {}
+  }
 
   const logoUrl = uiConfig?.logo?.imageUrl || "/images/brand-logo.png";
   const grandTotal = Number(invoice.grandTotal || order.total || 0);
@@ -267,23 +278,73 @@ export default async function CustomerInvoicePage({ params }: PageProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
-              {safeItems.map((it: any, idx: number) => (
-                <tr key={idx} className="hover:bg-slate-50/60">
-                  <td className="py-3 px-3 text-slate-500 font-mono">{idx + 1}</td>
-                  <td className="py-3 px-3">
-                    <p className="font-bold text-slate-900">{it.productName}</p>
-                    <p className="text-[10px] text-slate-500">Pack: {it.variantWeight}</p>
-                  </td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-600">{it.hsnCode}</td>
-                  <td className="py-3 px-3 text-center font-bold">{it.quantity}</td>
-                  <td className="py-3 px-3 text-right font-mono text-slate-700">₹{Number(it.unitPrice).toFixed(2)}</td>
-                  <td className="py-3 px-3 text-right font-mono text-slate-800">₹{Number(it.taxableValue).toFixed(2)}</td>
-                  <td className="py-3 px-3 text-right font-mono text-slate-700">
-                    ₹{(Number(it.cgst || 0) + Number(it.sgst || 0) + Number(it.igst || 0)).toFixed(2)}
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">₹{Number(it.total).toFixed(2)}</td>
-                </tr>
-              ))}
+              {safeItems.map((it: any, idx: number) => {
+                const qty = Number(it.quantity || 1);
+                const unitPrice = Number(it.unitPrice || 0);
+                const rawTotal = unitPrice * qty;
+
+                // Robust line total (post-tax & post-discount):
+                let lineTotal = rawTotal;
+                if (it.netTotal !== undefined && !isNaN(Number(it.netTotal))) {
+                  lineTotal = Number(it.netTotal);
+                } else if (it.totalAmount !== undefined && !isNaN(Number(it.totalAmount))) {
+                  lineTotal = Number(it.totalAmount);
+                } else if (it.total !== undefined && !isNaN(Number(it.total))) {
+                  lineTotal = Number(it.total);
+                } else if (it.grossAmount !== undefined && !isNaN(Number(it.grossAmount))) {
+                  lineTotal = Number(it.grossAmount);
+                }
+
+                // Robust taxable value (base goods amount before GST):
+                let taxableVal = Math.round((lineTotal / 1.05) * 100) / 100;
+                if (it.taxableAmount !== undefined && !isNaN(Number(it.taxableAmount))) {
+                  taxableVal = Number(it.taxableAmount);
+                } else if (it.taxableValue !== undefined && !isNaN(Number(it.taxableValue))) {
+                  taxableVal = Number(it.taxableValue);
+                } else if (it.taxRatePercent !== undefined || it.taxRate !== undefined) {
+                  const rate = Number(it.taxRatePercent || it.taxRate || 5);
+                  taxableVal = Math.round((lineTotal / (1 + rate / 100)) * 100) / 100;
+                }
+
+                // Robust GST amount:
+                let taxSum = Math.max(0, lineTotal - taxableVal);
+                if (it.totalTaxAmount !== undefined && !isNaN(Number(it.totalTaxAmount))) {
+                  taxSum = Number(it.totalTaxAmount);
+                } else if (
+                  (it.cgstAmount !== undefined && !isNaN(Number(it.cgstAmount))) ||
+                  (it.sgstAmount !== undefined && !isNaN(Number(it.sgstAmount))) ||
+                  (it.igstAmount !== undefined && !isNaN(Number(it.igstAmount)))
+                ) {
+                  taxSum = Number(it.cgstAmount || 0) + Number(it.sgstAmount || 0) + Number(it.igstAmount || 0);
+                } else if (
+                  (it.cgst !== undefined && !isNaN(Number(it.cgst))) ||
+                  (it.sgst !== undefined && !isNaN(Number(it.sgst))) ||
+                  (it.igst !== undefined && !isNaN(Number(it.igst)))
+                ) {
+                  taxSum = Number(it.cgst || 0) + Number(it.sgst || 0) + Number(it.igst || 0);
+                }
+
+                // Absolute fallback guards against any NaN
+                if (isNaN(lineTotal)) lineTotal = rawTotal;
+                if (isNaN(taxableVal)) taxableVal = Math.round((lineTotal / 1.05) * 100) / 100;
+                if (isNaN(taxSum)) taxSum = Math.max(0, lineTotal - taxableVal);
+
+                return (
+                  <tr key={idx} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-3 text-slate-500 font-mono">{idx + 1}</td>
+                    <td className="py-3 px-3">
+                      <p className="font-bold text-slate-900">{it.productName || "Handcrafted Sweet"}</p>
+                      <p className="text-[10px] text-slate-500">Pack: {it.variantWeight || "Standard"}</p>
+                    </td>
+                    <td className="py-3 px-3 font-mono text-[11px] text-slate-600">{it.hsnCode || "21069099"}</td>
+                    <td className="py-3 px-3 text-center font-bold">{qty}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-700">₹{unitPrice.toFixed(2)}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-800">₹{taxableVal.toFixed(2)}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-700">₹{taxSum.toFixed(2)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">₹{lineTotal.toFixed(2)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -296,7 +357,7 @@ export default async function CustomerInvoicePage({ params }: PageProps) {
                 Amount Chargeable in Words:
               </span>
               <p className="font-serif italic font-bold text-slate-900 text-sm">
-                {invoice.totalInWords || `Rupees ${grandTotal} Only`}
+                {invoice.totalInWords || `Rupees ${grandTotal.toFixed(0)} Only`}
               </p>
             </div>
           </div>
@@ -304,12 +365,24 @@ export default async function CustomerInvoicePage({ params }: PageProps) {
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
             <div className="flex justify-between text-slate-600">
               <span>Taxable Subtotal:</span>
-              <span className="font-mono">₹{Number(invoice.taxableValue || 0).toFixed(2)}</span>
+              <span className="font-mono">
+                ₹{(
+                  Number(invoice.taxableValue) && !isNaN(Number(invoice.taxableValue))
+                    ? Number(invoice.taxableValue)
+                    : safeItems.reduce((sum: number, it: any) => sum + (Number(it.taxableAmount ?? it.taxableValue) || 0), 0) || Math.round((grandTotal / 1.05) * 100) / 100
+                ).toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Total GST:</span>
               <span className="font-mono">
-                ₹{(Number(invoice.cgst || 0) + Number(invoice.sgst || 0) + Number(invoice.igst || 0)).toFixed(2)}
+                ₹{(
+                  (!isNaN(Number(invoice.cgst)) ? Number(invoice.cgst || 0) : 0) +
+                  (!isNaN(Number(invoice.sgst)) ? Number(invoice.sgst || 0) : 0) +
+                  (!isNaN(Number(invoice.igst)) ? Number(invoice.igst || 0) : 0) ||
+                  safeItems.reduce((sum: number, it: any) => sum + (Number(it.totalTaxAmount ?? it.cgstAmount ?? 0) || 0), 0) ||
+                  Math.max(0, grandTotal - (Number(invoice.taxableValue) || Math.round((grandTotal / 1.05) * 100) / 100))
+                ).toFixed(2)}
               </span>
             </div>
             {Number(invoice.deliveryFee) > 0 && (

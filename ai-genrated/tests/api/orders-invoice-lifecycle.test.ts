@@ -340,6 +340,18 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
       expect(data.invoice.grandTotal).toBe(945);
       expect(data.invoice.totalInWords).toContain("Rupees Nine Hundred Forty-Five Only");
 
+      // Verify line items are normalized and have no NaN values
+      expect(data.invoice.items.length).toBe(1);
+      const firstItem = data.invoice.items[0];
+      expect(Number.isNaN(Number(firstItem.unitPrice))).toBe(false);
+      expect(Number.isNaN(Number(firstItem.taxableValue))).toBe(false);
+      expect(Number.isNaN(Number(firstItem.taxableAmount))).toBe(false);
+      expect(Number.isNaN(Number(firstItem.total))).toBe(false);
+      expect(Number(firstItem.unitPrice)).toBe(1000);
+      expect(Number(firstItem.taxableAmount)).toBe(900);
+      expect(Number(firstItem.cgstAmount)).toBe(22.5);
+      expect(Number(firstItem.sgstAmount)).toBe(22.5);
+
       // Verify Immutability: Calling again returns the exact same invoice number
       const secondRes = await getInvoice(invReq, { params: Promise.resolve({ orderNumber: testOrderNumber }) });
       const secondData = await secondRes.json();

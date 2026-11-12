@@ -130,15 +130,47 @@ export default function OrderInvoicePage({ params }: PageProps) {
 
   // Items with tax calculation
   const items = order.items && order.items.length > 0 ? order.items : [];
-  const taxableSubtotal = items.reduce((sum, item) => {
-    const itemTotal = Number(item.unitPrice || 0) * Number(item.quantity || 1);
-    // 5% GST inclusive: taxable = total / 1.05
-    return sum + itemTotal / 1.05;
+  const taxableSubtotal = items.reduce((sum, item: any) => {
+    const qty = Number(item.quantity || 1);
+    const unit = Number(item.unitPrice || 0);
+    const rawTotal = unit * qty;
+    const itemTotal = item.netTotal !== undefined && !isNaN(Number(item.netTotal))
+      ? Number(item.netTotal)
+      : item.totalAmount !== undefined && !isNaN(Number(item.totalAmount))
+      ? Number(item.totalAmount)
+      : item.total !== undefined && !isNaN(Number(item.total))
+      ? Number(item.total)
+      : rawTotal;
+
+    const taxable = item.taxableAmount !== undefined && !isNaN(Number(item.taxableAmount))
+      ? Number(item.taxableAmount)
+      : item.taxableValue !== undefined && !isNaN(Number(item.taxableValue))
+      ? Number(item.taxableValue)
+      : itemTotal / 1.05;
+
+    return sum + (isNaN(taxable) ? 0 : taxable);
   }, 0);
 
-  const totalGst = items.reduce((sum, item) => {
-    const itemTotal = Number(item.unitPrice || 0) * Number(item.quantity || 1);
-    return sum + (itemTotal - itemTotal / 1.05);
+  const totalGst = items.reduce((sum, item: any) => {
+    const qty = Number(item.quantity || 1);
+    const unit = Number(item.unitPrice || 0);
+    const rawTotal = unit * qty;
+    const itemTotal = item.netTotal !== undefined && !isNaN(Number(item.netTotal))
+      ? Number(item.netTotal)
+      : item.totalAmount !== undefined && !isNaN(Number(item.totalAmount))
+      ? Number(item.totalAmount)
+      : item.total !== undefined && !isNaN(Number(item.total))
+      ? Number(item.total)
+      : rawTotal;
+
+    const taxable = item.taxableAmount !== undefined && !isNaN(Number(item.taxableAmount))
+      ? Number(item.taxableAmount)
+      : item.taxableValue !== undefined && !isNaN(Number(item.taxableValue))
+      ? Number(item.taxableValue)
+      : itemTotal / 1.05;
+
+    const gst = Math.max(0, itemTotal - taxable);
+    return sum + (isNaN(gst) ? 0 : gst);
   }, 0);
 
   const cgstAmount = isInterState ? 0 : totalGst / 2;
@@ -346,28 +378,46 @@ export default function OrderInvoicePage({ params }: PageProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
-              {items.map((it, idx) => {
-                const itemTotal = Number(it.unitPrice || 0) * Number(it.quantity || 1);
-                const taxable = itemTotal / 1.05;
-                const gst = itemTotal - taxable;
+              {items.map((it: any, idx) => {
+                const qty = Number(it.quantity || 1);
+                const unitPrice = Number(it.unitPrice || 0);
+                const rawTotal = unitPrice * qty;
+
+                const itemTotal = it.netTotal !== undefined && !isNaN(Number(it.netTotal))
+                  ? Number(it.netTotal)
+                  : it.totalAmount !== undefined && !isNaN(Number(it.totalAmount))
+                  ? Number(it.totalAmount)
+                  : it.total !== undefined && !isNaN(Number(it.total))
+                  ? Number(it.total)
+                  : rawTotal;
+
+                const taxable = it.taxableAmount !== undefined && !isNaN(Number(it.taxableAmount))
+                  ? Number(it.taxableAmount)
+                  : it.taxableValue !== undefined && !isNaN(Number(it.taxableValue))
+                  ? Number(it.taxableValue)
+                  : itemTotal / 1.05;
+
+                const safeTaxable = isNaN(taxable) ? itemTotal / 1.05 : taxable;
+                const safeTotal = isNaN(itemTotal) ? rawTotal : itemTotal;
+                const gst = Math.max(0, safeTotal - safeTaxable);
                 const halfGst = gst / 2;
 
                 return (
                   <tr key={it.id || idx} className="hover:bg-slate-50/60">
                     <td className="py-3 px-3 text-slate-500 font-mono">{idx + 1}</td>
                     <td className="py-3 px-3">
-                      <p className="font-bold text-slate-900">{it.productName}</p>
-                      <p className="text-[10px] text-slate-500">Pack: {it.variantWeight}</p>
+                      <p className="font-bold text-slate-900">{it.productName || "Handcrafted Sweets"}</p>
+                      <p className="text-[10px] text-slate-500">Pack: {it.variantWeight || "Standard"}</p>
                     </td>
                     <td className="py-3 px-3 font-mono text-[11px] text-slate-600">
                       {it.hsnCode || "21069099"}
                     </td>
-                    <td className="py-3 px-3 text-center font-bold">{it.quantity}</td>
+                    <td className="py-3 px-3 text-center font-bold">{qty}</td>
                     <td className="py-3 px-3 text-right font-mono text-slate-700">
-                      ₹{Number(it.unitPrice).toFixed(2)}
+                      ₹{unitPrice.toFixed(2)}
                     </td>
                     <td className="py-3 px-3 text-right font-mono text-slate-800">
-                      ₹{taxable.toFixed(2)}
+                      ₹{safeTaxable.toFixed(2)}
                     </td>
                     {!isInterState ? (
                       <>
@@ -384,7 +434,7 @@ export default function OrderInvoicePage({ params }: PageProps) {
                       </td>
                     )}
                     <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                      ₹{itemTotal.toFixed(2)}
+                      ₹{safeTotal.toFixed(2)}
                     </td>
                   </tr>
                 );

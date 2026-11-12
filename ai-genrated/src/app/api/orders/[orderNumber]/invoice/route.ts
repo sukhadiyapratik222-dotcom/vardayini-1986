@@ -60,7 +60,42 @@ export async function GET(
 
     const safeSeller = invoice.sellerSnapshot ? JSON.parse(invoice.sellerSnapshot) : null;
     const safeBuyer = invoice.buyerSnapshot ? JSON.parse(invoice.buyerSnapshot) : null;
-    const safeItems = invoice.itemsSnapshot ? JSON.parse(invoice.itemsSnapshot) : [];
+    const rawItems = invoice.itemsSnapshot ? JSON.parse(invoice.itemsSnapshot) : [];
+
+    const normalizedItems = rawItems.map((it: any) => {
+      const qty = Number(it.quantity || 1);
+      const unit = Number(it.unitPrice || 0);
+      const rawTotal = unit * qty;
+      const totalAmount = Number(it.netTotal ?? it.totalAmount ?? it.total ?? it.grossAmount ?? rawTotal);
+      const taxableAmount = Number(
+        it.taxableAmount ??
+        it.taxableValue ??
+        (it.taxRatePercent || it.taxRate
+          ? totalAmount / (1 + Number(it.taxRatePercent || it.taxRate) / 100)
+          : totalAmount / 1.05)
+      );
+      const safeTaxable = isNaN(taxableAmount) ? Math.round((totalAmount / 1.05) * 100) / 100 : taxableAmount;
+      const cgst = Number(it.cgstAmount ?? it.cgst ?? (it.totalTaxAmount ? it.totalTaxAmount / 2 : 0));
+      const sgst = Number(it.sgstAmount ?? it.sgst ?? (it.totalTaxAmount ? it.totalTaxAmount / 2 : 0));
+      const igst = Number(it.igstAmount ?? it.igst ?? 0);
+
+      return {
+        ...it,
+        unitPrice: unit,
+        quantity: qty,
+        taxableAmount: safeTaxable,
+        taxableValue: safeTaxable,
+        total: isNaN(totalAmount) ? rawTotal : totalAmount,
+        totalAmount: isNaN(totalAmount) ? rawTotal : totalAmount,
+        netTotal: isNaN(totalAmount) ? rawTotal : totalAmount,
+        cgst: isNaN(cgst) ? 0 : cgst,
+        sgst: isNaN(sgst) ? 0 : sgst,
+        igst: isNaN(igst) ? 0 : igst,
+        cgstAmount: isNaN(cgst) ? 0 : cgst,
+        sgstAmount: isNaN(sgst) ? 0 : sgst,
+        igstAmount: isNaN(igst) ? 0 : igst,
+      };
+    });
 
     return Response.json({
       invoice: {
@@ -74,7 +109,7 @@ export async function GET(
         isInterState: invoice.isInterState,
         seller: safeSeller,
         buyer: safeBuyer,
-        items: safeItems,
+        items: normalizedItems,
         taxableValue: Number(invoice.taxableValue),
         cgst: Number(invoice.cgst),
         sgst: Number(invoice.sgst),
