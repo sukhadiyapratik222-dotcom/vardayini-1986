@@ -14,6 +14,18 @@ interface PageProps {
   params: Promise<{ orderNumber: string }>;
 }
 
+function parseCurrencyNumber(val: any, fallback: number = 0): number {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "number") return isNaN(val) ? fallback : val;
+  if (typeof val === "string") {
+    const cleaned = val.replace(/[^0-9.-]+/g, "").trim();
+    if (!cleaned) return fallback;
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? fallback : num;
+  }
+  return fallback;
+}
+
 export default function OrderInvoicePage({ params }: PageProps) {
   const { orderNumber } = use(params);
 
@@ -131,45 +143,56 @@ export default function OrderInvoicePage({ params }: PageProps) {
   // Items with tax calculation
   const items = order.items && order.items.length > 0 ? order.items : [];
   const taxableSubtotal = items.reduce((sum, item: any) => {
-    const qty = Number(item.quantity || 1);
-    const unit = Number(item.unitPrice || 0);
+    const qty = Math.max(1, parseCurrencyNumber(item.quantity, 1));
+    const unit = parseCurrencyNumber(item.unitPrice, 0);
     const rawTotal = unit * qty;
-    const itemTotal = item.netTotal !== undefined && !isNaN(Number(item.netTotal))
-      ? Number(item.netTotal)
-      : item.totalAmount !== undefined && !isNaN(Number(item.totalAmount))
-      ? Number(item.totalAmount)
-      : item.total !== undefined && !isNaN(Number(item.total))
-      ? Number(item.total)
-      : rawTotal;
+    let itemTotal = rawTotal;
+    if (item.netTotal !== undefined && !isNaN(parseCurrencyNumber(item.netTotal)) && parseCurrencyNumber(item.netTotal) > 0) {
+      itemTotal = parseCurrencyNumber(item.netTotal);
+    } else if (item.totalAmount !== undefined && !isNaN(parseCurrencyNumber(item.totalAmount)) && parseCurrencyNumber(item.totalAmount) > 0) {
+      itemTotal = parseCurrencyNumber(item.totalAmount);
+    } else if (item.total !== undefined && !isNaN(parseCurrencyNumber(item.total)) && parseCurrencyNumber(item.total) > 0) {
+      itemTotal = parseCurrencyNumber(item.total);
+    }
 
-    const taxable = item.taxableAmount !== undefined && !isNaN(Number(item.taxableAmount))
-      ? Number(item.taxableAmount)
-      : item.taxableValue !== undefined && !isNaN(Number(item.taxableValue))
-      ? Number(item.taxableValue)
-      : itemTotal / 1.05;
+    if (!itemTotal || isNaN(itemTotal)) itemTotal = rawTotal;
 
-    return sum + (isNaN(taxable) ? 0 : taxable);
+    let taxable = Math.round((itemTotal / 1.05) * 100) / 100;
+    if (item.taxableAmount !== undefined && !isNaN(parseCurrencyNumber(item.taxableAmount)) && parseCurrencyNumber(item.taxableAmount) > 0) {
+      taxable = parseCurrencyNumber(item.taxableAmount);
+    } else if (item.taxableValue !== undefined && !isNaN(parseCurrencyNumber(item.taxableValue)) && parseCurrencyNumber(item.taxableValue) > 0) {
+      taxable = parseCurrencyNumber(item.taxableValue);
+    }
+
+    const safeTaxable = (isNaN(taxable) || taxable <= 0) ? Math.round((itemTotal / 1.05) * 100) / 100 : taxable;
+    return sum + safeTaxable;
   }, 0);
 
   const totalGst = items.reduce((sum, item: any) => {
-    const qty = Number(item.quantity || 1);
-    const unit = Number(item.unitPrice || 0);
+    const qty = Math.max(1, parseCurrencyNumber(item.quantity, 1));
+    const unit = parseCurrencyNumber(item.unitPrice, 0);
     const rawTotal = unit * qty;
-    const itemTotal = item.netTotal !== undefined && !isNaN(Number(item.netTotal))
-      ? Number(item.netTotal)
-      : item.totalAmount !== undefined && !isNaN(Number(item.totalAmount))
-      ? Number(item.totalAmount)
-      : item.total !== undefined && !isNaN(Number(item.total))
-      ? Number(item.total)
-      : rawTotal;
+    let itemTotal = rawTotal;
+    if (item.netTotal !== undefined && !isNaN(parseCurrencyNumber(item.netTotal)) && parseCurrencyNumber(item.netTotal) > 0) {
+      itemTotal = parseCurrencyNumber(item.netTotal);
+    } else if (item.totalAmount !== undefined && !isNaN(parseCurrencyNumber(item.totalAmount)) && parseCurrencyNumber(item.totalAmount) > 0) {
+      itemTotal = parseCurrencyNumber(item.totalAmount);
+    } else if (item.total !== undefined && !isNaN(parseCurrencyNumber(item.total)) && parseCurrencyNumber(item.total) > 0) {
+      itemTotal = parseCurrencyNumber(item.total);
+    }
 
-    const taxable = item.taxableAmount !== undefined && !isNaN(Number(item.taxableAmount))
-      ? Number(item.taxableAmount)
-      : item.taxableValue !== undefined && !isNaN(Number(item.taxableValue))
-      ? Number(item.taxableValue)
-      : itemTotal / 1.05;
+    if (!itemTotal || isNaN(itemTotal)) itemTotal = rawTotal;
 
-    const gst = Math.max(0, itemTotal - taxable);
+    let taxable = Math.round((itemTotal / 1.05) * 100) / 100;
+    if (item.taxableAmount !== undefined && !isNaN(parseCurrencyNumber(item.taxableAmount)) && parseCurrencyNumber(item.taxableAmount) > 0) {
+      taxable = parseCurrencyNumber(item.taxableAmount);
+    } else if (item.taxableValue !== undefined && !isNaN(parseCurrencyNumber(item.taxableValue)) && parseCurrencyNumber(item.taxableValue) > 0) {
+      taxable = parseCurrencyNumber(item.taxableValue);
+    }
+
+    const safeTaxable = (isNaN(taxable) || taxable <= 0) ? Math.round((itemTotal / 1.05) * 100) / 100 : taxable;
+    const safeTotal = (isNaN(itemTotal) || itemTotal <= 0) ? rawTotal : itemTotal;
+    const gst = Math.max(0, safeTotal - safeTaxable);
     return sum + (isNaN(gst) ? 0 : gst);
   }, 0);
 
@@ -379,26 +402,30 @@ export default function OrderInvoicePage({ params }: PageProps) {
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
               {items.map((it: any, idx) => {
-                const qty = Number(it.quantity || 1);
-                const unitPrice = Number(it.unitPrice || 0);
+                const qty = Math.max(1, parseCurrencyNumber(it.quantity, 1));
+                const unitPrice = parseCurrencyNumber(it.unitPrice, 0);
                 const rawTotal = unitPrice * qty;
 
-                const itemTotal = it.netTotal !== undefined && !isNaN(Number(it.netTotal))
-                  ? Number(it.netTotal)
-                  : it.totalAmount !== undefined && !isNaN(Number(it.totalAmount))
-                  ? Number(it.totalAmount)
-                  : it.total !== undefined && !isNaN(Number(it.total))
-                  ? Number(it.total)
-                  : rawTotal;
+                let itemTotal = rawTotal;
+                if (it.netTotal !== undefined && !isNaN(parseCurrencyNumber(it.netTotal)) && parseCurrencyNumber(it.netTotal) > 0) {
+                  itemTotal = parseCurrencyNumber(it.netTotal);
+                } else if (it.totalAmount !== undefined && !isNaN(parseCurrencyNumber(it.totalAmount)) && parseCurrencyNumber(it.totalAmount) > 0) {
+                  itemTotal = parseCurrencyNumber(it.totalAmount);
+                } else if (it.total !== undefined && !isNaN(parseCurrencyNumber(it.total)) && parseCurrencyNumber(it.total) > 0) {
+                  itemTotal = parseCurrencyNumber(it.total);
+                }
 
-                const taxable = it.taxableAmount !== undefined && !isNaN(Number(it.taxableAmount))
-                  ? Number(it.taxableAmount)
-                  : it.taxableValue !== undefined && !isNaN(Number(it.taxableValue))
-                  ? Number(it.taxableValue)
-                  : itemTotal / 1.05;
+                if (!itemTotal || isNaN(itemTotal)) itemTotal = rawTotal;
 
-                const safeTaxable = isNaN(taxable) ? itemTotal / 1.05 : taxable;
-                const safeTotal = isNaN(itemTotal) ? rawTotal : itemTotal;
+                let taxable = Math.round((itemTotal / 1.05) * 100) / 100;
+                if (it.taxableAmount !== undefined && !isNaN(parseCurrencyNumber(it.taxableAmount)) && parseCurrencyNumber(it.taxableAmount) > 0) {
+                  taxable = parseCurrencyNumber(it.taxableAmount);
+                } else if (it.taxableValue !== undefined && !isNaN(parseCurrencyNumber(it.taxableValue)) && parseCurrencyNumber(it.taxableValue) > 0) {
+                  taxable = parseCurrencyNumber(it.taxableValue);
+                }
+
+                const safeTaxable = (isNaN(taxable) || taxable <= 0) ? Math.round((itemTotal / 1.05) * 100) / 100 : taxable;
+                const safeTotal = (isNaN(itemTotal) || itemTotal <= 0) ? rawTotal : itemTotal;
                 const gst = Math.max(0, safeTotal - safeTaxable);
                 const halfGst = gst / 2;
 

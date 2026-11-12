@@ -13,6 +13,18 @@ import { InvoicePrintButton } from "@/components/invoice-print-button";
 
 export const dynamic = "force-dynamic";
 
+function parseCurrencyNumber(val: any, fallback: number = 0): number {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "number") return isNaN(val) ? fallback : val;
+  if (typeof val === "string") {
+    const cleaned = val.replace(/[^0-9.-]+/g, "").trim();
+    if (!cleaned) return fallback;
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? fallback : num;
+  }
+  return fallback;
+}
+
 interface PageProps {
   params: Promise<{ orderNumber: string }>;
 }
@@ -279,54 +291,58 @@ export default async function CustomerInvoicePage({ params }: PageProps) {
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
               {safeItems.map((it: any, idx: number) => {
-                const qty = Number(it.quantity || 1);
-                const unitPrice = Number(it.unitPrice || 0);
+                const qty = Math.max(1, parseCurrencyNumber(it.quantity, 1));
+                const unitPrice = parseCurrencyNumber(it.unitPrice, 0);
                 const rawTotal = unitPrice * qty;
 
                 // Robust line total (post-tax & post-discount):
                 let lineTotal = rawTotal;
-                if (it.netTotal !== undefined && !isNaN(Number(it.netTotal))) {
-                  lineTotal = Number(it.netTotal);
-                } else if (it.totalAmount !== undefined && !isNaN(Number(it.totalAmount))) {
-                  lineTotal = Number(it.totalAmount);
-                } else if (it.total !== undefined && !isNaN(Number(it.total))) {
-                  lineTotal = Number(it.total);
-                } else if (it.grossAmount !== undefined && !isNaN(Number(it.grossAmount))) {
-                  lineTotal = Number(it.grossAmount);
+                if (it.netTotal !== undefined && !isNaN(parseCurrencyNumber(it.netTotal)) && parseCurrencyNumber(it.netTotal) > 0) {
+                  lineTotal = parseCurrencyNumber(it.netTotal);
+                } else if (it.totalAmount !== undefined && !isNaN(parseCurrencyNumber(it.totalAmount)) && parseCurrencyNumber(it.totalAmount) > 0) {
+                  lineTotal = parseCurrencyNumber(it.totalAmount);
+                } else if (it.total !== undefined && !isNaN(parseCurrencyNumber(it.total)) && parseCurrencyNumber(it.total) > 0) {
+                  lineTotal = parseCurrencyNumber(it.total);
+                } else if (it.grossAmount !== undefined && !isNaN(parseCurrencyNumber(it.grossAmount)) && parseCurrencyNumber(it.grossAmount) > 0) {
+                  lineTotal = parseCurrencyNumber(it.grossAmount);
                 }
+
+                if (!lineTotal || isNaN(lineTotal)) lineTotal = rawTotal;
 
                 // Robust taxable value (base goods amount before GST):
                 let taxableVal = Math.round((lineTotal / 1.05) * 100) / 100;
-                if (it.taxableAmount !== undefined && !isNaN(Number(it.taxableAmount))) {
-                  taxableVal = Number(it.taxableAmount);
-                } else if (it.taxableValue !== undefined && !isNaN(Number(it.taxableValue))) {
-                  taxableVal = Number(it.taxableValue);
+                if (it.taxableAmount !== undefined && !isNaN(parseCurrencyNumber(it.taxableAmount)) && parseCurrencyNumber(it.taxableAmount) > 0) {
+                  taxableVal = parseCurrencyNumber(it.taxableAmount);
+                } else if (it.taxableValue !== undefined && !isNaN(parseCurrencyNumber(it.taxableValue)) && parseCurrencyNumber(it.taxableValue) > 0) {
+                  taxableVal = parseCurrencyNumber(it.taxableValue);
                 } else if (it.taxRatePercent !== undefined || it.taxRate !== undefined) {
-                  const rate = Number(it.taxRatePercent || it.taxRate || 5);
+                  const rate = parseCurrencyNumber(it.taxRatePercent || it.taxRate, 5);
                   taxableVal = Math.round((lineTotal / (1 + rate / 100)) * 100) / 100;
                 }
 
+                if (!taxableVal || isNaN(taxableVal)) taxableVal = Math.round((lineTotal / 1.05) * 100) / 100;
+
                 // Robust GST amount:
                 let taxSum = Math.max(0, lineTotal - taxableVal);
-                if (it.totalTaxAmount !== undefined && !isNaN(Number(it.totalTaxAmount))) {
-                  taxSum = Number(it.totalTaxAmount);
+                if (it.totalTaxAmount !== undefined && !isNaN(parseCurrencyNumber(it.totalTaxAmount))) {
+                  taxSum = parseCurrencyNumber(it.totalTaxAmount);
                 } else if (
-                  (it.cgstAmount !== undefined && !isNaN(Number(it.cgstAmount))) ||
-                  (it.sgstAmount !== undefined && !isNaN(Number(it.sgstAmount))) ||
-                  (it.igstAmount !== undefined && !isNaN(Number(it.igstAmount)))
+                  (it.cgstAmount !== undefined && !isNaN(parseCurrencyNumber(it.cgstAmount))) ||
+                  (it.sgstAmount !== undefined && !isNaN(parseCurrencyNumber(it.sgstAmount))) ||
+                  (it.igstAmount !== undefined && !isNaN(parseCurrencyNumber(it.igstAmount)))
                 ) {
-                  taxSum = Number(it.cgstAmount || 0) + Number(it.sgstAmount || 0) + Number(it.igstAmount || 0);
+                  taxSum = parseCurrencyNumber(it.cgstAmount, 0) + parseCurrencyNumber(it.sgstAmount, 0) + parseCurrencyNumber(it.igstAmount, 0);
                 } else if (
-                  (it.cgst !== undefined && !isNaN(Number(it.cgst))) ||
-                  (it.sgst !== undefined && !isNaN(Number(it.sgst))) ||
-                  (it.igst !== undefined && !isNaN(Number(it.igst)))
+                  (it.cgst !== undefined && !isNaN(parseCurrencyNumber(it.cgst))) ||
+                  (it.sgst !== undefined && !isNaN(parseCurrencyNumber(it.sgst))) ||
+                  (it.igst !== undefined && !isNaN(parseCurrencyNumber(it.igst)))
                 ) {
-                  taxSum = Number(it.cgst || 0) + Number(it.sgst || 0) + Number(it.igst || 0);
+                  taxSum = parseCurrencyNumber(it.cgst, 0) + parseCurrencyNumber(it.sgst, 0) + parseCurrencyNumber(it.igst, 0);
                 }
 
                 // Absolute fallback guards against any NaN
-                if (isNaN(lineTotal)) lineTotal = rawTotal;
-                if (isNaN(taxableVal)) taxableVal = Math.round((lineTotal / 1.05) * 100) / 100;
+                if (isNaN(lineTotal) || lineTotal <= 0) lineTotal = rawTotal;
+                if (isNaN(taxableVal) || taxableVal <= 0) taxableVal = Math.round((lineTotal / 1.05) * 100) / 100;
                 if (isNaN(taxSum)) taxSum = Math.max(0, lineTotal - taxableVal);
 
                 return (
