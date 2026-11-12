@@ -1586,6 +1586,84 @@ export const api = {
     const data = await handleResponse<{ productSales: ReportProductSaleItem[] }>(res, "Failed to load product sales report");
     return data.productSales || [];
   },
+
+  // Taste Quiz Management
+  async getQuizTags(): Promise<{ products: any[]; stats: { total: number; tagged: number; untagged: number } }> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/tags`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load product quiz tags");
+  },
+
+  async updateQuizTags(productId: number, tags: any): Promise<any> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/tags`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId, tags }),
+    });
+    return handleResponse(res, "Failed to update product quiz tags");
+  },
+
+  async autoTagQuizProducts(): Promise<any> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/tags`, {
+      method: "POST",
+    });
+    return handleResponse(res, "Failed to auto-tag products");
+  },
+
+  async getQuizQuestions(): Promise<{ questions: any[] }> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/questions`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load quiz questions");
+  },
+
+  async updateQuizQuestions(questions: any[]): Promise<any> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/questions`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ questions }),
+    });
+    return handleResponse(res, "Failed to update questions");
+  },
+
+  async getQuizPersonalities(): Promise<{ personalities: any[] }> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/personalities`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load personalities");
+  },
+
+  async updateQuizPersonality(payload: any): Promise<any> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/personalities`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, "Failed to update personality");
+  },
+
+  async getQuizSettings(): Promise<{ settings: any }> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/settings`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load quiz settings");
+  },
+
+  async updateQuizSettings(payload: any): Promise<any> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/settings`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, "Failed to save quiz settings");
+  },
+
+  async getQuizLeads(): Promise<{ leads: any[]; totalCount: number }> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/leads`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load quiz leads");
+  },
+
+  async testQuizSimulation(answers: any): Promise<{ result: any }> {
+    const res = await fetch(`${PROXY_BASE}/api/store/api/quiz/match`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers }),
+    });
+    return handleResponse(res, "Failed to simulate quiz match");
+  },
 };
 
 export interface ReviewItem {

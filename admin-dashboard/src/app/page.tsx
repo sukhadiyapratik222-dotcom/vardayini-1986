@@ -36,6 +36,7 @@ import { PagesTab } from "@/components/pages-tab";
 import { FestivalsTab } from "@/components/festivals-tab";
 import { ReviewsTab } from "@/components/reviews-tab";
 import { PickupsTab } from "@/components/pickups-tab";
+import { TasteQuizTab } from "@/components/taste-quiz-tab";
 import { CategoryShowcaseTab } from "@/components/category-showcase-tab";
 import { BestsellersTab } from "@/components/bestsellers-tab";
 import { WelcomeOfferTab } from "@/components/welcome-offer-tab";
@@ -45,6 +46,7 @@ import { NewLaunchTab } from "@/components/new-launch-tab";
 export type TabId =
   | "overview"
   | "festivals"
+  | "taste-quiz"
   | "admin-management"
   | "activity-logs"
   | "pages"
@@ -272,8 +274,18 @@ export default function AdminDashboardPage() {
     };
 
     window.addEventListener("vsm:admin:auth_revoked", onAuthRevoked);
+
+    const onSwitchTab = (e: Event) => {
+      const customEvt = e as CustomEvent<TabId>;
+      if (customEvt.detail) {
+        handleTabChange(customEvt.detail);
+      }
+    };
+    window.addEventListener("vsm:switch_tab", onSwitchTab);
+
     return () => {
       window.removeEventListener("vsm:admin:auth_revoked", onAuthRevoked);
+      window.removeEventListener("vsm:switch_tab", onSwitchTab);
     };
   }, []);
 
@@ -396,6 +408,17 @@ export default function AdminDashboardPage() {
             perms.includes("festivals") ||
             perms.includes("settings:manage") ||
             perms.includes("products:manage")
+          );
+
+        // 11.5. Taste Quiz Builder
+        case "taste-quiz":
+          return (
+            perms.includes("products:view") ||
+            perms.includes("products:manage") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings") ||
+            currentUser.role === "admin" ||
+            currentUser.role === "super_admin"
           );
 
         // 12. Categories
@@ -541,6 +564,8 @@ export default function AdminDashboardPage() {
           return perms.includes("special_items:manage") || perms.includes("products:manage");
         case "festivals":
           return perms.includes("festivals:manage") || perms.includes("settings:manage");
+        case "taste-quiz":
+          return perms.includes("products:manage") || perms.includes("settings:manage") || currentUser.role === "admin" || currentUser.role === "super_admin";
         case "categories":
         case "category-showcase":
           return perms.includes("categories:manage") || perms.includes("products:manage");
@@ -866,6 +891,12 @@ export default function AdminDashboardPage() {
       label: "Festival Specials",
       icon: "🪔",
       badge: "Manage",
+    },
+    {
+      id: "taste-quiz",
+      label: "Taste Quiz Builder",
+      icon: "✨",
+      badge: "Mithai Match",
     },
     {
       id: "categories",
@@ -1671,6 +1702,14 @@ export default function AdminDashboardPage() {
                   <PickupsTab />
                 ) : (
                   <AccessRestrictedCard moduleName="Store Pickups Management" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "taste-quiz" && (
+                isModulePermitted("taste-quiz") ? (
+                  <TasteQuizTab />
+                ) : (
+                  <AccessRestrictedCard moduleName="Taste Quiz Builder" currentUser={currentUser} />
                 )
               )}
 

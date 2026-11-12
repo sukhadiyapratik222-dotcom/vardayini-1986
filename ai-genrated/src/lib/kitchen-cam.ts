@@ -83,7 +83,7 @@ export function isWithinKitchenWorkingHours(
  */
 export async function getOrCreatePickupTrackingToken(
   orderId: number,
-  orderNumber?: string,
+  orderNumber: string,
   fulfillmentType: string = "pickup"
 ): Promise<string> {
   // Check if token already exists for this order
@@ -101,21 +101,6 @@ export async function getOrCreatePickupTrackingToken(
     console.warn("[KitchenCam] Error checking existing tracking token:", err);
   }
 
-  // Resolve orderNumber if not provided
-  let resolvedOrderNumber = orderNumber;
-  if (!resolvedOrderNumber) {
-    try {
-      const [ord] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, orderId))
-        .limit(1);
-      resolvedOrderNumber = ord?.orderNumber || `ORD-${orderId}`;
-    } catch {
-      resolvedOrderNumber = `ORD-${orderId}`;
-    }
-  }
-
   // Generate cryptographically secure token
   const token = `vsm_pk_${randomBytes(16).toString("hex")}`;
   const expiresAt = new Date();
@@ -124,7 +109,7 @@ export async function getOrCreatePickupTrackingToken(
   try {
     await db.insert(trackingTokens).values({
       orderId,
-      orderNumber: resolvedOrderNumber,
+      orderNumber,
       token,
       fulfillmentType: fulfillmentType === "pickup" ? "pickup" : "delivery",
       expiresAt,
@@ -468,3 +453,4 @@ export async function getCustomerTrackingDataByToken(token: string) {
     cameras,
   };
 }
+

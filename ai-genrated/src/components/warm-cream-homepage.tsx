@@ -18,6 +18,7 @@ import { OutletsSection } from "@/components/outlets-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { WelcomeOfferBanner } from "@/components/welcome-offer-banner";
 import { KitchenCamHomepageSection } from "@/components/kitchen-cam-homepage-section";
+import { TasteQuizCta } from "@/components/taste-quiz-cta";
 import type { SpecialItemsConfig } from "@/components/home-page-client";
 
 interface CategoryData {
@@ -296,6 +297,11 @@ export function WarmCreamHomepage({
           </div>
         </div>
       </section>
+
+      {/* ─────────────────────────────────────────────────────────────
+          6.5. FIND YOUR MITHAI TASTE QUIZ CTA
+         ───────────────────────────────────────────────────────────── */}
+      <TasteQuizCta />
 
       {/* ─────────────────────────────────────────────────────────────
           7. BENEFITS & PINCODE DELIVERY CHECKING

@@ -647,29 +647,6 @@ export function PickupsTab() {
                         <span>📋</span>
                         <span>Audit Timeline ({o.history?.length || 0})</span>
                       </button>
-
-                      {/* Prep Slip & Kitchen Staff Quick Actions */}
-                      <a
-                        href={`http://localhost:9449/kitchen/slip/${encodeURIComponent(o.orderNumber)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1.5 text-xs font-semibold transition"
-                        title="Print Kitchen Preparation Slip"
-                      >
-                        <span>🖨️</span>
-                        <span>Prep Slip</span>
-                      </a>
-
-                      <a
-                        href={`http://localhost:9449/kitchen?order=${encodeURIComponent(o.orderNumber)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1.5 text-xs font-semibold transition"
-                        title="Upload prep photos or manage kitchen stages"
-                      >
-                        <span>📷</span>
-                        <span>Kitchen Cam</span>
-                      </a>
                     </div>
 
                     {/* Expand Items Toggle */}

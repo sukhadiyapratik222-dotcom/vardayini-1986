@@ -21,3 +21,4 @@ export async function PUT(request: NextRequest) {
     return Response.json({ error: err.message || "Failed to save settings" }, { status: 500 });
   }
 }
+

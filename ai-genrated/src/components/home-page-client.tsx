@@ -36,6 +36,7 @@ import { TestimonialsSection } from "@/components/testimonials-section";
 import { CustomerBestsellersSection } from "@/components/customer-bestsellers-section";
 import { BrowseByCategorySection } from "@/components/browse-by-category-section";
 import { KitchenCamHomepageSection } from "@/components/kitchen-cam-homepage-section";
+import { TasteQuizCta } from "@/components/taste-quiz-cta";
 
 interface CategoryItem {
   id: number;
@@ -283,6 +284,9 @@ export function HomePageClient({
           </div>
         </div>
       </section>
+
+      {/* Find Your Mithai Taste Quiz CTA Card */}
+      <TasteQuizCta />
 
       {/* Customer Bestsellers ("MOST LOVED") */}
       {uiConfig?.bestsellersSection?.enabled !== false && (

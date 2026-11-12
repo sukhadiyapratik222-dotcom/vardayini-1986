@@ -533,3 +533,4 @@ export function PickupCamClient({ initialData, token }: Props) {
     </div>
   );
 }
+

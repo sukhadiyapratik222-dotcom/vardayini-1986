@@ -513,3 +513,104 @@ export const kitchenSettings = mysqlTable("kitchen_settings", {
   blurFacesNotice: boolean("blur_faces_notice").notNull().default(true),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Taste Quiz: Product Attributes for Matching
+export const productQuizTags = mysqlTable("product_quiz_tags", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("product_id")
+    .notNull()
+    .unique()
+    .references(() => products.id),
+  sweetnessLevel: varchar("sweetness_level", { length: 20 }).notNull().default("medium"), // low | medium | high | none
+  containsNuts: varchar("contains_nuts", { length: 20 }).notNull().default("no"), // no | yes | may_contain
+  mithaiType: varchar("mithai_type", { length: 40 }).notNull().default("dry"), // dry | milk_based | ghee_based | namkeen | bakery | other
+  occasions: text("occasions").notNull(), // comma-separated: festival,birthday_anniversary,wedding_gifting,everyday,corporate
+  dietaryTags: text("dietary_tags").notNull(), // comma-separated: pure_ghee,gluten_free,jain,sugar_free,vegan
+  texture: varchar("texture", { length: 40 }).default("soft_melt"), // soft_melt | crunchy | chewy | layered
+  quizDescription: text("quiz_description"), // short explanation why this suits customer
+  isFeaturedInQuiz: boolean("is_featured_in_quiz").notNull().default(false),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Taste Quiz: Questions Definition (admin-configurable)
+export const quizQuestions = mysqlTable("quiz_questions", {
+  id: int("id").autoincrement().primaryKey(),
+  questionKey: varchar("question_key", { length: 50 }).notNull().unique(), // sweetness, nuts, occasion, budget, type
+  title: varchar("title", { length: 200 }).notNull(),
+  subtitle: text("subtitle"),
+  stepNumber: int("step_number").notNull(),
+  icon: varchar("icon", { length: 30 }).default("🍯"),
+  weight: int("weight").notNull().default(20),
+  isStrictFilter: boolean("is_strict_filter").notNull().default(false),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Taste Quiz: Question Options (admin-configurable)
+export const quizOptions = mysqlTable("quiz_options", {
+  id: int("id").autoincrement().primaryKey(),
+  questionKey: varchar("question_key", { length: 50 }).notNull(),
+  optionKey: varchar("option_key", { length: 60 }).notNull(),
+  label: varchar("label", { length: 150 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 30 }).default("✨"),
+  sortOrder: int("sort_order").notNull().default(1),
+  tagMapping: text("tag_mapping").notNull(), // JSON mapping or criteria
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Taste Quiz: Mithai Personalities (admin-configurable)
+export const quizPersonalities = mysqlTable("quiz_personalities", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 80 }).notNull().unique(),
+  name: varchar("name", { length: 160 }).notNull(),
+  tagline: varchar("tagline", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  badge: varchar("badge", { length: 80 }).default("Pure Heritage"),
+  recommendedSweet: varchar("recommended_sweet", { length: 120 }),
+  heroImageUrl: text("hero_image_url"),
+  criteria: text("criteria"), // JSON match rules
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Taste Quiz: Global Settings
+export const quizSettings = mysqlTable("quiz_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  leadCaptureEnabled: boolean("lead_capture_enabled").notNull().default(true),
+  leadCaptureHeading: varchar("lead_capture_heading", { length: 200 }).notNull().default("Where should we send your mithai match?"),
+  leadCaptureSubheading: text("lead_capture_subheading").notNull().default("Save your personalized taste profile & unlock a special festive welcome code."),
+  maxResults: int("max_results").notNull().default(4), // 3 to 5
+  comboDiscountPercent: int("combo_discount_percent").notNull().default(10),
+  allergyDisclaimer: text("allergy_disclaimer").notNull().default("Please note: While we follow strict preparation protocols, all products are handcrafted in a facility handling dairy, ghee, and nuts. Check product ingredient details for severe allergies."),
+  pinnedProductId: int("pinned_product_id"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Taste Quiz: Customer Lead Capture
+export const quizLeads = mysqlTable("quiz_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").references(() => users.id),
+  sessionId: varchar("session_id", { length: 80 }),
+  name: varchar("name", { length: 120 }),
+  phone: varchar("phone", { length: 40 }),
+  email: varchar("email", { length: 160 }),
+  marketingConsent: boolean("marketing_consent").notNull().default(false),
+  personalitySlug: varchar("personality_slug", { length: 80 }),
+  answers: text("answers"), // JSON string
+  matchedProductIds: text("matched_product_ids"), // JSON array string
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Taste Quiz: Saved Customer Results
+export const userQuizResults = mysqlTable("user_quiz_results", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").references(() => users.id),
+  sessionId: varchar("session_id", { length: 80 }),
+  personalitySlug: varchar("personality_slug", { length: 80 }).notNull(),
+  personalityName: varchar("personality_name", { length: 160 }).notNull(),
+  answers: text("answers").notNull(),
+  matchedProductsJson: text("matched_products_json").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

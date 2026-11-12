@@ -716,12 +716,27 @@ export function ProductsTab({
         </div>
 
         {!isReadOnly && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-5 py-2.5 rounded-xl font-bold text-xs btn-primary shadow-sm hover:shadow-md transition self-start sm:self-auto cursor-pointer"
-          >
-            + Add New Sweet / Farsan
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("vsm:switch_tab", { detail: "taste-quiz" }));
+                }
+              }}
+              className="px-4 py-2.5 rounded-xl font-bold text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>✨</span>
+              <span>Taste Quiz Tags &amp; Bulk Editor</span>
+            </button>
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-5 py-2.5 rounded-xl font-bold text-xs btn-primary shadow-sm hover:shadow-md transition cursor-pointer"
+            >
+              + Add New Sweet / Farsan
+            </button>
+          </div>
         )}
       </div>
 

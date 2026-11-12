@@ -107,11 +107,24 @@ export function CartClient({ initial }: { initial: CartState }) {
   const lines = cart?.lines || [];
   if (lines.length === 0) {
     return (
-      <div className="mithai-card mt-8 rounded-3xl p-10 text-center">
+      <div className="mithai-card mt-8 rounded-3xl p-8 sm:p-12 text-center space-y-4">
+        <span className="text-5xl block">📦</span>
         <p className="font-[family-name:var(--font-display)] text-3xl text-[#6b1d1d]">Your mithai box is empty.</p>
-        <Link href="/shop" className="btn-primary mt-6 inline-block rounded-full px-6 py-3 text-sm">
-          Browse the counter
-        </Link>
+        <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto">
+          Looking for inspiration? Answer 5 quick questions in our Taste Quiz and discover your perfect heritage mithai match.
+        </p>
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/find-your-mithai"
+            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-stone-950 shadow-md transition"
+          >
+            <span>Take Taste Quiz</span>
+            <span>✨</span>
+          </Link>
+          <Link href="/shop" className="btn-primary inline-block rounded-full px-6 py-3 text-xs sm:text-sm">
+            Browse the counter
+          </Link>
+        </div>
       </div>
     );
   }

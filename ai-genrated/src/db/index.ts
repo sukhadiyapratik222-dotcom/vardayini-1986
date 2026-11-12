@@ -623,6 +623,97 @@ function initSqliteTables(sqlite: DatabaseSync) {
       blur_faces_notice INTEGER DEFAULT 1,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS product_quiz_tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL UNIQUE,
+      sweetness_level TEXT NOT NULL DEFAULT 'medium',
+      contains_nuts TEXT NOT NULL DEFAULT 'no',
+      mithai_type TEXT NOT NULL DEFAULT 'dry',
+      occasions TEXT NOT NULL DEFAULT 'everyday',
+      dietary_tags TEXT NOT NULL DEFAULT 'pure_ghee',
+      texture TEXT DEFAULT 'soft_melt',
+      quiz_description TEXT DEFAULT NULL,
+      is_featured_in_quiz INTEGER DEFAULT 0,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS quiz_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_key TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      subtitle TEXT,
+      step_number INTEGER NOT NULL,
+      icon TEXT DEFAULT '🍯',
+      weight INTEGER DEFAULT 20,
+      is_strict_filter INTEGER DEFAULT 0,
+      is_enabled INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS quiz_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_key TEXT NOT NULL,
+      option_key TEXT NOT NULL,
+      label TEXT NOT NULL,
+      description TEXT,
+      icon TEXT DEFAULT '✨',
+      sort_order INTEGER DEFAULT 1,
+      tag_mapping TEXT NOT NULL,
+      is_enabled INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS quiz_personalities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      tagline TEXT NOT NULL,
+      description TEXT NOT NULL,
+      badge TEXT DEFAULT 'Pure Heritage',
+      recommended_sweet TEXT,
+      hero_image_url TEXT,
+      criteria TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS quiz_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      is_enabled INTEGER DEFAULT 1,
+      lead_capture_enabled INTEGER DEFAULT 1,
+      lead_capture_heading TEXT DEFAULT 'Where should we send your mithai match?',
+      lead_capture_subheading TEXT DEFAULT 'Save your personalized taste profile & unlock a special festive welcome code.',
+      max_results INTEGER DEFAULT 4,
+      combo_discount_percent INTEGER DEFAULT 10,
+      allergy_disclaimer TEXT DEFAULT 'Please note: While we follow strict preparation protocols, all products are handcrafted in a facility handling dairy, ghee, and nuts. Check product ingredient details for severe allergies.',
+      pinned_product_id INTEGER DEFAULT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS quiz_leads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER DEFAULT NULL,
+      session_id TEXT DEFAULT NULL,
+      name TEXT,
+      phone TEXT,
+      email TEXT,
+      marketing_consent INTEGER DEFAULT 0,
+      personality_slug TEXT,
+      answers TEXT,
+      matched_product_ids TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS user_quiz_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER DEFAULT NULL,
+      session_id TEXT DEFAULT NULL,
+      personality_slug TEXT NOT NULL,
+      personality_name TEXT NOT NULL,
+      answers TEXT NOT NULL,
+      matched_products_json TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `;
   try {
     sqlite.exec(ddl);

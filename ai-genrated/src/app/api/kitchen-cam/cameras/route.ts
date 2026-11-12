@@ -54,3 +54,4 @@ export async function DELETE(request: NextRequest) {
     return Response.json({ error: err.message || "Failed to delete camera" }, { status: 500 });
   }
 }
+

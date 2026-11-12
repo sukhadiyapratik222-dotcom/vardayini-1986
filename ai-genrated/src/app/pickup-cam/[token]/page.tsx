@@ -48,3 +48,4 @@ export default async function PickupCamPage({ params }: Props) {
 
   return <PickupCamClient initialData={data} token={token} />;
 }
+

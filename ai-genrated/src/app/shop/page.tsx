@@ -279,6 +279,27 @@ export default async function ShopPage({
             </div>
           )}
 
+          {/* Taste Quiz Banner */}
+          <div className="rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-orange-50 border border-amber-300/80 p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl p-2 rounded-xl bg-white shadow-2xs">🪄</span>
+              <div>
+                <p className="text-xs sm:text-sm font-bold text-[#6b1d1d]">
+                  Can&apos;t decide? Let our Taste Quiz find your perfect mithai in 30 seconds!
+                </p>
+                <p className="text-[11px] text-amber-800/80">
+                  Personalized sweet matches based on sweetness preference, nut allergies &amp; budget.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/find-your-mithai"
+              className="shrink-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#6b1d1d] hover:bg-[#852525] text-white shadow-xs transition"
+            >
+              Take Taste Quiz ✨
+            </Link>
+          </div>
+
           {/* Showing Toolbar matching User Screenshot */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-[#0b2f8a]/10 shadow-2xs">
             <div className="text-xs text-slate-600 font-medium">
@@ -362,6 +383,16 @@ export default async function ShopPage({
           )}
         </div>
       </div>
+
+      {/* Floating Glass Quiz Button */}
+      <Link
+        href="/find-your-mithai"
+        className="fixed bottom-20 right-6 z-40 rounded-full px-4 py-2.5 bg-gradient-to-r from-[#2e003e]/90 to-[#6b1d1d]/90 hover:from-[#3d0052] hover:to-[#852525] text-amber-200 border border-amber-300/40 shadow-2xl backdrop-blur-md text-xs font-black uppercase tracking-wider flex items-center gap-2 transition transform hover:scale-105 active:scale-95 group"
+      >
+        <span className="text-base group-hover:rotate-12 transition">✨</span>
+        <span className="hidden sm:inline">Find Your Mithai</span>
+        <span className="sm:hidden">Quiz</span>
+      </Link>
     </main>
   );
 }
