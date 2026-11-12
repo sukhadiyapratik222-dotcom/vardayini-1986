@@ -54,6 +54,42 @@ const DEFAULT_SETTINGS: KitchenSettingsData = {
 };
 
 /**
+ * Safely parses any date/timestamp representation (string, SQL datetime, timestamp number, Date)
+ * into a valid ISO string. Returns fallback if invalid or null, never throws RangeError: Invalid time value.
+ */
+export function safeIsoDate(val: any, fallback: string | null = null): string | null {
+  if (val === null || val === undefined || val === "") return fallback;
+  try {
+    if (val instanceof Date) {
+      return isNaN(val.getTime()) ? fallback : val.toISOString();
+    }
+    if (typeof val === "number") {
+      const d = new Date(val > 1e11 ? val : val * 1000);
+      return isNaN(d.getTime()) ? fallback : d.toISOString();
+    }
+    if (typeof val === "string") {
+      const trimmed = val.trim();
+      if (!trimmed || trimmed === "Invalid Date" || trimmed === "NaN") return fallback;
+      if (/^\d+$/.test(trimmed)) {
+        const num = Number(trimmed);
+        const d = new Date(num > 1e11 ? num : num * 1000);
+        return isNaN(d.getTime()) ? fallback : d.toISOString();
+      }
+      // Replace space in SQL datetime "YYYY-MM-DD HH:MM:SS" with "T"
+      const normalized = trimmed.includes("T") ? trimmed : trimmed.replace(" ", "T");
+      const d = new Date(normalized);
+      if (!isNaN(d.getTime())) return d.toISOString();
+      const raw = new Date(trimmed);
+      if (!isNaN(raw.getTime())) return raw.toISOString();
+    }
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? fallback : d.toISOString();
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * Checks if current IST time (Asia/Kolkata) falls within kitchen working hours
  */
 export function isWithinKitchenWorkingHours(
@@ -333,9 +369,7 @@ export async function getCustomerTrackingDataByToken(token: string) {
       mediaType: (m.mediaType as any) || "image",
       caption: m.caption,
       uploadedBy: m.uploadedBy,
-      createdAt: m.createdAt
-        ? new Date(m.createdAt).toISOString()
-        : new Date().toISOString(),
+      createdAt: safeIsoDate(m.createdAt, new Date().toISOString())!,
     };
     if (mediaByStage[m.stage]) {
       mediaByStage[m.stage].push(item);
@@ -351,8 +385,9 @@ export async function getCustomerTrackingDataByToken(token: string) {
 
   const timestampByStatus: Record<string, string> = {};
   for (const h of historyRows) {
-    if (h.createdAt) {
-      timestampByStatus[h.status.toLowerCase()] = new Date(h.createdAt).toISOString();
+    const ts = safeIsoDate(h.createdAt);
+    if (ts) {
+      timestampByStatus[h.status.toLowerCase()] = ts;
     }
   }
 
@@ -403,13 +438,13 @@ export async function getCustomerTrackingDataByToken(token: string) {
 
     // Best timestamp match
     let ts: string | null = null;
-    if (key === "order_received") ts = order.createdAt ? new Date(order.createdAt).toISOString() : null;
+    if (key === "order_received") ts = safeIsoDate(order.createdAt);
     else if (key === "preparing") ts = timestampByStatus["preparing"] || null;
     else if (key === "packed") ts = timestampByStatus["packed"] || null;
     else if (key === "ready_for_pickup") {
-      ts = order.actualReadyAt ? new Date(order.actualReadyAt).toISOString() : timestampByStatus["ready_for_pickup"] || null;
+      ts = safeIsoDate(order.actualReadyAt) || timestampByStatus["ready_for_pickup"] || null;
     } else if (key === "completed") {
-      ts = order.deliveredAt ? new Date(order.deliveredAt).toISOString() : timestampByStatus["delivered"] || null;
+      ts = safeIsoDate(order.deliveredAt) || timestampByStatus["delivered"] || null;
     }
 
     return {
@@ -435,7 +470,7 @@ export async function getCustomerTrackingDataByToken(token: string) {
     fulfillmentType: order.fulfillmentType || "pickup",
     status: order.status,
     currentStage: currentStageKey,
-    createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
+    createdAt: safeIsoDate(order.createdAt, new Date().toISOString())!,
     pickupDate: order.pickupDate || "Today",
     pickupSlot: order.pickupSlot || "Standard Store Hours (7:00 AM – 8:30 PM)",
     pickupOtp: order.pickupOtp || null,

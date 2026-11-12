@@ -9,7 +9,7 @@ import {
   QuizMatchResult,
   QuizMatchedProduct,
   DEFAULT_QUESTIONS,
-} from "@/lib/taste-quiz";
+} from "@/lib/taste-quiz-types";
 
 export function TasteQuizClient() {
   const router = useRouter();

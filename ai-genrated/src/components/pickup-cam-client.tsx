@@ -64,6 +64,23 @@ interface TrackingData {
   cameras: CameraItem[];
 }
 
+function formatSafeTime(timestampStr: string | null | undefined): string {
+  if (!timestampStr) return "";
+  try {
+    const normalized = timestampStr.includes("T") ? timestampStr : timestampStr.replace(" ", "T");
+    const d = new Date(normalized);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "";
+  }
+}
+
 interface Props {
   initialData: TrackingData;
   token: string;
@@ -366,14 +383,9 @@ export function PickupCamClient({ initialData, token }: Props) {
                         )}
                       </div>
 
-                      {stage.timestamp && (
+                      {stage.timestamp && formatSafeTime(stage.timestamp) && (
                         <span className="text-[11px] font-mono text-slate-500">
-                          {new Date(stage.timestamp).toLocaleTimeString("en-IN", {
-                            timeZone: "Asia/Kolkata",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
+                          {formatSafeTime(stage.timestamp)}
                         </span>
                       )}
                     </div>
