@@ -353,3 +353,4 @@ export const DEFAULT_PERSONALITIES: QuizPersonalityItem[] = [
     heroImageUrl: "/images/mawa-sweets.jpg",
   },
 ];
+
