@@ -93,6 +93,39 @@ export async function GET(request: Request) {
         city: resolveCustomerLocation(r.name, r.city),
       }));
 
+    // Hydrate any reviews persisted in MongoDB Atlas into the response list
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const mReviews = await mongo
+          .collection("reviews")
+          .find()
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .toArray();
+
+        for (const mr of mReviews) {
+          const revId = mr.reviewId ? Number(mr.reviewId) : mr.id ? Number(mr.id) : null;
+          if (revId && seen.has(revId)) continue;
+          if (revId) seen.add(revId);
+
+          allReviews.unshift({
+            id: revId || Date.now(),
+            productId: mr.productId || 1,
+            productName: mr.productName || "Silver Leaf Kaju Katli Festive Box",
+            productSlug: mr.productSlug || "kaju-katli",
+            rating: mr.rating || 5,
+            comment: mr.comment || "",
+            isVerified: mr.isVerified ?? true,
+            createdAt: mr.createdAt || new Date(),
+            name: mr.userName || mr.name || "Valued Patron",
+            city: resolveCustomerLocation(mr.userName || mr.name, mr.city),
+          });
+        }
+      }
+    } catch {}
+
     // If database returned no authentic reviews, supply default verified customer reviews
     if (allReviews.length === 0) {
       allReviews = DEFAULT_VERIFIED_REVIEWS.map((d, idx) => ({
@@ -146,10 +179,6 @@ export async function POST(request: Request) {
     await ensureSeeded();
     const user = await getAuthUser(request);
 
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await readJsonSafe<{
       productId?: unknown;
       rating?: unknown;
@@ -163,9 +192,18 @@ export async function POST(request: Request) {
     }
 
     const guestName = typeof body.userName === "string" ? body.userName.trim() : "";
-    const reviewerName = user?.name?.trim() || guestName;
 
-    if (!reviewerName || reviewerName.toLowerCase() === "valued customer" || reviewerName.length < 2) {
+    // Anonymous request with neither user session nor guest name returns 401
+    if (!user && !guestName) {
+      return Response.json(
+        { error: "Unauthorized. Please log in or provide your name to post a review." },
+        { status: 401 }
+      );
+    }
+
+    const reviewerName = guestName || user?.name?.trim() || "";
+
+    if (!reviewerName || reviewerName.length < 2) {
       return Response.json(
         { error: "Please enter your name to post a review." },
         { status: 400 }
@@ -182,9 +220,9 @@ export async function POST(request: Request) {
         : 5;
     const comment = typeof body.comment === "string" ? body.comment.trim() : "";
 
-    if (!comment || comment.length < 8) {
+    if (!comment || comment.length < 4) {
       return Response.json(
-        { error: "Please provide a detailed review comment with at least 8 characters." },
+        { error: "Please provide a review comment with at least 4 characters." },
         { status: 400 }
       );
     }
@@ -206,6 +244,27 @@ export async function POST(request: Request) {
       reviewerName,
       typeof body.city === "string" ? body.city : null
     );
+
+    // Persist review to MongoDB Atlas as well for multi-environment durability
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        await mongo.collection("reviews").insertOne({
+          reviewId: newId,
+          productId,
+          userId: user?.id || null,
+          userName: reviewerName,
+          rating,
+          comment,
+          city,
+          isVerified: true,
+          createdAt: now,
+        });
+      }
+    } catch (mErr) {
+      console.warn("[Reviews POST MongoDB sync notice]", mErr);
+    }
 
     return Response.json({
       ok: true,

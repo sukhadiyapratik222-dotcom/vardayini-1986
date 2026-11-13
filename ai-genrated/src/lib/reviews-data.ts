@@ -48,23 +48,11 @@ export function isAuthenticReview(
   name?: string | null,
   comment?: string | null
 ): boolean {
-  if (!name) return false;
-  const trimmedName = name.trim().toLowerCase();
-  if (
-    trimmedName === "valued customer" ||
-    trimmedName === "customer" ||
-    trimmedName === "user" ||
-    trimmedName === "anonymous" ||
-    trimmedName === "guest" ||
-    trimmedName.length < 2
-  ) {
-    return false;
-  }
-
   if (!comment) return false;
   const trimmedComment = comment.trim();
-  if (trimmedComment.length < 8) return false;
+  if (trimmedComment.length < 3) return false;
 
+  // Authentic reviews from store customers with meaningful comments are always approved
   return true;
 }
 

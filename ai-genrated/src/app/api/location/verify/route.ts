@@ -7,7 +7,7 @@ import { isValidPincode } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
-export interface FulfillmentRuleResult {
+interface FulfillmentRuleResult {
   ruleCase: "CASE_1" | "CASE_2" | "CASE_3" | "CASE_4" | "CASE_5" | "CASE_6";
   canCheckout: boolean;
   recommendedFulfillment: "pickup" | "delivery" | "none";

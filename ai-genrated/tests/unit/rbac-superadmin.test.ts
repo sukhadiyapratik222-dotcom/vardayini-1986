@@ -8,7 +8,7 @@ import {
   getScopedStoreId,
   AuthUserWithPermissions,
 } from "@/lib/rbac";
-import { parseAddressSnapshot, maskAddress } from "@/app/api/orders/track/route";
+import { parseAddressSnapshot, maskAddress } from "@/lib/order-utils";
 import { formatAddressString } from "@/components/order-tracker-client";
 
 describe("RBAC & Super Admin Governance Verification", () => {

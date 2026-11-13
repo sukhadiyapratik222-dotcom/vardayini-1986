@@ -5,7 +5,7 @@ import { orders, orderItems, stores, users, orderStatusHistory } from "@/db/sche
 import { ensureSeeded } from "@/db/seed";
 import { requireAdmin } from "@/lib/auth";
 import { getISTDateString, getNowInIST, parseTimeToMinutes } from "@/lib/pickup";
-import { handlePickupUpdate } from "./[orderNumber]/route";
+import { handlePickupUpdate } from "@/lib/pickup-handlers";
 
 export const dynamic = "force-dynamic";
 

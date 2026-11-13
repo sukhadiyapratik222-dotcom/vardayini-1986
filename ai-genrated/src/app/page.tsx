@@ -10,6 +10,7 @@ import {
   isAuthenticReview,
   DEFAULT_VERIFIED_REVIEWS,
 } from "@/lib/reviews-data";
+import { safeIsoDate } from "@/lib/kitchen-cam";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function HomePage() {
         comment: reviews.comment,
         isVerified: reviews.isVerified,
         createdAt: reviews.createdAt,
-        name: sql<string>`coalesce(${users.name}, ${reviews.userName}, 'Customer')`,
+        name: sql<string>`coalesce(${users.name}, ${reviews.userName}, 'Valued Patron')`,
         city: sql<string>`coalesce(${addresses.city}, 'Gujarat')`,
         productName: products.name,
       })
@@ -59,7 +60,7 @@ export default async function HomePage() {
     getRealTopSellingProducts(8).catch(() => []),
   ]);
 
-  // Deduplicate reviews in case a user has multiple address rows and filter authentic verified customer reviews
+  // Deduplicate reviews and format authentic verified customer reviews
   const seenReviews = new Set<number>();
   let uniqueReviews = reviewRows
     .filter((r) => {
@@ -75,11 +76,7 @@ export default async function HomePage() {
       quote: r.comment,
       productName: r.productName || undefined,
       isVerified: r.isVerified ?? true,
-      createdAt: r.createdAt
-        ? typeof r.createdAt === "string"
-          ? r.createdAt
-          : new Date(r.createdAt).toISOString()
-        : new Date().toISOString(),
+      createdAt: safeIsoDate(r.createdAt, new Date().toISOString())!,
     }));
 
   if (uniqueReviews.length === 0) {
@@ -93,6 +90,23 @@ export default async function HomePage() {
       isVerified: d.isVerified ?? true,
       createdAt: d.createdAt || new Date().toISOString(),
     }));
+  } else if (uniqueReviews.length < 5) {
+    // Retain newest real customer reviews first, and supplement with heritage verified reviews for carousel depth
+    const existingQuotes = new Set(uniqueReviews.map((r) => r.quote.trim().toLowerCase()));
+    for (const d of DEFAULT_VERIFIED_REVIEWS) {
+      if (!existingQuotes.has(d.quote.trim().toLowerCase())) {
+        uniqueReviews.push({
+          id: d.id,
+          name: d.name,
+          location: d.location,
+          rating: d.rating,
+          quote: d.quote,
+          productName: d.productName || undefined,
+          isVerified: d.isVerified ?? true,
+          createdAt: d.createdAt || new Date().toISOString(),
+        });
+      }
+    }
   }
 
   const bestsellersConfig = uiConfig?.bestsellersSection;
