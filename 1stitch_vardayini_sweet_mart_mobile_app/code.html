@@ -1,0 +1,446 @@
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vardayini Sweet Mart - Artisanal Indian Sweets</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "accent-gold": "#D4AF37",
+          "secondary-container": "#fed65b",
+          "inverse-on-surface": "#f2f0ed",
+          "on-tertiary-fixed": "#390c00",
+          "primary-fixed": "#dce1ff",
+          "surface-variant": "#e4e2de",
+          "on-background": "#1b1c1a",
+          "deep-navy": "#0B1B4F",
+          "outline": "#757683",
+          "on-primary": "#ffffff",
+          "inverse-surface": "#30312e",
+          "error-container": "#ffdad6",
+          "tertiary": "#451000",
+          "on-error": "#ffffff",
+          "surface-container-high": "#eae8e4",
+          "surface-container-highest": "#e4e2de",
+          "surface": "#FDFBF7",
+          "tertiary-fixed": "#ffdbd0",
+          "secondary-fixed": "#ffe088",
+          "primary": "#0B1B4F",
+          "secondary": "#735c00",
+          "rich-gold": "#DFB755",
+          "inverse-primary": "#b6c4ff",
+          "background": "#FDFBF7",
+          "tertiary-container": "#6a1d00",
+          "on-surface-variant": "#444652",
+          "surface-container-lowest": "#ffffff",
+          "on-primary-fixed-variant": "#223f99",
+          "on-secondary-container": "#745c00",
+          "surface-container": "#efeeea",
+          "error": "#ba1a1a",
+          "primary-fixed-dim": "#b6c4ff",
+          "on-tertiary-container": "#f2825c",
+          "outline-variant": "#c5c5d4",
+          "surface-tint": "#3d58b3",
+          "on-primary-container": "#839cfc",
+          "tertiary-fixed-dim": "#ffb59d",
+          "on-tertiary-fixed-variant": "#7e2b0c",
+          "on-secondary": "#ffffff",
+          "on-secondary-fixed-variant": "#574500",
+          "on-primary-fixed": "#001550",
+          "surface-dim": "#dbdad6",
+          "secondary-fixed-dim": "#e9c349",
+          "surface-bright": "#FDFBF7",
+          "primary-container": "#0b2f8a",
+          "on-surface": "#1b1c1a",
+          "warm-cream": "#FDFBF7",
+          "on-error-container": "#93000a",
+          "surface-container-low": "#f5f3ef",
+          "on-secondary-fixed": "#241a00",
+          "on-tertiary": "#ffffff"
+        },
+        borderRadius: {
+          DEFAULT: "0.125rem",
+          lg: "0.25rem",
+          xl: "0.5rem",
+          full: "0.75rem"
+        },
+        fontFamily: {
+          "label-md": ["Outfit"],
+          "body-md": ["Outfit"],
+          "headline-sm": ["Outfit"],
+          "label-sm": ["Outfit"],
+          "body-lg": ["Outfit"],
+          "headline-md": ["Cormorant Garamond"],
+          "headline-lg": ["Cormorant Garamond"],
+          "headline-xl": ["Cormorant Garamond"],
+          "body-sm": ["Outfit"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-rich-gold/30">
+<!-- Announcement Bar -->
+<div class="bg-deep-navy text-on-primary text-xs font-medium py-2 px-4 text-center tracking-wide flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-rich-gold text-sm" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+<span>Free delivery on orders above ₹799 • Use code <strong class="text-rich-gold">FESTIVE15</strong> for 15% off</span>
+</div>
+<!-- Main Wrapper -->
+<div class="relative flex min-h-screen w-full flex-col bg-background overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-surface-variant/40 px-4 py-3 flex items-center justify-between">
+<button class="flex items-center justify-center p-2 text-deep-navy hover:text-rich-gold transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="text-center">
+<h1 class="font-headline-md text-deep-navy text-2xl font-bold leading-none tracking-tight">Vardayini</h1>
+<span class="text-[10px] uppercase tracking-widest text-rich-gold font-semibold">Sweet Mart • Est. 1951</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center p-2 text-deep-navy hover:text-rich-gold transition-colors relative">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="flex items-center justify-center p-2 text-deep-navy hover:text-rich-gold transition-colors relative">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="absolute top-1 right-1 bg-rich-gold text-deep-navy font-bold text-[10px] size-4 rounded-full flex items-center justify-center">2</span>
+</button>
+</div>
+</header>
+<!-- Hero Slider Banner -->
+<section class="p-4">
+<div class="relative overflow-hidden rounded-xl bg-deep-navy min-h-[380px] flex flex-col justify-end p-6 text-white shadow-xl">
+<div class="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-50" data-alt="A luxurious high-end product photography shot of artisanal Dubai Chocolate Ladoo garnished with edible gold leaf, pistachios, and rich dark cocoa dusting, set against a dark royal blue background with warm golden ambient lighting, highlighting the exquisite 2026 warm cream aesthetic and gourmet confectionery details." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDR0U7Q7ELwl2BQOQow29n7SIeUFo7eVNLdJwqHTooiePhMT33_O1wf5HOvJ0_nm_2k-65tdbyvaxbSFQb-Cml_frWFGlNOPb7vwW7XQY8LE9ow6J-rlMiVKAnOhuDhCnP6bg9yvTCOEh6zpHNY6VBj05mNROfOOehfwsJRpStSG4spNMNmOtyMu08Ynn5jruVgs6JNXU4sdjE-SEltNCWl3Fz4ZQWTQKK9WaWblGA')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-deep-navy via-deep-navy/40 to-transparent"></div>
+<!-- Badge -->
+<div class="relative z-10 mb-3 flex items-center gap-2">
+<span class="bg-rich-gold/20 border border-rich-gold text-rich-gold text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+          100% Shuddh Desi Ghee
+        </span>
+</div>
+<div class="relative z-10">
+<span class="text-rich-gold text-xs font-bold uppercase tracking-widest block mb-1">New Artisanal Creation</span>
+<h2 class="font-headline-lg text-3xl md:text-4xl font-bold leading-tight mb-3 text-warm-cream">Dubai Chocolate Ladoo</h2>
+<p class="text-surface-variant text-sm mb-5 max-w-md line-clamp-2">A decadent fusion of traditional besan and rich Belgian pistachio knafeh chocolate. Crafted by master halwais.</p>
+<div class="flex items-center gap-4">
+<button class="bg-rich-gold text-deep-navy font-semibold px-6 py-3 rounded-lg shadow-lg hover:bg-rich-gold/90 transition-all flex items-center gap-2">
+<span>Order Now</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<div class="text-warm-cream">
+<span class="text-xs text-surface-variant block">Special Price</span>
+<span class="text-xl font-bold text-rich-gold">₹499 <span class="text-xs font-normal text-surface-variant">/ 250g</span></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Marquee Strip of Popular Items -->
+<section class="py-3 border-y border-surface-variant/30 bg-surface-container-low overflow-hidden">
+<div class="flex gap-4 px-4 overflow-x-auto no-scrollbar scroll-smooth">
+<div class="flex items-center gap-2 shrink-0 bg-surface px-4 py-2 rounded-lg border border-surface-variant/40 shadow-sm">
+<span class="material-symbols-outlined text-rich-gold text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-sm font-semibold text-deep-navy">Kaju Katli</span>
+</div>
+<div class="flex items-center gap-2 shrink-0 bg-surface px-4 py-2 rounded-lg border border-surface-variant/40 shadow-sm">
+<span class="material-symbols-outlined text-rich-gold text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-sm font-semibold text-deep-navy">Shahi Gulab Jamun</span>
+</div>
+<div class="flex items-center gap-2 shrink-0 bg-surface px-4 py-2 rounded-lg border border-surface-variant/40 shadow-sm">
+<span class="material-symbols-outlined text-rich-gold text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-sm font-semibold text-deep-navy">Kesar Peda</span>
+</div>
+<div class="flex items-center gap-2 shrink-0 bg-surface px-4 py-2 rounded-lg border border-surface-variant/40 shadow-sm">
+<span class="material-symbols-outlined text-rich-gold text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-sm font-semibold text-deep-navy">Mohanthal</span>
+</div>
+</div>
+</section>
+<!-- Shop By Category Horizontal Scroll -->
+<section class="py-6 px-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline-md text-2xl font-bold text-deep-navy">Shop By Category</h3>
+<a class="text-xs font-semibold text-rich-gold hover:underline" href="#">View All</a>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+<!-- Category 1 -->
+<div class="flex flex-col items-center shrink-0 cursor-pointer group">
+<div class="size-20 rounded-full bg-surface-container-high overflow-hidden border-2 border-rich-gold/50 shadow-md transition-transform group-hover:scale-105">
+<div class="w-full h-full bg-cover bg-center" data-alt="A vibrant arrangement of traditional Indian sweets including colourful laddoos, burfis, and pedas neatly arranged on a silver platter under warm spotlight, reflecting the high-end 2026 warm cream aesthetic with golden accents." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC011LuFdlHsbjSeNvyFsO5LlGinzAlPW_pv70csLOHKNA8-uPhvNMZSl0ytBTMC1z7tj5_j5X_cJuRKiDmM5I1ha58Llo1l61Ixsjo0U8qaKA84vkb0q_iQvXNlq05NSdi6-kb-o2689_ZaFWj7z-Jd8755F6A9tE5yY7cDrxsuj8vifWo20ubeoOap21Wr9MV-C-PAavD2avhWD0rooL5sDQAF6FZl92rY9sa5y0')"></div>
+</div>
+<span class="text-xs font-semibold mt-2 text-deep-navy">Sweets</span>
+</div>
+<!-- Category 2 -->
+<div class="flex flex-col items-center shrink-0 cursor-pointer group">
+<div class="size-20 rounded-full bg-surface-container-high overflow-hidden border-2 border-surface-variant/50 shadow-md transition-transform group-hover:scale-105">
+<div class="w-full h-full bg-cover bg-center" data-alt="Crispy golden Indian savory snacks like namkeen, mathri, and bhujia neatly presented in a rustic ceramic bowl against a soft warm cream background with subtle natural lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC03l_3lHgg1SCjDBxljPzbq9zx1jKTx0ANJcBt3C7Jegi-sGZ7jfd95a4IyUvwMqA3W4WeIrjgklkq9781Rl6MklXus48fNH-TbE2PrGCri98TO3UQsXR0oWgI-NqkvxxyHJdCzecd7CYY7-_GSPDSnpcEJ4_v596V2QmIcGDYdZPxVdoYjWg61G1VlIQDFNMYc53IW8Sqd2UQHio71dUulWEpx4SdfrrgjQ6r2BM')"></div>
+</div>
+<span class="text-xs font-semibold mt-2 text-deep-navy">Savouries</span>
+</div>
+<!-- Category 3 -->
+<div class="flex flex-col items-center shrink-0 cursor-pointer group">
+<div class="size-20 rounded-full bg-surface-container-high overflow-hidden border-2 border-rich-gold/50 shadow-md transition-transform group-hover:scale-105">
+<div class="w-full h-full bg-cover bg-center" data-alt="Artisanal fusion mithai pieces garnished with edible silver leaf and exotic nuts, styled in a minimalist luxury confectionery display with warm golden highlights and deep blue undertones." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC30iANXE8AsZuIT3Yry-mmbH2pMO13d4VPMi_RCraubBwHN9kvW3sKkzZuXC5KZTiIE13ydFDUc30FvbwWmicArGVBNAB6rIh36CGYWdlobp3hz7evX0wIz_NEVe5gxk_qLR8CFoKunQMJLA2uKsUxV00LV1OAyF7f9pHxYZyVYolPpOXjtDry29rXZxxY7TN5kALvr2Q8Ncd0LUR4S51QnfkL1twGblTIPep4BzE')"></div>
+</div>
+<span class="text-xs font-semibold mt-2 text-deep-navy">Artisanal Sweets</span>
+</div>
+<!-- Category 4 -->
+<div class="flex flex-col items-center shrink-0 cursor-pointer group">
+<div class="size-20 rounded-full bg-surface-container-high overflow-hidden border-2 border-surface-variant/50 shadow-md transition-transform group-hover:scale-105">
+<div class="w-full h-full bg-cover bg-center" data-alt="Freshly baked traditional eggless Indian bakery items and cookies arranged neatly on a wooden tray with a warm morning ambiance and soft shadows." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBtsLgZLXz5nhbATBpRhrnjGWo30aDtAO6s4hlAGO2vC4451rQSOMqVXgApfgUoqjZVoQEejK_sis-3Vhcgx5WL4ZcXdiXDEyxKYIdZnyyGdTZtuFqS76gRq-51FqA6reTxBnHPn6R3GSEDOvPDDXTzx2xWcuUQ2vSs1CeTz-GdmO9JSheCcZB44ayL9LE2qBQo10XdXQsF_uK9CdwGyAhB2lCN94rniRPx2DYGE-8')"></div>
+</div>
+<span class="text-xs font-semibold mt-2 text-deep-navy">Bakery</span>
+</div>
+<!-- Category 5 -->
+<div class="flex flex-col items-center shrink-0 cursor-pointer group">
+<div class="size-20 rounded-full bg-surface-container-high overflow-hidden border-2 border-rich-gold/50 shadow-md transition-transform group-hover:scale-105">
+<div class="w-full h-full bg-cover bg-center" data-alt="An ornate festival gift hamper filled with assorted mithai boxes, dried fruits, and decorative diyas, styled for high-end gifting with rich gold ribbons and warm cream packaging." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA4U0IefwWwgDg6V8n7GfL9e59Ws5VCUbKG7j1HUj3aIRit5p9wYB2ySeWThn-80rLPXHOB0mMOvMMZZW5gIB1RIbky2pQdc_hya4aUOhjRqMZXTNxpPIfYpu7CepVvVQc-Fbk12bRh5ENiQrpE_vlibxLRLbtjccVkzqClNiEn7MF2KUy6OiWZcwSRwGSk2eJRjgD_dsfUkNX-5WNOjKntwBeIeRmpg4c8OavyRcI')"></div>
+</div>
+<span class="text-xs font-semibold mt-2 text-deep-navy">Gifting</span>
+</div>
+</div>
+</section>
+<!-- Signature Best Sellers Section -->
+<section class="py-6 px-4 bg-surface-container-low/50">
+<div class="flex items-center justify-between mb-4">
+<div>
+<span class="text-xs font-semibold uppercase tracking-widest text-rich-gold">Handcrafted Daily</span>
+<h3 class="font-headline-md text-2xl font-bold text-deep-navy">Signature Best Sellers</h3>
+</div>
+<a class="text-xs font-semibold text-rich-gold hover:underline" href="#">See All</a>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Product 1 -->
+<div class="bg-surface rounded-xl p-3 border border-surface-variant/30 shadow-sm flex flex-col justify-between relative group">
+<span class="absolute top-5 left-5 z-10 bg-deep-navy text-rich-gold text-[10px] font-bold px-2 py-0.5 rounded shadow">BEST SELLER</span>
+<div class="h-36 rounded-lg bg-surface-container-high mb-3 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105" data-alt="Close-up product shot of pristine diamond-shaped silver-foiled Kaju Katli pieces stacked neatly on a luxury marble plate, lit with warm inviting light that emphasizes its smooth texture and rich cashew quality." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC8hSlQr8DFej_2xyt7m5KUByEgedm99Egh3L8Dl76mBeuAl6kUGNZ7VO2VJeV8jl-odGWV7m11W6sWJXeARBQnnmXEbQIubRyXn1bypCZop31X3_vGKDjXUURya0jH6DaKr5x09tcm57jpSJju6nTN9nYVe401C4Icg93up_cTxnYIKb37MqHcRiwD2yqRD0H8JMbzPsHuIUvL0DdkO8ZIkUBRJlgp1aJ2xK0K69Q')"></div>
+</div>
+<div>
+<h4 class="font-semibold text-sm text-deep-navy line-clamp-1">Silver Foil Kaju Katli</h4>
+<p class="text-xs text-outline mb-2">Pure Cashews &amp; Ghee</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-bold text-deep-navy text-sm">₹425 <span class="text-[10px] font-normal text-outline">/ 250g</span></span>
+<button class="bg-deep-navy text-on-primary p-2 rounded-lg hover:bg-rich-gold hover:text-deep-navy transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product 2 -->
+<div class="bg-surface rounded-xl p-3 border border-surface-variant/30 shadow-sm flex flex-col justify-between relative group">
+<span class="absolute top-5 left-5 z-10 bg-deep-navy text-rich-gold text-[10px] font-bold px-2 py-0.5 rounded shadow">BEST SELLER</span>
+<div class="h-36 rounded-lg bg-surface-container-high mb-3 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105" data-alt="Luscious Shahi Gulab Jamun spheres soaked in fragrant rose and cardamom sugar syrup, served in a traditional brass bowl with glowing warm highlights and a sophisticated background." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAtBUzsiL8sAxWm-_0N4f3Y5zDimRyVc_1059ypBuPS6jnnFRpthIB451KeoK3GR1aqmhSlF2bUUILPcymOWiItLGuHImGeMZmSw1aCyUB3jDApFXlVoQgMeiT83OVo2oTZLh20EtyWnU916Sd8qNng_R4x4P1j2mXlK_mwGUtUCUDceTCn9wU2hvv-32Yunw421GNQ41V05w1N4uIi2x4mG1gs6vcRc7uGFSOcgRo')"></div>
+</div>
+<div>
+<h4 class="font-semibold text-sm text-deep-navy line-clamp-1">Shahi Gulab Jamun</h4>
+<p class="text-xs text-outline mb-2">Mawa &amp; Rose Syrup</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-bold text-deep-navy text-sm">₹280 <span class="text-[10px] font-normal text-outline">/ 500g</span></span>
+<button class="bg-deep-navy text-on-primary p-2 rounded-lg hover:bg-rich-gold hover:text-deep-navy transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product 3 -->
+<div class="bg-surface rounded-xl p-3 border border-surface-variant/30 shadow-sm flex flex-col justify-between relative group">
+<span class="absolute top-5 left-5 z-10 bg-rich-gold text-deep-navy text-[10px] font-bold px-2 py-0.5 rounded shadow">CHEF'S PICK</span>
+<div class="h-36 rounded-lg bg-surface-container-high mb-3 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105" data-alt="Rich golden Kesar Peda garnished with premium saffron strands and sliced pistachios, presented on an artisanal ceramic tray with warm ambient lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAp0TfPqfZD-QIM0S14zTULf7bFis16MSfPrgWjg-0Ikl84R3EPaLBhijDBZR9wT6QC9vc9XhOfBzjCOYNS_mgVV_A_irfiicAU1GZKGCsl-6BFPgmg_y9JICQAYzC-LM-w8BDN-gZ91vy_-qvzHM6QETYJ2sx6oVDtvbhwX7Y84KUECK-mGNHmfdqi36Mf75u8pkvLxysW_W5blFE1W3m_lQfbbIzLVbbpuu_WEx8')"></div>
+</div>
+<div>
+<h4 class="font-semibold text-sm text-deep-navy line-clamp-1">Kesar Malai Peda</h4>
+<p class="text-xs text-outline mb-2">Kashmiri Saffron</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-bold text-deep-navy text-sm">₹350 <span class="text-[10px] font-normal text-outline">/ 250g</span></span>
+<button class="bg-deep-navy text-on-primary p-2 rounded-lg hover:bg-rich-gold hover:text-deep-navy transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product 4 -->
+<div class="bg-surface rounded-xl p-3 border border-surface-variant/30 shadow-sm flex flex-col justify-between relative group">
+<span class="absolute top-5 left-5 z-10 bg-deep-navy text-rich-gold text-[10px] font-bold px-2 py-0.5 rounded shadow">TRADITIONAL</span>
+<div class="h-36 rounded-lg bg-surface-container-high mb-3 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105" data-alt="Grained traditional Gujarati Mohanthal sweet cubes made with roasted gram flour and pure desi ghee, garnished with nuts under warm golden lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCNXqW4nRXQfqP4BT1z8vCDcdbskfIoyu-XjfuDrAZZuypfYQYAy_vndtcOEer8fUDtBD1pWrFwXKS91hG_ZeyRqjqUP9lleVxnSYpJM2kTa70ThSlbEo46ZOH7RLA9BAK6V6e_tuX8E30MZWvRI6__dVqRqu_966UUVdNlRVxaDUibuhDyYmZvPX3UJ951c3-MZaFGYTDaBmmvhHSRLtmOYRIWPRuNQct6M6cr9Fk')"></div>
+</div>
+<div>
+<h4 class="font-semibold text-sm text-deep-navy line-clamp-1">Gujarati Mohanthal</h4>
+<p class="text-xs text-outline mb-2">Besan &amp; Shuddh Ghee</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-bold text-deep-navy text-sm">₹320 <span class="text-[10px] font-normal text-outline">/ 250g</span></span>
+<button class="bg-deep-navy text-on-primary p-2 rounded-lg hover:bg-rich-gold hover:text-deep-navy transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- A Journey Of 75 Years Counter Stats -->
+<section class="py-10 px-4 bg-deep-navy text-warm-cream relative overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center opacity-15 mix-blend-overlay" data-alt="Vintage historical heritage photograph of a traditional Indian sweet shop from 1951 with brass utensils and authentic halwai masters preparing sweets, blending classic sepia tones with a warm luxury aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBt95f3NKNjVY0L-auWOCiJeQuveK63uGFgg4qjVICrxh0NZ7ku7N2NK_ywRY4HMNQd0LDwT59i30G3i13dp-ZmHQmbMduVpl_NZCfRrP6qP3K13btXiUTJbyw8y8RKfY46Gr9Mdwa79Sy9pmTBvXTrD9yvImJ24R1M6vF9et6YxXPT86glXqBRFDU9O2Tw5U6mPBoDA_9vID-RdznnOyJAQjUfm4yIm2S-jFcAfe0')"></div>
+<div class="relative z-10 text-center max-w-lg mx-auto mb-8">
+<span class="text-rich-gold text-xs font-bold uppercase tracking-widest block mb-2">A Legacy of Trust</span>
+<h3 class="font-headline-lg text-3xl font-bold mb-2">A Journey Of 75 Years</h3>
+<p class="text-surface-variant text-sm">Serving generations of sweet lovers with uncompromised quality, authentic recipes, and pure ingredients since 1951.</p>
+</div>
+<div class="grid grid-cols-3 gap-4 relative z-10 text-center max-w-xl mx-auto">
+<div class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
+<span class="font-headline-lg text-3xl font-bold text-rich-gold block">75+</span>
+<span class="text-xs text-surface-variant uppercase tracking-wider">Years Legacy</span>
+</div>
+<div class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
+<span class="font-headline-lg text-3xl font-bold text-rich-gold block">150+</span>
+<span class="text-xs text-surface-variant uppercase tracking-wider">Varieties</span>
+</div>
+<div class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
+<span class="font-headline-lg text-3xl font-bold text-rich-gold block">2M+</span>
+<span class="text-xs text-surface-variant uppercase tracking-wider">Happy Customers</span>
+</div>
+</div>
+</section>
+<!-- Quick Taste Match Finder Banner -->
+<section class="py-8 px-4">
+<div class="rounded-2xl bg-gradient-to-r from-rich-gold/20 via-rich-gold/10 to-transparent border border-rich-gold/40 p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+<div class="space-y-2 text-center md:text-left">
+<span class="bg-rich-gold text-deep-navy text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">Mithai Quiz</span>
+<h3 class="font-headline-md text-2xl font-bold text-deep-navy">Quick Taste Match Finder</h3>
+<p class="text-sm text-outline max-w-md">Confused about what to pick for your celebrations or palate? Take our 30-second quiz to discover your ideal sweet match!</p>
+</div>
+<button class="bg-deep-navy text-warm-cream font-semibold px-6 py-3.5 rounded-xl shadow-md hover:bg-rich-gold hover:text-deep-navy transition-all shrink-0 flex items-center gap-2">
+<span>Start Quiz</span>
+<span class="material-symbols-outlined text-sm">quiz</span>
+</button>
+</div>
+</section>
+<!-- Store Locations Summary -->
+<section class="py-8 px-4 border-t border-surface-variant/30">
+<div class="mb-6 text-center">
+<span class="text-xs font-semibold uppercase tracking-widest text-rich-gold">Visit Us</span>
+<h3 class="font-headline-md text-2xl font-bold text-deep-navy">Our Flagship Stores</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+<!-- Store 1 -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-surface-variant/40 flex items-start gap-4">
+<div class="bg-deep-navy text-rich-gold p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div>
+<h4 class="font-semibold text-deep-navy text-base">Vardayini Main Bazaar</h4>
+<p class="text-xs text-outline mt-1 leading-relaxed">Shop No. 4, Heritage Market Crossroad, Old City, Ahmedabad - 380001</p>
+<span class="text-xs font-semibold text-rich-gold mt-2 inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Open 8:00 AM - 10:00 PM
+          </span>
+</div>
+</div>
+<!-- Store 2 -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-surface-variant/40 flex items-start gap-4">
+<div class="bg-deep-navy text-rich-gold p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div>
+<h4 class="font-semibold text-deep-navy text-base">Vardayini Satellite Outlet</h4>
+<p class="text-xs text-outline mt-1 leading-relaxed">GF-12, Titanium Plaza, SG Highway, Satellite, Ahmedabad - 380015</p>
+<span class="text-xs font-semibold text-rich-gold mt-2 inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Open 9:00 AM - 10:30 PM
+          </span>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-deep-navy text-warm-cream pt-12 pb-24 px-4 border-t border-surface-variant/20">
+<div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+<div class="space-y-3">
+<h2 class="font-headline-md text-2xl font-bold text-warm-cream">Vardayini</h2>
+<p class="text-xs text-surface-variant leading-relaxed">Crafting pure desi ghee sweets with traditional dedication and modern artisanal finesse since 1951.</p>
+<div class="flex items-center gap-3 text-rich-gold pt-2">
+<span class="material-symbols-outlined cursor-pointer hover:text-warm-cream">public</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-warm-cream">share</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-warm-cream">mail</span>
+</div>
+</div>
+<div>
+<h4 class="font-semibold text-rich-gold text-sm uppercase tracking-wider mb-3">Quick Links</h4>
+<ul class="space-y-2 text-xs text-surface-variant">
+<li><a class="hover:text-warm-cream" href="#">Our Story</a></li>
+<li><a class="hover:text-warm-cream" href="#">Artisanal Sweets</a></li>
+<li><a class="hover:text-warm-cream" href="#">Corporate Gifting</a></li>
+<li><a class="hover:text-warm-cream" href="#">Mithai Quiz</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-rich-gold text-sm uppercase tracking-wider mb-3">Customer Care</h4>
+<ul class="space-y-2 text-xs text-surface-variant">
+<li><a class="hover:text-warm-cream" href="#">Track Order</a></li>
+<li><a class="hover:text-warm-cream" href="#">Shipping &amp; Delivery</a></li>
+<li><a class="hover:text-warm-cream" href="#">Privacy Policy</a></li>
+<li><a class="hover:text-warm-cream" href="#">Contact Us</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-rich-gold text-sm uppercase tracking-wider mb-3">Newsletter</h4>
+<p class="text-xs text-surface-variant mb-3">Subscribe to get secret festive offers and new seasonal sweet updates.</p>
+<div class="flex gap-2">
+<input class="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-xs text-warm-cream placeholder:text-surface-variant/60 focus:outline-none focus:border-rich-gold w-full" placeholder="Enter your email" type="email"/>
+<button class="bg-rich-gold text-deep-navy font-semibold px-3 py-2 rounded-lg text-xs shrink-0 hover:bg-rich-gold/90 transition-colors">Join</button>
+</div>
+</div>
+</div>
+<div class="max-w-4xl mx-auto pt-6 border-t border-white/10 text-center text-[11px] text-surface-variant">
+      © 1951–2026 Vardayini Sweet Mart. All Rights Reserved. Crafted with Shuddh Desi Ghee &amp; Tradition.
+    </div>
+</footer>
+<!-- Bottom Navigation Bar (Shared Asset Integrated) -->
+<div class="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-[#e7ebf3] bg-[#f8f9fc] px-4 pb-3 pt-2 shadow-2xl">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-[#0d111b]" href="#">
+<div class="text-[#0d111b] flex h-8 items-center justify-center" data-icon="House" data-size="24px" data-weight="fill">
+<svg fill="currentColor" height="24px" viewbox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
+</svg>
+</div>
+<p class="text-[#0d111b] text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#4c629a]" href="#">
+<div class="text-[#4c629a] flex h-8 items-center justify-center" data-icon="FileSvg" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewbox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M87.82,196.31a20.82,20.82,0,0,1-9.19,15.23C73.44,215,67,216,61.14,216A61.23,61.23,0,0,1,46,214a8,8,0,0,1,4.3-15.41c4.38,1.2,14.95,2.7,19.55-.36.88-.59,1.83-1.52,2.14-3.93.35-2.67-.71-4.1-12.78-7.59-9.35-2.7-25-7.23-23-23.11a20.55,20.55,0,0,1,9-14.95c11.84-8,30.72-3.31,32.83-2.76a8,8,0,0,1-4.07,15.48c-4.48-1.17-15.23-2.56-19.83.56a4.54,4.54,0,0,0-2,3.67c-.11.9-.14,1.09,1.12,1.9,2.31,1.49,6.44,2.68,10.45,3.84C73.5,174.17,90.06,179,87.82,196.31ZM216,88v24a8,8,0,0,1-16,0V96H152a8,8,0,0,1-8-8V40H56v72a8,8,0,1,1-16,0V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.65,2.34l56,56A8,8,0,0,1,216,88Zm-56-8h28.69L160,51.31Zm-13.3,64.47a8,8,0,0,0-10.23,4.84L124,184.21l-12.47-34.9a8,8,0,1,0-15.06,5.38l20,56a8,8,0,0,0,15.07,0l20-56A8,8,0,0,0,146.7,144.47ZM208,176h-8a8,8,0,0,0,0,16v5.29a13.38,13.38,0,0,1-8,2.71c-8.82,0-16-9-16-20s7.18-20,16-20a13.27,13.27,0,0,1,7.53,2.38,8,8,0,0,0,8.95-13.26A29.38,29.38,0,0,0,192,144c-17.64,0-32,16.15-32,36s14.36,36,32,36a30.06,30.06,0,0,0,21.78-9.6,8,8,0,0,0,2.22-5.53V184A8,8,0,0,0,208,176Z"></path>
+</svg>
+</div>
+<p class="text-[#4c629a] text-xs font-medium leading-normal tracking-[0.015em]">Shop</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#4c629a]" href="#">
+<div class="text-[#4c629a] flex h-8 items-center justify-center" data-icon="Gift" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewbox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39A13.69,13.69,0,0,1,69.5,72a16.6,16.6,0,0,1-15.37-35.13ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"></path>
+</svg>
+</div>
+<p class="text-[#4c629a] text-xs font-medium leading-normal tracking-[0.015em]">Gifting</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#4c629a]" href="#">
+<div class="text-[#4c629a] flex h-8 items-center justify-center" data-icon="MapPin" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewbox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"></path>
+</svg>
+</div>
+<p class="text-[#4c629a] text-xs font-medium leading-normal tracking-[0.015em]">Stores</p>
+</a>
+</div>
+</div>
+</body></html>

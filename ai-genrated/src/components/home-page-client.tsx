@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { WarmCreamHomepage, HomepageProductData } from "@/components/warm-cream-homepage";
+import { MobileArtisanalHome } from "@/components/mobile-artisanal-home";
 import { HeritageGlassHero } from "@/components/heritage-glass-hero";
 import { HeritageHeroBanner } from "@/components/heritage-hero-banner";
 import { ProductListMarquee } from "@/components/product-list-marquee";
@@ -123,21 +124,39 @@ export function HomePageClient({
     }
   }
 
-  // 1. Warm Cream & Deep Purple Redesign (Default)
+  // 1. Warm Cream & Deep Purple Redesign (Default) with Mobile Artisanal View for Mobile Screens
   if (uiDesign === "warm-cream") {
     return (
-      <WarmCreamHomepage
-        categories={categories}
-        featuredProducts={featured}
-        bestsellers={bestsellers}
-        specialItemsConfig={specialItemsConfig}
-        specialProducts={specialProducts}
-        stores={stores}
-        reviews={reviews}
-        uiConfig={uiConfig}
-        onToggleUiDesign={toggleUiDesign}
-        currentUiDesign={uiDesign}
-      />
+      <>
+        {/* Mobile-First Artisanal View on Mobile Screens (< md) */}
+        {uiConfig?.mobileManagement?.enabled !== false && (
+          <div className="block md:hidden">
+            <MobileArtisanalHome
+              categories={categories}
+              featuredProducts={featured}
+              bestsellers={bestsellers}
+              stores={stores}
+              uiConfig={uiConfig}
+            />
+          </div>
+        )}
+
+        {/* Desktop View on Tablet & Desktop (>= md or when mobile view disabled) */}
+        <div className={uiConfig?.mobileManagement?.enabled !== false ? "hidden md:block" : "block"}>
+          <WarmCreamHomepage
+            categories={categories}
+            featuredProducts={featured}
+            bestsellers={bestsellers}
+            specialItemsConfig={specialItemsConfig}
+            specialProducts={specialProducts}
+            stores={stores}
+            reviews={reviews}
+            uiConfig={uiConfig}
+            onToggleUiDesign={toggleUiDesign}
+            currentUiDesign={uiDesign}
+          />
+        </div>
+      </>
     );
   }
 

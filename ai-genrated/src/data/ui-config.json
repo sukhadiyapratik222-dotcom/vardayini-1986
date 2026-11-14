@@ -1001,5 +1001,246 @@
         "description": "Same-day doorstep delivery in Kalol, Gandhinagar, and across Gujarat."
       }
     ]
+  },
+  "mobileManagement": {
+    "enabled": true,
+    "activeDesignId": "artisanal-modern",
+    "theme": {
+      "primaryColor": "#0B1B4F",
+      "accentColor": "#DFB755",
+      "bgColor": "#FDFBF7"
+    },
+    "announcement": {
+      "enabled": true,
+      "text": "Free delivery on orders above ₹799 • Use code FESTIVE15 for 15% off",
+      "couponCode": "FESTIVE15"
+    },
+    "hero": {
+      "enabled": true,
+      "badge": "100% Shuddh Desi Ghee",
+      "tag": "New Artisanal Creation",
+      "title": "Dubai Chocolate Ladoo",
+      "description": "A decadent fusion of traditional besan and rich Belgian pistachio knafeh chocolate. Crafted by master halwais.",
+      "priceText": "₹499",
+      "weightText": "/ 250g",
+      "buttonText": "Order Now",
+      "buttonLink": "/shop/dubai-chocolate-ladoo",
+      "imageUrl": "/images/showcase/dubai-chocolate-ladoo.jpg"
+    },
+    "marquee": {
+      "enabled": true,
+      "items": [
+        "Kaju Katli",
+        "Shahi Gulab Jamun",
+        "Kesar Peda",
+        "Mohanthal",
+        "Motichoor Ladoo",
+        "Kaju Pista Roll"
+      ]
+    },
+    "categories": {
+      "enabled": true,
+      "title": "Shop By Category",
+      "viewAllText": "View All",
+      "viewAllUrl": "/shop",
+      "items": [
+        {
+          "id": "cat-sweets",
+          "name": "Sweets",
+          "slug": "sweets",
+          "imageUrl": "/images/kaju-katli.jpg",
+          "active": true
+        },
+        {
+          "id": "cat-savouries",
+          "name": "Savouries",
+          "slug": "savouries",
+          "imageUrl": "/images/namkeen.jpg",
+          "active": true
+        },
+        {
+          "id": "cat-artisanal",
+          "name": "Artisanal Sweets",
+          "slug": "artisanal-sweets",
+          "imageUrl": "/images/showcase/dubai-chocolate-ladoo.jpg",
+          "active": true
+        },
+        {
+          "id": "cat-bakery",
+          "name": "Bakery",
+          "slug": "bakery",
+          "imageUrl": "/images/special-bhel-showcase.jpg",
+          "active": true
+        },
+        {
+          "id": "cat-gifting",
+          "name": "Gifting",
+          "slug": "gifting",
+          "imageUrl": "/images/festive-hamper.jpg",
+          "active": true
+        }
+      ]
+    },
+    "bestsellers": {
+      "enabled": true,
+      "tag": "Handcrafted Daily",
+      "title": "Signature Best Sellers",
+      "viewAllText": "See All",
+      "viewAllUrl": "/shop",
+      "items": [
+        {
+          "id": "mb-1",
+          "name": "Silver Foil Kaju Katli",
+          "sublabel": "Pure Cashews & Ghee",
+          "badge": "BEST SELLER",
+          "price": 425,
+          "weight": "/ 250g",
+          "imageUrl": "/images/kaju-katli.jpg",
+          "slug": "kaju-katli",
+          "productId": 1
+        },
+        {
+          "id": "mb-2",
+          "name": "Shahi Gulab Jamun",
+          "sublabel": "Mawa & Rose Syrup",
+          "badge": "BEST SELLER",
+          "price": 280,
+          "weight": "/ 500g",
+          "imageUrl": "/images/gulab-jamun.jpg",
+          "slug": "gulab-jamun",
+          "productId": 2
+        },
+        {
+          "id": "mb-3",
+          "name": "Kesar Malai Peda",
+          "sublabel": "Kashmiri Saffron",
+          "badge": "CHEF'S PICK",
+          "price": 350,
+          "weight": "/ 250g",
+          "imageUrl": "/images/peda.jpg",
+          "slug": "kesar-malai-penda",
+          "productId": 37
+        },
+        {
+          "id": "mb-4",
+          "name": "Gujarati Mohanthal",
+          "sublabel": "Besan & Shuddh Ghee",
+          "badge": "TRADITIONAL",
+          "price": 320,
+          "weight": "/ 250g",
+          "imageUrl": "/images/motichoor.jpg",
+          "slug": "desi-ghee-mohanthal",
+          "productId": 3
+        }
+      ]
+    },
+    "journeyStats": {
+      "enabled": true,
+      "tag": "A Legacy of Trust",
+      "title": "A Journey Of 75 Years",
+      "description": "Serving generations of sweet lovers with uncompromised quality, authentic recipes, and pure ingredients since 1951 in Kalol.",
+      "stats": [
+        {
+          "value": "75+",
+          "label": "Years Legacy"
+        },
+        {
+          "value": "150+",
+          "label": "Varieties"
+        },
+        {
+          "value": "2M+",
+          "label": "Happy Customers"
+        }
+      ]
+    },
+    "tasteQuizBanner": {
+      "enabled": true,
+      "tag": "Mithai Quiz",
+      "title": "Quick Taste Match Finder",
+      "description": "Confused about what to pick for your celebrations or palate? Take our 30-second quiz to discover your ideal sweet match!",
+      "buttonText": "Start Quiz",
+      "buttonLink": "/find-your-sweet"
+    },
+    "outletsSection": {
+      "enabled": true,
+      "tag": "Visit Us",
+      "title": "Our Flagship Stores",
+      "stores": [
+        {
+          "name": "Vardayini Main Bazaar Counter",
+          "address": "6A, Navjivan Shopping Center, Kalol 382721",
+          "timings": "Open 8:00 AM - 10:00 PM"
+        },
+        {
+          "name": "Vardayini Satellite Outlet",
+          "address": "Station Road, Navjivan Corner, Kalol 382721",
+          "timings": "Open 9:00 AM - 10:30 PM"
+        }
+      ]
+    },
+    "bottomNav": {
+      "enabled": true,
+      "tabs": [
+        {
+          "id": "nav-home",
+          "label": "Home",
+          "href": "/",
+          "icon": "home",
+          "active": true
+        },
+        {
+          "id": "nav-shop",
+          "label": "Shop",
+          "href": "/shop",
+          "icon": "shop",
+          "active": true
+        },
+        {
+          "id": "nav-gifting",
+          "label": "Gifting",
+          "href": "/shop?category=gifting",
+          "icon": "gifting",
+          "active": true
+        },
+        {
+          "id": "nav-stores",
+          "label": "Stores",
+          "href": "#stores",
+          "icon": "stores",
+          "active": true
+        },
+        {
+          "id": "nav-cart",
+          "label": "Cart",
+          "href": "/cart",
+          "icon": "cart",
+          "active": true
+        }
+      ]
+    },
+    "customPages": [
+      {
+        "id": "page-festive",
+        "title": "Festive Gold Collection",
+        "slug": "festive-gold",
+        "description": "Handcrafted sweets in exclusive royal gold gift boxes for festive gifting.",
+        "designStyle": "gold-luxury",
+        "bannerImageUrl": "/images/showcase/dubai-chocolate-ladoo.jpg",
+        "heroHeading": "Diwali & Festive Masterpieces",
+        "heroSubheading": "Pure Gir cow desi ghee sweets slow-cooked and adorned with silver vark and Iranian saffron.",
+        "contentHtml": "<p>Experience authentic Gujarat celebrations with pure taste and fragrant warmth.</p>",
+        "featuredProductIds": [
+          1,
+          2,
+          37,
+          3
+        ],
+        "isActive": true,
+        "isDefaultHome": false,
+        "createdAt": "2026-11-14T20:00:00.000Z",
+        "updatedAt": "2026-11-14T20:00:00.000Z"
+      }
+    ]
   }
 }

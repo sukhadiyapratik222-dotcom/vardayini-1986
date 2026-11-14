@@ -95,6 +95,126 @@ export interface UiConfig {
   testimonialsSection?: TestimonialsSectionConfig;
   newLaunchPage?: NewLaunchPageConfig;
   culinaryPillars?: CulinaryPillarsConfig;
+  mobileManagement?: MobileManagementConfig;
+}
+
+export interface MobileCustomPage {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  designStyle: "artisanal-navy" | "warm-cream" | "gold-luxury";
+  bannerImageUrl?: string;
+  heroHeading?: string;
+  heroSubheading?: string;
+  contentHtml?: string;
+  featuredProductIds?: number[];
+  isActive: boolean;
+  isDefaultHome?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MobileManagementConfig {
+  enabled: boolean;
+  activeDesignId: string;
+  theme?: {
+    primaryColor?: string;
+    accentColor?: string;
+    bgColor?: string;
+  };
+  announcement?: {
+    enabled?: boolean;
+    text?: string;
+    couponCode?: string;
+  };
+  hero?: {
+    enabled?: boolean;
+    badge?: string;
+    tag?: string;
+    title?: string;
+    description?: string;
+    priceText?: string;
+    weightText?: string;
+    buttonText?: string;
+    buttonLink?: string;
+    imageUrl?: string;
+  };
+  marquee?: {
+    enabled?: boolean;
+    items?: string[];
+  };
+  categories?: {
+    enabled?: boolean;
+    title?: string;
+    viewAllText?: string;
+    viewAllUrl?: string;
+    items?: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      imageUrl: string;
+      active?: boolean;
+    }>;
+  };
+  bestsellers?: {
+    enabled?: boolean;
+    tag?: string;
+    title?: string;
+    viewAllText?: string;
+    viewAllUrl?: string;
+    items?: Array<{
+      id: string;
+      name: string;
+      sublabel?: string;
+      badge?: string;
+      price?: number;
+      weight?: string;
+      imageUrl?: string;
+      slug?: string;
+      productId?: number;
+      variantId?: number;
+    }>;
+  };
+  journeyStats?: {
+    enabled?: boolean;
+    tag?: string;
+    title?: string;
+    description?: string;
+    stats?: Array<{
+      value: string;
+      label: string;
+    }>;
+  };
+  tasteQuizBanner?: {
+    enabled?: boolean;
+    tag?: string;
+    title?: string;
+    description?: string;
+    buttonText?: string;
+    buttonLink?: string;
+  };
+  outletsSection?: {
+    enabled?: boolean;
+    tag?: string;
+    title?: string;
+    stores?: Array<{
+      name: string;
+      address: string;
+      timings: string;
+    }>;
+  };
+  bottomNav?: {
+    enabled?: boolean;
+    tabs?: Array<{
+      id: string;
+      label: string;
+      href: string;
+      icon: string;
+      active?: boolean;
+    }>;
+  };
+  customPages?: MobileCustomPage[];
 }
 
 export interface BrowseByCategoryCard {

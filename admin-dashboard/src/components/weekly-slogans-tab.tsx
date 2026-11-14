@@ -351,8 +351,6 @@ export function WeeklySlogansTab({
     setSaving(true);
     setConflictWarning(null);
 
-    const shouldReplace = forceReplace || replaceExisting;
-
     try {
       const payload = {
         ...(editingId ? { id: editingId } : {}),

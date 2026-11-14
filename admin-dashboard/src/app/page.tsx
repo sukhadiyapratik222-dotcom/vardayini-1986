@@ -43,9 +43,11 @@ import { WelcomeOfferTab } from "@/components/welcome-offer-tab";
 import { TestimonialsTab } from "@/components/testimonials-tab";
 import { NewLaunchTab } from "@/components/new-launch-tab";
 import { WeeklySlogansTab } from "@/components/weekly-slogans-tab";
+import { MobileManagementTab } from "@/components/mobile-management-tab";
 
 export type TabId =
   | "overview"
+  | "mobile-management"
   | "weekly-slogans"
   | "festivals"
   | "taste-quiz"
@@ -356,6 +358,18 @@ export default function AdminDashboardPage() {
             perms.includes("settings")
           );
 
+        // 5A. Mobile Management
+        case "mobile-management":
+          return (
+            perms.includes("mobile:view") ||
+            perms.includes("mobile:manage") ||
+            perms.includes("mobile") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings") ||
+            currentUser?.role === "admin" ||
+            currentUser?.role === "super_admin"
+          );
+
         // 5B. Weekly Slogans (Sweet of the Week)
         case "weekly-slogans":
           return (
@@ -569,6 +583,8 @@ export default function AdminDashboardPage() {
           return perms.includes("hero:manage") || perms.includes("settings:manage");
         case "announcements":
           return perms.includes("announcements:manage") || perms.includes("settings:manage");
+        case "mobile-management":
+          return perms.includes("mobile:manage") || perms.includes("settings:manage") || currentUser.role === "admin" || currentUser.role === "super_admin";
         case "weekly-slogans":
           return perms.includes("slogans:manage") || perms.includes("settings:manage") || currentUser.role === "super_admin";
         case "bestsellers":
@@ -873,6 +889,12 @@ export default function AdminDashboardPage() {
       icon: "🖼️",
     },
     { id: "announcements", label: "Banners & Promos", icon: "📢" },
+    {
+      id: "mobile-management",
+      label: "Mobile Management",
+      icon: "📱",
+      badge: "App Studio",
+    },
     {
       id: "weekly-slogans",
       label: "Weekly Slogans",
@@ -1606,6 +1628,14 @@ export default function AdminDashboardPage() {
                   />
                 ) : (
                   <AccessRestrictedCard moduleName="Category Showcase (2x2)" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "mobile-management" && (
+                isModulePermitted("mobile-management") ? (
+                  <MobileManagementTab config={config} onRefresh={loadData} />
+                ) : (
+                  <AccessRestrictedCard moduleName="Mobile Management" currentUser={currentUser} />
                 )
               )}
 

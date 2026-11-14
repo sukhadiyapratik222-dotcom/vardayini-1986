@@ -297,6 +297,125 @@ const CulinaryPillarsSchema = z.object({
   pillars: z.array(CulinaryPillarItemSchema).optional(),
 }).passthrough().optional();
 
+const MobileCustomPageSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  slug: z.string(),
+  description: z.string().optional(),
+  designStyle: z.string().optional(),
+  bannerImageUrl: z.string().optional(),
+  heroHeading: z.string().optional(),
+  heroSubheading: z.string().optional(),
+  contentHtml: z.string().optional(),
+  featuredProductIds: z.array(z.number()).optional(),
+  isActive: z.boolean().optional(),
+  isDefaultHome: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+const MobileManagementSchema = z.object({
+  enabled: z.boolean().optional(),
+  activeDesignId: z.string().optional(),
+  theme: z.object({
+    primaryColor: z.string().optional(),
+    accentColor: z.string().optional(),
+    bgColor: z.string().optional(),
+  }).passthrough().optional(),
+  announcement: z.object({
+    enabled: z.boolean().optional(),
+    text: z.string().optional(),
+    couponCode: z.string().optional(),
+  }).passthrough().optional(),
+  hero: z.object({
+    enabled: z.boolean().optional(),
+    badge: z.string().optional(),
+    tag: z.string().optional(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    priceText: z.string().optional(),
+    weightText: z.string().optional(),
+    buttonText: z.string().optional(),
+    buttonLink: z.string().optional(),
+    imageUrl: z.string().optional(),
+  }).passthrough().optional(),
+  marquee: z.object({
+    enabled: z.boolean().optional(),
+    items: z.array(z.string()).optional(),
+  }).passthrough().optional(),
+  categories: z.object({
+    enabled: z.boolean().optional(),
+    title: z.string().optional(),
+    viewAllText: z.string().optional(),
+    viewAllUrl: z.string().optional(),
+    items: z.array(z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      imageUrl: z.string(),
+      active: z.boolean().optional(),
+    }).passthrough()).optional(),
+  }).passthrough().optional(),
+  bestsellers: z.object({
+    enabled: z.boolean().optional(),
+    tag: z.string().optional(),
+    title: z.string().optional(),
+    viewAllText: z.string().optional(),
+    viewAllUrl: z.string().optional(),
+    items: z.array(z.object({
+      id: z.string(),
+      name: z.string(),
+      sublabel: z.string().optional(),
+      badge: z.string().optional(),
+      price: z.number().optional(),
+      weight: z.string().optional(),
+      imageUrl: z.string().optional(),
+      slug: z.string().optional(),
+      productId: z.number().optional(),
+      variantId: z.number().optional(),
+    }).passthrough()).optional(),
+  }).passthrough().optional(),
+  journeyStats: z.object({
+    enabled: z.boolean().optional(),
+    tag: z.string().optional(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    stats: z.array(z.object({
+      value: z.string(),
+      label: z.string(),
+    }).passthrough()).optional(),
+  }).passthrough().optional(),
+  tasteQuizBanner: z.object({
+    enabled: z.boolean().optional(),
+    tag: z.string().optional(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    buttonText: z.string().optional(),
+    buttonLink: z.string().optional(),
+  }).passthrough().optional(),
+  outletsSection: z.object({
+    enabled: z.boolean().optional(),
+    tag: z.string().optional(),
+    title: z.string().optional(),
+    stores: z.array(z.object({
+      name: z.string(),
+      address: z.string(),
+      timings: z.string(),
+    }).passthrough()).optional(),
+  }).passthrough().optional(),
+  bottomNav: z.object({
+    enabled: z.boolean().optional(),
+    tabs: z.array(z.object({
+      id: z.string(),
+      label: z.string(),
+      href: z.string(),
+      icon: z.string(),
+      active: z.boolean().optional(),
+    }).passthrough()).optional(),
+  }).passthrough().optional(),
+  customPages: z.array(MobileCustomPageSchema).optional(),
+}).passthrough().optional();
+
 const UiConfigUpdateSchema = z.object({
   heroPhotos: z.array(HeroPhotoSchema).optional(),
   heroSettings: HeroSettingsSchema.optional(),
@@ -315,6 +434,7 @@ const UiConfigUpdateSchema = z.object({
   testimonialsSection: TestimonialsSectionSchema.optional(),
   newLaunchPage: NewLaunchPageSchema.optional(),
   culinaryPillars: CulinaryPillarsSchema.optional(),
+  mobileManagement: MobileManagementSchema.optional(),
 }).strict();
 
 function deepMerge(target: any, source: any): any {

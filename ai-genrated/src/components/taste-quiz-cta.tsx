@@ -15,7 +15,7 @@ export function TasteQuizCta() {
           if (stored) {
             setSavedMatch(JSON.parse(stored));
           }
-        } catch {}
+        } catch { }
       }
     }
 

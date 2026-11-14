@@ -53,6 +53,7 @@ export interface UiConfigData {
   heroContent?: Record<string, string>;
   heritageBanner?: Record<string, any>;
   specialItems?: Record<string, any>;
+  mobileManagement?: Record<string, any>;
   [key: string]: any;
 }
 
