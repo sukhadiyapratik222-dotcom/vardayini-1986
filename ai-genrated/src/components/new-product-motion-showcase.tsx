@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { formatInr, unitPrice } from "@/lib/money";
 import { Magnetic } from "@/components/core/magnetic";
+import { Stepper } from "@/components/ui/stepper";
 
 export interface ProductVariant {
   id: number;
@@ -709,23 +710,14 @@ export function NewProductMotionShowcase({
                   {/* Quantity & Total Price */}
                   {selectedProduct.variants[selectedVariantIdx] && (
                     <div className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                        <button
-                          type="button"
-                          onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                          className="px-3 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition"
-                        >
-                          −
-                        </button>
-                        <span className="px-3 text-xs font-bold text-slate-900">{quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-                          className="px-3 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <Stepper
+                        value={quantity}
+                        min={1}
+                        max={10}
+                        onChange={(val) => setQuantity(val)}
+                        size="sm"
+                        theme="gold"
+                      />
 
                       <div className="text-right">
                         <span className="text-[10px] text-slate-400 block">Total Price</span>

@@ -63,6 +63,24 @@ img, svg, video, iframe {
   background: linear-gradient(90deg, transparent, #dfb755, transparent);
 }
 
+/* Google Fonts Material Symbols */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
 /* Glassmorphic Effects */
 .glass-panel {
   background: rgba(255, 255, 255, 0.65);
