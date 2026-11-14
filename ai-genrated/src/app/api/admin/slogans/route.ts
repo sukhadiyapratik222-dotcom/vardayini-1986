@@ -69,14 +69,20 @@ export async function POST(request: Request) {
     if (body.startAt && body.endAt && (body.status === "active" || body.status === "scheduled")) {
       const conflict = await checkScheduleConflict(body.startAt, body.endAt);
       if (conflict) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error: `Schedule conflict: overlaps with existing slogan "${conflict.text}" (${new Date(conflict.startAt).toLocaleDateString()} - ${new Date(conflict.endAt).toLocaleDateString()})`,
-            conflict,
-          },
-          { status: 409 }
-        );
+        if (body.replaceExisting || body.overrideConflict) {
+          const { getSqliteDb } = await import("@/db");
+          const sqlite = getSqliteDb();
+          sqlite.prepare("UPDATE slogans SET status = 'draft' WHERE id = ?").run(conflict.id);
+        } else {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `Schedule conflict: overlaps with existing slogan "${conflict.text}" (${new Date(conflict.startAt).toLocaleDateString()} - ${new Date(conflict.endAt).toLocaleDateString()})`,
+              conflict,
+            },
+            { status: 409 }
+          );
+        }
       }
     }
 
@@ -125,14 +131,20 @@ export async function PUT(request: Request) {
     if (body.startAt && body.endAt && (body.status === "active" || body.status === "scheduled")) {
       const conflict = await checkScheduleConflict(body.startAt, body.endAt, Number(body.id));
       if (conflict) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error: `Schedule conflict: overlaps with existing slogan "${conflict.text}" (${new Date(conflict.startAt).toLocaleDateString()} - ${new Date(conflict.endAt).toLocaleDateString()})`,
-            conflict,
-          },
-          { status: 409 }
-        );
+        if (body.replaceExisting || body.overrideConflict) {
+          const { getSqliteDb } = await import("@/db");
+          const sqlite = getSqliteDb();
+          sqlite.prepare("UPDATE slogans SET status = 'draft' WHERE id = ?").run(conflict.id);
+        } else {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `Schedule conflict: overlaps with existing slogan "${conflict.text}" (${new Date(conflict.startAt).toLocaleDateString()} - ${new Date(conflict.endAt).toLocaleDateString()})`,
+              conflict,
+            },
+            { status: 409 }
+          );
+        }
       }
     }
 

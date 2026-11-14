@@ -64,6 +64,11 @@ export function WeeklySlogansTab({
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [replaceExisting, setReplaceExisting] = useState(false);
+  const [conflictWarning, setConflictWarning] = useState<{
+    message: string;
+    conflictSlogan?: any;
+  } | null>(null);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -156,6 +161,9 @@ export function WeeklySlogansTab({
       return;
     }
 
+    setConflictWarning(null);
+    setReplaceExisting(false);
+
     const now = new Date();
     // Monday of target week
     const day = now.getDay();
@@ -200,6 +208,8 @@ export function WeeklySlogansTab({
       toast.error("You do not have permission to edit slogans");
       return;
     }
+    setConflictWarning(null);
+    setReplaceExisting(false);
     setEditingId(item.id);
     let badgesArray: string[] = ["100% Desi Ghee", "Handcrafted Daily"];
     if (item.badges && Array.isArray(item.badges)) {
@@ -232,9 +242,36 @@ export function WeeklySlogansTab({
     setModalOpen(true);
   };
 
+  // Helper to shift dates to next unoccupied week
+  const handleSelectNextFreeWeek = () => {
+    let latestEnd = new Date();
+    for (const s of slogans) {
+      if (s.endAt && (s.status === "active" || s.status === "scheduled")) {
+        const d = new Date(s.endAt);
+        if (d > latestEnd) latestEnd = d;
+      }
+    }
+    const nextStart = new Date(latestEnd);
+    nextStart.setDate(latestEnd.getDate() + 1);
+    nextStart.setHours(0, 0, 0, 0);
+
+    const nextEnd = new Date(nextStart);
+    nextEnd.setDate(nextStart.getDate() + 6);
+    nextEnd.setHours(23, 59, 59, 999);
+
+    setFormData((p) => ({
+      ...p,
+      startAt: nextStart.toISOString().slice(0, 16),
+      endAt: nextEnd.toISOString().slice(0, 16),
+      status: "scheduled",
+    }));
+    setConflictWarning(null);
+    toast.info("Shifted dates to next free week slot");
+  };
+
   // Handle Save Slogan (Create or Update)
-  const handleSaveSlogan = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveSlogan = async (e?: React.FormEvent, forceReplace: boolean = false) => {
+    if (e) e.preventDefault();
     if (!canManage) return;
 
     if (!formData.text.trim()) {
@@ -243,26 +280,43 @@ export function WeeklySlogansTab({
     }
 
     setSaving(true);
+    setConflictWarning(null);
+
+    const shouldReplace = forceReplace || replaceExisting;
+
     try {
       const payload = {
         ...(editingId ? { id: editingId } : {}),
         ...formData,
         badgesJson: JSON.stringify(formData.badges),
+        replaceExisting: shouldReplace,
       };
 
       if (editingId) {
         await api.updateAdminSlogan(payload);
-        toast.success("Weekly slogan updated successfully");
+        toast.success(shouldReplace ? "Slogan replaced and updated successfully" : "Weekly slogan updated successfully");
       } else {
         await api.createAdminSlogan(payload);
-        toast.success("Weekly slogan scheduled successfully");
+        toast.success(shouldReplace ? "Slogan replaced and scheduled successfully" : "Weekly slogan scheduled successfully");
       }
 
       setModalOpen(false);
+      setReplaceExisting(false);
+      setConflictWarning(null);
       await loadData();
     } catch (err: any) {
-      console.error("Save slogan error:", err);
-      toast.error(err.message || "Failed to save slogan");
+      console.warn("Save slogan validation/conflict notice:", err?.message || err);
+
+      const msg = err?.message || "";
+      if (err?.status === 409 || msg.toLowerCase().includes("conflict") || msg.toLowerCase().includes("overlap")) {
+        setConflictWarning({
+          message: msg,
+          conflictSlogan: err?.data?.conflict,
+        });
+        toast.error("Schedule conflict: Slogan overlaps with an existing week. Choose replace or change date.");
+      } else {
+        toast.error(msg || "Failed to save slogan");
+      }
     } finally {
       setSaving(false);
     }
@@ -1313,6 +1367,26 @@ export function WeeklySlogansTab({
                   </div>
                 </div>
 
+                {/* Replace Existing Option */}
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={replaceExisting}
+                      onChange={(e) => setReplaceExisting(e.target.checked)}
+                      className="rounded text-[#140638] focus:ring-[#dfb755]"
+                    />
+                    <span>Replace existing slogan if this week is already booked</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleSelectNextFreeWeek}
+                    className="text-[11px] font-bold text-amber-800 hover:underline cursor-pointer"
+                  >
+                    Find Next Open Week &rarr;
+                  </button>
+                </div>
+
                 {/* Story Line & Badges */}
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1">
@@ -1405,6 +1479,47 @@ export function WeeklySlogansTab({
                     </label>
                   </div>
                 </div>
+
+                {/* Conflict Alert Banner if server returned 409 */}
+                {conflictWarning && (
+                  <div className="rounded-2xl border border-amber-300 bg-amber-50/95 p-3.5 text-xs shadow-xs space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-base text-amber-700">⚠️</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-amber-900">Schedule Conflict</p>
+                        <p className="text-amber-800 text-[11.5px] mt-0.5 leading-relaxed">
+                          {conflictWarning.message}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-amber-200/80">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSlogan(undefined, true)}
+                        className="px-3 py-1.5 rounded-lg bg-[#140638] text-[#dfb755] font-bold hover:bg-[#250d54] cursor-pointer shadow-xs text-xs"
+                      >
+                        ✓ Replace &amp; Publish Slogan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSelectNextFreeWeek}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer text-xs"
+                      >
+                        Shift to Next Free Week
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((p) => ({ ...p, status: "draft" }));
+                          setConflictWarning(null);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 cursor-pointer text-xs"
+                      >
+                        Save as Draft
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
