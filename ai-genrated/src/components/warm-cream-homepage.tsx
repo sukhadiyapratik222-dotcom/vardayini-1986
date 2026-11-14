@@ -96,8 +96,9 @@ export function WarmCreamHomepage({
   }
 
   function handleAddToCartSuccess(productName: string) {
-    setToastMessage(`✓ "${productName}" added to your box!`);
-    setTimeout(() => setToastMessage(null), 3000);
+    const cleanName = productName.replace(/^✓\s*"?|"?\s*added to your box!?/gi, "").trim();
+    setToastMessage(cleanName || productName);
+    setTimeout(() => setToastMessage(null), 4000);
   }
 
   // Map dynamic bestsellers from database if available
@@ -240,7 +241,7 @@ export function WarmCreamHomepage({
                     {/* Name & Pack Size */}
                     <div className="mt-3 space-y-1">
                       <Link href={`/shop/${product.slug}`}>
-                        <h3 className="font-[family-name:var(--font-display)] text-sm sm:text-base font-bold text-[#24142e] group-hover:text-[#3b1e54] transition line-clamp-1 leading-snug">
+                        <h3 className="font-[family-name:var(--font-display)] text-sm sm:text-base font-bold text-[#24142e] group-hover:text-[#3b1e54] transition line-clamp-2 min-h-[2.5rem] leading-snug">
                           {product.name}
                         </h3>
                       </Link>
@@ -422,15 +423,43 @@ export function WarmCreamHomepage({
           13. ADDED TO CART NOTIFICATION TOAST
          ───────────────────────────────────────────────────────────── */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#140638] text-white px-5 py-2.5 text-xs sm:text-sm font-bold shadow-2xl border border-[#dfb755]/50 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <span>{toastMessage}</span>
-          <Link
-            href="/cart"
-            className="rounded-full bg-[#dfb755] px-3 py-1 text-xs text-[#140638] font-bold hover:bg-[#f5c518] transition"
-          >
-            Go to Cart →
-          </Link>
-        </div>
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] sm:w-auto max-w-lg rounded-2xl bg-[#140638]/95 backdrop-blur-md text-white px-4 sm:px-5 py-3 text-xs sm:text-sm shadow-2xl border border-[#dfb755]/60 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200"
+        >
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold">
+              ✓
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-white leading-tight truncate">
+                &ldquo;{toastMessage}&rdquo;
+              </p>
+              <p className="text-[11px] text-[#dfb755] mt-0.5 font-medium">
+                Added to your sweet box! 🛍️
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/cart"
+              className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#dfb755] to-[#f5c518] px-3.5 py-1.5 text-xs text-[#140638] font-black hover:brightness-105 active:scale-95 transition shadow-sm inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>Go to Cart</span>
+              <span>→</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setToastMessage(null)}
+              className="text-white/60 hover:text-white p-1 transition text-xs font-bold cursor-pointer"
+              aria-label="Dismiss notification"
+            >
+              ✕
+            </button>
+          </div>
+        </aside>
       )}
     </div>
   );

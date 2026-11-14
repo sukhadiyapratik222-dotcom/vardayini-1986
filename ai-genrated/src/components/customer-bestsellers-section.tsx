@@ -206,7 +206,7 @@ export function CustomerBestsellersSection({
                   <div>
                     {/* Title */}
                     <Link href={`/shop/${item.slug}`}>
-                      <h3 className="font-[family-name:var(--font-display)] font-serif text-sm sm:text-base font-bold text-neutral-900 group-hover:text-[#541e73] uppercase tracking-wide leading-snug transition-colors line-clamp-1">
+                      <h3 className="font-[family-name:var(--font-display)] font-serif text-sm sm:text-base font-bold text-neutral-900 group-hover:text-[#541e73] uppercase tracking-wide leading-snug transition-colors line-clamp-2 min-h-[2.5rem]">
                         {item.name}
                       </h3>
                     </Link>

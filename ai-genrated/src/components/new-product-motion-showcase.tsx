@@ -576,7 +576,7 @@ export function NewProductMotionShowcase({
                     <div className="mt-3 space-y-1">
                       <motion.h4
                         layoutId={`product-title-${product.id}`}
-                        className="font-[family-name:var(--font-display)] text-base font-bold text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-1"
+                        className="font-[family-name:var(--font-display)] text-base font-bold text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-2 min-h-[2.5rem]"
                       >
                         {product.name}
                       </motion.h4>
@@ -795,17 +795,19 @@ export function NewProductMotionShowcase({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ type: "spring", bounce: 0.2 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full bg-slate-900/95 px-5 py-3 text-white shadow-2xl backdrop-blur-md border border-white/20"
+            className="fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 w-[calc(100%-2rem)] sm:w-auto max-w-md rounded-2xl sm:rounded-full bg-slate-900/95 px-4 sm:px-5 py-3 text-white shadow-2xl backdrop-blur-md border border-[#dfb755]/40"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dfb755] text-slate-950 font-bold text-xs">
-              ✓
-            </span>
-            <div className="text-xs">
-              <span className="font-bold text-[#dfb755]">{addedToast.name}</span> added to your box!
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dfb755] text-slate-950 font-bold text-xs">
+                ✓
+              </span>
+              <div className="text-xs min-w-0 flex-1 truncate">
+                <span className="font-bold text-[#dfb755]">{addedToast.name}</span> added to your box!
+              </div>
             </div>
             <Link
               href="/cart"
-              className="ml-2 rounded-full bg-[#dfb755] px-3 py-1 text-xs font-bold text-slate-950 hover:bg-white transition"
+              className="shrink-0 whitespace-nowrap rounded-full bg-[#dfb755] px-3.5 py-1.5 text-xs font-bold text-slate-950 hover:bg-white transition"
             >
               View Cart →
             </Link>

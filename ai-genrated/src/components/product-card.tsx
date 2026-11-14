@@ -103,7 +103,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <div className="mt-2.5 space-y-0.5">
           <Link href={`/shop/${product.slug}`}>
             <h3
-              className="font-[family-name:var(--font-display)] text-sm sm:text-[15px] font-bold tracking-tight text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-1"
+              className="font-[family-name:var(--font-display)] text-sm sm:text-[15px] font-bold tracking-tight text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-2 min-h-[2.5rem]"
               title={product.name}
             >
               {product.name}

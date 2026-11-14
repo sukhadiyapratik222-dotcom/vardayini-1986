@@ -439,7 +439,7 @@ export function LuxuryBestsellersSection({
 
                     {/* Product Title */}
                     <Link href={`/shop/${item.slug}`}>
-                      <h3 className="font-[family-name:var(--font-display)] text-sm sm:text-base font-bold text-white hover:text-[#f5c518] transition line-clamp-1 leading-snug mt-1.5">
+                      <h3 className="font-[family-name:var(--font-display)] text-sm sm:text-base font-bold text-white hover:text-[#f5c518] transition line-clamp-2 min-h-[2.5rem] leading-snug mt-1.5">
                         {item.name}
                       </h3>
                     </Link>
