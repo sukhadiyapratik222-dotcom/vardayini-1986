@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatInr, unitPrice } from "@/lib/money";
 import { Magnetic } from "@/components/core/magnetic";
+import { Stepper } from "@/components/watermelon/stepper";
 
 export interface ProductOptionVariant {
   id: number;
@@ -205,24 +206,15 @@ export function ProductOptionsModal({
           {/* Quantity & Live Price Summary */}
           <div className="pt-2 flex items-center justify-between border-t border-slate-100">
             <div>
-              <span className="text-xs font-semibold text-slate-600 block mb-1">Quantity</span>
-              <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="px-3 py-1 text-sm font-bold text-slate-600 hover:bg-slate-200 transition"
-                >
-                  −
-                </button>
-                <span className="px-3 text-xs font-bold text-slate-900">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-                  className="px-3 py-1 text-sm font-bold text-slate-600 hover:bg-slate-200 transition"
-                >
-                  +
-                </button>
-              </div>
+              <span className="text-xs font-semibold text-slate-600 block mb-1.5">Quantity</span>
+              <Stepper
+                value={quantity}
+                min={1}
+                max={10}
+                onChange={(val) => setQuantity(val)}
+                size="sm"
+                theme="gold"
+              />
             </div>
 
             <div className="text-right">

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { formatInr, unitPrice } from "@/lib/money";
+import { Stepper } from "@/components/watermelon/stepper";
 
 type Variant = {
   id: number;
@@ -125,29 +126,17 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
       )}
 
       {/* Quantity & Add to Cart */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-1">
-        <div className="flex items-center justify-center self-start rounded-xl border border-amber-900/20 bg-white shadow-xs overflow-hidden">
-          <button
-            type="button"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center font-bold text-lg text-[#140638] hover:bg-amber-50 disabled:opacity-40 cursor-pointer transition active:scale-90"
-            disabled={isOutOfStock || qty <= 1}
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-            aria-label="Decrease quantity"
-          >
-            −
-          </button>
-          <span className="w-10 text-center font-bold text-sm sm:text-base text-[#140638]">
-            {isOutOfStock ? 0 : qty}
-          </span>
-          <button
-            type="button"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center font-bold text-lg text-[#140638] hover:bg-amber-50 disabled:opacity-40 cursor-pointer transition active:scale-90"
-            disabled={isOutOfStock || qty >= selected.stock}
-            onClick={() => setQty((q) => Math.min(selected.stock, q + 1))}
-            aria-label="Increase quantity"
-          >
-            +
-          </button>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-1">
+        <div className="self-start">
+          <Stepper
+            value={isOutOfStock ? 0 : qty}
+            min={1}
+            max={selected.stock}
+            onChange={(val) => setQty(val)}
+            disabled={isOutOfStock}
+            size="md"
+            theme="gold"
+          />
         </div>
         <div className="flex-1 w-full">
           <AddToCartButton

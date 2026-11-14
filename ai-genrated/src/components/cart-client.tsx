@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { formatInr } from "@/lib/money";
+import { Stepper } from "@/components/watermelon/stepper";
 import type { CartLine } from "@/lib/cart";
 
 type CartState = {
@@ -257,30 +258,16 @@ export function CartClient({ initial }: { initial: CartState }) {
               </div>
 
               <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-5 shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-amber-900/10">
-                {/* Stepper */}
-                <div className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50/90 p-1 shadow-2xs">
-                  <button
-                    type="button"
-                    aria-label="Decrease quantity"
-                    disabled={loading}
-                    onClick={() => updateQty(line.id, line.quantity - 1, line.variantId)}
-                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 text-stone-700 border border-stone-200/80 flex items-center justify-center font-bold text-sm sm:text-base disabled:opacity-40 transition cursor-pointer active:scale-95 shadow-xs"
-                  >
-                    −
-                  </button>
-                  <span className="font-bold text-xs sm:text-sm px-3 min-w-[34px] text-center text-stone-900 tabular-nums">
-                    {line.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Increase quantity"
-                    disabled={loading}
-                    onClick={() => updateQty(line.id, line.quantity + 1, line.variantId)}
-                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 text-stone-700 border border-stone-200/80 flex items-center justify-center font-bold text-sm sm:text-base disabled:opacity-40 transition cursor-pointer active:scale-95 shadow-xs"
-                  >
-                    +
-                  </button>
-                </div>
+                {/* Watermelon Rolling-Digit Stepper */}
+                <Stepper
+                  value={line.quantity}
+                  min={1}
+                  max={99}
+                  onChange={(val) => updateQty(line.id, val, line.variantId)}
+                  disabled={loading}
+                  size="sm"
+                  theme="gold"
+                />
 
                 {/* Line Total Price */}
                 <div className="text-right min-w-[80px] sm:min-w-[100px]">
