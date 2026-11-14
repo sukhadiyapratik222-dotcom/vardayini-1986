@@ -31,7 +31,8 @@ export function AuthForm({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // OTP Verification state
-  const [otpStep, setOtpStep] = useState<"input" | "verify">("input");
+  const [otpStep, setOtpStep] = useState<"input" | "verify" | "profile">("input");
+  const [completedUserRole, setCompletedUserRole] = useState<string | undefined>();
   const [otpCode, setOtpCode] = useState("");
   const [otpProof, setOtpProof] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
@@ -220,6 +221,8 @@ export function AuthForm({
           userOtp: cleanOtp,
           trigger: "login",
           otpProof: otpProof || undefined,
+          name: name.trim() || undefined,
+          email: email.trim() ? email.trim().toLowerCase() : undefined,
         }),
       });
 
@@ -229,10 +232,59 @@ export function AuthForm({
         return;
       }
 
+      // Check if profile needs completion (new user or placeholder name)
+      const currentUserName = data.user?.name || "";
+      const isPlaceholder = !currentUserName || currentUserName.startsWith("Patron ");
+      if (data.needsProfileCompletion && isPlaceholder) {
+        setCompletedUserRole(data.user?.role);
+        setOtpStep("profile");
+        setSuccessMsg("✓ Phone verified! Please provide your name to complete your profile.");
+        return;
+      }
+
       setSuccessMsg("✓ Verification successful! Starting your session...");
       navigateToTarget(data.user?.role);
     } catch {
       setError("Verification failed due to a network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // 3b. Profile Completion Step for New / Placeholder OTP users
+  async function handleCompleteProfile(event: FormEvent) {
+    event.preventDefault();
+    if (loading) return;
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setFieldErrors({ name: "Please enter your full name (minimum 2 characters)." });
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setFieldErrors({});
+
+    try {
+      const res = await fetch("/api/account/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: trimmedName,
+          email: email.trim() ? email.trim().toLowerCase() : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to update profile details.");
+        return;
+      }
+
+      setSuccessMsg("✓ Profile completed! Redirecting to your destination...");
+      navigateToTarget(completedUserRole);
+    } catch {
+      setError("Network error while saving profile. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -449,6 +501,25 @@ export function AuthForm({
                   </p>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-[#6b1d1d] mb-1">
+                    Your Name <span className="text-xs font-normal text-[#2a1a12]/50">(Optional if existing customer)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      clearFieldError("name");
+                    }}
+                    placeholder="e.g. Pratik Patel"
+                    className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3.5 py-2.5 text-sm bg-white focus:border-[#c45c26] focus:outline-none focus:ring-2 focus:ring-[#c45c26]/20"
+                  />
+                  <p className="text-[11px] text-[#2a1a12]/50 mt-1">
+                    Helps us personalize your deliveries and order invoices.
+                  </p>
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -457,7 +528,7 @@ export function AuthForm({
                   {loading ? "Sending OTP..." : "Send Verification OTP 🚀"}
                 </button>
               </form>
-            ) : (
+            ) : otpStep === "verify" ? (
               <form onSubmit={handleVerifyLoginOtp} className="space-y-4">
                 <div className="flex items-center justify-between text-xs text-[#2a1a12]/70 bg-[#faf8f5] p-3 rounded-2xl border border-[#6b1d1d]/10">
                   <div>
@@ -550,6 +621,76 @@ export function AuthForm({
                       </button>
                     </div>
                   )}
+                </div>
+              </form>
+            ) : (
+              /* Profile Completion for New / Placeholder Mobile Users */
+              <form onSubmit={handleCompleteProfile} className="space-y-4">
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3.5 text-xs text-[#2a1a12]">
+                  <div className="flex items-center gap-2 font-bold text-[#6b1d1d] text-sm">
+                    <span>🌟</span> Welcome to Vardayini Sweet Mart!
+                  </div>
+                  <p className="mt-1 text-[11px] text-[#2a1a12]/70 leading-relaxed">
+                    Phone (+91 {getCleanPhone(phone)}) verified! Please tell us your name so we can address your fresh mithai orders and print delivery slips.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#6b1d1d] mb-1">
+                    Your Full Name <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      clearFieldError("name");
+                    }}
+                    placeholder="e.g. Pratik Patel"
+                    required
+                    autoFocus
+                    className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3.5 py-2.5 text-sm bg-white focus:border-[#c45c26] focus:outline-none focus:ring-2 focus:ring-[#c45c26]/20"
+                  />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-red-600 mt-1 ml-1">{fieldErrors.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#6b1d1d] mb-1">
+                    Email Address <span className="text-xs font-normal text-[#2a1a12]/50">(Optional for GST invoices & receipts)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearFieldError("email");
+                    }}
+                    placeholder="e.g. pratik@example.com"
+                    className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3.5 py-2.5 text-sm bg-white focus:border-[#c45c26] focus:outline-none focus:ring-2 focus:ring-[#c45c26]/20"
+                  />
+                  {fieldErrors.email && (
+                    <p className="text-xs text-red-600 mt-1 ml-1">{fieldErrors.email}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="btn-primary w-full rounded-full py-3 text-sm font-semibold shadow-sm transition"
+                >
+                  {loading ? "Saving Details..." : "Save Details & Continue 🛍️"}
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => navigateToTarget(completedUserRole)}
+                    className="text-xs text-[#2a1a12]/60 hover:text-[#6b1d1d] underline cursor-pointer"
+                  >
+                    I&apos;ll add my name later →
+                  </button>
                 </div>
               </form>
             )}

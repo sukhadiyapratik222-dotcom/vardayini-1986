@@ -8,6 +8,7 @@ import { formatInr } from "@/lib/money";
 import { LogoutButton } from "@/components/logout-button";
 import { ensureSeeded } from "@/db/seed";
 import { AccountAddressManager, AddressItem } from "@/components/account-address-manager";
+import { AccountProfileManager } from "@/components/account-profile-manager";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -116,40 +117,8 @@ export default async function AccountPage() {
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b2f8a] via-[#09256e] to-[#06184a] text-white p-6 sm:p-8 shadow-xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#dfb755]/20 via-transparent to-transparent pointer-events-none" />
 
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            {/* Royal Crest Avatar */}
-            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#dfb755] to-[#b89130] p-0.5 shadow-lg">
-              <div className="flex h-full w-full items-center justify-center rounded-2xl bg-[#0b2f8a] text-white font-[family-name:var(--font-display)] text-3xl font-black text-[#dfb755]">
-                {userInitial}
-              </div>
-            </div>
-
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#dfb755]/20 text-[#dfb755] border border-[#dfb755]/40">
-                  {authUser.role === "super_admin" ? "👑 Super Admin" : authUser.role === "admin" ? "Store Admin" : "Royal Customer Member"}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  ✓ Verified Account
-                </span>
-              </div>
-
-              <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight text-white">
-                {authUser.name}
-              </h1>
-
-              <p className="mt-1 text-xs sm:text-sm text-white/80 flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1">✉️ {authUser.email}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1">📞 {authUser.phone}</span>
-                <span>•</span>
-                <span className="text-white/60">Member since {memberSince}</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-start md:self-auto">
+        <div className="relative">
+          <div className="flex items-center justify-end gap-3 mb-2">
             {(authUser.role === "admin" || authUser.role === "super_admin") && (
               <a
                 href="http://localhost:3001"
@@ -162,6 +131,17 @@ export default async function AccountPage() {
             )}
             <LogoutButton />
           </div>
+
+          <AccountProfileManager
+            initialProfile={{
+              id: authUser.id,
+              name: userProfile?.name || authUser.name,
+              email: userProfile?.email || authUser.email,
+              phone: userProfile?.phone || authUser.phone,
+              role: authUser.role,
+              memberSince,
+            }}
+          />
         </div>
 
         {/* Profile Statistics Bar */}

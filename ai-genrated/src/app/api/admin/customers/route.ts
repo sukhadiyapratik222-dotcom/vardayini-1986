@@ -64,10 +64,65 @@ export async function GET(request: Request) {
     const allOrders = await db.select().from(orders);
 
     const customerList = allUsers.map((u) => {
-      const userAddresses = allAddresses.filter((a) => a.userId === u.id);
+      let userAddresses = allAddresses.filter((a) => a.userId === u.id);
       const userOrders = allOrders.filter(
         (o) => o.userId === u.id || (u.phone && o.guestPhone === u.phone)
       );
+
+      // If user has no saved addresses in addresses table, extract from their order history
+      if (userAddresses.length === 0 && userOrders.length > 0) {
+        const extracted: typeof allAddresses = [];
+        const seenLines = new Set<string>();
+        for (const ord of userOrders) {
+          if (ord.addressSnapshot) {
+            try {
+              const snap = typeof ord.addressSnapshot === "string" ? JSON.parse(ord.addressSnapshot) : ord.addressSnapshot;
+              if (snap && snap.line1 && !seenLines.has(snap.line1)) {
+                seenLines.add(snap.line1);
+                extracted.push({
+                  id: 900000 + ord.id,
+                  userId: u.id,
+                  label: "Order Delivery",
+                  line1: snap.line1,
+                  city: snap.city || "Vadodara",
+                  state: snap.state || "Gujarat",
+                  stateCode: "24",
+                  pincode: snap.pincode || "390001",
+                  phone: snap.phone || u.phone || "",
+                  gstin: null,
+                  latitude: null,
+                  longitude: null,
+                  addressType: "home",
+                });
+              }
+            } catch {}
+          }
+        }
+        if (extracted.length > 0) {
+          userAddresses = extracted;
+        }
+      }
+
+      // If user name is placeholder Patron XXXX, resolve from order history if available
+      let resolvedName = u.name;
+      if (!resolvedName || resolvedName.startsWith("Patron ")) {
+        for (const ord of userOrders) {
+          if (ord.guestName && !ord.guestName.startsWith("Patron ")) {
+            resolvedName = ord.guestName;
+            break;
+          }
+          if (ord.addressSnapshot) {
+            try {
+              const snap = typeof ord.addressSnapshot === "string" ? JSON.parse(ord.addressSnapshot) : ord.addressSnapshot;
+              if (snap?.name && !snap.name.startsWith("Patron ")) {
+                resolvedName = snap.name;
+                break;
+              }
+            } catch {}
+          }
+        }
+      }
+
       const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
       const lastOrder =
         userOrders.length > 0
@@ -79,7 +134,7 @@ export async function GET(request: Request) {
 
       return {
         id: u.id,
-        name: u.name,
+        name: resolvedName,
         email: u.email,
         phone: u.phone,
         role: u.role,

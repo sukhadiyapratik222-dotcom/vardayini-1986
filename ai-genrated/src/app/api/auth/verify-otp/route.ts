@@ -21,6 +21,8 @@ export async function POST(request: Request) {
     const userOtp = sanitizeString(body?.userOtp || body?.otp || "");
     const trigger = (sanitizeString(body?.trigger || "login") || "login");
     const otpProof = sanitizeString(body?.otpProof || "");
+    const providedName = sanitizeString(body?.name || body?.fullName || "").trim();
+    const providedEmail = sanitizeString(body?.email || "").trim().toLowerCase();
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 });
@@ -99,11 +101,15 @@ export async function POST(request: Request) {
     // If user still does not exist, auto-provision customer account
     if (!user) {
       isNewUser = true;
-      const autoEmail = `${cleanPhone}@patron.vardayini.com`;
+      const initialName = providedName && providedName.length >= 2 ? providedName : `Patron ${cleanPhone.slice(-4)}`;
+      const initialEmail = providedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(providedEmail)
+        ? providedEmail
+        : `${cleanPhone}@patron.vardayini.com`;
+
       try {
         const [insertRes] = await db.insert(users).values({
-          name: `Patron ${cleanPhone.slice(-4)}`,
-          email: autoEmail,
+          name: initialName,
+          email: initialEmail,
           phone: cleanPhone,
           passwordHash: "",
           role: "customer",
@@ -118,6 +124,29 @@ export async function POST(request: Request) {
         const [fallbackUser] = await db.select().from(users).where(eq(users.phone, cleanPhone)).limit(1);
         user = fallbackUser;
       }
+    } else {
+      // If user exists and currently has a placeholder name/email, update if provided
+      let shouldUpdate = false;
+      const updates: { name?: string; email?: string } = {};
+
+      if (user.name.startsWith("Patron ") && providedName && providedName.length >= 2) {
+        updates.name = providedName;
+        shouldUpdate = true;
+      }
+      if (user.email.endsWith("@patron.vardayini.com") && providedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(providedEmail)) {
+        updates.email = providedEmail;
+        shouldUpdate = true;
+      }
+
+      if (shouldUpdate) {
+        try {
+          await db.update(users).set(updates).where(eq(users.id, user.id));
+          const [refreshed] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+          if (refreshed) user = refreshed;
+        } catch (updateErr) {
+          console.warn("[Verify OTP] User update notice:", updateErr);
+        }
+      }
     }
 
     if (!user) {
@@ -126,6 +155,14 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // Determine if customer profile still needs completion
+    const isGenericPatron =
+      !user.name ||
+      user.name.startsWith("Patron ") ||
+      !user.email ||
+      user.email.endsWith("@patron.vardayini.com");
+    const needsProfileCompletion = isNewUser || isGenericPatron;
 
     // Synchronize user to MongoDB Atlas so all serverless functions recognize this customer
     try {
@@ -166,6 +203,7 @@ export async function POST(request: Request) {
       message: "Verification successful",
       token,
       isNewUser,
+      needsProfileCompletion,
       user: {
         id: user.id,
         name: user.name,

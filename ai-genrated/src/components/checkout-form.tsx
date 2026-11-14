@@ -91,6 +91,16 @@ function calculateHaversineDistance(
   return Math.round(R * c * 10) / 10;
 }
 
+interface SavedAddress {
+  id: number;
+  label?: string;
+  line1: string;
+  city: string;
+  state: string;
+  pincode: string;
+  phone: string;
+}
+
 export function CheckoutForm({
   defaultName,
   defaultPhone,
@@ -107,8 +117,16 @@ export function CheckoutForm({
   const [loading, setLoading] = useState(false);
 
   // Recipient info
-  const [name, setName] = useState(defaultName || "");
+  const initialCleanName = (defaultName && !defaultName.startsWith("Patron ")) ? defaultName : "";
+  const [name, setName] = useState(initialCleanName);
   const [phone, setPhone] = useState(defaultPhone || "");
+
+  // Saved Addresses state
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [saveAddressToAccount, setSaveAddressToAccount] = useState(true);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
 
   // Home Delivery fields
   const [line1, setLine1] = useState("");
@@ -152,6 +170,55 @@ export function CheckoutForm({
     }, 1000);
     return () => clearInterval(interval);
   }, [orderResendTimer]);
+
+  // Load saved addresses on mount
+  useEffect(() => {
+    async function loadSavedAddresses() {
+      setLoadingAddresses(true);
+      try {
+        const res = await fetch("/api/account/addresses");
+        if (res.ok) {
+          const data = await res.json();
+          const list: SavedAddress[] = data.addresses || [];
+          setSavedAddresses(list);
+          if (list.length > 0) {
+            const first = list[0];
+            setSelectedAddressId(first.id);
+            setLine1(first.line1);
+            setCity(first.city);
+            setState(first.state);
+            setPincode(first.pincode);
+            if (!phone && first.phone) {
+              setPhone(first.phone);
+            }
+          } else {
+            setIsAddingNewAddress(true);
+          }
+        } else {
+          setIsAddingNewAddress(true);
+        }
+      } catch (err) {
+        console.warn("Failed to load saved addresses for checkout:", err);
+        setIsAddingNewAddress(true);
+      } finally {
+        setLoadingAddresses(false);
+      }
+    }
+    loadSavedAddresses();
+  }, []);
+
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setSelectedAddressId(addr.id);
+    setIsAddingNewAddress(false);
+    setLine1(addr.line1);
+    setCity(addr.city);
+    setState(addr.state);
+    setPincode(addr.pincode);
+    if (addr.phone) setPhone(addr.phone.replace(/^(?:\+91|91|0)/, ""));
+    clearFieldError("line1");
+    clearFieldError("city");
+    clearFieldError("pincode");
+  };
 
   // Load active stores on mount
   useEffect(() => {
@@ -401,6 +468,7 @@ export function CheckoutForm({
               deliverySlot,
               paymentMethod,
               otp: cleanOtp,
+              saveAddressToAccount,
             };
 
       const res = await fetch("/api/orders", {
@@ -745,99 +813,200 @@ export function CheckoutForm({
       {/* 4. Home Delivery Address Fields (Only when Home Delivery is selected) */}
       {fulfillmentType === "delivery" && (
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
-              Delivery Address (House, street, landmark) *
-            </label>
-            <input
-              name="line1"
-              value={line1}
-              onChange={(e) => {
-                setLine1(e.target.value);
-                clearFieldError("line1");
-              }}
-              placeholder="e.g. 14, Heritage Enclave, Near Mandvi Gate, Mandvi"
-              className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm outline-none transition ${
-                fieldErrors.line1
-                  ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"
-                  : "border-[#6b1d1d]/15 focus:border-[#c45c26]"
-              }`}
-            />
-            {fieldErrors.line1 && (
-              <p className="mt-1 text-xs font-medium text-rose-600">{fieldErrors.line1}</p>
-            )}
-          </div>
+          {savedAddresses.length > 0 && (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#6b1d1d] flex items-center gap-1.5">
+                  <span>📍</span> Deliver to a Saved Address
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextMode = !isAddingNewAddress;
+                    setIsAddingNewAddress(nextMode);
+                    if (nextMode) {
+                      setSelectedAddressId(null);
+                      setLine1("");
+                      setCity("Vadodara");
+                      setState("Gujarat");
+                      setPincode("390001");
+                    } else if (savedAddresses.length > 0) {
+                      handleSelectSavedAddress(savedAddresses[0]);
+                    }
+                  }}
+                  className="text-xs font-bold text-[#c45c26] hover:underline cursor-pointer"
+                >
+                  {isAddingNewAddress ? "← Choose Saved Address" : "+ Enter New Delivery Address"}
+                </button>
+              </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
-                City *
-              </label>
-              <input
-                name="city"
-                value={city}
-                onChange={(e) => {
-                  setCity(e.target.value);
-                  clearFieldError("city");
-                }}
-                placeholder="Vadodara"
-                className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm outline-none transition ${
-                  fieldErrors.city
-                    ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"
-                    : "border-[#6b1d1d]/15 focus:border-[#c45c26]"
-                }`}
-              />
-              {fieldErrors.city && (
-                <p className="mt-1 text-xs font-medium text-rose-600">{fieldErrors.city}</p>
+              {!isAddingNewAddress && (
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {savedAddresses.map((addr) => {
+                    const isSelected = selectedAddressId === addr.id;
+                    return (
+                      <div
+                        key={addr.id}
+                        onClick={() => handleSelectSavedAddress(addr)}
+                        className={`cursor-pointer rounded-2xl p-3.5 border transition text-xs space-y-1 relative ${
+                          isSelected
+                            ? "border-[#c45c26] bg-[#c45c26]/5 shadow-sm ring-1 ring-[#c45c26]"
+                            : "border-[#6b1d1d]/15 bg-white hover:border-[#c45c26]/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#6b1d1d] uppercase tracking-wide text-[11px] bg-[#6b1d1d]/5 px-2 py-0.5 rounded-full">
+                            {addr.label || "Home"}
+                          </span>
+                          {isSelected && (
+                            <span className="text-emerald-700 font-bold text-[11px] flex items-center gap-0.5">
+                              ✓ Selected
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-medium text-[#2a1a12] leading-snug pt-0.5">
+                          {addr.line1}
+                        </p>
+                        <p className="text-[#2a1a12]/60">
+                          {addr.city}, {addr.state} - {addr.pincode}
+                        </p>
+                        {addr.phone && (
+                          <p className="text-[11px] text-[#2a1a12]/50">📞 {addr.phone}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
-                State *
-              </label>
-              <select
-                name="state"
-                value={state}
-                onChange={(e) => {
-                  setState(e.target.value);
-                  clearFieldError("state");
-                }}
-                className="mt-1 w-full rounded-2xl border border-[#6b1d1d]/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-[#c45c26]"
-              >
-                {INDIAN_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* New / Custom Delivery Address Fields */}
+          {(isAddingNewAddress || savedAddresses.length === 0) && (
+            <div className="space-y-4 rounded-2xl bg-[#faf8f5] p-4 border border-[#6b1d1d]/10">
+              <div className="flex items-center justify-between border-b border-[#6b1d1d]/10 pb-2">
+                <span className="text-xs font-bold text-[#6b1d1d]">
+                  Enter Full Delivery Address
+                </span>
+                {savedAddresses.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSavedAddress(savedAddresses[0])}
+                    className="text-[11px] font-semibold text-[#c45c26] hover:underline"
+                  >
+                    Cancel &amp; use saved address
+                  </button>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
-                Pincode (6 digits) *
-              </label>
-              <input
-                name="pincode"
-                maxLength={6}
-                value={pincode}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "");
-                  setPincode(digits);
-                  clearFieldError("pincode");
-                }}
-                placeholder="390001"
-                className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm font-mono outline-none transition ${
-                  fieldErrors.pincode
-                    ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"
-                    : "border-[#6b1d1d]/15 focus:border-[#c45c26]"
-                }`}
-              />
-              {fieldErrors.pincode && (
-                <p className="mt-1 text-xs font-medium text-rose-600">{fieldErrors.pincode}</p>
-              )}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
+                  Street Address (House/Flat, Building, Area, Landmark) *
+                </label>
+                <input
+                  name="line1"
+                  value={line1}
+                  onChange={(e) => {
+                    setLine1(e.target.value);
+                    clearFieldError("line1");
+                  }}
+                  placeholder="e.g. 14, Heritage Enclave, Near Mandvi Gate, Mandvi"
+                  className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm outline-none transition ${
+                    fieldErrors.line1
+                      ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"
+                      : "border-[#6b1d1d]/15 focus:border-[#c45c26]"
+                  }`}
+                />
+                {fieldErrors.line1 && (
+                  <p className="mt-1 text-xs font-medium text-rose-600">{fieldErrors.line1}</p>
+                )}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
+                    City *
+                  </label>
+                  <input
+                    name="city"
+                    value={city}
+                    onChange={(e) => {
+                      setCity(e.target.value);
+                      clearFieldError("city");
+                    }}
+                    placeholder="Vadodara"
+                    className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm outline-none transition ${
+                      fieldErrors.city
+                        ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"
+                        : "border-[#6b1d1d]/15 focus:border-[#c45c26]"
+                    }`}
+                  />
+                  {fieldErrors.city && (
+                    <p className="mt-1 text-xs font-medium text-rose-600">{fieldErrors.city}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
+                    State *
+                  </label>
+                  <select
+                    name="state"
+                    value={state}
+                    onChange={(e) => {
+                      setState(e.target.value);
+                      clearFieldError("state");
+                    }}
+                    className="mt-1 w-full rounded-2xl border border-[#6b1d1d]/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-[#c45c26]"
+                  >
+                    {INDIAN_STATES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">
+                    Pincode (6 digits) *
+                  </label>
+                  <input
+                    name="pincode"
+                    maxLength={6}
+                    value={pincode}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setPincode(digits);
+                      clearFieldError("pincode");
+                    }}
+                    placeholder="390001"
+                    className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm font-mono outline-none transition ${
+                      fieldErrors.pincode
+                        ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"
+                        : "border-[#6b1d1d]/15 focus:border-[#c45c26]"
+                    }`}
+                  />
+                  {fieldErrors.pincode && (
+                    <p className="mt-1 text-xs font-medium text-rose-600">{fieldErrors.pincode}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1 text-xs text-[#2a1a12]/80">
+                <input
+                  type="checkbox"
+                  id="saveAddressCheckbox"
+                  checked={saveAddressToAccount}
+                  onChange={(e) => setSaveAddressToAccount(e.target.checked)}
+                  className="rounded border-[#6b1d1d]/30 text-[#c45c26] focus:ring-[#c45c26]"
+                />
+                <label htmlFor="saveAddressCheckbox" className="cursor-pointer font-medium">
+                  Save this delivery address to my account for faster checkout next time
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#2a1a12]/70">

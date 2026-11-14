@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { createHash, randomBytes } from "crypto";
 import { db } from "@/db";
-import { cartItems, coupons, orderItems, orders, orderStatusHistory, productVariants, products, stores, users } from "@/db/schema";
+import { addresses, cartItems, coupons, orderItems, orders, orderStatusHistory, productVariants, products, stores, users } from "@/db/schema";
 import { getAuthUser, getCartSessionId, getCouponCode, setCouponCode, requireAdmin } from "@/lib/auth";
 import { loadCartLines } from "@/lib/cart";
 import { calcTotals, unitPrice } from "@/lib/money";
@@ -702,6 +702,88 @@ export async function POST(request: Request) {
   }
 
   await setCouponCode(null);
+
+  // 1. Automatically update placeholder/patron name to the customer's real recipient name
+  if (name && name.length >= 2 && !name.startsWith("Patron ")) {
+    try {
+      let targetUserId = user?.id;
+      if (!targetUserId && phone) {
+        const [foundUser] = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(eq(users.phone, phone))
+          .limit(1);
+        if (foundUser) targetUserId = foundUser.id;
+      }
+
+      if (targetUserId) {
+        const [targetUser] = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(eq(users.id, targetUserId))
+          .limit(1);
+
+        if (targetUser && (!targetUser.name || targetUser.name.startsWith("Patron "))) {
+          await db.update(users).set({ name }).where(eq(users.id, targetUserId));
+          try {
+            const { getMongoDb } = await import("@/lib/mongodb");
+            const mongo = await getMongoDb();
+            if (mongo) {
+              await mongo.collection("users").updateOne(
+                { id: targetUserId },
+                { $set: { name } }
+              );
+            }
+          } catch {}
+        }
+      }
+    } catch (nameUpdateErr) {
+      console.warn("[Orders API] User name auto-update notice:", nameUpdateErr);
+    }
+  }
+
+  // 2. Automatically save fresh delivery address to account for future 1-click checkouts
+  if (fulfillmentType === "delivery" && line1 && city && pincode) {
+    try {
+      let targetUserId = user?.id;
+      if (!targetUserId && phone) {
+        const [foundUser] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.phone, phone))
+          .limit(1);
+        if (foundUser) targetUserId = foundUser.id;
+      }
+
+      if (targetUserId) {
+        const existing = await db
+          .select({ id: addresses.id })
+          .from(addresses)
+          .where(
+            and(
+              eq(addresses.userId, targetUserId),
+              eq(addresses.line1, line1),
+              eq(addresses.pincode, pincode)
+            )
+          )
+          .limit(1);
+
+        if (existing.length === 0) {
+          await db.insert(addresses).values({
+            userId: targetUserId,
+            label: "Home",
+            line1,
+            city,
+            state: state || "Gujarat",
+            pincode,
+            phone: phone || "",
+          });
+        }
+      }
+    } catch (addrSaveErr) {
+      console.warn("[Orders API] Address autosave notice:", addrSaveErr);
+    }
+  }
 
   // Record Admin Notification
   try {
