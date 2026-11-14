@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { WarmCreamHomepage, HomepageProductData } from "@/components/warm-cream-homepage";
+import { BruvaHeritageHomepage } from "@/components/bruva-heritage-homepage";
 import { MobileArtisanalHome } from "@/components/mobile-artisanal-home";
 import { HeritageGlassHero } from "@/components/heritage-glass-hero";
 import { HeritageHeroBanner } from "@/components/heritage-hero-banner";
@@ -80,8 +81,8 @@ export function HomePageClient({
   uiConfig,
 }: HomePageClientProps) {
   const router = useRouter();
-  // UI Design mode: "warm-cream" (New 2026 Redesign) vs "classic" (Royal Navy Heritage)
-  const [uiDesign, setUiDesign] = useState<"warm-cream" | "classic">("warm-cream");
+  // UI Design mode: "bruva-heritage" (New Bruva-inspired Dark Roast & Gold) vs "warm-cream" vs "classic"
+  const [uiDesign, setUiDesign] = useState<"bruva-heritage" | "warm-cream" | "classic">("bruva-heritage");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -91,14 +92,15 @@ export function HomePageClient({
         if (typeof window !== "undefined") {
           const params = new URLSearchParams(window.location.search);
           const urlTheme = params.get("ui") || params.get("theme");
-          if (urlTheme === "classic" || urlTheme === "warm-cream") {
-            setUiDesign(urlTheme);
-            localStorage.setItem("vsm_ui_design_theme", urlTheme);
+          if (urlTheme === "classic" || urlTheme === "warm-cream" || urlTheme === "bruva-heritage" || urlTheme === "bruva") {
+            const mapped = urlTheme === "bruva" ? "bruva-heritage" : (urlTheme as any);
+            setUiDesign(mapped);
+            localStorage.setItem("vsm_ui_design_theme", mapped);
             return;
           }
         }
         const saved = localStorage.getItem("vsm_ui_design_theme");
-        if (saved === "classic" || saved === "warm-cream") {
+        if (saved === "classic" || saved === "warm-cream" || saved === "bruva-heritage") {
           setUiDesign(saved);
         }
       } catch {}
@@ -114,7 +116,12 @@ export function HomePageClient({
   }, []);
 
   function toggleUiDesign() {
-    const next = uiDesign === "warm-cream" ? "classic" : "warm-cream";
+    const next =
+      uiDesign === "bruva-heritage"
+        ? "warm-cream"
+        : uiDesign === "warm-cream"
+        ? "classic"
+        : "bruva-heritage";
     setUiDesign(next);
     try {
       localStorage.setItem("vsm_ui_design_theme", next);
@@ -124,7 +131,43 @@ export function HomePageClient({
     }
   }
 
-  // 1. Warm Cream & Deep Purple Redesign (Default) with Mobile Artisanal View for Mobile Screens
+  // 1. Bruva-Inspired Dark Roast & Gold Heritage Design (New Flagship)
+  if (uiDesign === "bruva-heritage") {
+    return (
+      <>
+        {/* Mobile-First Artisanal View on Mobile Screens (< md) */}
+        {uiConfig?.mobileManagement?.enabled !== false && (
+          <div className="block md:hidden">
+            <MobileArtisanalHome
+              categories={categories}
+              featuredProducts={featured}
+              bestsellers={bestsellers}
+              stores={stores}
+              uiConfig={uiConfig}
+            />
+          </div>
+        )}
+
+        {/* Desktop View on Tablet & Desktop (>= md or when mobile view disabled) */}
+        <div className={uiConfig?.mobileManagement?.enabled !== false ? "hidden md:block" : "block"}>
+          <BruvaHeritageHomepage
+            categories={categories}
+            featuredProducts={featured}
+            bestsellers={bestsellers}
+            specialItemsConfig={specialItemsConfig}
+            specialProducts={specialProducts}
+            stores={stores}
+            reviews={reviews}
+            uiConfig={uiConfig}
+            onToggleUiDesign={toggleUiDesign}
+            currentUiDesign={uiDesign}
+          />
+        </div>
+      </>
+    );
+  }
+
+  // 2. Warm Cream & Deep Purple Redesign with Mobile Artisanal View for Mobile Screens
   if (uiDesign === "warm-cream") {
     return (
       <>
