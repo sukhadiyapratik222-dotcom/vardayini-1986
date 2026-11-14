@@ -34,6 +34,7 @@ export function TasteQuizClient() {
   const [leadEmail, setLeadEmail] = useState("");
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [leadError, setLeadError] = useState("");
 
   // Results
   const [result, setResult] = useState<QuizMatchResult | null>(null);
@@ -363,6 +364,23 @@ export function TasteQuizClient() {
   // Submit lead and fetch results (non-blocking parallel dispatch)
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLeadError("");
+
+    const trimmedInput = leadPhone.trim();
+    // Normalize: auto-correct common typos like letter 'o' or 'O' in place of '0'
+    const normalized = trimmedInput.replace(/[oO]/g, "0");
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+    const digitsOnly = normalized.replace(/\D/g, "");
+    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 13;
+
+    if (!isEmail && !isPhone) {
+      setLeadError("Please enter a valid 10-digit mobile number or email address.");
+      return;
+    }
+
+    const finalPhone = isPhone ? digitsOnly.slice(-10) : "";
+    const finalEmail = isEmail ? normalized : "";
+
     setLeadSubmitting(true);
 
     try {
@@ -381,9 +399,9 @@ export function TasteQuizClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: leadName,
-          phone: leadPhone,
-          email: leadEmail,
+          name: leadName.trim(),
+          phone: finalPhone,
+          email: finalEmail,
           marketingConsent,
           answers,
         }),
@@ -813,10 +831,19 @@ export function TasteQuizClient() {
                 type="text"
                 required
                 value={leadPhone}
-                onChange={(e) => setLeadPhone(e.target.value)}
+                onChange={(e) => {
+                  setLeadPhone(e.target.value);
+                  setLeadError("");
+                }}
                 placeholder="e.g. +91 98250 19760 or name@gmail.com"
                 className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-sm focus:border-[#6b1d1d] focus:ring-2 focus:ring-[#6b1d1d]/10 outline-none transition"
               />
+              {leadError && (
+                <p className="text-xs text-rose-600 font-semibold pt-1 flex items-center gap-1">
+                  <span>⚠️</span>
+                  <span>{leadError}</span>
+                </p>
+              )}
             </div>
 
             <label className="flex items-start gap-2.5 pt-1 cursor-pointer">

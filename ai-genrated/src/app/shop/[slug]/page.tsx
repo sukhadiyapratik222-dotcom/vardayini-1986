@@ -25,10 +25,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#FAF6EE] via-[#FFFDF9] to-[#FAF6EE] text-[#140638]">
-      <div className="mx-auto max-w-6xl px-3.5 sm:px-6 py-5 sm:py-10">
+    <main className="min-h-screen bg-gradient-to-b from-[#FAF6EE] via-[#FFFDF9] to-[#FAF6EE] text-[#140638] w-full max-w-full overflow-x-hidden">
+      <div className="mx-auto max-w-6xl px-3.5 sm:px-6 py-5 sm:py-10 w-full max-w-full box-border">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1.5 text-xs sm:text-sm text-slate-500 mb-5 sm:mb-8">
+        <nav aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1.5 text-xs sm:text-sm text-slate-500 mb-5 sm:mb-8 min-w-0">
           <Link href="/" className="hover:text-[#140638] transition font-medium">
             Home
           </Link>
@@ -44,15 +44,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.categoryName}
           </Link>
           <span className="text-amber-400">›</span>
-          <span className="text-[#140638] font-semibold truncate max-w-[200px] sm:max-w-none">
+          <span className="text-[#140638] font-semibold truncate max-w-[180px] sm:max-w-none">
             {product.name}
           </span>
         </nav>
 
         {/* Main Product Showcase Grid */}
-        <div className="grid gap-8 lg:gap-12 md:grid-cols-2 items-start">
+        <div className="grid gap-8 lg:gap-12 md:grid-cols-2 items-start w-full max-w-full">
           {/* Left Column: Image & Authenticity Highlights */}
-          <div className="space-y-4">
+          <div className="space-y-4 w-full min-w-0 max-w-full">
             <div className="relative aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border border-amber-900/10 bg-white">
               <Image
                 src={product.imageUrl}
@@ -77,27 +77,27 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
 
             {/* Freshness & Quality Badges */}
-            <div className="grid grid-cols-3 gap-2 p-3 sm:p-4 rounded-2xl border border-amber-900/10 bg-white/90 shadow-2xs text-center">
-              <div className="flex flex-col items-center">
+            <div className="grid grid-cols-3 gap-2 p-3 sm:p-4 rounded-2xl border border-amber-900/10 bg-white/90 shadow-2xs text-center w-full min-w-0">
+              <div className="flex flex-col items-center min-w-0">
                 <span className="text-base sm:text-lg">🥛</span>
-                <span className="text-[10px] sm:text-xs font-bold text-[#140638] mt-1">Pure Desi Ghee</span>
-                <span className="text-[9px] sm:text-[10px] text-slate-500">Gir Cow & Buffalo</span>
+                <span className="text-[10px] sm:text-xs font-bold text-[#140638] mt-1 truncate w-full">Pure Desi Ghee</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 truncate w-full">Gir Cow & Buffalo</span>
               </div>
-              <div className="flex flex-col items-center border-x border-amber-900/10 px-1">
+              <div className="flex flex-col items-center border-x border-amber-900/10 px-1 min-w-0">
                 <span className="text-base sm:text-lg">✨</span>
-                <span className="text-[10px] sm:text-xs font-bold text-[#140638] mt-1">Made Daily</span>
-                <span className="text-[9px] sm:text-[10px] text-slate-500">Melt-in-mouth Fresh</span>
+                <span className="text-[10px] sm:text-xs font-bold text-[#140638] mt-1 truncate w-full">Made Daily</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 truncate w-full">Melt-in-mouth Fresh</span>
               </div>
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center min-w-0">
                 <span className="text-base sm:text-lg">📦</span>
-                <span className="text-[10px] sm:text-xs font-bold text-[#140638] mt-1">Sealed Box</span>
-                <span className="text-[9px] sm:text-[10px] text-slate-500">Airtight Protection</span>
+                <span className="text-[10px] sm:text-xs font-bold text-[#140638] mt-1 truncate w-full">Sealed Box</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 truncate w-full">Airtight Protection</span>
               </div>
             </div>
           </div>
 
           {/* Right Column: Title, Ratings, Pricing, Variants & Delivery */}
-          <div className="min-w-0">
+          <div className="min-w-0 w-full max-w-full">
             {/* Category Tag */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-950 border border-amber-300/60">
               <span>🏷️</span>
@@ -105,43 +105,43 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
 
             {/* Product Title */}
-            <h1 className="mt-2.5 font-[family-name:var(--font-display)] text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] text-[#140638] font-bold leading-tight tracking-tight">
+            <h1 className="mt-2.5 font-[family-name:var(--font-display)] text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] text-[#140638] font-bold leading-tight tracking-tight break-words">
               {product.name}
             </h1>
 
             {/* Rating & Reviews Line */}
-            <div className="mt-2 flex items-center flex-wrap gap-2 text-xs sm:text-sm">
-              <div className="flex items-center gap-1 text-amber-500">
+            <div className="mt-2 flex items-center flex-wrap gap-2 text-xs sm:text-sm min-w-0">
+              <div className="flex items-center gap-1 text-amber-500 shrink-0">
                 <span className="text-base">★</span>
                 <span className="font-bold text-[#140638]">
                   {product.avgRating ? product.avgRating.toFixed(1) : "5.0"}
                 </span>
               </div>
               <span className="text-slate-400">·</span>
-              <a href="#reviews" className="text-slate-600 hover:text-amber-800 underline decoration-amber-400/60 font-medium">
+              <a href="#reviews" className="text-slate-600 hover:text-amber-800 underline decoration-amber-400/60 font-medium truncate">
                 {product.reviews.length > 0 ? `${product.reviews.length} Customer Reviews` : "Be the first to review"}
               </a>
               <span className="text-slate-400">·</span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full shrink-0">
                 <span>✓</span>
                 <span>FSSAI Certified</span>
               </span>
             </div>
 
             {/* Description */}
-            <p className="mt-4 text-xs sm:text-sm sm:text-base leading-relaxed text-slate-700 font-normal">
+            <p className="mt-4 text-xs sm:text-sm sm:text-base leading-relaxed text-slate-700 font-normal break-words">
               {product.description}
             </p>
 
             {/* Key Quality Highlights */}
-            <ul className="mt-3.5 space-y-1.5 text-xs sm:text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <span className="text-amber-600 font-bold">✓</span>
-                <span>Handcrafted with traditional family recipe perfected over decades.</span>
+            <ul className="mt-3.5 space-y-1.5 text-xs sm:text-sm text-slate-600 min-w-0">
+              <li className="flex items-start gap-2">
+                <span className="text-amber-600 font-bold shrink-0 mt-0.5">✓</span>
+                <span className="break-words">Handcrafted with traditional family recipe perfected over decades.</span>
               </li>
-              <li className="flex items-center gap-2">
-                <span className="text-amber-600 font-bold">✓</span>
-                <span>Zero artificial colours, zero preservatives — 100% natural aroma.</span>
+              <li className="flex items-start gap-2">
+                <span className="text-amber-600 font-bold shrink-0 mt-0.5">✓</span>
+                <span className="break-words">Zero artificial colours, zero preservatives — 100% natural aroma.</span>
               </li>
             </ul>
 
@@ -154,7 +154,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <ProductDeliveryCard />
 
             {/* Additional Actions: Wishlist & WhatsApp Share */}
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3 min-w-0">
               <WishlistButton productId={product.id} />
               <a
                 href={`https://api.whatsapp.com/send?text=${shareText}`}
@@ -170,13 +170,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
 
         {/* Heritage Trust Strip */}
-        <section className="mt-14 rounded-2xl sm:rounded-3xl border border-amber-900/15 bg-gradient-to-r from-amber-50/80 via-[#fffdf9] to-amber-50/80 p-5 sm:p-7 shadow-xs">
-          <div className="max-w-3xl mx-auto text-center">
+        <section className="mt-14 rounded-2xl sm:rounded-3xl border border-amber-900/15 bg-gradient-to-r from-amber-50/80 via-[#fffdf9] to-amber-50/80 p-5 sm:p-7 shadow-xs w-full max-w-full box-border">
+          <div className="max-w-3xl mx-auto text-center min-w-0">
             <span className="text-2xl sm:text-3xl">🪔</span>
             <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-[#140638]">
               The Vardayini Pure Ghee Promise
             </h3>
-            <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed break-words">
               Since 1986, every sweet from our Kalol counter is prepared in small batches using pure,
               fragrant desi ghee, premium whole dry fruits, and slow-simmered dairy mawa. We deliver melt-in-mouth
               warmth to your family celebrations across Gujarat and all over India.
@@ -185,9 +185,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </section>
 
         {/* Customer Reviews Section */}
-        <section id="reviews" className="mt-14 scroll-mt-24">
-          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-amber-900/15">
-            <div>
+        <section id="reviews" className="mt-14 scroll-mt-24 w-full max-w-full box-border">
+          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-amber-900/15 min-w-0">
+            <div className="min-w-0">
               <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl text-[#140638] font-bold">
                 Customer Reviews
               </h2>
@@ -196,7 +196,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </p>
             </div>
             {product.reviews.length > 0 && (
-              <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-400/40 rounded-full px-3 py-1 text-xs font-bold text-amber-950">
+              <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-400/40 rounded-full px-3 py-1 text-xs font-bold text-amber-950 shrink-0">
                 <span>★</span>
                 <span>{product.avgRating.toFixed(1)} / 5.0</span>
                 <span className="text-slate-400">·</span>
@@ -205,7 +205,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             )}
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 w-full max-w-full">
             {product.reviews.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-amber-900/20 bg-white/70 p-6 text-center col-span-2">
                 <span className="text-2xl">🍯</span>
@@ -218,23 +218,23 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               product.reviews.map((review) => (
                 <article
                   key={review.id}
-                  className="rounded-2xl border border-amber-900/10 bg-white/95 p-4 sm:p-5 shadow-xs transition hover:shadow-sm"
+                  className="rounded-2xl border border-amber-900/10 bg-white/95 p-4 sm:p-5 shadow-xs transition hover:shadow-sm min-w-0 overflow-hidden"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-bold text-[#140638]">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#140638] truncate">
                         {review.userName || "Verified Patron"}
                       </p>
                       <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
                         <span>✓</span> Verified Purchase
                       </span>
                     </div>
-                    <div className="text-sm font-medium text-amber-500">
+                    <div className="text-sm font-medium text-amber-500 shrink-0">
                       {"★".repeat(review.rating)}
                       {"☆".repeat(5 - review.rating)}
                     </div>
                   </div>
-                  <p className="mt-3 text-xs sm:text-sm leading-6 text-slate-700">
+                  <p className="mt-3 text-xs sm:text-sm leading-6 text-slate-700 break-words">
                     {review.comment}
                   </p>
                 </article>
@@ -248,25 +248,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
         {/* Related Products Grid */}
         {related.length > 0 && (
-          <section className="mt-16 pt-8 border-t border-amber-900/15">
-            <div className="flex items-center justify-between mb-6">
-              <div>
+          <section className="mt-16 pt-8 border-t border-amber-900/15 w-full max-w-full box-border">
+            <div className="flex items-center justify-between mb-6 min-w-0">
+              <div className="min-w-0">
                 <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl text-[#140638] font-bold">
                   More From This Counter
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
                   Handcrafted favorites from our {product.categoryName} selection.
                 </p>
               </div>
               <Link
                 href={`/shop?category=${product.categorySlug}`}
-                className="text-xs sm:text-sm font-bold text-amber-800 hover:text-amber-950 hover:underline flex items-center gap-1"
+                className="text-xs sm:text-sm font-bold text-amber-800 hover:text-amber-950 hover:underline flex items-center gap-1 shrink-0"
               >
                 <span>View All</span>
                 <span>→</span>
               </Link>
             </div>
-            <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4 w-full max-w-full">
               {related.map((item) => (
                 <ProductCard key={item.id} product={item} />
               ))}

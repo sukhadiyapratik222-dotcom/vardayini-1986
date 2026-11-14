@@ -105,37 +105,37 @@ export function WarmCreamHomepage({
   const dynamicBestsellers =
     bestsellers && bestsellers.length > 0
       ? bestsellers.slice(0, 15).map((product) => {
-          const primaryVariant = product.variants?.[0];
-          const sellingPrice = primaryVariant
-            ? unitPrice(primaryVariant.price, primaryVariant.discountedPrice)
-            : product.fromPrice;
-          const originalPrice =
-            primaryVariant?.price && primaryVariant.price > sellingPrice
-              ? primaryVariant.price
-              : product.comparePrice && product.comparePrice > sellingPrice
+        const primaryVariant = product.variants?.[0];
+        const sellingPrice = primaryVariant
+          ? unitPrice(primaryVariant.price, primaryVariant.discountedPrice)
+          : product.fromPrice;
+        const originalPrice =
+          primaryVariant?.price && primaryVariant.price > sellingPrice
+            ? primaryVariant.price
+            : product.comparePrice && product.comparePrice > sellingPrice
               ? product.comparePrice
               : Math.round(sellingPrice * 1.15);
 
-          return {
-            id: `bs-${product.id}`,
-            productId: product.id,
-            variantId: primaryVariant?.id || product.id,
-            name: product.name,
-            slug: product.slug,
-            price: sellingPrice,
-            originalPrice: originalPrice,
-            rating: 5.0,
-            reviewsCount: 120 + ((product.id * 19) % 240),
-            imageUrl: product.imageUrl || "/images/kaju-katli.jpg",
-            weight: primaryVariant?.weight || "500g",
-            badge: "BEST SELLER",
-          };
-        })
+        return {
+          id: `bs-${product.id}`,
+          productId: product.id,
+          variantId: primaryVariant?.id || product.id,
+          name: product.name,
+          slug: product.slug,
+          price: sellingPrice,
+          originalPrice: originalPrice,
+          rating: 5.0,
+          reviewsCount: 120 + ((product.id * 19) % 240),
+          imageUrl: product.imageUrl || "/images/kaju-katli.jpg",
+          weight: primaryVariant?.weight || "500g",
+          badge: "BEST SELLER",
+        };
+      })
       : undefined;
 
   return (
     <div className="min-h-screen bg-[#faf6ee] text-[#24142e] selection:bg-[#d97706]/20">
-      
+
       {/* ─────────────────────────────────────────────────────────────
           1. HERO CAROUSEL (Full Width, Auto-Slide Every 5s, Ken Burns)
          ───────────────────────────────────────────────────────────── */}
