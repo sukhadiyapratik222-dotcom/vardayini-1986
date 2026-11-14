@@ -2,7 +2,7 @@ import { and, desc, eq, like, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { categories, products, productVariants, reviews } from "@/db/schema";
 import { unitPrice } from "@/lib/money";
-import { ensureSeeded } from "@/db/seed";
+import { ensureSeeded, PRODUCT_CATALOG } from "@/db/seed";
 
 export const CATEGORY_GROUPS: Record<
   string,
@@ -173,8 +173,16 @@ export async function listProducts(opts: {
     const defaultVariant = effectiveVariants.find((v: any) => v.isDefault);
     const cheapest = [...effectiveVariants].sort((a: any, b: any) => unitPrice(a.price, a.discountedPrice) - unitPrice(b.price, b.discountedPrice))[0];
     const preferred = defaultVariant || cheapest;
+
+    const catalogMatch = PRODUCT_CATALOG.find((p) => p.slug === row.slug);
+    const resolvedImageUrl =
+      row.slug === "mysore-pak"
+        ? "/images/showcase/mysore-pak-clean.jpg"
+        : catalogMatch?.imageUrl || row.imageUrl;
+
     return {
       ...row,
+      imageUrl: resolvedImageUrl,
       variants: effectiveVariants,
       fromPrice: preferred ? unitPrice(preferred.price, preferred.discountedPrice) : 350,
       comparePrice: preferred && preferred.discountedPrice && preferred.price > preferred.discountedPrice ? preferred.price : null,
@@ -239,7 +247,23 @@ export async function getProductBySlug(slug: string) {
       isActive: true,
     } as any,
   ];
-  return { ...product, variants: effectiveVariants, reviews: reviewRows, avgRating: avg };
+
+  // Guarantee accurate imagery and description from catalog
+  const catalogMatch = PRODUCT_CATALOG.find((p) => p.slug === slug);
+  const resolvedImageUrl =
+    product.slug === "mysore-pak"
+      ? "/images/showcase/mysore-pak-clean.jpg"
+      : catalogMatch?.imageUrl || product.imageUrl;
+  const resolvedDescription = catalogMatch?.description || product.description;
+
+  return {
+    ...product,
+    imageUrl: resolvedImageUrl,
+    description: resolvedDescription,
+    variants: effectiveVariants,
+    reviews: reviewRows,
+    avgRating: avg,
+  };
 }
 
 export async function searchSuggestions(q: string) {

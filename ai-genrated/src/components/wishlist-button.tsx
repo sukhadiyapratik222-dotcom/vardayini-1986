@@ -43,9 +43,11 @@ export function WishlistButton({ productId }: { productId: number }) {
     <button
       onClick={toggle}
       disabled={loading}
-      className="min-h-[44px] flex items-center justify-center rounded-full border border-[#6b1d1d]/20 px-5 py-2.5 text-sm font-medium hover:bg-[#fff8ee] disabled:opacity-50 transition cursor-pointer"
+      aria-label="Add to wishlist"
+      className="min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl border border-amber-900/15 bg-white/90 px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#140638] hover:bg-amber-50 hover:border-amber-400 hover:text-amber-900 disabled:opacity-50 transition cursor-pointer shadow-2xs"
     >
-      {loading ? "Updating..." : msg || "Save to wishlist"}
+      <span className="text-rose-600 text-sm">♥</span>
+      <span>{loading ? "Updating..." : msg || "Save to Wishlist"}</span>
     </button>
   );
 }

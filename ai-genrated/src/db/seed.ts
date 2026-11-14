@@ -206,7 +206,7 @@ export const PRODUCT_CATALOG: {
         name: "Mawa Gujiya / Ghughra",
         slug: "mawa-gujiya",
         description: "Festive flaky pastry shells packed with rich khoya, grated coconut, dryfruits and green cardamom.",
-        imageUrl: "/images/motichoor.jpg",
+        imageUrl: "/images/holi-gujiya.jpg",
         tags: "mawa,ghughra,gujiya",
         isFeatured: false,
         variants: [
@@ -767,6 +767,23 @@ export async function ensureEssentialProducts() {
 
       if (prodId) {
         try {
+          // Always ensure the latest catalog image, name & description are synced for existing products
+          if (item.imageUrl || item.description) {
+            try {
+              await db
+                .update(products)
+                .set({
+                  imageUrl: item.imageUrl,
+                  description: item.description,
+                  name: item.name,
+                  tags: item.tags,
+                })
+                .where(eq(products.id, prodId));
+            } catch (updateErr) {
+              console.warn(`[Seed] Product ${item.slug} update notice:`, updateErr);
+            }
+          }
+
           const existingVars = await db
             .select({ id: productVariants.id })
             .from(productVariants)
@@ -796,6 +813,9 @@ export async function ensureEssentialProducts() {
             if (pRow) {
               await syncProductToMongo({
                 ...pRow,
+                imageUrl: item.imageUrl,
+                description: item.description,
+                name: item.name,
                 variants: vRows,
               });
             }

@@ -69,46 +69,56 @@ export function ReviewForm({ productId }: { productId: number }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mithai-card mt-6 max-w-xl space-y-3 rounded-3xl p-5">
-      <h3 className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">Write a review</h3>
-      <select
-        value={rating}
-        disabled={loading}
-        onChange={(e) => {
-          setRating(Number(e.target.value));
-          if (error) setError("");
-        }}
-        className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3 py-2 text-sm disabled:opacity-50"
-      >
-        {[5, 4, 3, 2, 1].map((value) => (
-          <option key={value} value={value}>
-            {value} star{value > 1 ? "s" : ""}
-          </option>
-        ))}
-      </select>
-      <textarea
-        value={comment}
-        disabled={loading}
-        onChange={(e) => {
-          setComment(e.target.value);
-          if (error) setError("");
-        }}
-        rows={3}
-        placeholder="How was the freshness, packing, sweetness?"
-        className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3 py-2 text-sm disabled:opacity-50"
-      />
+    <form onSubmit={onSubmit} className="mt-6 max-w-xl space-y-3 rounded-2xl sm:rounded-3xl border border-amber-900/15 bg-white/95 p-5 shadow-xs">
+      <h3 className="font-[family-name:var(--font-display)] text-2xl text-[#140638] font-bold">Write a Review</h3>
+      <p className="text-xs text-slate-500">Share your experience with fellow mithai lovers.</p>
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 mb-1">Your Rating:</label>
+        <select
+          value={rating}
+          disabled={loading}
+          onChange={(e) => {
+            setRating(Number(e.target.value));
+            if (error) setError("");
+          }}
+          className="w-full rounded-xl border border-amber-900/20 bg-amber-50/20 px-3 py-2 text-sm text-[#140638] font-medium disabled:opacity-50 focus:outline-none focus:border-[#dfb755]"
+        >
+          <option value={5}>★★★★★ 5 Stars - Exceptional Taste</option>
+          <option value={4}>★★★★☆ 4 Stars - Very Good</option>
+          <option value={3}>★★★☆☆ 3 Stars - Average</option>
+          <option value={2}>★★☆☆☆ 2 Stars - Below Expectations</option>
+          <option value={1}>★☆☆☆☆ 1 Star - Poor</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 mb-1">Your Feedback:</label>
+        <textarea
+          value={comment}
+          disabled={loading}
+          onChange={(e) => {
+            setComment(e.target.value);
+            if (error) setError("");
+          }}
+          rows={3}
+          placeholder="How was the freshness, ghee aroma, packing and sweetness?"
+          className="w-full rounded-xl border border-amber-900/20 bg-amber-50/20 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 disabled:opacity-50 focus:outline-none focus:border-[#dfb755] focus:ring-1 focus:ring-[#dfb755]"
+        />
+      </div>
       {error ? (
-        <div className="rounded-xl bg-red-50 p-2.5 text-sm text-red-700 border border-red-200">
+        <div className="rounded-xl bg-red-50 p-2.5 text-xs text-red-700 border border-red-200">
           {error}
         </div>
       ) : null}
       {done ? (
-        <div className="rounded-xl bg-emerald-50 p-2.5 text-sm text-emerald-800 border border-emerald-200">
-          Thank you for your review
+        <div className="rounded-xl bg-emerald-50 p-2.5 text-xs text-emerald-800 border border-emerald-200 font-medium">
+          ✓ Thank you! Your review has been saved.
         </div>
       ) : null}
-      <button disabled={loading} className="btn-primary rounded-full px-5 py-2 text-sm disabled:opacity-50">
-        {loading ? "Submitting..." : "Submit review"}
+      <button
+        disabled={loading}
+        className="rounded-xl px-6 py-2.5 text-xs sm:text-sm font-bold bg-[#140638] text-[#dfb755] hover:bg-[#250d54] active:scale-95 disabled:opacity-50 cursor-pointer transition shadow-xs"
+      >
+        {loading ? "Submitting..." : "Submit Review"}
       </button>
     </form>
   );

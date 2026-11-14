@@ -36,34 +36,36 @@ export function ProductDeliveryCard() {
   };
 
   return (
-    <div className="mt-5 rounded-2xl border border-[#3b1e54]/15 bg-[#fff8ee]/60 p-3 sm:p-4 shadow-xs">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#6b1d1d] flex items-center gap-1.5">
-          <span>📍</span>
+    <div className="mt-5 rounded-2xl border border-amber-900/15 bg-gradient-to-br from-[#fffdf9] via-[#fbf7ee] to-[#f7f0df]/60 p-3.5 sm:p-4 shadow-xs w-full max-w-full overflow-hidden">
+      <div className="flex items-center justify-between mb-2.5 gap-2">
+        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#140638] flex items-center gap-1.5">
+          <span className="text-amber-600">📍</span>
           <span>Delivery Availability</span>
         </span>
         {result?.city && (
-          <span className="text-[10px] sm:text-[10.5px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md truncate max-w-[140px]">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-800 bg-emerald-100/90 border border-emerald-300/60 px-2 py-0.5 rounded-md truncate max-w-[160px]">
             {result.city}
           </span>
         )}
       </div>
 
-      <form onSubmit={handleCheck} className="flex gap-1.5 sm:gap-2">
+      <form onSubmit={handleCheck} className="relative flex items-center w-full">
         <input
           type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           maxLength={6}
           value={pincode}
           onChange={(e) => {
-            setPincode(e.target.value);
+            setPincode(e.target.value.replace(/\D/g, ""));
             setError("");
           }}
-          placeholder="Enter 6-digit PIN code"
-          className="flex-1 min-w-0 rounded-xl border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs text-slate-900 outline-none focus:border-[#6b1d1d] focus:ring-1 focus:ring-[#6b1d1d]"
+          placeholder="Enter 6-digit Pincode (e.g. 390001)"
+          className="w-full rounded-xl border border-amber-900/20 bg-white pl-3.5 pr-22 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#dfb755] focus:ring-2 focus:ring-[#dfb755]/25 shadow-xs"
         />
         <button
           type="submit"
-          className="rounded-xl bg-[#6b1d1d] text-[#fff8ee] text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 hover:bg-[#852525] active:scale-95 transition cursor-pointer shrink-0"
+          className="absolute right-1 top-1 bottom-1 px-3.5 sm:px-4 rounded-lg bg-[#140638] text-[#dfb755] hover:bg-[#250d54] text-xs font-bold tracking-wide transition active:scale-95 flex items-center justify-center cursor-pointer shadow-xs"
         >
           Check
         </button>
@@ -82,10 +84,10 @@ export function ProductDeliveryCard() {
             {result.options.map((opt, i) => (
               <div
                 key={i}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-2 p-2 rounded-lg bg-white/90 border border-slate-200/80 text-[11px]"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-2 p-2.5 rounded-xl bg-white/95 border border-amber-900/10 text-[11px] shadow-2xs"
               >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-sm shrink-0">{opt.icon}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base shrink-0">{opt.icon}</span>
                   <div className="min-w-0">
                     <p className="font-bold text-slate-800 truncate">{opt.title}</p>
                     <p className="text-slate-500 text-[10px] truncate">{opt.details}</p>
@@ -99,7 +101,7 @@ export function ProductDeliveryCard() {
             ))}
           </div>
 
-          <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] sm:text-[10.5px] text-slate-600">
+          <div className="mt-2.5 pt-2 border-t border-amber-900/10 flex items-center justify-between text-[10px] sm:text-[10.5px] text-slate-600">
             <span>🛡️ Insulated Fresh Packaging</span>
             <span>✨ 100% Shuddh Desi Ghee</span>
           </div>

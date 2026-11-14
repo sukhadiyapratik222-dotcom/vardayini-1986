@@ -59,70 +59,89 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
 
   return (
     <div className="mt-6 space-y-4">
-      {/* Requirement 1: Display selected product pack size clearly */}
+      {/* Pack size indicator */}
       <div className="flex items-center">
-        <span className="text-xs sm:text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200/80 rounded-full px-3 py-1 inline-flex items-center gap-1.5 shadow-2xs">
-          {packSizeText}
+        <span className="text-xs sm:text-sm font-semibold text-amber-950 bg-amber-500/10 border border-amber-300/60 rounded-full px-3.5 py-1 inline-flex items-center gap-1.5 shadow-2xs">
+          <span>🏷️</span>
+          <span>{packSizeText}</span>
         </span>
       </div>
 
-      {/* Requirements 2, 3, 4, 5, 6, 7, 8: Price Display Section */}
+      {/* Price Display Section */}
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-        {/* Prominent Current Selling Price */}
-        <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#182230]">
+        <span className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#140638]">
           {formatInr(sellingPrice)}
         </span>
 
-        {/* Strikethrough Original Price: Only when greater than selling price */}
         {hasDiscount && originalPrice && (
-          <span className="text-sm sm:text-base md:text-lg text-[#5e6d82] line-through font-medium">
+          <span className="text-base sm:text-lg text-slate-400 line-through font-medium">
             {formatInr(originalPrice)}
           </span>
         )}
 
-        {/* Automatic Discount Percentage Badge: Hidden if identical */}
         {hasDiscount && discountPercent > 0 && (
           <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs sm:text-sm font-bold text-emerald-700 border border-emerald-200/70 shadow-2xs">
             {discountPercent}% OFF
           </span>
         )}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {variants.map((variant) => (
-          <button
-            key={variant.id}
-            type="button"
-            onClick={() => handleSelectVariant(variant)}
-            className={`min-h-[44px] flex items-center rounded-full px-4 py-2.5 text-sm font-medium transition cursor-pointer ${
-              variant.id === selected.id ? "bg-[#6b1d1d] text-[#fff8ee] shadow-sm" : "mithai-card hover:bg-slate-50"
-            }`}
-          >
-            {variant.packName && variant.packName !== "Standard Pack"
-              ? `${variant.packName} (${variant.weight})`
-              : variant.weight}
-          </button>
-        ))}
+
+      {/* Variant Pills */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Select Pack Size:</p>
+        <div className="flex flex-wrap gap-2">
+          {variants.map((variant) => (
+            <button
+              key={variant.id}
+              type="button"
+              onClick={() => handleSelectVariant(variant)}
+              className={`min-h-[44px] flex items-center rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition cursor-pointer ${
+                variant.id === selected.id
+                  ? "bg-[#140638] text-[#dfb755] border-2 border-[#dfb755] shadow-sm scale-[1.02]"
+                  : "bg-white/90 text-slate-700 border border-amber-900/15 hover:border-amber-400 hover:bg-amber-50/40"
+              }`}
+            >
+              <span>
+                {variant.packName && variant.packName !== "Standard Pack"
+                  ? `${variant.packName} (${variant.weight})`
+                  : variant.weight}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Stock Status */}
       {isOutOfStock ? (
-        <p className="text-xs font-semibold text-[#6b1d1d]">Out of stock</p>
+        <p className="text-xs font-semibold text-rose-700 flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+          <span>Currently Out of Stock · Baking fresh batch</span>
+        </p>
       ) : (
-        <p className="text-xs text-[#2a1a12]/55">{selected.stock} packs left</p>
+        <p className="text-xs font-medium text-emerald-800 flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>In Stock · Ready for fresh dispatch ({selected.stock} packs available)</span>
+        </p>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
-        <div className="flex items-center justify-center self-start rounded-full border border-[#6b1d1d]/15 bg-white shadow-xs">
+
+      {/* Quantity & Add to Cart */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-1">
+        <div className="flex items-center justify-center self-start rounded-xl border border-amber-900/20 bg-white shadow-xs overflow-hidden">
           <button
             type="button"
-            className="min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center px-3 font-bold text-base disabled:opacity-40 cursor-pointer"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center font-bold text-lg text-[#140638] hover:bg-amber-50 disabled:opacity-40 cursor-pointer transition active:scale-90"
             disabled={isOutOfStock || qty <= 1}
             onClick={() => setQty((q) => Math.max(1, q - 1))}
             aria-label="Decrease quantity"
           >
             −
           </button>
-          <span className="w-8 text-center font-semibold text-sm">{isOutOfStock ? 0 : qty}</span>
+          <span className="w-10 text-center font-bold text-sm sm:text-base text-[#140638]">
+            {isOutOfStock ? 0 : qty}
+          </span>
           <button
             type="button"
-            className="min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center px-3 font-bold text-base disabled:opacity-40 cursor-pointer"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center font-bold text-lg text-[#140638] hover:bg-amber-50 disabled:opacity-40 cursor-pointer transition active:scale-90"
             disabled={isOutOfStock || qty >= selected.stock}
             onClick={() => setQty((q) => Math.min(selected.stock, q + 1))}
             aria-label="Increase quantity"
@@ -135,7 +154,8 @@ export function VariantPicker({ variants }: { variants: Variant[] }) {
             variantId={selected.id}
             quantity={isOutOfStock ? 0 : qty}
             disabled={isOutOfStock}
-            label={isOutOfStock ? "Out of stock" : "Add to mithai box"}
+            label={isOutOfStock ? "Out of stock" : "Add to Mithai Box"}
+            className="w-full min-h-[48px] flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm sm:text-base font-bold bg-gradient-to-r from-[#140638] via-[#240b54] to-[#140638] text-[#dfb755] border border-[#dfb755]/50 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] transition cursor-pointer"
           />
         </div>
       </div>
