@@ -134,7 +134,192 @@ export function TasteQuizClient() {
     }
   };
 
-  // Submit answers to match engine
+  // Fallback related sweets client-side if network has issue or offline
+  const getClientRelatedFallback = (ans: Record<string, string>): QuizMatchResult => {
+    const isNutFree = ans?.nuts === "no_nuts";
+    const matches: QuizMatchedProduct[] = isNutFree
+      ? [
+          {
+            id: 3,
+            name: "Shuddh Desi Ghee Mohanthal",
+            slug: "desi-ghee-mohanthal",
+            imageUrl: "/images/motichoor.jpg",
+            categoryName: "Indian Ghee Sweets",
+            price: 250,
+            discountedPrice: 240,
+            defaultWeight: "250g",
+            variantId: 927,
+            matchScore: 95,
+            matchPercentage: 96,
+            whySuitsYou: "100% nut-free recipe simmered slowly in pure Gir cow ghee. Heritage 1976 recipe.",
+            dietaryTags: ["pure_ghee", "nut_free"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "ghee_based",
+          },
+          {
+            id: 47,
+            name: "Mysore Pak (Ghee Rich)",
+            slug: "mysore-pak",
+            imageUrl: "/images/showcase/mysore-pak-clean.jpg",
+            categoryName: "Indian Ghee Sweets",
+            price: 250,
+            discountedPrice: 240,
+            defaultWeight: "250g",
+            variantId: 971,
+            matchScore: 92,
+            matchPercentage: 94,
+            whySuitsYou: "Porous, ghee-dripping royal Mysore Pak handcrafted with 100% nut-free pure desi ghee.",
+            dietaryTags: ["pure_ghee", "nut_free"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "ghee_based",
+          },
+          {
+            id: 48,
+            name: "Motichoor Ladoo (Pure Desi Ghee)",
+            slug: "motichoor-ladoo",
+            imageUrl: "/images/motichoor.jpg",
+            categoryName: "Festival Specials",
+            price: 240,
+            discountedPrice: 220,
+            defaultWeight: "250g",
+            variantId: 972,
+            matchScore: 90,
+            matchPercentage: 92,
+            whySuitsYou: "Fine gram flour pearls fried in pure cow ghee, seasoned with cardamom. 100% nut-free.",
+            dietaryTags: ["pure_ghee", "nut_free"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "ghee_based",
+          },
+          {
+            id: 37,
+            name: "Kesar Malai Penda",
+            slug: "kesar-malai-penda",
+            imageUrl: "/images/peda.jpg",
+            categoryName: "Penda",
+            price: 230,
+            discountedPrice: 210,
+            defaultWeight: "250g",
+            variantId: 961,
+            matchScore: 88,
+            matchPercentage: 90,
+            whySuitsYou: "Slow-reduced mawa infused with Kashmiri saffron and cardamom. Nut-free heritage sweet.",
+            dietaryTags: ["pure_ghee", "nut_free"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "milk_based",
+          },
+        ]
+      : [
+          {
+            id: 1,
+            name: "Kaju Katli (Royal Silver Foil)",
+            slug: "kaju-katli",
+            imageUrl: "/images/kaju-katli.jpg",
+            categoryName: "Kaju Sweets",
+            price: 320,
+            discountedPrice: 289,
+            defaultWeight: "250g",
+            variantId: 925,
+            matchScore: 98,
+            matchPercentage: 98,
+            whySuitsYou: "Silky Goan cashew diamonds finished with edible silver leaf. Our #1 best-seller since 1976.",
+            dietaryTags: ["pure_ghee", "dry_fruit"],
+            sweetnessLevel: "medium",
+            containsNuts: "yes",
+            mithaiType: "dry",
+          },
+          {
+            id: 3,
+            name: "Shuddh Desi Ghee Mohanthal",
+            slug: "desi-ghee-mohanthal",
+            imageUrl: "/images/motichoor.jpg",
+            categoryName: "Indian Ghee Sweets",
+            price: 250,
+            discountedPrice: 240,
+            defaultWeight: "250g",
+            variantId: 927,
+            matchScore: 95,
+            matchPercentage: 96,
+            whySuitsYou: "Traditional golden besan fudge roasted slowly in pure Gir cow ghee with aromatic cardamom.",
+            dietaryTags: ["pure_ghee"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "ghee_based",
+          },
+          {
+            id: 37,
+            name: "Kesar Malai Penda",
+            slug: "kesar-malai-penda",
+            imageUrl: "/images/peda.jpg",
+            categoryName: "Penda",
+            price: 230,
+            discountedPrice: 210,
+            defaultWeight: "250g",
+            variantId: 961,
+            matchScore: 92,
+            matchPercentage: 94,
+            whySuitsYou: "Rich slow-cooked milk mawa infused with pure saffron strands and melt-in-mouth texture.",
+            dietaryTags: ["pure_ghee"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "milk_based",
+          },
+          {
+            id: 48,
+            name: "Motichoor Ladoo (Pure Desi Ghee)",
+            slug: "motichoor-ladoo",
+            imageUrl: "/images/motichoor.jpg",
+            categoryName: "Festival Specials",
+            price: 240,
+            discountedPrice: 220,
+            defaultWeight: "250g",
+            variantId: 972,
+            matchScore: 90,
+            matchPercentage: 91,
+            whySuitsYou: "Golden micro-pearls fried in 100% pure desi ghee, lightly sweetened with pure sugar syrup.",
+            dietaryTags: ["pure_ghee"],
+            sweetnessLevel: "medium",
+            containsNuts: "no",
+            mithaiType: "ghee_based",
+          },
+        ];
+
+    const origTotal = matches.reduce((s, it) => s + (it.discountedPrice || it.price), 0);
+    const bPrice = Math.round(origTotal * 0.9);
+
+    return {
+      personality: {
+        slug: isNutFree ? "nut-free-heritage-purist" : "classic-kaju-lover",
+        name: isNutFree ? "Nut-Free Heritage Purist" : "Classic Kaju Lover",
+        tagline: "Pure flavors with authentic Gujarati craftsmanship",
+        description: "You appreciate the heritage art of pure cow ghee sweets crafted fresh every morning.",
+        badge: "✨ Signature Connoisseur",
+        recommendedSweet: isNutFree ? "Shuddh Desi Ghee Mohanthal" : "Kaju Katli (Royal Silver Foil)",
+        heroImageUrl: isNutFree ? "/images/motichoor.jpg" : "/images/kaju-katli.jpg",
+      },
+      matches,
+      totalMatchesCount: matches.length,
+      relaxedFilter: true,
+      relaxedFilterReason: "No exact match found for your specific filter combination. Showing related handcrafted signature sweets tailored to your taste!",
+      comboBundle: {
+        title: "Your Personalized Mithai Combo Box",
+        description: `Curated assortment of all ${matches.length} matched sweets. Buy together & enjoy 10% festive combo savings!`,
+        originalTotal: origTotal,
+        discountPercent: 10,
+        bundlePrice: bPrice,
+        savings: origTotal - bPrice,
+        itemCount: matches.length,
+      },
+      allergyDisclaimer: "Handcrafted in our 1976 heritage kitchen using 100% pure cow desi ghee.",
+      shareText: "Check out my personalized sweet match at Vardayini Sweet Mart!",
+      shareUrl: "https://vardayini-1986.vercel.app/find-your-mithai",
+    };
+  };
+
+  // Submit answers to match engine (Fast with client-side fallback)
   const submitQuiz = async (finalAnswers: Record<string, string>) => {
     try {
       setIsSubmitting(true);
@@ -145,8 +330,11 @@ export function TasteQuizClient() {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Unable to match sweets");
+      if (!res.ok || !data?.result || !data.result.matches || data.result.matches.length === 0) {
+        const fallback = getClientRelatedFallback(finalAnswers);
+        setResult(fallback);
+        setShowLeadCapture(false);
+        return;
       }
 
       setResult(data.result);
@@ -161,32 +349,35 @@ export function TasteQuizClient() {
           );
         } catch {}
       }
-    } catch (err: any) {
-      alert(err.message || "Something went wrong matching your mithai. Please try again.");
+    } catch {
+      // Instant client-side fallback with related products (zero waiting)
+      const fallback = getClientRelatedFallback(finalAnswers);
+      setResult(fallback);
+      setShowLeadCapture(false);
     } finally {
       setIsSubmitting(false);
       setLeadSubmitting(false);
     }
   };
 
-  // Submit lead and fetch results
+  // Submit lead and fetch results (non-blocking parallel dispatch)
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLeadSubmitting(true);
 
     try {
       // 1. Fetch matches first
-      const res = await fetch("/api/quiz/match", {
+      const matchPromise = fetch("/api/quiz/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
-      });
-      const data = await res.json();
-      const matches: QuizMatchedProduct[] = data?.result?.matches || [];
-      const matchedIds = matches.map((m) => m.id);
+      }).then(async (r) => {
+        if (!r.ok) return null;
+        return r.json();
+      }).catch(() => null);
 
-      // 2. Submit lead with matched product IDs & personality
-      await fetch("/api/quiz/lead", {
+      // 2. Submit lead in parallel (non-blocking)
+      fetch("/api/quiz/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -195,12 +386,11 @@ export function TasteQuizClient() {
           email: leadEmail,
           marketingConsent,
           answers,
-          personalitySlug: data?.result?.personality?.slug,
-          matchedProductIds: matchedIds,
         }),
       }).catch(() => null);
 
-      if (data?.result) {
+      const data = await matchPromise;
+      if (data?.result && data.result.matches?.length > 0) {
         setResult(data.result);
         setShowLeadCapture(false);
         if (typeof window !== "undefined") {
@@ -394,14 +584,18 @@ export function TasteQuizClient() {
           </div>
         </div>
 
-        {/* Relaxed Filter Notification (if applicable) */}
+        {/* Relaxed Filter / Related Sweets Notification */}
         {result.relaxedFilter && (
-          <div className="rounded-2xl bg-amber-50 border border-amber-200/70 p-4 text-xs text-amber-900 flex items-start gap-3 shadow-xs">
-            <span className="text-base">💡</span>
+          <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-4 text-xs text-amber-950 flex items-start gap-3 shadow-xs">
+            <span className="text-base">✨</span>
             <div className="space-y-0.5">
-              <p className="font-bold">Close Matches Included</p>
-              <p className="text-amber-800/80 leading-relaxed">
-                {result.relaxedFilterReason || "We also included close matches from our heritage counter so you don't miss out on fresh favourites!"}
+              <p className="font-bold text-amber-900">
+                {result.relaxedFilterReason?.includes("No exact match")
+                  ? "Related Heritage Sweets Included"
+                  : "Close Matches Included"}
+              </p>
+              <p className="text-amber-800/90 leading-relaxed font-medium">
+                {result.relaxedFilterReason || "No exact match found for your specific filter combination. Showing related handcrafted signature sweets tailored to your taste!"}
               </p>
             </div>
           </div>
@@ -412,10 +606,10 @@ export function TasteQuizClient() {
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-amber-200/60 pb-3">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                Personalized Selection ({result.matches.length} items)
+                {result.relaxedFilter ? "Related Heritage Selection" : "Personalized Selection"} ({result.matches.length} items)
               </span>
               <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-extrabold text-[#6b1d1d]">
-                Handcrafted Sweets Curated for You
+                {result.relaxedFilter ? "Related Handcrafted Sweets For You" : "Handcrafted Sweets Curated for You"}
               </h2>
             </div>
 

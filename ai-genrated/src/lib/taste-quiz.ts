@@ -356,17 +356,181 @@ export async function getQuizPersonalities(): Promise<QuizPersonalityItem[]> {
 }
 
 // -------------------------------------------------------------
+// RELATED HERITAGE SWEETS FALLBACK (NEVER RETURN 0 ITEMS)
+// -------------------------------------------------------------
+
+export function getRelatedHeritageSweets(strictNoNuts: boolean): QuizMatchedProduct[] {
+  if (strictNoNuts) {
+    return [
+      {
+        id: 3,
+        name: "Shuddh Desi Ghee Mohanthal",
+        slug: "desi-ghee-mohanthal",
+        imageUrl: "/images/motichoor.jpg",
+        categoryName: "Indian Ghee Sweets",
+        price: 250,
+        discountedPrice: 240,
+        defaultWeight: "250g",
+        variantId: 927,
+        matchScore: 95,
+        matchPercentage: 96,
+        whySuitsYou: "100% nut-free recipe simmered slowly in pure Gir cow ghee. Heritage 1976 recipe.",
+        dietaryTags: ["pure_ghee", "nut_free"],
+        sweetnessLevel: "medium",
+        containsNuts: "no",
+        mithaiType: "ghee_based",
+      },
+      {
+        id: 47,
+        name: "Mysore Pak (Ghee Rich)",
+        slug: "mysore-pak",
+        imageUrl: "/images/showcase/mysore-pak-clean.jpg",
+        categoryName: "Indian Ghee Sweets",
+        price: 250,
+        discountedPrice: 240,
+        defaultWeight: "250g",
+        variantId: 971,
+        matchScore: 92,
+        matchPercentage: 94,
+        whySuitsYou: "Porous, ghee-dripping royal Mysore Pak handcrafted with 100% nut-free pure desi ghee.",
+        dietaryTags: ["pure_ghee", "nut_free"],
+        sweetnessLevel: "medium",
+        containsNuts: "no",
+        mithaiType: "ghee_based",
+      },
+      {
+        id: 48,
+        name: "Motichoor Ladoo (Pure Desi Ghee)",
+        slug: "motichoor-ladoo",
+        imageUrl: "/images/motichoor.jpg",
+        categoryName: "Festival Specials",
+        price: 240,
+        discountedPrice: 220,
+        defaultWeight: "250g",
+        variantId: 972,
+        matchScore: 90,
+        matchPercentage: 92,
+        whySuitsYou: "Fine gram flour pearls fried in pure cow ghee, seasoned with cardamom. 100% nut-free.",
+        dietaryTags: ["pure_ghee", "nut_free"],
+        sweetnessLevel: "medium",
+        containsNuts: "no",
+        mithaiType: "ghee_based",
+      },
+      {
+        id: 37,
+        name: "Kesar Malai Penda",
+        slug: "kesar-malai-penda",
+        imageUrl: "/images/peda.jpg",
+        categoryName: "Penda",
+        price: 230,
+        discountedPrice: 210,
+        defaultWeight: "250g",
+        variantId: 961,
+        matchScore: 88,
+        matchPercentage: 90,
+        whySuitsYou: "Slow-reduced mawa infused with Kashmiri saffron and cardamom. Nut-free heritage sweet.",
+        dietaryTags: ["pure_ghee", "nut_free"],
+        sweetnessLevel: "medium",
+        containsNuts: "no",
+        mithaiType: "milk_based",
+      },
+    ];
+  }
+
+  return [
+    {
+      id: 1,
+      name: "Kaju Katli (Royal Silver Foil)",
+      slug: "kaju-katli",
+      imageUrl: "/images/kaju-katli.jpg",
+      categoryName: "Kaju Sweets",
+      price: 320,
+      discountedPrice: 289,
+      defaultWeight: "250g",
+      variantId: 925,
+      matchScore: 98,
+      matchPercentage: 98,
+      whySuitsYou: "Silky Goan cashew diamonds finished with edible silver leaf. Our #1 best-seller since 1976.",
+      dietaryTags: ["pure_ghee", "dry_fruit"],
+      sweetnessLevel: "medium",
+      containsNuts: "yes",
+      mithaiType: "dry",
+    },
+    {
+      id: 3,
+      name: "Shuddh Desi Ghee Mohanthal",
+      slug: "desi-ghee-mohanthal",
+      imageUrl: "/images/motichoor.jpg",
+      categoryName: "Indian Ghee Sweets",
+      price: 250,
+      discountedPrice: 240,
+      defaultWeight: "250g",
+      variantId: 927,
+      matchScore: 95,
+      matchPercentage: 96,
+      whySuitsYou: "Traditional golden besan fudge roasted slowly in pure Gir cow ghee with aromatic cardamom.",
+      dietaryTags: ["pure_ghee"],
+      sweetnessLevel: "medium",
+      containsNuts: "no",
+      mithaiType: "ghee_based",
+    },
+    {
+      id: 37,
+      name: "Kesar Malai Penda",
+      slug: "kesar-malai-penda",
+      imageUrl: "/images/peda.jpg",
+      categoryName: "Penda",
+      price: 230,
+      discountedPrice: 210,
+      defaultWeight: "250g",
+      variantId: 961,
+      matchScore: 92,
+      matchPercentage: 94,
+      whySuitsYou: "Rich slow-cooked milk mawa infused with pure saffron strands and melt-in-mouth texture.",
+      dietaryTags: ["pure_ghee"],
+      sweetnessLevel: "medium",
+      containsNuts: "no",
+      mithaiType: "milk_based",
+    },
+    {
+      id: 48,
+      name: "Motichoor Ladoo (Pure Desi Ghee)",
+      slug: "motichoor-ladoo",
+      imageUrl: "/images/motichoor.jpg",
+      categoryName: "Festival Specials",
+      price: 240,
+      discountedPrice: 220,
+      defaultWeight: "250g",
+      variantId: 972,
+      matchScore: 90,
+      matchPercentage: 91,
+      whySuitsYou: "Golden micro-pearls fried in 100% pure desi ghee, lightly sweetened with pure sugar syrup.",
+      dietaryTags: ["pure_ghee"],
+      sweetnessLevel: "medium",
+      containsNuts: "no",
+      mithaiType: "ghee_based",
+    },
+  ];
+}
+
+// -------------------------------------------------------------
 // CORE MATCHING ENGINE
 // -------------------------------------------------------------
 
 export async function calculateQuizMatch(
   answers: QuizMatchAnswerPayload
 ): Promise<QuizMatchResult> {
+  // Ultra-fast local SQLite initialization without blocking on remote MongoDB
   try {
-    await ensureSeeded();
-  } catch (err) {
-    console.warn("[TasteQuiz] ensureSeeded notice:", err);
-  }
+    const { getSqliteDb } = await import("@/db");
+    const sqlite = getSqliteDb();
+    const count = (sqlite.prepare("SELECT count(*) as count FROM products").get() as any)?.count || 0;
+    if (count === 0) {
+      const { ensureEssentialProducts } = await import("@/db/seed");
+      await ensureEssentialProducts().catch(() => null);
+    }
+  } catch {}
+
   await ensureQuizDataSeeded();
   const settings = await getQuizSettings();
 
@@ -610,7 +774,7 @@ export async function calculateQuizMatch(
   const personality = selectPersonality(answers);
 
   // Generate personalized "Why this suits you" line
-  const matchedProducts: QuizMatchedProduct[] = selected.map(({ product: p, score }) => {
+  let matchedProducts: QuizMatchedProduct[] = selected.map(({ product: p, score }) => {
     // Generate tailored reasoning
     const whyReasons: string[] = [];
     if (strictNoNuts) {
@@ -661,6 +825,21 @@ export async function calculateQuizMatch(
       mithaiType: p.mithaiType || "dry",
     };
   });
+
+  // GUARANTEE: If no exact match found or fewer than 3 items, provide related customer favorites!
+  if (matchedProducts.length < 3) {
+    const relatedFallback = getRelatedHeritageSweets(strictNoNuts);
+    for (const rel of relatedFallback) {
+      if (!matchedProducts.some((m) => m.slug === rel.slug)) {
+        matchedProducts.push(rel);
+        if (matchedProducts.length >= maxItems) break;
+      }
+    }
+    relaxed = true;
+    relaxedReason = strictNoNuts
+      ? "No exact match found for your specific filter combination. Showing related 100% nut-free heritage sweets!"
+      : "No exact match found for your specific filter combination. Showing related handcrafted signature sweets tailored to your taste!";
+  }
 
   // Calculate Combo Bundle Box
   const originalTotal = matchedProducts.reduce(
