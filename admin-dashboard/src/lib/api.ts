@@ -1671,7 +1671,135 @@ export const api = {
     });
     return handleResponse(res, "Failed to simulate quiz match");
   },
+
+  // Weekly Slogans Methods
+  async getAdminSlogans(): Promise<{
+    slogans: AdminSloganItem[];
+    activeSlogan: AdminSloganItem | null;
+    missingNextWeeks: boolean;
+    stats: {
+      total: number;
+      active: number;
+      scheduled: number;
+      draft: number;
+      expired: number;
+      totalViews: number;
+      totalClicks: number;
+      totalAddToCart: number;
+    };
+  }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load weekly slogans");
+  },
+
+  async createAdminSlogan(payload: any): Promise<{ slogan: AdminSloganItem }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, "Failed to create weekly slogan");
+  },
+
+  async updateAdminSlogan(payload: any): Promise<{ slogan: AdminSloganItem }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, "Failed to update weekly slogan");
+  },
+
+  async deleteAdminSlogan(id: number): Promise<{ success: boolean }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans?id=${id}`, {
+      method: "DELETE",
+    });
+    return handleResponse(res, "Failed to delete weekly slogan");
+  },
+
+  async getAdminSloganSettings(): Promise<{ settings: AdminSloganSettings }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans/settings`, { cache: "no-store" });
+    return handleResponse(res, "Failed to load slogan settings");
+  },
+
+  async updateAdminSloganSettings(payload: AdminSloganSettings): Promise<{ settings: AdminSloganSettings }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans/settings`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, "Failed to update slogan settings");
+  },
+
+  async getAdminSloganSuggestions(params: { productId?: number; sweetName?: string; festival?: string }): Promise<{
+    suggestions: {
+      title: string;
+      text: string;
+      subText: string;
+      themeColor: string;
+      category: string;
+    }[];
+  }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/slogans/suggest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return handleResponse(res, "Failed to generate slogan suggestions");
+  },
+
+  getAdminSlogansExportUrl(): string {
+    return `${PROXY_BASE}/api/admin/slogans/analytics/export`;
+  },
 };
+
+export interface AdminSloganItem {
+  id: number;
+  text: string;
+  subText?: string | null;
+  textHi?: string | null;
+  subTextHi?: string | null;
+  textGu?: string | null;
+  subTextGu?: string | null;
+  productId: number;
+  productName?: string;
+  productSlug?: string;
+  productPrice?: number;
+  productStock?: number;
+  productImageUrl?: string;
+  customImageUrl?: string | null;
+  themeColor: string;
+  bgStyle: string;
+  buttonText: string;
+  buttonLink: string;
+  storyLine?: string | null;
+  badgesJson?: string | null;
+  badges?: string[];
+  startAt: string;
+  endAt: string;
+  weekLabel?: string;
+  status: "active" | "scheduled" | "draft" | "expired";
+  createdAt: string;
+  viewsCount?: number;
+  clicksCount?: number;
+  addToCartCount?: number;
+  ctr?: string;
+}
+
+export interface AdminSloganSettings {
+  id?: number;
+  enabled: boolean;
+  location: string;
+  showCountdown: boolean;
+  showPastArchive: boolean;
+  showShareButton: boolean;
+  showAnnouncementStrip: boolean;
+  autoRotateEnabled: boolean;
+  rotationMode: string;
+  fallbackSloganText: string;
+  fallbackSubText: string;
+  fallbackProductId?: number;
+}
 
 export interface ReviewItem {
   id: number;

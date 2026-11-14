@@ -614,3 +614,67 @@ export const userQuizResults = mysqlTable("user_quiz_results", {
   matchedProductsJson: text("matched_products_json").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ==========================================
+// Weekly Slogans & Sweet of the Week System
+// ==========================================
+
+export const slogans = mysqlTable("slogans", {
+  id: int("id").autoincrement().primaryKey(),
+  text: varchar("text", { length: 255 }).notNull(),
+  subText: text("sub_text"),
+  textHi: varchar("text_hi", { length: 255 }),
+  subTextHi: text("sub_text_hi"),
+  textGu: varchar("text_gu", { length: 255 }),
+  subTextGu: text("sub_text_gu"),
+  productId: int("product_id").references(() => products.id),
+  customImageUrl: text("custom_image_url"),
+  themeColor: varchar("theme_color", { length: 40 }).default("#dfb755"),
+  bgStyle: varchar("bg_style", { length: 40 }).default("glass_aurora"),
+  buttonText: varchar("button_text", { length: 80 }).default("Shop Sweet of the Week →"),
+  buttonLink: varchar("button_link", { length: 255 }),
+  storyLine: text("story_line"),
+  badgesJson: text("badges_json"),
+  startAt: timestamp("start_at"),
+  endAt: timestamp("end_at"),
+  status: varchar("status", { length: 30 }).default("scheduled"),
+  createdBy: int("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sloganSettings = mysqlTable("slogan_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  enabled: boolean("enabled").default(true),
+  location: varchar("location", { length: 60 }).default("between_categories_bestsellers"),
+  showCountdown: boolean("show_countdown").default(true),
+  showPastArchive: boolean("show_past_archive").default(true),
+  showShareButton: boolean("show_share_button").default(true),
+  showAnnouncementStrip: boolean("show_announcement_strip").default(true),
+  autoRotateEnabled: boolean("auto_rotate_enabled").default(true),
+  rotationMode: varchar("rotation_mode", { length: 30 }).default("sequential"),
+  fallbackSloganText: varchar("fallback_slogan_text", { length: 255 }).default("Pure *Desi Ghee*. Pure *Tradition*. Handcrafted in Vadodara."),
+  fallbackSubText: text("fallback_sub_text").default("Experience our royal Shuddh Desi Ghee sweets fresh from our morning bhatti."),
+  fallbackProductId: int("fallback_product_id"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sloganTemplates = mysqlTable("slogan_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 150 }).notNull(),
+  templateText: varchar("template_text", { length: 255 }).notNull(),
+  templateSubText: text("template_sub_text"),
+  category: varchar("category", { length: 80 }).default("general"),
+  seasonOrFestival: varchar("season_or_festival", { length: 80 }),
+  suggestedThemeColor: varchar("suggested_theme_color", { length: 40 }).default("#dfb755"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sloganAnalytics = mysqlTable("slogan_analytics", {
+  id: int("id").autoincrement().primaryKey(),
+  sloganId: int("slogan_id").references(() => slogans.id),
+  viewsCount: int("views_count").default(0),
+  clicksCount: int("clicks_count").default(0),
+  addToCartCount: int("add_to_cart_count").default(0),
+  lastTrackedAt: timestamp("last_tracked_at").defaultNow(),
+});

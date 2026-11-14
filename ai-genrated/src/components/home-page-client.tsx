@@ -34,6 +34,7 @@ import { ScrollArea } from "@/components/website/scroll-area";
 import { OutletsSection } from "@/components/outlets-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { CustomerBestsellersSection } from "@/components/customer-bestsellers-section";
+import { WeeklySloganSection } from "@/components/weekly-slogan-section";
 import { BrowseByCategorySection } from "@/components/browse-by-category-section";
 import { KitchenCamHomepageSection } from "@/components/kitchen-cam-homepage-section";
 import { TasteQuizCta } from "@/components/taste-quiz-cta";
@@ -287,6 +288,9 @@ export function HomePageClient({
 
       {/* Find Your Mithai Taste Quiz CTA Card */}
       <TasteQuizCta />
+
+      {/* Weekly Slogan Section */}
+      <WeeklySloganSection />
 
       {/* Customer Bestsellers ("MOST LOVED") */}
       {uiConfig?.bestsellersSection?.enabled !== false && (

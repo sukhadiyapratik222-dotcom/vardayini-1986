@@ -10,6 +10,7 @@ import { LuxuryHeroCarousel } from "@/components/luxury-hero-carousel";
 import { ProductListMarquee } from "@/components/product-list-marquee";
 import { ShopByCategoryStrip } from "@/components/shop-by-category-strip";
 import { LuxuryBestsellersSection } from "@/components/luxury-bestsellers-section";
+import { WeeklySloganSection } from "@/components/weekly-slogan-section";
 import { OurStoryHeritageSection } from "@/components/our-story-heritage-section";
 import { FestivalCollectionsSection } from "@/components/festival-collections-section";
 import { CulinaryExperienceSection } from "@/components/culinary-experience-section";
@@ -148,6 +149,11 @@ export function WarmCreamHomepage({
           2. SHOP BY CATEGORY (Horizontal Circular Row with Badges)
          ───────────────────────────────────────────────────────────── */}
       <ShopByCategoryStrip />
+
+      {/* ─────────────────────────────────────────────────────────────
+          2B. WEEKLY SLOGAN & SWEET OF THE WEEK (Glassmorphic Banner)
+         ───────────────────────────────────────────────────────────── */}
+      <WeeklySloganSection onAddToCartSuccess={handleAddToCartSuccess} />
 
       {/* ─────────────────────────────────────────────────────────────
           3. BEST SELLERS (Rounded Red Cards with Add To Bag)

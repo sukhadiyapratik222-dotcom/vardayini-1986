@@ -714,6 +714,66 @@ function initSqliteTables(sqlite: DatabaseSync) {
       matched_products_json TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS slogans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text TEXT NOT NULL,
+      sub_text TEXT,
+      text_hi TEXT,
+      sub_text_hi TEXT,
+      text_gu TEXT,
+      sub_text_gu TEXT,
+      product_id INTEGER DEFAULT NULL,
+      custom_image_url TEXT,
+      theme_color TEXT DEFAULT '#dfb755',
+      bg_style TEXT DEFAULT 'glass_aurora',
+      button_text TEXT DEFAULT 'Shop Sweet of the Week →',
+      button_link TEXT,
+      story_line TEXT,
+      badges_json TEXT,
+      start_at TEXT,
+      end_at TEXT,
+      status TEXT DEFAULT 'scheduled',
+      created_by INTEGER DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS slogan_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      enabled INTEGER DEFAULT 1,
+      location TEXT DEFAULT 'between_categories_bestsellers',
+      show_countdown INTEGER DEFAULT 1,
+      show_past_archive INTEGER DEFAULT 1,
+      show_share_button INTEGER DEFAULT 1,
+      show_announcement_strip INTEGER DEFAULT 1,
+      auto_rotate_enabled INTEGER DEFAULT 1,
+      rotation_mode TEXT DEFAULT 'sequential',
+      fallback_slogan_text TEXT DEFAULT 'Pure *Desi Ghee*. Pure *Tradition*. Handcrafted in Vadodara.',
+      fallback_sub_text TEXT DEFAULT 'Experience our royal Shuddh Desi Ghee sweets fresh from our morning bhatti.',
+      fallback_product_id INTEGER DEFAULT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS slogan_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      template_text TEXT NOT NULL,
+      template_sub_text TEXT,
+      category TEXT DEFAULT 'general',
+      season_or_festival TEXT,
+      suggested_theme_color TEXT DEFAULT '#dfb755',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS slogan_analytics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slogan_id INTEGER NOT NULL,
+      views_count INTEGER DEFAULT 0,
+      clicks_count INTEGER DEFAULT 0,
+      add_to_cart_count INTEGER DEFAULT 0,
+      last_tracked_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `;
   try {
     sqlite.exec(ddl);

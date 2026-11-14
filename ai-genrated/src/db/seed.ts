@@ -41,6 +41,10 @@ export function ensureSeeded() {
         await ensureFestivalProducts();
       } catch { }
       try {
+        const { ensureSlogansSeeded } = await import("@/db/slogans-seed");
+        await ensureSlogansSeeded();
+      } catch { }
+      try {
         const { globalAccountLockoutManager } = await import("@/lib/security");
         globalAccountLockoutManager.recordSuccess("user:admin@vardayini.com");
       } catch { }
@@ -1178,6 +1182,9 @@ async function seedInternal() {
         // 21. SMS Wallet & Credits
         { name: "View SMS Wallet & Credits", slug: "sms_wallet:view", module: "sms_wallet", action: "view", description: "View Fast2SMS wallet balance, DLT SMS logs & delivery stats" },
         { name: "Manage SMS Wallet & Credits", slug: "sms_wallet:manage", module: "sms_wallet", action: "manage", description: "Recharge SMS credits, configure SMS triggers, and send test SMS" },
+        // 22. Weekly Slogans (Sweet of the Week)
+        { name: "View Weekly Slogans", slug: "slogans:view", module: "slogans", action: "view", description: "View scheduled weekly slogans, rotating sweets & countdown timeline" },
+        { name: "Manage Weekly Slogans", slug: "slogans:manage", module: "slogans", action: "manage", description: "Create, edit, schedule weekly slogans, adjust settings & generate suggestions" },
         // Legacy compatibility
         { name: "Manage Store Settings (Legacy)", slug: "settings:manage", module: "settings", action: "manage", description: "Legacy combined store settings permission" },
         // Super Admin Exclusive

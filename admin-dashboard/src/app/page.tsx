@@ -42,9 +42,11 @@ import { BestsellersTab } from "@/components/bestsellers-tab";
 import { WelcomeOfferTab } from "@/components/welcome-offer-tab";
 import { TestimonialsTab } from "@/components/testimonials-tab";
 import { NewLaunchTab } from "@/components/new-launch-tab";
+import { WeeklySlogansTab } from "@/components/weekly-slogans-tab";
 
 export type TabId =
   | "overview"
+  | "weekly-slogans"
   | "festivals"
   | "taste-quiz"
   | "admin-management"
@@ -354,6 +356,16 @@ export default function AdminDashboardPage() {
             perms.includes("settings")
           );
 
+        // 5B. Weekly Slogans (Sweet of the Week)
+        case "weekly-slogans":
+          return (
+            perms.includes("slogans:view") ||
+            perms.includes("slogans:manage") ||
+            perms.includes("slogans") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings")
+          );
+
         // 6. Customer Bestsellers
         case "bestsellers":
           return (
@@ -557,6 +569,8 @@ export default function AdminDashboardPage() {
           return perms.includes("hero:manage") || perms.includes("settings:manage");
         case "announcements":
           return perms.includes("announcements:manage") || perms.includes("settings:manage");
+        case "weekly-slogans":
+          return perms.includes("slogans:manage") || perms.includes("settings:manage") || currentUser.role === "super_admin";
         case "bestsellers":
           return perms.includes("bestsellers:manage") || perms.includes("settings:manage");
         case "welcome-offer":
@@ -859,6 +873,12 @@ export default function AdminDashboardPage() {
       icon: "🖼️",
     },
     { id: "announcements", label: "Banners & Promos", icon: "📢" },
+    {
+      id: "weekly-slogans",
+      label: "Weekly Slogans",
+      icon: "👑",
+      badge: "Sweet of Week",
+    },
     {
       id: "bestsellers",
       label: "Customer Bestsellers",
@@ -1586,6 +1606,18 @@ export default function AdminDashboardPage() {
                   />
                 ) : (
                   <AccessRestrictedCard moduleName="Category Showcase (2x2)" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "weekly-slogans" && (
+                isModulePermitted("weekly-slogans") ? (
+                  <WeeklySlogansTab
+                    products={products}
+                    currentUser={currentUser}
+                    canManage={canManageModule("weekly-slogans")}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Weekly Slogans" currentUser={currentUser} />
                 )
               )}
 
