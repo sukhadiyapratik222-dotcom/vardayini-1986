@@ -126,27 +126,11 @@ export async function GET(request: Request) {
       }
     } catch {}
 
-    // If database returned no authentic reviews, supply default verified customer reviews
-    if (allReviews.length === 0) {
-      allReviews = DEFAULT_VERIFIED_REVIEWS.map((d, idx) => ({
-        id: 100 + idx,
-        productId: 1,
-        productName: d.productName || "Silver Leaf Kaju Katli Festive Box",
-        productSlug: "kaju-katli",
-        rating: d.rating,
-        comment: d.quote,
-        isVerified: true,
-        createdAt: new Date(),
-        name: d.name,
-        city: d.location,
-      }));
-    }
-
     const totalCount = allReviews.length;
     const avgRating =
       totalCount > 0
         ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalCount).toFixed(1)
-        : "5.0";
+        : "0.0";
 
     return Response.json({
       reviews: allReviews,
@@ -156,20 +140,9 @@ export async function GET(request: Request) {
   } catch (err: any) {
     console.error("[Reviews GET Error]", err);
     return Response.json({
-      reviews: DEFAULT_VERIFIED_REVIEWS.map((d, idx) => ({
-        id: 100 + idx,
-        productId: 1,
-        productName: d.productName || "Silver Leaf Kaju Katli Festive Box",
-        productSlug: "kaju-katli",
-        rating: d.rating,
-        comment: d.quote,
-        isVerified: true,
-        createdAt: new Date(),
-        name: d.name,
-        city: d.location,
-      })),
-      totalCount: DEFAULT_VERIFIED_REVIEWS.length,
-      averageRating: "5.0",
+      reviews: [],
+      totalCount: 0,
+      averageRating: "0.0",
     });
   }
 }

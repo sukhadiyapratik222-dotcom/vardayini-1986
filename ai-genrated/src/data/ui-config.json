@@ -953,40 +953,7 @@
     "subtitle": "Real feedback from our patrons across Gujarat and India",
     "showTrustBadge": true,
     "trustBadgeText": "Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India",
-    "reviews": [
-      {
-        "id": "rev-1",
-        "name": "Pratik Sukhadiya",
-        "location": "Kalol, Gujarat",
-        "rating": 5,
-        "quote": "The authentic taste of pure ghee Mohanthal, Kaju Katli and Kesar Peda is unmatched. Best sweet shop in Kalol and Gandhinagar district!",
-        "active": true
-      },
-      {
-        "id": "rev-2",
-        "name": "Rajeshbhai Shah",
-        "location": "Alkapuri, Vadodara",
-        "rating": 5,
-        "quote": "Our family has been ordering Motichoor Ladoo and Mathura Penda from Vardayini for over 25 years. Never a compromise on Gir cow ghee quality.",
-        "active": true
-      },
-      {
-        "id": "rev-3",
-        "name": "Aanya Patel",
-        "location": "Mandvi, Vadodara",
-        "rating": 5,
-        "quote": "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Vadodara heritage taste without excessive sweetness.",
-        "active": true
-      },
-      {
-        "id": "rev-4",
-        "name": "Kiritbhai Gandhi",
-        "location": "Raopura, Vadodara",
-        "rating": 5,
-        "quote": "Steamed Nylon Khaman and crisp Khandvi arrive as if picked straight from the morning counter. Pure authentic taste.",
-        "active": true
-      }
-    ]
+    "reviews": []
   },
   "newLaunchPage": {
     "enabled": true,

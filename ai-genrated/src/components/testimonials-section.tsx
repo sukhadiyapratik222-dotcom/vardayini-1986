@@ -55,16 +55,16 @@ export function TestimonialsSection({
 
   // If autoShowRealReviews is enabled, prioritize real verified customer reviews
   const effectiveInitial = useMemo(() => {
-    if (autoShowRealReviews && Array.isArray(initialReviews) && initialReviews.length > 0) {
+    if (autoShowRealReviews && Array.isArray(initialReviews)) {
       return initialReviews;
     }
     if (configReviews && configReviews.length > 0) {
       return configReviews;
     }
-    if (Array.isArray(initialReviews) && initialReviews.length > 0) {
+    if (Array.isArray(initialReviews)) {
       return initialReviews;
     }
-    return DEFAULT_VERIFIED_REVIEWS;
+    return [];
   }, [autoShowRealReviews, configReviews, initialReviews]);
 
   const [reviewsList, setReviewsList] = useState<CustomerReview[]>(effectiveInitial);
@@ -75,15 +75,17 @@ export function TestimonialsSection({
   // Sync state ONLY when incoming configuration reviews or initial reviews change
   const reviewsSerialized = JSON.stringify(config?.reviews || initialReviews || []);
   useEffect(() => {
-    if (autoShowRealReviews && Array.isArray(initialReviews) && initialReviews.length > 0) {
-      setReviewsList(initialReviews);
-      setTotalCount(initialReviews.length);
+    if (autoShowRealReviews) {
+      const list = Array.isArray(initialReviews) ? initialReviews : [];
+      setReviewsList(list);
+      setTotalCount(list.length);
     } else if (configReviews && configReviews.length > 0) {
       setReviewsList(configReviews);
       setTotalCount(configReviews.length);
-    } else if (Array.isArray(initialReviews) && initialReviews.length > 0) {
-      setReviewsList(initialReviews);
-      setTotalCount(initialReviews.length);
+    } else {
+      const list = Array.isArray(initialReviews) ? initialReviews : [];
+      setReviewsList(list);
+      setTotalCount(list.length);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reviewsSerialized, autoShowRealReviews]);
@@ -128,7 +130,7 @@ export function TestimonialsSection({
         const res = await fetch("/api/reviews");
         if (res.ok && isMounted) {
           const data = await res.json();
-          if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+          if (Array.isArray(data.reviews)) {
             const mapped: CustomerReview[] = data.reviews
               .filter((r: any) => isAuthenticReview(r.name || r.userName, r.comment))
               .map((r: any) => ({
@@ -142,11 +144,9 @@ export function TestimonialsSection({
                 isVerified: r.isVerified ?? true,
                 createdAt: r.createdAt || new Date().toISOString(),
               }));
-            if (mapped.length > 0) {
-              setReviewsList(mapped);
-              setTotalCount(data.totalCount || mapped.length);
-              setAvgRating(data.averageRating || "5.0");
-            }
+            setReviewsList(mapped);
+            setTotalCount(data.totalCount ?? mapped.length);
+            setAvgRating(data.averageRating || (mapped.length > 0 ? "5.0" : "0.0"));
           }
         }
       } catch (e) {
@@ -259,111 +259,132 @@ export function TestimonialsSection({
           </p>
         </div>
 
-        {/* Real Customer Reviews List - Clean stacked cards */}
-        <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
-          {displayedReviews.map((review) => {
-            const hasAvatarImg = !!review.avatarUrl;
-            const initials = getInitials(review.name);
+        {/* Real Customer Reviews List or Empty State */}
+        {displayedReviews.length === 0 ? (
+          <div className="max-w-xl mx-auto text-center py-12 px-6 rounded-2xl bg-white border border-[#eee8df] shadow-xs">
+            <span className="text-4xl select-none mb-3 block">💬</span>
+            <h3 className="font-serif text-lg font-bold text-[#1f242e] mb-1">
+              No customer reviews yet
+            </h3>
+            <p className="text-xs sm:text-sm text-neutral-500 mb-6">
+              Be the first to share your experience with our authentic Gujarati sweets and farsan!
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-[#3b1e54] hover:bg-[#24142e] text-white px-6 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
+            >
+              <span>✍️ Be the First to Review</span>
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
+              {displayedReviews.map((review) => {
+                const hasAvatarImg = !!review.avatarUrl;
+                const initials = getInitials(review.name);
 
-            return (
-              <div
-                key={review.id}
-                className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 border border-[#eee8df] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200"
-              >
-                {/* 5 Gold Stars Rating + Verified Badge */}
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                return (
                   <div
-                    className="flex items-center gap-1 text-[#eab308] text-sm sm:text-base"
-                    aria-label={`${review.rating} out of 5 stars`}
+                    key={review.id}
+                    className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 border border-[#eee8df] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200"
                   >
-                    {[...Array(review.rating)].map((_, i) => (
-                      <span key={i} className="leading-none select-none">
-                        ★
-                      </span>
-                    ))}
-                  </div>
+                    {/* 5 Gold Stars Rating + Verified Badge */}
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                      <div
+                        className="flex items-center gap-1 text-[#eab308] text-sm sm:text-base"
+                        aria-label={`${review.rating} out of 5 stars`}
+                      >
+                        {[...Array(review.rating)].map((_, i) => (
+                          <span key={i} className="leading-none select-none">
+                            ★
+                          </span>
+                        ))}
+                      </div>
 
-                  {review.isVerified && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                      <span>✓</span>
-                      <span>Verified Customer</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Review Quote / Actual Comment */}
-                <blockquote className="text-neutral-700 italic font-normal text-sm sm:text-base md:text-[17px] leading-relaxed mb-5 sm:mb-7">
-                  &ldquo;{review.quote}&rdquo;
-                </blockquote>
-
-                {/* Customer Author Row */}
-                <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100">
-                  <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                    {/* Circular Avatar / Initials */}
-                    <div className="relative h-11 w-11 sm:h-12 sm:w-12 rounded-full overflow-hidden shrink-0 border border-neutral-200 bg-[#f5efe1] shadow-2xs flex items-center justify-center font-bold text-xs sm:text-sm text-[#3b1e54]">
-                      {hasAvatarImg ? (
-                        <Image
-                          src={review.avatarUrl!}
-                          alt={review.name}
-                          width={48}
-                          height={48}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span>{initials}</span>
+                      {review.isVerified && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                          <span>✓</span>
+                          <span>Verified Customer</span>
+                        </span>
                       )}
                     </div>
 
-                    {/* Name & Location */}
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-neutral-900 text-sm sm:text-base truncate">
-                        {review.name}
-                      </h4>
-                      <p className="text-neutral-500 text-xs sm:text-sm mt-0.5 truncate">
-                        {review.location}
-                      </p>
+                    {/* Review Quote / Actual Comment */}
+                    <blockquote className="text-neutral-700 italic font-normal text-sm sm:text-base md:text-[17px] leading-relaxed mb-5 sm:mb-7">
+                      &ldquo;{review.quote}&rdquo;
+                    </blockquote>
+
+                    {/* Customer Author Row */}
+                    <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100">
+                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                        {/* Circular Avatar / Initials */}
+                        <div className="relative h-11 w-11 sm:h-12 sm:w-12 rounded-full overflow-hidden shrink-0 border border-neutral-200 bg-[#f5efe1] shadow-2xs flex items-center justify-center font-bold text-xs sm:text-sm text-[#3b1e54]">
+                          {hasAvatarImg ? (
+                            <Image
+                              src={review.avatarUrl!}
+                              alt={review.name}
+                              width={48}
+                              height={48}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span>{initials}</span>
+                          )}
+                        </div>
+
+                        {/* Name & Location */}
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-neutral-900 text-sm sm:text-base truncate">
+                            {review.name}
+                          </h4>
+                          <p className="text-neutral-500 text-xs sm:text-sm mt-0.5 truncate">
+                            {review.location}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Product Mentioned Tag */}
+                      {review.productName && (
+                        <span className="hidden sm:inline-block text-[11px] font-medium text-neutral-500 bg-neutral-50 px-2.5 py-1 rounded-full border border-neutral-100 truncate max-w-[200px]">
+                          {review.productName}
+                        </span>
+                      )}
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  {/* Product Mentioned Tag */}
-                  {review.productName && (
-                    <span className="hidden sm:inline-block text-[11px] font-medium text-neutral-500 bg-neutral-50 px-2.5 py-1 rounded-full border border-neutral-100 truncate max-w-[200px]">
-                      {review.productName}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+            {/* View More / Toggle Controls */}
+            <div className="text-center mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-3">
+              {reviewsList.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(!showAll)}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#3b1e54]/20 hover:border-[#3b1e54] bg-white px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-bold text-[#3b1e54] shadow-xs hover:bg-[#faf6ee] transition active:scale-95 cursor-pointer"
+                >
+                  <span>{showAll ? "Show Less" : `View More Customer Reviews (${reviewsList.length})`}</span>
+                  <span className="text-sm">{showAll ? "↑" : "↓"}</span>
+                </button>
+              )}
 
-        {/* View More / Toggle Controls */}
-        <div className="text-center mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-3">
-          {reviewsList.length > 3 && (
-            <button
-              type="button"
-              onClick={() => setShowAll(!showAll)}
-              className="inline-flex items-center gap-2 rounded-full border border-[#3b1e54]/20 hover:border-[#3b1e54] bg-white px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-bold text-[#3b1e54] shadow-xs hover:bg-[#faf6ee] transition active:scale-95 cursor-pointer"
-            >
-              <span>{showAll ? "Show Less" : `View More Customer Reviews (${reviewsList.length})`}</span>
-              <span className="text-sm">{showAll ? "↑" : "↓"}</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-[#3b1e54] hover:bg-[#24142e] text-white px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
-          >
-            <span>✍️ Write a Review</span>
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-[#3b1e54] hover:bg-[#24142e] text-white px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                <span>✍️ Write a Review</span>
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Real Accurate Customer Trust Strip */}
-        {showTrustBadge && (
+        {showTrustBadge && reviewsList.length > 0 && (
           <div className="mt-12 sm:mt-16 text-center">
             <p className="text-xs sm:text-sm text-neutral-600 flex items-center justify-center flex-wrap gap-2">
-              <span className="font-bold text-[#b45309]">★ 5.0 / 5</span>
+              <span className="font-bold text-[#b45309]">★ {avgRating} / 5</span>
               <span>·</span>
               <span>{trustBadgeText}</span>
             </p>

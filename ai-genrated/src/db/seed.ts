@@ -816,6 +816,13 @@ export async function ensureReviews() {
       return; // Never delete reviews! Preserve all existing customer reviews permanently.
     }
 
+    // Do not resurrect deleted reviews if the catalog or orders already exist.
+    // If the database has products/orders and reviews is empty, it means the admin intentionally cleared all reviews.
+    const checkStore = await db.select({ id: products.id }).from(products).limit(1);
+    if (checkStore.length > 0) {
+      return;
+    }
+
     const allCurrentProducts = await db.select().from(products);
     const prodMap = new Map(allCurrentProducts.map((p) => [p.slug, p.id]));
     const allUsersList = await db.select().from(users);
@@ -914,7 +921,7 @@ async function seedInternal() {
     await ensureEssentialCategories();
     await ensureEssentialProducts();
     await ensureDefaultCoupons();
-    await ensureReviews();
+    // Do not call ensureReviews() here so admin review deletions are respected permanently
     return;
   }
 

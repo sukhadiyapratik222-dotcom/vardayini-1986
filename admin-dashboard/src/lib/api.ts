@@ -1556,6 +1556,13 @@ export const api = {
     return handleResponse<{ success: boolean; message?: string }>(res, "Failed to delete review");
   },
 
+  async deleteAllReviews(): Promise<{ success: boolean; message?: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/reviews?all=true`, {
+      method: "DELETE",
+    });
+    return handleResponse<{ success: boolean; message?: string }>(res, "Failed to delete all reviews");
+  },
+
   // Database-grounded Reports
   async getReportLogins(): Promise<ReportLoginItem[]> {
     const res = await fetch(`${PROXY_BASE}/api/admin/reports?type=logins`, { cache: "no-store" });

@@ -30,14 +30,14 @@ export function TestimonialsTab({ config, onRefresh, currentUser }: Testimonials
 
   // Initialize reviews: prioritize real database reviews if available
   const initialReviews: TestimonialConfigItem[] = useMemo(() => {
-    if (currentCfg.realDbReviews && currentCfg.realDbReviews.length > 0) {
-      return currentCfg.realDbReviews;
+    if (autoShowRealReviews) {
+      return currentCfg.realDbReviews || [];
     }
     if (currentCfg.reviews && currentCfg.reviews.length > 0) {
       return currentCfg.reviews;
     }
     return [];
-  }, [currentCfg.realDbReviews, currentCfg.reviews]);
+  }, [autoShowRealReviews, currentCfg.realDbReviews, currentCfg.reviews]);
 
   const [reviews, setReviews] = useState<TestimonialConfigItem[]>(initialReviews);
   const [saving, setSaving] = useState(false);

@@ -79,36 +79,7 @@ export default async function HomePage() {
       createdAt: safeIsoDate(r.createdAt, new Date().toISOString())!,
     }));
 
-  if (uniqueReviews.length === 0) {
-    uniqueReviews = DEFAULT_VERIFIED_REVIEWS.map((d) => ({
-      id: d.id,
-      name: d.name,
-      location: d.location,
-      rating: d.rating,
-      quote: d.quote,
-      productName: d.productName || undefined,
-      isVerified: d.isVerified ?? true,
-      createdAt: d.createdAt || new Date().toISOString(),
-    }));
-  } else if (uniqueReviews.length < 5) {
-    // Retain newest real customer reviews first, and supplement with heritage verified reviews for carousel depth
-    const existingQuotes = new Set(uniqueReviews.map((r) => r.quote.trim().toLowerCase()));
-    for (const d of DEFAULT_VERIFIED_REVIEWS) {
-      if (!existingQuotes.has(d.quote.trim().toLowerCase())) {
-        uniqueReviews.push({
-          id: d.id,
-          name: d.name,
-          location: d.location,
-          rating: d.rating,
-          quote: d.quote,
-          productName: d.productName || undefined,
-          isVerified: d.isVerified ?? true,
-          createdAt: d.createdAt || new Date().toISOString(),
-        });
-      }
-    }
-  }
-
+  // Retain only authentic real customer reviews. When the admin deletes all reviews, do not resurrect mock/default reviews.
   const bestsellersConfig = uiConfig?.bestsellersSection;
   const autoCalculate = bestsellersConfig?.autoCalculateFromSales !== false;
 
@@ -146,12 +117,9 @@ export default async function HomePage() {
       trustBadgeText:
         testimonialsConfig?.trustBadgeText ||
         "Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India",
-      reviews:
-        autoRealReviews && uniqueReviews.length > 0
-          ? uniqueReviews
-          : testimonialsConfig?.reviews && testimonialsConfig.reviews.length > 0
-          ? testimonialsConfig.reviews
-          : uniqueReviews,
+      reviews: autoRealReviews
+        ? uniqueReviews
+        : testimonialsConfig?.reviews || [],
       realDbReviews: uniqueReviews,
     },
   };

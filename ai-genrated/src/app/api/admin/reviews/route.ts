@@ -62,13 +62,39 @@ export async function DELETE(request: Request) {
 
   try {
     const url = new URL(request.url);
+    const deleteAll = url.searchParams.get("all") === "true";
     const reviewId = parsePositiveInt(url.searchParams.get("id"));
 
-    if (!reviewId) {
-      return NextResponse.json({ error: "A valid review id is required" }, { status: 400, headers: CORS_HEADERS });
+    if (deleteAll) {
+      await db.delete(reviews);
+
+      try {
+        const { getMongoDb } = await import("@/lib/mongodb");
+        const mongo = await getMongoDb();
+        if (mongo) {
+          await mongo.collection("reviews").deleteMany({});
+        }
+      } catch {}
+
+      return NextResponse.json({ success: true, message: "All reviews removed successfully" }, { headers: CORS_HEADERS });
     }
 
-    const [deleted] = await db.delete(reviews).where(eq(reviews.id, reviewId));
+    if (!reviewId) {
+      return NextResponse.json({ error: "A valid review id is required or all=true" }, { status: 400, headers: CORS_HEADERS });
+    }
+
+    await db.delete(reviews).where(eq(reviews.id, reviewId));
+
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        await mongo.collection("reviews").deleteOne({
+          $or: [{ id: reviewId }, { reviewId: reviewId }, { id: String(reviewId) }, { reviewId: String(reviewId) }]
+        });
+      }
+    } catch {}
+
     return NextResponse.json({ success: true, message: "Review deleted successfully" }, { headers: CORS_HEADERS });
   } catch (error: any) {
     console.error("[Admin Reviews DELETE Error]:", error);

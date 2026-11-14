@@ -15,6 +15,8 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
   const [ratingFilter, setRatingFilter] = useState<number | "all">("all");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [reviewToDelete, setReviewToDelete] = useState<ReviewItem | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   const loadReviews = useCallback(async () => {
     setLoading(true);
@@ -45,6 +47,21 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
       toast.error(err instanceof Error ? err.message : "Failed to delete review");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    try {
+      await api.deleteAllReviews();
+      toast.success("All reviews permanently deleted from store & database");
+      setShowDeleteAllConfirm(false);
+      await loadReviews();
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete all reviews");
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -101,14 +118,27 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
           </p>
         </div>
 
-        <button
-          onClick={loadReviews}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-[#0b2f8a]/5 text-[#182230] border border-[#0b2f8a]/15 shadow-sm transition"
-        >
-          <span>🔄</span>
-          <span>{loading ? "Refreshing..." : "Refresh Reviews"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {totalReviews > 0 && (
+            <button
+              onClick={() => setShowDeleteAllConfirm(true)}
+              disabled={deletingAll || loading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 shadow-sm transition disabled:opacity-50"
+            >
+              <span>🗑️</span>
+              <span>{deletingAll ? "Deleting..." : "Delete All Reviews"}</span>
+            </button>
+          )}
+
+          <button
+            onClick={loadReviews}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-[#0b2f8a]/5 text-[#182230] border border-[#0b2f8a]/15 shadow-sm transition"
+          >
+            <span>🔄</span>
+            <span>{loading ? "Refreshing..." : "Refresh Reviews"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Analytics KPI Cards */}
@@ -370,6 +400,43 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
                 className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition disabled:opacity-50"
               >
                 {deletingId ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete All Reviews Modal */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-bold text-base text-slate-900">Delete ALL Customer Reviews?</h3>
+              <p className="text-xs text-slate-500">
+                Are you sure you want to permanently remove <strong>all {totalReviews} reviews</strong> from the database and storefront?
+                The storefront will cleanly display an empty reviews state without fake or auto-seeded reviews.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteAllConfirm(false)}
+                disabled={deletingAll}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAll}
+                disabled={deletingAll}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition disabled:opacity-50"
+              >
+                {deletingAll ? "Deleting All..." : "Yes, Delete All"}
               </button>
             </div>
           </div>
