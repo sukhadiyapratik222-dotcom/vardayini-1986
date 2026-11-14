@@ -103,7 +103,7 @@ export function WarmCreamHomepage({
   // Map dynamic bestsellers from database if available
   const dynamicBestsellers =
     bestsellers && bestsellers.length > 0
-      ? bestsellers.slice(0, 8).map((product) => {
+      ? bestsellers.slice(0, 15).map((product) => {
           const primaryVariant = product.variants?.[0];
           const sellingPrice = primaryVariant
             ? unitPrice(primaryVariant.price, primaryVariant.discountedPrice)

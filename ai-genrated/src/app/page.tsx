@@ -35,7 +35,7 @@ export default async function HomePage() {
   const [categories, featured, bestsellers, specialProducts, storeRows, reviewRows, realTopSellers] = await Promise.all([
     listCategories(),
     listProducts({ featured: true, limit: 8 }),
-    listProducts({ tag: "best_seller", limit: 8 }),
+    listProducts({ tag: "best_seller", limit: 15 }),
     specialIds.length > 0
       ? listProducts({ ids: specialIds })
       : listProducts({ featured: true, limit: 4 }),

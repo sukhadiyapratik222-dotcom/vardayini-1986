@@ -77,3 +77,4 @@ export function maskAddress(snapshotRaw?: string | null): {
 
   return result;
 }
+
