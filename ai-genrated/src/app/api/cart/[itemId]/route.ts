@@ -97,21 +97,18 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
 
   const item = await ownedItem(itemId);
   if (!item) {
-    // If reducing quantity to 0 on an already-deleted item, return 200 idempotent success
-    if (q === 0) {
-      try {
-        const { removeMongoCartItem } = await import("@/lib/mongodb");
-        const { user, sessionId } = await getCartIdentity();
-        await removeMongoCartItem({ userId: user?.id, sessionId, variantId: itemId });
-      } catch {}
-      const cart = await loadCartLines();
-      return Response.json({
-        items: cart.lines,
-        totals: cart.totals,
-        count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
-      });
-    }
-    return Response.json({ error: "Item not found" }, { status: 404 });
+    // Idempotent resilience: If item is already deleted or missing, clean up and return fresh cart
+    try {
+      const { removeMongoCartItem } = await import("@/lib/mongodb");
+      const { user, sessionId } = await getCartIdentity();
+      await removeMongoCartItem({ userId: user?.id, sessionId, variantId: itemId });
+    } catch {}
+    const cart = await loadCartLines();
+    return Response.json({
+      items: cart.lines,
+      totals: cart.totals,
+      count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+    });
   }
 
   if (q === 0) {

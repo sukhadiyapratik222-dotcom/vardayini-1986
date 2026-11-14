@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { WelcomeOfferPopup } from "@/components/welcome-offer-popup";
 import { ensureSeeded } from "@/db/seed";
 import { getUiConfigSafe } from "@/lib/ui-config";
 import "./globals.css";
@@ -51,6 +52,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <SiteHeader initialConfig={uiConfig} />
           {children}
           <SiteFooter initialConfig={uiConfig} />
+          <WelcomeOfferPopup config={uiConfig?.welcomeOffer} />
         </div>
       </body>
     </html>

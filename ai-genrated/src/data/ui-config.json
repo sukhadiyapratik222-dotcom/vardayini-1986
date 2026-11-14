@@ -938,6 +938,9 @@
   },
   "welcomeOffer": {
     "enabled": true,
+    "delaySeconds": 300,
+    "cooldownDays": 7,
+    "exitIntent": false,
     "badge": "WELCOME OFFER",
     "title": "FLAT 10% OFF ON YOUR FIRST ORDER",
     "subtitle": "Sign up now with your email or phone number to receive your exclusive discount code instantly!",

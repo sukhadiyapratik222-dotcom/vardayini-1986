@@ -6,7 +6,6 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { formatInr, unitPrice } from "@/lib/money";
 import { Magnetic } from "@/components/core/magnetic";
-import { WelcomeOfferBanner } from "@/components/welcome-offer-banner";
 
 export interface ProductVariant {
   id: number;
@@ -402,15 +401,6 @@ export function NewProductMotionShowcase({
               </div>
             </div>
           </div>
-        </section>
-      )}
-
-      {/* ─────────────────────────────────────────────────────────────
-          2.5. WELCOME OFFER: Flat 10% Off On Your First Order
-         ───────────────────────────────────────────────────────────── */}
-      {welcomeOfferConfig?.enabled !== false && (
-        <section className="py-12 sm:py-16 bg-[#faf8f5]">
-          <WelcomeOfferBanner config={welcomeOfferConfig} />
         </section>
       )}
 

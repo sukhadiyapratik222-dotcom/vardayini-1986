@@ -774,6 +774,18 @@ function initSqliteTables(sqlite: DatabaseSync) {
       add_to_cart_count INTEGER DEFAULT 0,
       last_tracked_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS welcome_offer_leads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      contact TEXT NOT NULL UNIQUE,
+      contact_type TEXT NOT NULL DEFAULT 'unknown',
+      coupon_code TEXT NOT NULL DEFAULT 'FIRST10',
+      discount_percent INTEGER NOT NULL DEFAULT 10,
+      marketing_consent INTEGER NOT NULL DEFAULT 1,
+      source_url TEXT DEFAULT '/',
+      status TEXT NOT NULL DEFAULT 'claimed',
+      claimed_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `;
   try {
     sqlite.exec(ddl);

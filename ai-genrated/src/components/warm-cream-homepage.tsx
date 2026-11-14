@@ -17,7 +17,6 @@ import { CulinaryExperienceSection } from "@/components/culinary-experience-sect
 import { Magnetic } from "@/components/core/magnetic";
 import { OutletsSection } from "@/components/outlets-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
-import { WelcomeOfferBanner } from "@/components/welcome-offer-banner";
 import { KitchenCamHomepageSection } from "@/components/kitchen-cam-homepage-section";
 import { TasteQuizCta } from "@/components/taste-quiz-cta";
 import type { SpecialItemsConfig } from "@/components/home-page-client";
@@ -369,15 +368,6 @@ export function WarmCreamHomepage({
           </div>
         </div>
       </section>
-
-      {/* ─────────────────────────────────────────────────────────────
-          8. WELCOME OFFER BANNER: Flat 10% Off First Order
-         ───────────────────────────────────────────────────────────── */}
-      {uiConfig?.welcomeOffer?.enabled !== false && (
-        <section className="py-12 sm:py-16 bg-[#faf6ee] border-t border-[#3b1e54]/10">
-          <WelcomeOfferBanner config={uiConfig?.welcomeOffer} />
-        </section>
-      )}
 
       {/* ─────────────────────────────────────────────────────────────
           9. TESTIMONIALS: What Our Customers Say

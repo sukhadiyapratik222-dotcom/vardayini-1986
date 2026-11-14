@@ -76,8 +76,8 @@ export function CartClient({ initial }: { initial: CartState }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 404) {
-          // If 404, item was already removed; refresh cart from server
+        if (res.status === 404 || data?.error === "Item not found") {
+          // If item already removed/missing; refresh cart silently without scary error
           const freshRes = await fetch("/api/cart", { cache: "no-store" });
           if (freshRes.ok) {
             const freshData = await freshRes.json();
@@ -118,7 +118,7 @@ export function CartClient({ initial }: { initial: CartState }) {
     try {
       const res = await fetch(`/api/cart/${targetId}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok && res.status !== 404) {
+      if (!res.ok && res.status !== 404 && data?.error !== "Item not found") {
         setError(data.error || "Could not remove item");
         return;
       }
@@ -207,8 +207,15 @@ export function CartClient({ initial }: { initial: CartState }) {
     <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
       <div className="space-y-4">
         {error ? (
-          <div className="rounded-2xl border border-[#6b1d1d]/20 bg-[#6b1d1d]/10 p-4 text-sm text-[#6b1d1d]">
-            {error}
+          <div className="rounded-2xl border border-[#6b1d1d]/20 bg-[#6b1d1d]/10 p-4 text-sm text-[#6b1d1d] flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="text-xs text-[#6b1d1d] hover:text-stone-900 font-bold underline ml-3"
+            >
+              Dismiss
+            </button>
           </div>
         ) : null}
         {lines.map((line) => {

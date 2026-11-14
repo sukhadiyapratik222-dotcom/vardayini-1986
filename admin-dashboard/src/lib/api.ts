@@ -144,6 +144,9 @@ export interface BestsellersSectionConfig {
 
 export interface WelcomeOfferConfig {
   enabled?: boolean;
+  delaySeconds?: number;
+  cooldownDays?: number;
+  exitIntent?: boolean;
   badge?: string;
   title?: string;
   subtitle?: string;

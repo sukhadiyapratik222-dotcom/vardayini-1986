@@ -678,3 +678,20 @@ export const sloganAnalytics = mysqlTable("slogan_analytics", {
   addToCartCount: int("add_to_cart_count").default(0),
   lastTrackedAt: timestamp("last_tracked_at").defaultNow(),
 });
+
+// ==========================================
+// Welcome Offer Popup: Leads & Conversions
+// ==========================================
+
+export const welcomeOfferLeads = mysqlTable("welcome_offer_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  contact: varchar("contact", { length: 160 }).notNull().unique(),
+  contactType: varchar("contact_type", { length: 20 }).notNull().default("unknown"),
+  couponCode: varchar("coupon_code", { length: 40 }).notNull().default("FIRST10"),
+  discountPercent: int("discount_percent").notNull().default(10),
+  marketingConsent: boolean("marketing_consent").notNull().default(true),
+  sourceUrl: varchar("source_url", { length: 255 }).default("/"),
+  status: varchar("status", { length: 20 }).notNull().default("claimed"),
+  claimedAt: timestamp("claimed_at").notNull().defaultNow(),
+});
+
