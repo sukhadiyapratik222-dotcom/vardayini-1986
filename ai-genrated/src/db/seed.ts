@@ -354,7 +354,7 @@ export const PRODUCT_CATALOG: {
         name: "Mysore Pak (Ghee Rich)",
         slug: "mysore-pak",
         description: "Porous, ghee-dripping royal Mysore Pak that dissolves into golden crumbs on your tongue.",
-        imageUrl: "/images/kaju-katli.jpg",
+        imageUrl: "/images/showcase/mysore-pak-clean.jpg",
         tags: "ghee,mysore_pak",
         isFeatured: false,
         variants: [

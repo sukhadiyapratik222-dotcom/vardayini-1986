@@ -28,7 +28,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
       "Crisp roasted pistachio kunafa nestled inside fragrant boondi pearls, delicately enveloped in rich dark chocolate and crushed Iranian pistachios.",
     buttonText: "Shop Now",
     buttonHref: "/shop?search=ladoo",
-    imageUrl: "/images/showcase/dubai-chocolate-ladoo.jpg",
+    imageUrl: "/images/showcase/dubai-ladoo-clean.jpg",
     imageAlt: "Dubai Chocolate Ladoo with Pistachio Kunafa Center",
     bgGradient: "from-[#140638] via-[#21094e] to-[#0c0324]",
     accentColor: "#dfb755",
@@ -42,7 +42,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
       "Porous, ghee-dripping royal Mysore Pak simmered slowly in 100% Shuddh Desi Ghee. Melts instantly into golden cardamom sweetness on your tongue.",
     buttonText: "Shop Now",
     buttonHref: "/shop/mysore-pak",
-    imageUrl: "/images/showcase/mysore-pak-festival.jpg",
+    imageUrl: "/images/showcase/mysore-pak-clean.jpg",
     imageAlt: "Authentic Ghee Mysore Pak Triangular Sweets",
     bgGradient: "from-[#1c2e17] via-[#243d1e] to-[#121f0f]",
     accentColor: "#f5c518",
@@ -56,7 +56,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
       "Generations of Vadodara families have trusted our dawn-prepared mithai platters, golden chakli, and saffron motichoor for life's most precious celebrations.",
     buttonText: "Celebrate Now",
     buttonHref: "/shop",
-    imageUrl: "/images/mithai-platter-showcase.jpg",
+    imageUrl: "/images/showcase/tradition-clean.jpg",
     imageAlt: "Crafting Memories Traditional Mithai Platter",
     bgGradient: "from-[#2b1810] via-[#3a2016] to-[#1a0e0a]",
     accentColor: "#dfb755",
@@ -150,7 +150,7 @@ export function LuxuryHeroCarousel({
       onTouchEnd={handleTouchEnd}
     >
       {/* Slide Viewport */}
-      <div className="relative min-h-[500px] sm:min-h-[560px] lg:min-h-[620px] w-full flex items-center">
+      <div className="relative min-h-[500px] sm:min-h-[540px] lg:min-h-[600px] w-full flex items-center">
         {slides.map((slide, idx) => {
           const isActive = idx === currentIndex;
 
@@ -177,9 +177,11 @@ export function LuxuryHeroCarousel({
                 style={{ backgroundColor: slide.accentColor }}
               />
 
-              {/* Main Content Grid */}
-              <div className="relative mx-auto max-w-7xl h-full px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20 flex items-center">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+              {/* Main Content Grid: Responsive Layout */}
+              <div className="relative mx-auto max-w-7xl h-full px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-16 flex items-center w-full">
+                
+                {/* Desktop & Tablet Layout (>= lg) */}
+                <div className="hidden lg:grid lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
                   
                   {/* Left Column: Glass Overlay Panel & Typography */}
                   <div className="lg:col-span-6 z-20 space-y-4 sm:space-y-6">
@@ -245,7 +247,7 @@ export function LuxuryHeroCarousel({
                           className={`object-cover object-center ${
                             isActive ? "animate-ken-burns" : ""
                           }`}
-                          sizes="(max-width: 768px) 100vw, 50vw"
+                          sizes="(max-width: 1024px) 100vw, 50vw"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-6xl">
@@ -261,6 +263,75 @@ export function LuxuryHeroCarousel({
                   </div>
 
                 </div>
+
+                {/* Mobile & Small Screen Layout (< lg): Single Unified Premium Banner */}
+                <div className="flex lg:hidden flex-col items-center w-full max-w-md mx-auto space-y-3 pb-8">
+                  {/* Clean Food Photography on Top */}
+                  <div className="relative w-full aspect-[16/10] sm:aspect-[2/1] rounded-2xl overflow-hidden shadow-xl border border-white/15 bg-black/30 group">
+                    {slide.imageUrl ? (
+                      <Image
+                        src={slide.imageUrl}
+                        alt={slide.imageAlt}
+                        fill
+                        priority={idx === 0}
+                        className={`object-cover object-center ${
+                          isActive ? "animate-ken-burns" : ""
+                        }`}
+                        sizes="100vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-5xl">
+                        🍬
+                      </div>
+                    )}
+                    <div className="absolute bottom-2 right-2 glass-badge px-2.5 py-0.5 rounded-full text-[10px] text-white/90 font-medium">
+                      ✦ 100% Shuddh Desi Ghee
+                    </div>
+                  </div>
+
+                  {/* Integrated Typography & CTA Below Food Photo */}
+                  <div className="w-full text-center space-y-1.5 px-2">
+                    {slide.badge && (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full glass-badge mb-0.5">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full animate-ping"
+                          style={{ backgroundColor: slide.accentColor }}
+                        />
+                        <span
+                          className="text-[9px] font-bold uppercase tracking-widest text-[#f5c518]"
+                        >
+                          {slide.badge}
+                        </span>
+                      </div>
+                    )}
+
+                    <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-white leading-tight">
+                      {slide.title}
+                    </h1>
+
+                    <p
+                      className="font-medium text-xs tracking-wide"
+                      style={{ color: slide.accentColor }}
+                    >
+                      {slide.tagline}
+                    </p>
+
+                    <p className="text-[11px] text-slate-200/85 leading-relaxed max-w-xs mx-auto line-clamp-2">
+                      {slide.description}
+                    </p>
+
+                    <div className="pt-2 flex justify-center">
+                      <Link
+                        href={slide.buttonHref}
+                        className="gold-shimmer-btn inline-flex items-center gap-2 px-6 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all duration-300 shadow-lg active:scale-95 cursor-pointer bg-[#0c0324] text-[#dfb755] hover:bg-[#1f0b48] border border-[#dfb755]/50 hover:border-[#dfb755]"
+                      >
+                        <span>{slide.buttonText}</span>
+                        <span>→</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           );
