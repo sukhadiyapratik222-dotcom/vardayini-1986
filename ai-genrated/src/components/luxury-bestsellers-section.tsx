@@ -275,7 +275,7 @@ export function LuxuryBestsellersSection({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7a1c1c]/10 text-[#7a1c1c] text-xs font-bold uppercase tracking-wider mb-2">
               <span>✦</span>
-              <span>MOST LOVED BY VADODARA FAMILIES</span>
+              <span>MOST LOVED BY KALOL FAMILIES</span>
             </div>
             <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#140638]">
               Signature Best Sellers

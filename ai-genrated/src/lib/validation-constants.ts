@@ -96,7 +96,7 @@ export const INDIAN_PINCODE_REGEX = /^[1-9][0-9]{5}$/;
 
 /**
  * 5. CITY_REGEX:
- *    Letters, spaces, hyphens, and periods (e.g., "Vadodara", "New Delhi", "St. Thomas").
+ *    Letters, spaces, hyphens, and periods (e.g., "Kalol", "Gandhinagar", "New Delhi").
  */
 export const CITY_REGEX = /^[a-zA-Z\s'.-]{2,80}$/;
 

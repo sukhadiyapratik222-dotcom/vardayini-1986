@@ -94,7 +94,7 @@ export default async function HomePage() {
       autoCalculateFromSales: autoCalculate,
       badge: bestsellersConfig?.badge || "MOST LOVED",
       title: bestsellersConfig?.title || "CUSTOMER BESTSELLERS",
-      viewAllText: bestsellersConfig?.viewAllText || "Explore All Vadodara Bestsellers",
+      viewAllText: bestsellersConfig?.viewAllText || "Explore All Kalol Bestsellers",
       viewAllUrl: bestsellersConfig?.viewAllUrl || "/shop?tag=best_seller",
       items:
         autoCalculate && realTopSellers.length > 0
@@ -116,7 +116,7 @@ export default async function HomePage() {
       showTrustBadge: testimonialsConfig?.showTrustBadge ?? true,
       trustBadgeText:
         testimonialsConfig?.trustBadgeText ||
-        "Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India",
+        "Over 1,850+ verified reviews across Kalol, Gujarat & Pan-India",
       reviews: autoRealReviews
         ? uniqueReviews
         : testimonialsConfig?.reviews || [],

@@ -56,12 +56,12 @@ export const ALL_FESTIVE_PRODUCTS: FestiveHighlightItem[] = [
     festivalId: "diwali",
     festivalName: "Diwali Special",
     gujarati: "શુદ્ધ ઘી મોહનથાળ & ઘારી",
-    name: "Heritage Mohanthal & Surat Ghari Box",
+    name: "Heritage Mohanthal & Kalol Ghari Box",
     badge: "Gujarati Authentic 👑",
     price: 880,
     image: "/images/mithai-platter-showcase.jpg",
     tags: "Gir Cow Ghee Mohanthal & Mawa Ghari",
-    slug: "heritage-mohanthal-surat-ghari-box",
+    slug: "heritage-mohanthal-kalol-ghari-box",
   },
 
   // 2. NAVRATRI & DUSSEHRA

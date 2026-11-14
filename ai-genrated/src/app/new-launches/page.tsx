@@ -5,7 +5,7 @@ import { NewProductMotionShowcase } from "@/components/new-product-motion-showca
 export const metadata: Metadata = {
   title: "New Launches & 2026 Collection | Vardayini Sweet Mart",
   description:
-    "Discover newly launched royal sweets, authentic Gujarati farsan, and festive gift hampers handcrafted with 100% Shuddh Desi Ghee in Vadodara.",
+    "Discover newly launched royal sweets, authentic Gujarati farsan, and festive gift hampers handcrafted with 100% Shuddh Desi Ghee in Kalol, Gujarat.",
 };
 
 export default async function NewLaunchesPage() {

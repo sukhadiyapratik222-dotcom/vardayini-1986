@@ -42,11 +42,11 @@ export function maskAddress(snapshotRaw?: string | null): {
   fullAddress: string;
 } {
   const result = {
-    city: "Vadodara",
+    city: "Kalol",
     state: "Gujarat",
     pincode: "",
-    maskedSummary: "Vadodara Hub Dispatch, Gujarat",
-    fullAddress: "Vadodara, Gujarat",
+    maskedSummary: "Kalol Hub Dispatch, Gujarat",
+    fullAddress: "Kalol, Gujarat",
   };
 
   if (!snapshotRaw) return result;
@@ -54,12 +54,12 @@ export function maskAddress(snapshotRaw?: string | null): {
   try {
     const snap = parseAddressSnapshot(snapshotRaw);
     if (snap && typeof snap === "object") {
-      result.city = snap.city || "Vadodara";
+      result.city = snap.city || "Kalol";
       result.state = snap.state || "Gujarat";
       result.pincode = snap.pincode || "";
       const rawLine1 = (snap.line1 || snap.address || snap.street || "").trim();
       const line1 = rawLine1.replace(/,\s*/g, ", ").trim();
-      const locality = snap.city || "Vadodara";
+      const locality = snap.city || "Kalol";
       const state = snap.state || "Gujarat";
       const pin = snap.pincode ? ` - ${snap.pincode}` : "";
       
@@ -71,8 +71,8 @@ export function maskAddress(snapshotRaw?: string | null): {
       result.fullAddress = snapshotRaw.trim();
     }
   } catch {
-    result.maskedSummary = "Vadodara Hub Dispatch, Gujarat";
-    result.fullAddress = "Vadodara, Gujarat";
+    result.maskedSummary = "Kalol Hub Dispatch, Gujarat";
+    result.fullAddress = "Kalol, Gujarat";
   }
 
   return result;

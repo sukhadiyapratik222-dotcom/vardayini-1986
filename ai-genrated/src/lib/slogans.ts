@@ -294,7 +294,7 @@ export async function getActiveWeeklySlogan(): Promise<WeeklySloganPayload | nul
     showAnnouncementStrip: true,
     autoRotateEnabled: true,
     rotationMode: "sequential",
-    fallbackSloganText: "Pure *Desi Ghee*. Pure *Tradition*. Handcrafted in Vadodara.",
+    fallbackSloganText: "Pure *Desi Ghee*. Pure *Tradition*. handcrafted in Kalol.",
     fallbackSubText: "Experience our royal Shuddh Desi Ghee sweets fresh from our morning bhatti.",
     fallbackProductId: 1,
   };
@@ -385,7 +385,7 @@ export async function getActiveWeeklySlogan(): Promise<WeeklySloganPayload | nul
       bg_style: "glass_aurora",
       button_text: "Shop Sweet of the Week →",
       button_link: "/shop",
-      story_line: "Handcrafted in our Vadodara kitchen daily with pure Gir cow desi ghee.",
+      story_line: "Handcrafted in our Kalol kitchen daily with pure Gir cow desi ghee.",
       badges_json: JSON.stringify(["100% Desi Ghee", "Handcrafted", "Made Fresh Daily", "Silver Leaf"]),
       start_at: currentBoundaries.startIso,
       end_at: currentBoundaries.endIso,
@@ -394,7 +394,7 @@ export async function getActiveWeeklySlogan(): Promise<WeeklySloganPayload | nul
   }
 
   // 5. Parse Badges
-  let badges: string[] = ["100% Desi Ghee", "Handcrafted Daily", "Vadodara Heritage"];
+  let badges: string[] = ["100% Desi Ghee", "Handcrafted Daily", "Kalol Heritage"];
   try {
     const rawBadges = activeSloganRow.badges_json || activeSloganRow.badgesJson;
     if (rawBadges) {

@@ -66,59 +66,59 @@ export const DEFAULT_OUTLETS: StoreOutlet[] = [
   },
   {
     id: 3,
-    name: 'Vardayini Mandvi (Heritage Flagship)',
-    badge: 'Flagship Store · Since 1994',
-    address: '12, Mandvi Pol, opposite Mahalaxmi Temple, Mandvi',
-    city: 'Vadodara, Gujarat',
-    pincode: '390001',
-    phone: '+91 265 242 1186',
-    phoneInquiries: '+91 98250 19760',
-    emailGeneral: 'mandvi@vardayinisweets.com',
+    name: 'Vardayini Station Road Counter',
+    badge: 'Station Express Counter',
+    address: 'Station Road, Near Railway Station, Kalol',
+    city: 'Kalol, Gujarat',
+    pincode: '382721',
+    phone: '+91 63531 19329',
+    phoneInquiries: '+91 63521 19329',
+    emailGeneral: 'station@vardayinisweets.com',
     emailCareers: 'careers@vardayinisweets.com',
-    hours: '8:00 AM – 10:30 PM (All 7 Days)',
-    lat: '22.307200',
-    lng: '73.181200',
+    hours: '8:00 AM – 9:30 PM (All 7 Days)',
+    lat: '23.243500',
+    lng: '72.501200',
     image: '/images/shop.jpg',
-    mapUrl: 'https://maps.google.com/maps?q=22.3072,73.1812',
-    directionsUrl: 'https://maps.google.com/maps?q=22.3072,73.1812',
+    mapUrl: 'https://maps.google.com/maps?q=23.2435,72.5012',
+    directionsUrl: 'https://maps.google.com/maps?q=23.2435,72.5012',
     isComingSoon: false,
   },
   {
     id: 4,
-    name: 'Vardayini Alkapuri (Modern Boutique)',
-    badge: 'Boutique & Sweet Counter',
-    address: '33, RC Dutt Road, Alkapuri',
-    city: 'Vadodara, Gujarat',
-    pincode: '390007',
-    phone: '+91 265 233 4411',
-    phoneInquiries: '+91 98251 23456',
-    emailGeneral: 'alkapuri@vardayinisweets.com',
+    name: 'Vardayini Tower Bazar Counter',
+    badge: 'Heritage Market Counter',
+    address: 'Old Tower Bazar, Near Clock Tower, Kalol',
+    city: 'Kalol, Gujarat',
+    pincode: '382721',
+    phone: '+91 63531 19329',
+    phoneInquiries: '+91 63521 19329',
+    emailGeneral: 'bazar@vardayinisweets.com',
     emailCareers: 'careers@vardayinisweets.com',
-    hours: '9:00 AM – 10:00 PM (All 7 Days)',
-    lat: '22.313500',
-    lng: '73.171800',
+    hours: '8:30 AM – 9:00 PM (All 7 Days)',
+    lat: '23.245100',
+    lng: '72.504300',
     image: '/images/shop.jpg',
-    mapUrl: 'https://maps.google.com/maps?q=22.3135,73.1718',
-    directionsUrl: 'https://maps.google.com/maps?q=22.3135,73.1718',
+    mapUrl: 'https://maps.google.com/maps?q=23.2451,72.5043',
+    directionsUrl: 'https://maps.google.com/maps?q=23.2451,72.5043',
     isComingSoon: false,
   },
   {
     id: 5,
-    name: 'Vardayini CG Road (Ahmedabad Hub)',
-    badge: 'Ahmedabad Flagship Counter',
-    address: 'Ground Floor, Heritage Plaza, CG Road, Navrangpura',
-    city: 'Ahmedabad, Gujarat',
-    pincode: '380009',
-    phone: '+91 79 2646 5522',
-    phoneInquiries: '+91 99099 44331',
-    emailGeneral: 'cgroadd@vardayinisweets.com',
+    name: 'Vardayini Highway Express Counter',
+    badge: 'Express Hub & Drive-Through Counter',
+    address: 'Kalol-Gandhinagar Highway, Opp. Toll Plaza, Kalol',
+    city: 'Kalol, Gujarat',
+    pincode: '382721',
+    phone: '+91 63531 19329',
+    phoneInquiries: '+91 63521 19329',
+    emailGeneral: 'highway@vardayinisweets.com',
     emailCareers: 'careers@vardayinisweets.com',
-    hours: '9:00 AM – 11:00 PM (All 7 Days)',
-    lat: '23.033000',
-    lng: '72.565000',
+    hours: '7:00 AM – 10:30 PM (All 7 Days)',
+    lat: '23.251000',
+    lng: '72.518000',
     image: '/images/shop.jpg',
-    mapUrl: 'https://maps.google.com/maps?q=23.0330,72.5650',
-    directionsUrl: 'https://maps.google.com/maps?q=23.0330,72.5650',
+    mapUrl: 'https://maps.google.com/maps?q=23.2510,72.5180',
+    directionsUrl: 'https://maps.google.com/maps?q=23.2510,72.5180',
     isComingSoon: false,
   },
   {
@@ -201,18 +201,18 @@ export function OutletsSection({
 
       const isKalol = sName.includes("kalol") || sAddr.includes("kalol") || sAddr.includes("navjivan") || sCity.includes("kalol") || store.pincode === "382721";
       const isRupal = sName.includes("rupal") || sAddr.includes("rupal") || store.pincode === "382630";
-      const isMandvi = sName.includes("mandvi") || sAddr.includes("mandvi");
-      const isAlkapuri = sName.includes("alkapuri") || sAddr.includes("alkapuri");
-      const isAhmedabad = sName.includes("cg road") || sAddr.includes("cg road") || sCity.includes("ahmedabad");
+      const isStation = sName.includes("station") || sAddr.includes("station");
+      const isTower = sName.includes("tower") || sAddr.includes("tower");
+      const isHighway = sName.includes("highway") || sAddr.includes("highway");
 
       // Find matching default outlet to enrich data (by name, address or specific branch)
       const match = DEFAULT_OUTLETS.find(
         (d) =>
           (isKalol && (d.name.includes("Kalol") || d.address.includes("Navjivan"))) ||
           (isRupal && d.name.toLowerCase().includes("rupal")) ||
-          (isMandvi && d.name.toLowerCase().includes("mandvi")) ||
-          (isAlkapuri && d.name.toLowerCase().includes("alkapuri")) ||
-          (isAhmedabad && d.name.toLowerCase().includes("cg road")) ||
+          (isStation && d.name.toLowerCase().includes("station")) ||
+          (isTower && d.name.toLowerCase().includes("tower")) ||
+          (isHighway && d.name.toLowerCase().includes("highway")) ||
           d.name.toLowerCase().includes(sName) ||
           sName.includes(d.name.toLowerCase())
       );
@@ -232,15 +232,15 @@ export function OutletsSection({
       } else if (isRupal) {
         resolvedLat = "23.310000";
         resolvedLng = "72.596900";
-      } else if (isMandvi) {
-        resolvedLat = "22.307200";
-        resolvedLng = "73.181200";
-      } else if (isAlkapuri) {
-        resolvedLat = "22.313500";
-        resolvedLng = "73.171800";
-      } else if (isAhmedabad) {
-        resolvedLat = "23.033000";
-        resolvedLng = "72.565000";
+      } else if (isStation) {
+        resolvedLat = "23.243500";
+        resolvedLng = "72.501200";
+      } else if (isTower) {
+        resolvedLat = "23.245100";
+        resolvedLng = "72.504300";
+      } else if (isHighway) {
+        resolvedLat = "23.251000";
+        resolvedLng = "72.518000";
       } else if (match?.lat && match?.lng) {
         resolvedLat = String(match.lat);
         resolvedLng = String(match.lng);

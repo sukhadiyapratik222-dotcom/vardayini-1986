@@ -110,7 +110,7 @@ export function TasteQuizCta() {
             </h2>
 
             <p className="text-xs sm:text-sm text-stone-200/90 leading-relaxed font-sans">
-              Answer 5 quick taste questions — sweetness preference, nut allergy filters, occasion, and budget — and let our 75-year Vadodara halwai recipes calculate your personalized mithai matches.
+              Answer 5 quick taste questions — sweetness preference, nut allergy filters, occasion, and budget — and let our 75-year Kalol halwai recipes calculate your personalized mithai matches.
             </p>
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1 text-xs text-amber-200/90 font-medium">

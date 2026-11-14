@@ -402,7 +402,7 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
               Orders &amp; Dispatch Desk
             </h2>
             <p className="text-xs text-[#5e6d82] mt-1">
-              Real-time tracking of fresh mithai &amp; farsan deliveries across Vadodara, Ahmedabad, Surat and Anand.
+              Real-time tracking of fresh mithai &amp; farsan deliveries across Kalol, Gujarat & Pan-India.
             </p>
           </div>
           <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">

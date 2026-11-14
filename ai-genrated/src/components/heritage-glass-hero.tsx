@@ -47,7 +47,7 @@ interface HeritageGlassHeroProps {
 export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("Vadodara, Gujarat");
+  const [selectedLocation, setSelectedLocation] = useState("Kalol, Gujarat");
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [pincodeInput, setPincodeInput] = useState("");
   const [pincodeResult, setPincodeResult] = useState<DeliveryCheckResult | null>(null);
@@ -126,7 +126,7 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
   };
 
   const availableCities = [
-    { name: "Vadodara, Gujarat", pincode: "390001", badge: "⚡ Same-Day Delivery" },
+    { name: "Kalol, Gujarat", pincode: "382721", badge: "⚡ Same-Day Delivery" },
     { name: "Ahmedabad, Gujarat", pincode: "380001", badge: "🚚 Next-Day Express" },
     { name: "Surat, Gujarat", pincode: "395001", badge: "🚚 Next-Day Express" },
     { name: "Anand, Gujarat", pincode: "388001", badge: "🚚 Next-Day Express" },
@@ -574,7 +574,7 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
                     Delivery Options &amp; Coverage
                   </h3>
                   <p className="text-xs text-white/70 mt-1 leading-relaxed">
-                    Handcrafted in Vadodara with 100% Shuddh Desi Ghee. Express delivery options to your doorstep:
+                    handcrafted in Kalol with 100% Shuddh Desi Ghee. Express delivery options to your doorstep:
                   </p>
                 </div>
 
@@ -598,7 +598,7 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
                       <span>Same-Day Fresh Delivery</span>
                     </span>
                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#f5c518] text-[#140638]">
-                      Vadodara &amp; Suburbs
+                      Kalol &amp; Gandhinagar
                     </span>
                   </div>
                   <p className="text-xs text-white/80 leading-relaxed mb-2">
@@ -662,12 +662,12 @@ export function HeritageGlassHero({ onOpenPincodeModal }: HeritageGlassHeroProps
                     </span>
                   </div>
                   <p className="text-xs text-white/80 leading-relaxed mb-2">
-                    Skip the delivery queue and collect your order directly from any of our 3 Vadodara heritage counters:
+                    Skip the delivery queue and collect your order directly from our Kalol heritage counters:
                   </p>
                   <ul className="text-[11px] text-white/70 space-y-1 list-disc list-inside">
-                    <li>Mandvi Heritage Flagship (Near Mandvi Gate, Vadodara)</li>
-                    <li>Alkapuri Express Counter (RC Dutt Road, Alkapuri)</li>
-                    <li>Karelibaug Royal Outlet (Opp. Mahalaxmi Temple, Karelibaug)</li>
+                    <li>Kalol Main Flagship (6A, Navjivan Shopping Center, Kalol 382721)</li>
+                    <li>Rupal Heritage Counter (Opp. Vardayini Mata Mandir, Rupal 382630)</li>
+                    <li>Station Road Counter (Station Road, Kalol 382721)</li>
                   </ul>
                   <div className="flex items-center justify-between text-[11px] pt-2 mt-2 border-t border-white/10 text-white/60">
                     <span>Open 8:00 AM – 10:00 PM daily</span>

@@ -25,8 +25,8 @@
       "order": 3
     },
     {
-      "id": "surati-khandvi",
-      "name": "Surati Khandvi",
+      "id": "kalol-khandvi",
+      "name": "Kalol Khandvi",
       "image": "/images/khandvi-showcase.jpg",
       "category": "Farsan",
       "active": true,
@@ -357,13 +357,13 @@
       {
         "legacyId": 903,
         "sku": "FEST-903",
-        "slug": "heritage-mohanthal-surat-ghari-box",
+        "slug": "heritage-mohanthal-kalol-ghari-box",
         "festivalId": "diwali",
         "festivalName": "Diwali Special",
         "gujaratiName": "શુદ્ધ ઘી મોહનથાળ & ઘારી",
-        "name": "Heritage Mohanthal & Surat Ghari Box",
+        "name": "Heritage Mohanthal & Kalol Ghari Box",
         "badge": "Gujarati Authentic",
-        "description": "Slow-roasted gram flour mohanthal in Gir cow ghee with pistachios, paired with Surati mawa ghari.",
+        "description": "Slow-roasted gram flour mohanthal in Gir cow ghee with pistachios, paired with Kalol mawa ghari.",
         "imageUrl": "/images/mithai-platter-showcase.jpg",
         "price": 880,
         "comparePrice": 990,
@@ -546,7 +546,7 @@
           "phone": "+91 6352119329",
           "titlePrefix": "Celebrate Shubh Deepavali & New Year with",
           "titleHighlight": "Royal Desi Ghee Mithai",
-          "subtitle": "Handcrafted Diwali gift hampers, silver vark Kaju Katli, slow-roasted Mohanthal, and authentic Surati Ghari crafted with 100% pure Gir cow ghee.",
+          "subtitle": "Handcrafted Diwali gift hampers, silver vark Kaju Katli, slow-roasted Mohanthal, and authentic Kalol Ghari crafted with 100% pure Gir cow ghee.",
           "button1Text": "Shop Diwali Hampers 🪔",
           "button1Link": "#festive-catalog",
           "button2Text": "Corporate Gifting 🎁",
@@ -883,7 +883,7 @@
     "autoCalculateFromSales": true,
     "badge": "MOST LOVED",
     "title": "CUSTOMER BESTSELLERS",
-    "viewAllText": "Explore All Vadodara Bestsellers",
+    "viewAllText": "Explore All Kalol Bestsellers",
     "viewAllUrl": "/shop?tag=best_seller",
     "items": [
       {
@@ -955,7 +955,7 @@
     "title": "WHAT OUR CUSTOMERS SAY",
     "subtitle": "Real feedback from our patrons across Gujarat and India",
     "showTrustBadge": true,
-    "trustBadgeText": "Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India",
+    "trustBadgeText": "Over 1,850+ verified reviews across Kalol, Gujarat & Pan-India",
     "reviews": []
   },
   "newLaunchPage": {
@@ -998,7 +998,7 @@
         "id": "pillar-4",
         "icon": "⚡",
         "title": "Gujarat Express Network",
-        "description": "Same-day doorstep delivery in Vadodara, Kalol, Gandhinagar, and Ahmedabad."
+        "description": "Same-day doorstep delivery in Kalol, Gandhinagar, and across Gujarat."
       }
     ]
   }

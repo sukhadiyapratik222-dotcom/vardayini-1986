@@ -15,7 +15,7 @@ const MITHAI_PHOTO_PRESETS = [
   { name: "Kaju Katli", image: "/images/kaju-katli-showcase.jpg", category: "Mithai" },
   { name: "Motichoor Ladoo", image: "/images/motichoor-showcase.jpg", category: "Mithai" },
   { name: "Nylon Khaman", image: "/images/khaman-showcase.jpg", category: "Farsan" },
-  { name: "Surati Khandvi", image: "/images/khandvi-showcase.jpg", category: "Farsan" },
+  { name: "Kalol Khandvi", image: "/images/khandvi-showcase.jpg", category: "Farsan" },
   { name: "Shahi Platter", image: "/images/mithai-platter-showcase.jpg", category: "Festive" },
   { name: "Special Bhel", image: "/images/special-bhel-showcase.jpg", category: "Farsan" },
   { name: "Ratlami Sev", image: "/uploads/1791029531387-c8e0da1d-527e-48b8-be9a-a5500eca62e3.jpg", category: "Farsan" },
@@ -86,7 +86,7 @@ export function HeroScrollerTab({ config, onRefresh }: HeroScrollerTabProps) {
       { id: "kaju-katli", name: "Kaju Katli", image: "/images/kaju-katli-showcase.jpg", category: "Mithai", active: true, order: 1 },
       { id: "motichoor-ladoo", name: "Motichoor Ladoo", image: "/images/motichoor-showcase.jpg", category: "Mithai", active: true, order: 2 },
       { id: "nylon-khaman", name: "Nylon Khaman", image: "/images/khaman-showcase.jpg", category: "Farsan", active: true, order: 3 },
-      { id: "surati-khandvi", name: "Surati Khandvi", image: "/images/khandvi-showcase.jpg", category: "Farsan", active: true, order: 4 },
+      { id: "kalol-khandvi", name: "Kalol Khandvi", image: "/images/khandvi-showcase.jpg", category: "Farsan", active: true, order: 4 },
       { id: "festive-platter", name: "Shahi Platter", image: "/images/mithai-platter-showcase.jpg", category: "Festive", active: true, order: 5 },
     ]
   );

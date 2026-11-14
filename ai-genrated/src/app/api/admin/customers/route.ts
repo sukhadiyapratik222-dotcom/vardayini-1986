@@ -84,7 +84,7 @@ export async function GET(request: Request) {
                   userId: u.id,
                   label: "Order Delivery",
                   line1: snap.line1,
-                  city: snap.city || "Vadodara",
+                  city: snap.city || "Kalol",
                   state: snap.state || "Gujarat",
                   stateCode: "24",
                   pincode: snap.pincode || "390001",

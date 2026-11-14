@@ -38,7 +38,7 @@ export function AccountAddressManager({
   const [fullName, setFullName] = useState(userName || "");
   const [line1, setLine1] = useState("");
   const [line2, setLine2] = useState("");
-  const [city, setCity] = useState("Vadodara");
+  const [city, setCity] = useState("Kalol");
   const [state, setState] = useState("Gujarat");
   const [pincode, setPincode] = useState("390001");
   const [phone, setPhone] = useState(userPhone || "");
@@ -162,7 +162,7 @@ export function AccountAddressManager({
             Saved Delivery Addresses
           </h3>
           <p className="text-xs text-[#2a1a12]/70 mt-0.5">
-            Verified addresses for fresh express dispatch across Vadodara & Pan-India
+            Verified addresses for fresh express dispatch across Kalol & Pan-India
           </p>
         </div>
         <button
@@ -173,7 +173,7 @@ export function AccountAddressManager({
               setFullName(userName || "");
               setLine1("");
               setLine2("");
-              setCity("Vadodara");
+              setCity("Kalol");
               setState("Gujarat");
               setPincode("390001");
               setPhone(userPhone || "");
@@ -312,7 +312,7 @@ export function AccountAddressManager({
                   setCity(e.target.value);
                   validateField("city", e.target.value);
                 }}
-                placeholder="Vadodara"
+                placeholder="Kalol"
                 className={`w-full px-3.5 py-2.5 rounded-xl border bg-white text-[#2a1a12] outline-none transition ${
                   fieldErrors.city
                     ? "border-rose-500 bg-rose-50/30 focus:border-rose-600"

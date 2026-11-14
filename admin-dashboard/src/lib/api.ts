@@ -606,7 +606,7 @@ function cleanOrderParam(orderNumber: string): string {
 }
 
 export function formatAddressSnapshot(raw: any): string {
-  if (!raw) return "Vadodara, Gujarat";
+  if (!raw) return "Kalol, Gujarat";
   let target = raw;
 
   // Unwrap any JSON string layers
@@ -638,7 +638,7 @@ export function formatAddressSnapshot(raw: any): string {
     if (parts.length > 0) {
       return pincode ? `${parts.join(", ")} - ${pincode}` : parts.join(", ");
     }
-    return target.fullAddress || target.summary || "Vadodara, Gujarat";
+    return target.fullAddress || target.summary || "Kalol, Gujarat";
   }
 
   const s = String(raw).trim();
@@ -655,7 +655,7 @@ export function formatAddressSnapshot(raw: any): string {
     } catch {}
   }
 
-  return s.startsWith("{") ? "Vadodara, Gujarat" : s;
+  return s.startsWith("{") ? "Kalol, Gujarat" : s;
 }
 
 export const api = {

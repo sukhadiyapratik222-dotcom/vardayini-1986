@@ -24,9 +24,9 @@ export function checkDeliveryAvailability(input: string): DeliveryCheckResult {
 
   // If user entered a 6-digit PIN code
   if (digits.length === 6) {
-    // Vadodara City & Suburbs (390xxx, 391xxx)
-    if (digits.startsWith("390") || digits.startsWith("391")) {
-      const vCity = digits.startsWith("390") ? "Vadodara" : "Vadodara Suburbs";
+    // Kalol & Gandhinagar District (382xxx) - Same-Day Local Delivery & Store Pickup
+    if (digits.startsWith("382")) {
+      const vCity = digits === "382721" ? "Kalol" : "Kalol & Gandhinagar District";
       return {
         query: clean,
         pincode: digits,
@@ -40,7 +40,7 @@ export function checkDeliveryAvailability(input: string): DeliveryCheckResult {
             badge: "⚡ Same-Day (Hot & Fresh)",
             estimatedDelivery: "Today by 6:30 PM",
             feeText: "FREE over ₹799 (₹49 standard)",
-            details: "Orders placed before 2:00 PM are packed warm and hand-delivered directly from local counters.",
+            details: "Orders placed before 2:00 PM are packed warm and hand-delivered directly from our Kalol flagship kitchen.",
             icon: "⚡",
           },
           {
@@ -58,7 +58,7 @@ export function checkDeliveryAvailability(input: string): DeliveryCheckResult {
             badge: "FREE (Ready in 30 mins)",
             estimatedDelivery: "Pick up today anytime",
             feeText: "₹0 Free Pickup",
-            details: "Available at Mandvi Heritage Flagship, Alkapuri Express, or Karelibaug counter.",
+            details: "Available at Kalol Main Counter (6A, Navjivan Shopping Center, Kalol 382721).",
             icon: "🏬",
           },
         ],
@@ -136,10 +136,19 @@ export function checkDeliveryAvailability(input: string): DeliveryCheckResult {
 
   // Check if string matches city names
   const lower = clean.toLowerCase();
-  if (lower.includes("vadodara") || lower.includes("baroda")) {
-    return checkDeliveryAvailability("390001");
+  if (lower.includes("kalol") || lower.includes("rupal")) {
+    return checkDeliveryAvailability("382721");
   }
-  if (lower.includes("ahmedabad") || lower.includes("surat") || lower.includes("anand") || lower.includes("rajkot") || lower.includes("gandhinagar") || lower.includes("gujarat")) {
+  if (
+    lower.includes("gandhinagar") ||
+    lower.includes("ahmedabad") ||
+    lower.includes("surat") ||
+    lower.includes("vadodara") ||
+    lower.includes("baroda") ||
+    lower.includes("rajkot") ||
+    lower.includes("anand") ||
+    lower.includes("gujarat")
+  ) {
     return checkDeliveryAvailability("380001");
   }
 
@@ -161,7 +170,7 @@ export function checkDeliveryAvailability(input: string): DeliveryCheckResult {
       },
       {
         type: "pickup",
-        title: "Store Pickup in Vadodara",
+        title: "Store Pickup in Kalol",
         badge: "FREE Pickup",
         estimatedDelivery: "Ready in 30 mins",
         feeText: "₹0 Pickup Fee",

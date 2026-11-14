@@ -72,7 +72,11 @@ export async function POST(request: Request) {
         if (body.replaceExisting || body.overrideConflict) {
           const { getSqliteDb } = await import("@/db");
           const sqlite = getSqliteDb();
-          sqlite.prepare("UPDATE slogans SET status = 'draft' WHERE id = ?").run(conflict.id);
+          sqlite
+            .prepare(
+              "UPDATE slogans SET status = 'draft' WHERE (status = 'active' OR status = 'scheduled') AND NOT (end_at <= ? OR start_at >= ?)"
+            )
+            .run(body.startAt, body.endAt);
         } else {
           return NextResponse.json(
             {
@@ -134,7 +138,11 @@ export async function PUT(request: Request) {
         if (body.replaceExisting || body.overrideConflict) {
           const { getSqliteDb } = await import("@/db");
           const sqlite = getSqliteDb();
-          sqlite.prepare("UPDATE slogans SET status = 'draft' WHERE id = ?").run(conflict.id);
+          sqlite
+            .prepare(
+              "UPDATE slogans SET status = 'draft' WHERE (status = 'active' OR status = 'scheduled') AND NOT (end_at <= ? OR start_at >= ?) AND id != ?"
+            )
+            .run(body.startAt, body.endAt, Number(body.id));
         } else {
           return NextResponse.json(
             {

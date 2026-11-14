@@ -157,7 +157,7 @@ export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
 
             <p className="max-w-xl text-sm leading-relaxed text-white/75">
               {uiConfig?.storeInfo?.tagline ||
-                "Authentic Gujarati mithai and fresh morning farsan from Vadodara. Pure shuddh desi ghee, saffron, and patience — rolled and packed fresh for our customers."}
+                "Authentic Gujarati mithai and fresh morning farsan from Kalol. Pure shuddh desi ghee, saffron, and patience — rolled and packed fresh for our customers."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-[#dfb755] font-medium pt-1">

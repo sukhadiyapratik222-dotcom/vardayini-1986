@@ -33,7 +33,7 @@ export default async function StoresPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end p-8 sm:p-12 text-white">
             <span className="text-xs font-bold uppercase tracking-widest text-amber-400">
-              Vadodara Craftsmanship · Since 1994
+              Kalol Craftsmanship · Since 1986
             </span>
             <h3 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold mt-1">
               Taste the 30-Year Heritage of Pure Shuddh Desi Ghee

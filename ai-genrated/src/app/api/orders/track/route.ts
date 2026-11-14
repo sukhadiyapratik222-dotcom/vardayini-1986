@@ -432,7 +432,7 @@ export async function GET(request: Request) {
           title: "Out for Express Dispatch",
           description: orderRow.courierName
             ? `Dispatched via ${orderRow.courierName} ${orderRow.trackingNumber ? `(#${orderRow.trackingNumber})` : ""}`
-            : "Handed over to our Vadodara express delivery partner.",
+            : "Handed over to our Kalol express delivery partner.",
           time: currentStepIndex >= 3 ? "On the Way" : "Estimated Dispatch",
           completed: currentStepIndex >= 3,
           current: currentStepIndex === 3,
@@ -485,7 +485,7 @@ export async function GET(request: Request) {
               storeId: pickupStoreDetails?.id || orderRow.pickupStoreId,
               storeName: pickupStoreDetails?.name || "Vardayini Sweet Mart",
               storeAddress: pickupStoreDetails?.address || "Mandvi Main Road",
-              storeCity: pickupStoreDetails?.city || "Vadodara",
+              storeCity: pickupStoreDetails?.city || "Kalol",
               storePincode: pickupStoreDetails?.pincode || "390001",
               storePhone: pickupStoreDetails?.phone || "+91 98250 19760",
               storeHours: pickupStoreDetails?.hours || "8:00 AM - 10:00 PM",
@@ -495,8 +495,8 @@ export async function GET(request: Request) {
               actualReadyAt: orderRow.actualReadyAt,
               pickupOtp: isOwner ? orderRow.pickupOtp : "******",
               pickupVerifiedBy: orderRow.pickupVerifiedBy,
-              googleMapsUrl: pickupStoreDetails?.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("Vardayini Sweet Mart Vadodara")}`,
-              directionsUrl: pickupStoreDetails?.directionsUrl || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent("Vardayini Sweet Mart Vadodara")}`,
+              googleMapsUrl: pickupStoreDetails?.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("Vardayini Sweet Mart Kalol")}`,
+              directionsUrl: pickupStoreDetails?.directionsUrl || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent("Vardayini Sweet Mart Kalol")}`,
               instructions: [
                 "Please show your 6-digit Pickup OTP or Order Number at the store express counter.",
                 "Inspect sweets packaging seal before leaving the counter.",

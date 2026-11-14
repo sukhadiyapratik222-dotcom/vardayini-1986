@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Vardayini Sweet Mart | Fresh handmade mithai",
   description:
-    "Order kaju katli, motichoor ladoo, rasmalai and festive hampers from Vardayini Sweet Mart in Vadodara and Ahmedabad.",
+    "Order kaju katli, motichoor ladoo, rasmalai and festive hampers from Vardayini Sweet Mart in Kalol, Gujarat.",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/images/brand-logo.png",

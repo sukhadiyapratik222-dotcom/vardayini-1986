@@ -154,8 +154,69 @@ export function WeeklySlogansTab({
     return productMap.get(formData.productId) || products[0];
   }, [formData.productId, productMap, products]);
 
+  // Helper to find next free week slot without overlapping existing active/scheduled slogans
+  const findNextFreeWeek = (preferredOffset?: number) => {
+    const now = new Date();
+    const day = now.getDay();
+
+    if (typeof preferredOffset === "number") {
+      const diffToMonday = (day === 0 ? -6 : 1) - day + preferredOffset * 7;
+      const mon = new Date(now);
+      mon.setDate(now.getDate() + diffToMonday);
+      mon.setHours(0, 0, 0, 0);
+
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      sun.setHours(23, 59, 59, 999);
+      return { monday: mon, sunday: sun };
+    }
+
+    // Scan forward starting from current week (w = 0) up to 52 weeks
+    for (let w = 0; w < 52; w++) {
+      const diffToMonday = (day === 0 ? -6 : 1) - day + w * 7;
+      const mon = new Date(now);
+      mon.setDate(now.getDate() + diffToMonday);
+      mon.setHours(0, 0, 0, 0);
+
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      sun.setHours(23, 59, 59, 999);
+
+      const monMs = mon.getTime();
+      const sunMs = sun.getTime();
+
+      const occupied = slogans.some((s) => {
+        if (s.status !== "active" && s.status !== "scheduled") return false;
+        if (!s.startAt || !s.endAt) return false;
+        const sStart = new Date(s.startAt).getTime();
+        const sEnd = new Date(s.endAt).getTime();
+        return !(sunMs <= sStart || monMs >= sEnd);
+      });
+
+      if (!occupied) {
+        return { monday: mon, sunday: sun };
+      }
+    }
+
+    // Fallback: Day after latest slogan end date
+    let latestEnd = new Date();
+    for (const s of slogans) {
+      if (s.endAt && (s.status === "active" || s.status === "scheduled")) {
+        const d = new Date(s.endAt);
+        if (d > latestEnd) latestEnd = d;
+      }
+    }
+    const nextMon = new Date(latestEnd);
+    nextMon.setDate(latestEnd.getDate() + 1);
+    nextMon.setHours(0, 0, 0, 0);
+    const nextSun = new Date(nextMon);
+    nextSun.setDate(nextMon.getDate() + 6);
+    nextSun.setHours(23, 59, 59, 999);
+    return { monday: nextMon, sunday: nextSun };
+  };
+
   // Open Create Modal
-  const openCreateModal = (presetDateOffsetWeeks: number = 1) => {
+  const openCreateModal = (presetDateOffsetWeeks?: number) => {
     if (!canManage) {
       toast.error("You do not have permission to create or edit slogans");
       return;
@@ -164,17 +225,7 @@ export function WeeklySlogansTab({
     setConflictWarning(null);
     setReplaceExisting(false);
 
-    const now = new Date();
-    // Monday of target week
-    const day = now.getDay();
-    const diffToMonday = (day === 0 ? -6 : 1) - day + presetDateOffsetWeeks * 7;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diffToMonday);
-    monday.setHours(0, 0, 0, 0);
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
+    const { monday, sunday } = findNextFreeWeek(presetDateOffsetWeeks);
 
     const defaultProd = products[0];
     const initialSlug = defaultProd?.slug || "kaju-katli";
@@ -244,30 +295,36 @@ export function WeeklySlogansTab({
 
   // Helper to shift dates to next unoccupied week
   const handleSelectNextFreeWeek = () => {
-    let latestEnd = new Date();
-    for (const s of slogans) {
-      if (s.endAt && (s.status === "active" || s.status === "scheduled")) {
-        const d = new Date(s.endAt);
-        if (d > latestEnd) latestEnd = d;
-      }
-    }
-    const nextStart = new Date(latestEnd);
-    nextStart.setDate(latestEnd.getDate() + 1);
-    nextStart.setHours(0, 0, 0, 0);
-
-    const nextEnd = new Date(nextStart);
-    nextEnd.setDate(nextStart.getDate() + 6);
-    nextEnd.setHours(23, 59, 59, 999);
+    const { monday, sunday } = findNextFreeWeek();
 
     setFormData((p) => ({
       ...p,
-      startAt: nextStart.toISOString().slice(0, 16),
-      endAt: nextEnd.toISOString().slice(0, 16),
+      startAt: monday.toISOString().slice(0, 16),
+      endAt: sunday.toISOString().slice(0, 16),
       status: "scheduled",
     }));
     setConflictWarning(null);
     toast.info("Shifted dates to next free week slot");
   };
+
+  // Real-time local schedule conflict detection
+  const currentConflict = useMemo(() => {
+    if (!formData.startAt || !formData.endAt || (formData.status !== "active" && formData.status !== "scheduled")) {
+      return null;
+    }
+    const formStart = new Date(formData.startAt).getTime();
+    const formEnd = new Date(formData.endAt).getTime();
+    if (isNaN(formStart) || isNaN(formEnd) || formStart >= formEnd) return null;
+
+    return slogans.find((s) => {
+      if (editingId && s.id === editingId) return false;
+      if (s.status !== "active" && s.status !== "scheduled") return false;
+      if (!s.startAt || !s.endAt) return false;
+      const sStart = new Date(s.startAt).getTime();
+      const sEnd = new Date(s.endAt).getTime();
+      return !(formEnd <= sStart || formStart >= sEnd);
+    });
+  }, [formData.startAt, formData.endAt, formData.status, slogans, editingId]);
 
   // Handle Save Slogan (Create or Update)
   const handleSaveSlogan = async (e?: React.FormEvent, forceReplace: boolean = false) => {
@@ -276,6 +333,18 @@ export function WeeklySlogansTab({
 
     if (!formData.text.trim()) {
       toast.error("Main slogan text is required");
+      return;
+    }
+
+    const shouldReplace = forceReplace || replaceExisting;
+
+    // Client-side proactive conflict check: prevents 409 or unhandled Dev Overlay popups!
+    if (currentConflict && !shouldReplace && (formData.status === "active" || formData.status === "scheduled")) {
+      setConflictWarning({
+        message: `Schedule conflict: overlaps with existing slogan "${currentConflict.text.replace(/\*/g, "")}" (${new Date(currentConflict.startAt).toLocaleDateString()} - ${new Date(currentConflict.endAt).toLocaleDateString()})`,
+        conflictSlogan: currentConflict,
+      });
+      toast.error("Schedule conflict: Slogan overlaps with an existing week. Choose replace or change date.");
       return;
     }
 
@@ -353,6 +422,7 @@ export function WeeklySlogansTab({
         status: "active",
         startAt: now.toISOString(),
         endAt: sunday.toISOString(),
+        replaceExisting: true,
       });
       toast.success(`Published "${item.text.replace(/\*/g, "")}" as Live Slogan!`);
       await loadData();
@@ -463,7 +533,7 @@ export function WeeklySlogansTab({
           {canManage && (
             <button
               type="button"
-              onClick={() => openCreateModal(1)}
+              onClick={() => openCreateModal()}
               className="shrink-0 px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 shadow-xs transition"
             >
               + Schedule Next Week
@@ -586,7 +656,7 @@ export function WeeklySlogansTab({
         {canManage && (
           <button
             type="button"
-            onClick={() => openCreateModal(1)}
+            onClick={() => openCreateModal()}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#dfb755] text-[#140638] hover:bg-[#e6c46e] shadow-xs transition"
           >
             <span>+</span>
@@ -1367,25 +1437,57 @@ export function WeeklySlogansTab({
                   </div>
                 </div>
 
-                {/* Replace Existing Option */}
-                <div className="flex items-center justify-between pt-1">
-                  <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={replaceExisting}
-                      onChange={(e) => setReplaceExisting(e.target.checked)}
-                      className="rounded text-[#140638] focus:ring-[#dfb755]"
-                    />
-                    <span>Replace existing slogan if this week is already booked</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleSelectNextFreeWeek}
-                    className="text-[11px] font-bold text-amber-800 hover:underline cursor-pointer"
-                  >
-                    Find Next Open Week &rarr;
-                  </button>
-                </div>
+                {/* Real-time schedule overlap warning */}
+                {currentConflict ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50/95 p-3 text-xs text-amber-900 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-base leading-none">⚠️</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-amber-950">Schedule Overlap Detected</p>
+                        <p className="text-[11.5px] text-amber-800 leading-snug mt-0.5">
+                          This slot overlaps with <strong className="font-semibold text-amber-950">&quot;{currentConflict.text.replace(/\*/g, "")}&quot;</strong> ({new Date(currentConflict.startAt).toLocaleDateString()} – {new Date(currentConflict.endAt).toLocaleDateString()}).
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-200">
+                      <label className="flex items-center gap-2 text-xs text-amber-950 font-medium cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={replaceExisting}
+                          onChange={(e) => setReplaceExisting(e.target.checked)}
+                          className="rounded text-[#140638] focus:ring-[#dfb755]"
+                        />
+                        <span>Replace existing slogan (moves previous to Draft)</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleSelectNextFreeWeek}
+                        className="px-2.5 py-1 rounded-md bg-white border border-amber-300 text-[11px] font-bold text-amber-900 hover:bg-amber-100/50 cursor-pointer"
+                      >
+                        Shift to Free Week &rarr;
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={replaceExisting}
+                        onChange={(e) => setReplaceExisting(e.target.checked)}
+                        className="rounded text-[#140638] focus:ring-[#dfb755]"
+                      />
+                      <span>Replace existing slogan if this week is already booked</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleSelectNextFreeWeek}
+                      className="text-[11px] font-bold text-amber-800 hover:underline cursor-pointer"
+                    >
+                      Find Next Open Week &rarr;
+                    </button>
+                  </div>
+                )}
 
                 {/* Story Line & Badges */}
                 <div>

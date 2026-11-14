@@ -218,7 +218,7 @@ export async function POST(request: Request) {
 
   // Variables for delivery vs pickup
   let line1 = "";
-  let city = "Vadodara";
+  let city = "Kalol";
   let state = "Gujarat";
   let pincode = "390001";
   let deliverySlot = "";
@@ -313,7 +313,7 @@ export async function POST(request: Request) {
     }
 
     line1 = body.line1.trim();
-    city = typeof body.city === "string" && body.city.trim() ? body.city.trim() : "Vadodara";
+    city = typeof body.city === "string" && body.city.trim() ? body.city.trim() : "Kalol";
     state = typeof body.state === "string" && body.state.trim() ? body.state.trim() : "Gujarat";
     pincode = body.pincode.trim();
     deliverySlot = body.deliverySlot.trim();

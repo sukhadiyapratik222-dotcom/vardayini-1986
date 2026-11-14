@@ -265,7 +265,7 @@ export function ReportsTab({
         const name = getOrderCustomerName(o);
         const phone = getOrderCustomerPhone(o);
         const key = phone !== "-" ? phone : name || `order-${o.id}`;
-        const existing = custMap.get(key) || { name, phone: phone === "-" ? "N/A" : phone, address: "Vadodara, Gujarat", totalOrders: 0, totalSpent: 0, lastOrder: o.createdAt };
+        const existing = custMap.get(key) || { name, phone: phone === "-" ? "N/A" : phone, address: "Kalol, Gujarat", totalOrders: 0, totalSpent: 0, lastOrder: o.createdAt };
         existing.totalOrders += 1;
         existing.totalSpent += (o.total || 0);
         custMap.set(key, existing);
@@ -1336,7 +1336,7 @@ function CustomerReportView({
     if (customers && customers.length > 0) {
       customers.forEach((c) => {
         const key = (c.phone || c.email || `user-${c.id}`).trim().toLowerCase();
-        let addr = "Vadodara, Gujarat";
+        let addr = "Kalol, Gujarat";
         if (c.addresses && c.addresses.length > 0) {
           const a = c.addresses[0];
           addr = [a.line1, a.city, a.state, a.pincode].filter(Boolean).join(", ");
@@ -1358,7 +1358,7 @@ function CustomerReportView({
       const custName = getOrderCustomerName(o);
       const custPhone = getOrderCustomerPhone(o);
       const key = (custPhone !== "-" ? custPhone : custName || `order-${o.id}`).trim().toLowerCase();
-      let addr = "Vadodara, Gujarat";
+      let addr = "Kalol, Gujarat";
       if (o.addressSnapshot) {
         try {
           const parsed = JSON.parse(o.addressSnapshot);
@@ -1381,7 +1381,7 @@ function CustomerReportView({
         }
         if (new Date(o.createdAt) > new Date(existing.lastOrder)) {
           existing.lastOrder = o.createdAt;
-          if (addr && addr !== "Vadodara, Gujarat") existing.address = addr;
+          if (addr && addr !== "Kalol, Gujarat") existing.address = addr;
         }
       } else {
         map.set(key, {

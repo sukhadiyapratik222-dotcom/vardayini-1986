@@ -155,7 +155,7 @@ export async function POST(
       order.id,
       "cancelled",
       `Order cancelled: ${reasonText}`,
-      "Vadodara Fulfilment Center",
+      "Kalol Fulfilment Center",
       user?.role === "super_admin" ? "super_admin" : user?.role === "admin" ? "admin" : "customer",
       tx as any
     );

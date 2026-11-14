@@ -360,7 +360,7 @@ export async function getRealTopSellingProducts(limit = 4): Promise<RealTopSelle
       "PURE DESI GHEE",
       "MOST LOVED",
       "FESTIVE FAVORITE",
-      "VADODARA SPECIAL",
+      "KALOL SPECIAL",
       "SIGNATURE RECIPE",
       "CUSTOMER CHOICE",
     ];

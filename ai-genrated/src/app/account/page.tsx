@@ -15,7 +15,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 export const dynamic = "force-dynamic";
 
 function parseAddressSnapshot(raw: string | null | undefined): string {
-  if (!raw) return "Standard Dispatch (Vadodara Hub)";
+  if (!raw) return "Standard Dispatch (Kalol Hub)";
   try {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object") {

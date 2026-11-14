@@ -86,7 +86,7 @@ interface OrderTrackingData {
 }
 
 export function formatAddressString(raw?: any): string {
-  if (!raw) return "Vadodara, Gujarat";
+  if (!raw) return "Kalol, Gujarat";
   let target = raw;
 
   // Unwrap any JSON string layers
@@ -120,7 +120,7 @@ export function formatAddressString(raw?: any): string {
     if (parts.length > 0) {
       return pincode ? `${parts.join(", ")} - ${pincode}` : parts.join(", ");
     }
-    return target.fullAddress || target.summary || "Vadodara, Gujarat";
+    return target.fullAddress || target.summary || "Kalol, Gujarat";
   }
 
   const s = String(raw).trim();
@@ -138,7 +138,7 @@ export function formatAddressString(raw?: any): string {
     } catch {}
   }
 
-  return (s.startsWith("{") || s.includes('"line1"')) ? "Vadodara, Gujarat" : s;
+  return (s.startsWith("{") || s.includes('"line1"')) ? "Kalol, Gujarat" : s;
 }
 
 export function OrderTrackerClient() {
@@ -633,7 +633,7 @@ export function OrderTrackerClient() {
             </div>
 
             <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-              Every mithai batch is hand-simmered with 100% Shuddh Desi Ghee in our Vadodara kitchen. Follow live preparation milestones, halwai photos, and aroma-lock packaging seals.
+              Every mithai batch is hand-simmered with 100% Shuddh Desi Ghee in our Kalol kitchen. Follow live preparation milestones, halwai photos, and aroma-lock packaging seals.
             </p>
 
             {/* Media Gallery / Stage Updates */}
@@ -867,7 +867,7 @@ export function OrderTrackerClient() {
                   <div className="flex justify-between py-1 border-b border-slate-100">
                     <span className="text-slate-500">Delivery Partner</span>
                     <span className="font-semibold text-slate-800">
-                      {orderData.courier?.name || "Vadodara Express Store Fleet"}
+                      {orderData.courier?.name || "Kalol Express Store Fleet"}
                     </span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-slate-100">
@@ -937,7 +937,7 @@ export function OrderTrackerClient() {
                 <span>🍬</span>
                 <span>Mithai & Farsan in this Box ({orderData.items.length})</span>
               </h3>
-              <span className="text-xs text-slate-500">Packed fresh in Vadodara</span>
+              <span className="text-xs text-slate-500">Packed fresh in Kalol</span>
             </div>
 
             <div className="divide-y divide-slate-100">

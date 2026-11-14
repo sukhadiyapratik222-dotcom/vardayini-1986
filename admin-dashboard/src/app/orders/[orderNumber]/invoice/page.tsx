@@ -134,7 +134,7 @@ export default function OrderInvoicePage({ params }: PageProps) {
       ]
         .filter(Boolean)
         .join(", ")
-    : order.addressSnapshot || "Vadodara, Gujarat";
+    : order.addressSnapshot || "Kalol, Gujarat";
 
   const buyerState = order.parsedAddress?.state || "Gujarat";
   const buyerStateCode = order.parsedAddress?.stateCode || "24";
@@ -372,7 +372,7 @@ export default function OrderInvoicePage({ params }: PageProps) {
               )}
               <div className="pt-2 mt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">Reverse Charge: <strong>No</strong></span>
-                <span className="text-slate-500">Dispatch Hub: <strong>Vadodara Central</strong></span>
+                <span className="text-slate-500">Dispatch Hub: <strong>Kalol Central</strong></span>
               </div>
             </div>
           </div>
@@ -507,7 +507,7 @@ export default function OrderInvoicePage({ params }: PageProps) {
               <p className="font-bold text-slate-700">Terms &amp; Conditions:</p>
               <p>1. Fresh handmade sweets &amp; namkeen are perishable food articles; not returnable.</p>
               <p>2. Keep refrigerated below 8°C. Best consumed within 5 days of delivery date.</p>
-              <p>3. Disputes subject to Vadodara jurisdiction only.</p>
+              <p>3. Disputes subject to Kalol jurisdiction only.</p>
             </div>
           </div>
 

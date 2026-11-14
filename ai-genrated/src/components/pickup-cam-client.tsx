@@ -206,8 +206,8 @@ export function PickupCamClient({ initialData, token }: Props) {
               </h1>
               <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
                 {data.fulfillmentType === "delivery"
-                  ? "Every sweet is handcrafted with 100% Shuddh Desi Ghee in our Vadodara kitchen and sealed in aroma-lock insulated packaging for express doorstep delivery."
-                  : "Every sweet is rolled with 100% Shuddh Desi Ghee in our Vadodara kitchen. Follow live milestones, inspect your freshly packed box, and collect with OTP."}
+                  ? "Every sweet is handcrafted with 100% Shuddh Desi Ghee in our Kalol kitchen and sealed in aroma-lock insulated packaging for express doorstep delivery."
+                  : "Every sweet is rolled with 100% Shuddh Desi Ghee in our Kalol kitchen. Follow live milestones, inspect your freshly packed box, and collect with OTP."}
               </p>
             </div>
 
@@ -220,7 +220,7 @@ export function PickupCamClient({ initialData, token }: Props) {
                 {data.orderNumber}
               </span>
               <span className="block text-[11px] text-white/70 mt-1">
-                {data.fulfillmentType === "delivery" ? "🚚 Vadodara Express Fleet" : `📅 ${data.pickupDate} • ${data.pickupSlot}`}
+                {data.fulfillmentType === "delivery" ? "🚚 Kalol Express Fleet" : `📅 ${data.pickupDate} • ${data.pickupSlot}`}
               </span>
             </div>
           </div>
@@ -254,7 +254,7 @@ export function PickupCamClient({ initialData, token }: Props) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#071c54]">Express Doorstep Delivery Across Vadodara</h3>
+                  <h3 className="font-bold text-sm text-[#071c54]">Express Doorstep Delivery Across Kalol</h3>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                     EXPRESS FLEET
                   </span>

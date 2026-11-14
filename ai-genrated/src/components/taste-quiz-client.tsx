@@ -969,7 +969,7 @@ export function TasteQuizClient() {
         {/* Footer info notice */}
         <div className="text-center pt-2">
           <p className="text-[11px] text-stone-400 font-medium">
-            ✨ Handcrafted recipes refined over 75+ years in Vadodara
+            ✨ Handcrafted recipes refined over 75+ years in Kalol
           </p>
         </div>
       </div>

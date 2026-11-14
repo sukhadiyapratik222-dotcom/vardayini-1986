@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Vardayini Sweet Mart",
     short_name: "Vardayini",
     description:
-      "Order kaju katli, motichoor ladoo, rasmalai and festive hampers from Vardayini Sweet Mart in Vadodara and Ahmedabad.",
+      "Order kaju katli, motichoor ladoo, rasmalai and festive hampers from Vardayini Sweet Mart in Kalol, Gujarat.",
     start_url: "/",
     scope: "/",
     display: "standalone",

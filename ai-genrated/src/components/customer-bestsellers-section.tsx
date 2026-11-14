@@ -99,7 +99,7 @@ export function CustomerBestsellersSection({
 
   const badge = config?.badge || "MOST LOVED";
   const title = config?.title || "CUSTOMER BESTSELLERS";
-  const viewAllText = config?.viewAllText || "Explore All Vadodara Bestsellers";
+  const viewAllText = config?.viewAllText || "Explore All Kalol Bestsellers";
   const viewAllUrl = config?.viewAllUrl || "/shop?tag=best_seller";
   const activeItems = (config?.items && config.items.length > 0 ? config.items : items).filter(
     (it: any) => it.active !== false

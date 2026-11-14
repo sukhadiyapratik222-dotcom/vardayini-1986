@@ -75,7 +75,7 @@ export function BestsellersTab({ config, onRefresh, currentUser, products }: Bes
   const [badge, setBadge] = useState(currentCfg.badge || "MOST LOVED");
   const [title, setTitle] = useState(currentCfg.title || "CUSTOMER BESTSELLERS");
   const [viewAllText, setViewAllText] = useState(
-    currentCfg.viewAllText || "Explore All Vadodara Bestsellers"
+    currentCfg.viewAllText || "Explore All Kalol Bestsellers"
   );
   const [viewAllUrl, setViewAllUrl] = useState(currentCfg.viewAllUrl || "/shop?tag=best_seller");
   const [items, setItems] = useState<BestsellerCardItem[]>(
@@ -476,7 +476,7 @@ export function BestsellersTab({ config, onRefresh, currentUser, products }: Bes
                 value={viewAllText}
                 onChange={(e) => setViewAllText(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#541e73] disabled:bg-slate-50 disabled:text-slate-500"
-                placeholder="e.g. Explore All Vadodara Bestsellers"
+                placeholder="e.g. Explore All Kalol Bestsellers"
               />
             </div>
 

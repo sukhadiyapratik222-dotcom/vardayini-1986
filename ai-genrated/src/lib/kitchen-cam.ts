@@ -334,7 +334,7 @@ export async function getCustomerTrackingDataByToken(token: string) {
   if (!storeDetail) {
     storeDetail = {
       name: "Mandvi Main Counter & Heritage Flagship",
-      address: "Opp. Jubilee Baug, Mandvi, Raopura, Vadodara, Gujarat 390001",
+      address: "6A, Navjivan Shopping Center, Kalol, Gujarat 382721",
       phone: "+91 98250 12345",
       hours: "7:00 AM – 8:30 PM (All 7 Days)",
     };
@@ -424,7 +424,7 @@ export async function getCustomerTrackingDataByToken(token: string) {
           label: "Out for Express Dispatch",
           title: "Handed over to Express Delivery Fleet",
           description:
-            "Your packed mithai box is dispatched and on its way to your doorstep across Vadodara.",
+            "Your packed mithai box is dispatched and on its way to your doorstep across Kalol.",
         }
       : {
           label: "Ready at Store Counter",

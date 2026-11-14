@@ -33,7 +33,7 @@ const POLICIES = {
       },
       {
         heading: "2. Same-Day Dispatch",
-        text: "Orders placed before 1:00 PM are dispatched the same morning directly from our Vadodara flagship counters to guarantee optimal freshness.",
+        text: "Orders placed before 1:00 PM are dispatched the same morning directly from our Kalol counter to guarantee optimal freshness.",
       },
       {
         heading: "3. Freshness Guarantee",

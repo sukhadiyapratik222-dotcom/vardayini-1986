@@ -525,7 +525,7 @@ function initSqliteTables(sqlite: DatabaseSync) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       pincode TEXT NOT NULL,
       store_id INTEGER REFERENCES stores(id),
-      city TEXT NOT NULL DEFAULT 'Vadodara',
+      city TEXT NOT NULL DEFAULT 'Kalol',
       state TEXT NOT NULL DEFAULT 'Gujarat',
       delivery_enabled INTEGER NOT NULL DEFAULT 1,
       delivery_charge REAL NOT NULL DEFAULT 49.0,
@@ -749,7 +749,7 @@ function initSqliteTables(sqlite: DatabaseSync) {
       show_announcement_strip INTEGER DEFAULT 1,
       auto_rotate_enabled INTEGER DEFAULT 1,
       rotation_mode TEXT DEFAULT 'sequential',
-      fallback_slogan_text TEXT DEFAULT 'Pure *Desi Ghee*. Pure *Tradition*. Handcrafted in Vadodara.',
+      fallback_slogan_text TEXT DEFAULT 'Pure *Desi Ghee*. Pure *Tradition*. handcrafted in Kalol.',
       fallback_sub_text TEXT DEFAULT 'Experience our royal Shuddh Desi Ghee sweets fresh from our morning bhatti.',
       fallback_product_id INTEGER DEFAULT NULL,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP

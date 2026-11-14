@@ -120,7 +120,7 @@ export default async function ShopPage({
         : "Traditional Sweets, Namkeen & Bakery";
 
   const subHeading = activeCategoryObj
-    ? `Handcrafted fresh in Vadodara · Authentic purity in every bite`
+    ? `Handcrafted fresh in Kalol · Authentic purity in every bite`
     : activeGroup && CATEGORY_GROUPS[activeGroup]
       ? CATEGORY_GROUPS[activeGroup].description
       : "100% Shuddh Desi Ghee Mithai, Crunchy Farsan & Bakery Delights";

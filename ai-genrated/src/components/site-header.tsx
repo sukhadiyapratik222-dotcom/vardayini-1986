@@ -39,7 +39,7 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     title: "Bakery & Gifting (બેકરી અને ભેટ)",
     items: [
-      { name: "Surat Nankhatai & Cookies", href: "/shop?category=biscuits-and-cookies", icon: "🍪" },
+      { name: "Kalol Nankhatai & Cookies", href: "/shop?category=biscuits-and-cookies", icon: "🍪" },
       { name: "Flaky Butter Khari & Toast", href: "/shop?category=toast-and-khari", icon: "🥐" },
       { name: "Royal Festive Hampers", href: "/shop?category=gift-hampers", icon: "🎁" },
       { name: "Premium Dry Fruit Boxes", href: "/shop?category=premium-dry-fruits", icon: "🌰" },
@@ -214,9 +214,9 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
       linkUrl: "/shop?category=gift-hampers",
     },
     storeInfo: {
-      city: "Vadodara, Gujarat",
+      city: "Kalol, Gujarat",
       established: "1976",
-      phone: "+91 98250 19760",
+      phone: "+91 63531 19329",
     },
   };
 
@@ -341,7 +341,7 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
         <div className="bg-[#0b1b4f] text-white border-b border-[#dfb755]/20 overflow-hidden">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-1.5 text-xs">
             <p className="hidden sm:flex items-center gap-2 text-slate-300 font-light truncate">
-              <span>{uiConfig.storeInfo?.city || "Vadodara, Gujarat"}</span>
+              <span>{uiConfig.storeInfo?.city || "Kalol, Gujarat"}</span>
               <span className="text-[#dfb755]">·</span>
               <span>Since {uiConfig.storeInfo?.established || "1976"}</span>
               <span className="text-[#dfb755]">·</span>
@@ -667,7 +667,7 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
 
             {/* Right Tagline on Menu Bar (Visible on larger screens) */}
             <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-semibold text-[#8d6715] shrink-0 bg-[#dfb755]/15 px-3 py-1 rounded-full">
-              <span>⚡ Same-Day Delivery across Vadodara</span>
+              <span>⚡ Same-Day Delivery across Kalol</span>
             </div>
           </div>
         </div>

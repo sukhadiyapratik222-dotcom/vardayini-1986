@@ -1025,7 +1025,7 @@ export default function AdminDashboardPage() {
         <header className="bg-[#0b2f8a] text-white">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 text-xs">
             <p className="hidden sm:block text-white/80">
-              Vadodara · Established 1976 · 100% Shuddh Desi Ghee
+              Kalol · Established 1986 · 100% Shuddh Desi Ghee
             </p>
             <p className="mx-auto sm:mx-0 text-center font-medium tracking-wide text-[#dfb755]">
               ✨ Vardayini Sweet Mart · Dedicated Karigar Control Desk
@@ -1148,7 +1148,7 @@ export default function AdminDashboardPage() {
       <header className="bg-[#0b2f8a] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-1.5 text-xs">
           <p className="hidden sm:block text-white/80">
-            Vadodara · Established 1976 · 100% Shuddh Desi Ghee
+            Kalol · Established 1986 · 100% Shuddh Desi Ghee
           </p>
           <p className="mx-auto sm:mx-0 text-center font-medium tracking-wide text-[#dfb755]">
             ✨ Vardayini Sweet Mart · Dedicated Karigar Control Desk (Port 3001)

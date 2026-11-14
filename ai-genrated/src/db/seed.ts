@@ -220,7 +220,7 @@ export const PRODUCT_CATALOG: {
         category: "penda",
         name: "Kesar Malai Penda",
         slug: "kesar-malai-penda",
-        description: "Authentic Vadodara dairy penda cooked from fresh full-cream milk, saffron, and cardamom. Silky and aromatic.",
+        description: "Authentic Kalol dairy penda cooked from fresh full-cream milk, saffron, and cardamom. Silky and aromatic.",
         imageUrl: "/images/peda.jpg",
         tags: "penda,kesar,best_seller",
         isFeatured: true,
@@ -232,8 +232,8 @@ export const PRODUCT_CATALOG: {
       },
       {
         category: "penda",
-        name: "Rajkot Brown Penda",
-        slug: "rajkot-brown-penda",
+        name: "Kalol Brown Penda",
+        slug: "kalol-brown-penda",
         description: "Traditional caramelised slow-roasted brown penda with a distinct grainy texture and intense mawa flavour.",
         imageUrl: "/images/peda.jpg",
         tags: "penda,brown,traditional",
@@ -439,8 +439,8 @@ export const PRODUCT_CATALOG: {
       },
       {
         category: "gujarati",
-        name: "Surati Khandvi (Tempered Coconut)",
-        slug: "surati-khandvi",
+        name: "Kalol Khandvi (Tempered Coconut)",
+        slug: "kalol-khandvi",
         description: "Delicate gram flour rolls tempered with sesame and mustard seeds, garnished with grated coconut.",
         imageUrl: "/images/khandvi-showcase.jpg",
         tags: "gujarati,khandvi,farsan",
@@ -523,11 +523,11 @@ export const PRODUCT_CATALOG: {
       // 12. Mixture
       {
         category: "mixture",
-        name: "Special Vadodara Royal Mixture",
-        slug: "special-vadodara-mixture",
+        name: "Special Kalol Royal Mixture",
+        slug: "special-kalol-mixture",
         description: "A blend of spicy sev, fried lentils, peanuts, cashews and sweet raisins. Our all-time bestseller.",
         imageUrl: "/images/namkeen.jpg",
-        tags: "mixture,chivda,vadodara,best_seller",
+        tags: "mixture,chivda,kalol,best_seller",
         isFeatured: true,
         variants: [
           { weight: "250 g", sku: "SVM-250", price: 120, stock: 90 },
@@ -872,7 +872,7 @@ export async function ensureReviews() {
         userName: "Aanya Patel",
         rating: 5,
         comment:
-          "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Vadodara heritage taste without excessive sweetness. Our family has been buying here for decades.",
+          "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Kalol heritage taste without excessive sweetness. Our family has been buying here for decades.",
       },
       {
         productSlug: "kesar-malai-penda",
@@ -886,7 +886,7 @@ export async function ensureReviews() {
         userName: "Bhavin Desai",
         rating: 5,
         comment:
-          "Ordered 40 festive celebration boxes for our corporate clients in Surat. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service, punctual delivery and royal presentation.",
+          "Ordered 40 festive celebration boxes for our corporate clients in Kalol. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service, punctual delivery and royal presentation.",
       },
       {
         productSlug: "kesar-malai-penda",
@@ -1280,8 +1280,8 @@ async function seedInternal() {
           {
             title: "About Vardayini Sweet Mart",
             slug: "about-us",
-            content: "Founded in 1976 in Vadodara, Gujarat, Vardayini Sweet Mart has been handcrafting traditional mithai, crunchy Gujarati farsan, and festival celebration hampers with 100% Shuddh Desi Ghee for three generations.",
-            metaTitle: "About Us | Vardayini Sweet Mart Vadodara",
+            content: "Founded in 1986 in Kalol, Gujarat, Vardayini Sweet Mart has been handcrafting traditional mithai, crunchy Gujarati farsan, and festival celebration hampers with 100% Shuddh Desi Ghee for three generations.",
+            metaTitle: "About Us | Vardayini Sweet Mart Kalol",
             metaDescription: "Learn about Vardayini Sweet Mart's legacy of royal sweets and farsan since 1976.",
             isPublished: true,
           },
@@ -1296,7 +1296,7 @@ async function seedInternal() {
           {
             title: "Terms & Conditions",
             slug: "terms",
-            content: "All orders placed through Vardayini Sweet Mart online are processed for same-day delivery in Vadodara and express courier across Gujarat. Sweets and perishable farsan are prepared fresh on order date.",
+            content: "All orders placed through Vardayini Sweet Mart online are processed for same-day delivery in Kalol and express courier across Gujarat. Sweets and perishable farsan are prepared fresh on order date.",
             metaTitle: "Terms & Conditions | Vardayini Sweet Mart",
             metaDescription: "Standard ordering terms and conditions.",
             isPublished: true,
@@ -1497,32 +1497,32 @@ async function seedInternal() {
   if (existingStores.length === 0) {
     await db.insert(stores).values([
       {
-        name: "Vardayini Mandvi (Heritage Flagship)",
-        address: "12, Mandvi Pol, opposite Mahalaxmi Temple, Mandvi",
-        city: "Vadodara",
-        pincode: "390001",
-        phone: "+91 265 242 1186",
-        hours: "8:00 AM – 10:30 PM (All 7 Days)",
+        name: "Vardayini Sweet Mart (Kalol Flagship)",
+        address: "6A, Navjivan Shopping Center, Kalol",
+        city: "Kalol",
+        pincode: "382721",
+        phone: "+91 63531 19329",
+        hours: "8:00 AM – 8:30 PM (All 7 Days)",
         openingTime: "08:00",
-        closingTime: "22:30",
+        closingTime: "20:30",
         slotIntervalMinutes: 60,
         slotCapacity: 15,
-        prepTimeMinutes: 45,
+        prepTimeMinutes: 30,
         isActive: true,
         pickupEnabled: true,
         holidays: "",
-        lat: "22.307200",
-        lng: "73.181200",
-        mapUrl: "https://maps.google.com/maps?q=Vardayini+Sweet+Mandvi+Vadodara",
+        lat: "23.246300",
+        lng: "72.508600",
+        mapUrl: "https://maps.google.com/maps?q=23.2463,72.5086",
       },
       {
-        name: "Vardayini Alkapuri (Premium Counter)",
-        address: "33, RC Dutt Road, Alkapuri",
-        city: "Vadodara",
-        pincode: "390007",
-        phone: "+91 265 233 4411",
-        hours: "9:00 AM – 10:00 PM (All 7 Days)",
-        openingTime: "09:00",
+        name: "Kandoi Rupalvada (Vardayini Mata Mandir)",
+        address: "Opp. Vardayini Mata Mandir, Rupal",
+        city: "Kalol / Rupal",
+        pincode: "382630",
+        phone: "+91 63531 19329",
+        hours: "7:30 AM – 10:00 PM (All 7 Days)",
+        openingTime: "07:30",
         closingTime: "22:00",
         slotIntervalMinutes: 60,
         slotCapacity: 12,
@@ -1530,28 +1530,28 @@ async function seedInternal() {
         isActive: true,
         pickupEnabled: true,
         holidays: "",
-        lat: "22.313500",
-        lng: "73.171800",
-        mapUrl: "https://maps.google.com/maps?q=Vardayini+Alkapuri+Vadodara",
+        lat: "23.310000",
+        lng: "72.596900",
+        mapUrl: "https://maps.google.com/maps?q=23.3100,72.5969",
       },
       {
-        name: "Vardayini CG Road",
-        address: "Ground Floor, Heritage Plaza, CG Road, Navrangpura",
-        city: "Ahmedabad",
-        pincode: "380009",
-        phone: "+91 79 2646 5522",
-        hours: "9:00 AM – 11:00 PM (All 7 Days)",
-        openingTime: "09:00",
-        closingTime: "23:00",
+        name: "Vardayini Station Road Counter",
+        address: "Station Road, Near Railway Station, Kalol",
+        city: "Kalol",
+        pincode: "382721",
+        phone: "+91 63531 19329",
+        hours: "8:00 AM – 9:30 PM (All 7 Days)",
+        openingTime: "08:00",
+        closingTime: "21:30",
         slotIntervalMinutes: 60,
         slotCapacity: 10,
-        prepTimeMinutes: 60,
+        prepTimeMinutes: 30,
         isActive: true,
         pickupEnabled: true,
         holidays: "",
-        lat: "23.033000",
-        lng: "72.565000",
-        mapUrl: "https://maps.google.com/maps?q=Vardayini+CG+Road+Ahmedabad",
+        lat: "23.243500",
+        lng: "72.501200",
+        mapUrl: "https://maps.google.com/maps?q=23.2435,72.5012",
       },
       {
         name: "Coming to London, Ontario",
@@ -1580,41 +1580,41 @@ async function seedInternal() {
       .update(stores)
       .set({
         openingTime: "08:00",
-        closingTime: "22:30",
+        closingTime: "20:30",
         slotIntervalMinutes: 60,
         slotCapacity: 15,
-        prepTimeMinutes: 45,
+        prepTimeMinutes: 30,
         isActive: true,
         pickupEnabled: true,
-        mapUrl: "https://maps.google.com/maps?q=Vardayini+Sweet+Mandvi+Vadodara",
+        mapUrl: "https://maps.google.com/maps?q=23.2463,72.5086",
       })
-      .where(like(stores.name, "%Mandvi%"));
+      .where(like(stores.name, "%Kalol%"));
     await db
       .update(stores)
       .set({
-        openingTime: "09:00",
+        openingTime: "07:30",
         closingTime: "22:00",
         slotIntervalMinutes: 60,
         slotCapacity: 12,
         prepTimeMinutes: 30,
         isActive: true,
         pickupEnabled: true,
-        mapUrl: "https://maps.google.com/maps?q=Vardayini+Alkapuri+Vadodara",
+        mapUrl: "https://maps.google.com/maps?q=23.3100,72.5969",
       })
-      .where(like(stores.name, "%Alkapuri%"));
+      .where(like(stores.name, "%Rupal%"));
     await db
       .update(stores)
       .set({
-        openingTime: "09:00",
-        closingTime: "23:00",
+        openingTime: "08:00",
+        closingTime: "21:30",
         slotIntervalMinutes: 60,
         slotCapacity: 10,
-        prepTimeMinutes: 60,
+        prepTimeMinutes: 30,
         isActive: true,
         pickupEnabled: true,
-        mapUrl: "https://maps.google.com/maps?q=Vardayini+CG+Road+Ahmedabad",
+        mapUrl: "https://maps.google.com/maps?q=23.2435,72.5012",
       })
-      .where(like(stores.name, "%CG Road%"));
+      .where(like(stores.name, "%Station%"));
     await db
       .update(stores)
       .set({
@@ -1676,53 +1676,30 @@ async function seedInternal() {
   } catch { }
 
 
-  // Ensure Serviceable Pincodes exist for Vadodara, Kalol, Gandhinagar, and Gujarat Express
+  // Ensure Serviceable Pincodes exist for Kalol, Gandhinagar, and Gujarat Express
   try {
     const existingPins = await db.select({ id: serviceablePincodes.id }).from(serviceablePincodes).limit(1);
     if (existingPins.length === 0) {
       const allStores = await db.select().from(stores);
-      const mandviStore = allStores.find(s => s.name.toLowerCase().includes("mandvi")) || allStores[0];
-      const alkapuriStore = allStores.find(s => s.name.toLowerCase().includes("alkapuri")) || mandviStore;
-      const kalolStore = allStores.find(s => s.name.toLowerCase().includes("kalol")) || mandviStore;
+      const kalolStore = allStores.find(s => s.name.toLowerCase().includes("kalol")) || allStores[0];
       const rupalStore = allStores.find(s => s.name.toLowerCase().includes("rupal")) || kalolStore;
-      const ahmedabadStore = allStores.find(s => s.name.toLowerCase().includes("cg road") || s.name.toLowerCase().includes("ahmedabad")) || mandviStore;
 
       const defaultPincodeList = [
-        // Vadodara Core Urban (Mandvi & Alkapuri) - Same Day Hot & Fresh
-        { pincode: "390001", storeId: mandviStore?.id || 1, city: "Vadodara (Mandvi / City)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390002", storeId: mandviStore?.id || 1, city: "Vadodara (Fatehgunj)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390004", storeId: mandviStore?.id || 1, city: "Vadodara (Karelibaug)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390005", storeId: mandviStore?.id || 1, city: "Vadodara (Pratapnagar)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390006", storeId: alkapuriStore?.id || 2, city: "Vadodara (Sayajigunj)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390007", storeId: alkapuriStore?.id || 2, city: "Vadodara (Alkapuri / Akota)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390008", storeId: mandviStore?.id || 1, city: "Vadodara (Waghodia Road)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390011", storeId: mandviStore?.id || 1, city: "Vadodara (Makarpura)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390012", storeId: alkapuriStore?.id || 2, city: "Vadodara (Gotri)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390015", storeId: alkapuriStore?.id || 2, city: "Vadodara (Vasna)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390019", storeId: mandviStore?.id || 1, city: "Vadodara (Manjalpur)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390020", storeId: alkapuriStore?.id || 2, city: "Vadodara (Subhanpura)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390021", storeId: alkapuriStore?.id || 2, city: "Vadodara (Sevasi)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390022", storeId: mandviStore?.id || 1, city: "Vadodara (Harni)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390024", storeId: mandviStore?.id || 1, city: "Vadodara (Sama)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        { pincode: "390025", storeId: alkapuriStore?.id || 2, city: "Vadodara (Tandalja)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:30 PM", isExpress: true },
-        
-        // Kalol & Gandhinagar Region
-        { pincode: "382721", storeId: kalolStore?.id || 1, city: "Kalol (Navjivan Center)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 5:00 PM", isExpress: true },
-        { pincode: "382630", storeId: rupalStore?.id || kalolStore?.id || 1, city: "Gandhinagar (Rupal)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 5:00 PM", isExpress: true },
+        // Kalol & Gandhinagar Region - Same Day Hot & Fresh Local Delivery & Pickup
+        { pincode: "382721", storeId: kalolStore?.id || 1, city: "Kalol (Navjivan Center / Flagship)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 5:00 PM", isExpress: true },
+        { pincode: "382630", storeId: rupalStore?.id || kalolStore?.id || 1, city: "Gandhinagar (Rupal / Mata Mandir)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 5:00 PM", isExpress: true },
+        { pincode: "382722", storeId: kalolStore?.id || 1, city: "Kalol (GIDC Industrial Area)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 5:30 PM", isExpress: true },
+        { pincode: "382715", storeId: kalolStore?.id || 1, city: "Kalol (Kadi Road Rural)", deliveryCharge: 49, estimatedDeliveryTime: "Today by 6:00 PM", isExpress: true },
         { pincode: "382010", storeId: rupalStore?.id || kalolStore?.id || 1, city: "Gandhinagar (Sector 1-10)", deliveryCharge: 59, estimatedDeliveryTime: "Tomorrow Morning", isExpress: true },
         { pincode: "382016", storeId: rupalStore?.id || kalolStore?.id || 1, city: "Gandhinagar (Infocity / Kudasan)", deliveryCharge: 59, estimatedDeliveryTime: "Tomorrow Morning", isExpress: true },
+        { pincode: "382024", storeId: rupalStore?.id || kalolStore?.id || 1, city: "Gandhinagar (Sector 24-30)", deliveryCharge: 59, estimatedDeliveryTime: "Tomorrow Morning", isExpress: true },
 
-        // Ahmedabad Region (CG Road)
-        { pincode: "380001", storeId: ahmedabadStore?.id || 1, city: "Ahmedabad (Old City / Bhadra)", deliveryCharge: 59, estimatedDeliveryTime: "Within 24 Hours", isExpress: true },
-        { pincode: "380006", storeId: ahmedabadStore?.id || 1, city: "Ahmedabad (Ellisbridge)", deliveryCharge: 59, estimatedDeliveryTime: "Within 24 Hours", isExpress: true },
-        { pincode: "380009", storeId: ahmedabadStore?.id || 1, city: "Ahmedabad (CG Road / Navrangpura)", deliveryCharge: 59, estimatedDeliveryTime: "Today by 7:00 PM", isExpress: true },
-        { pincode: "380015", storeId: ahmedabadStore?.id || 1, city: "Ahmedabad (Satellite / Bodakdev)", deliveryCharge: 59, estimatedDeliveryTime: "Within 24 Hours", isExpress: true },
-        { pincode: "380054", storeId: ahmedabadStore?.id || 1, city: "Ahmedabad (Thaltej / SG Highway)", deliveryCharge: 59, estimatedDeliveryTime: "Within 24 Hours", isExpress: true },
-
-        // Express Network (Surat & Anand)
-        { pincode: "395001", storeId: mandviStore?.id || 1, city: "Surat (Ring Road)", deliveryCharge: 70, estimatedDeliveryTime: "Within 24-36 Hours", isExpress: false },
-        { pincode: "395007", storeId: mandviStore?.id || 1, city: "Surat (Athwa Lines)", deliveryCharge: 70, estimatedDeliveryTime: "Within 24-36 Hours", isExpress: false },
-        { pincode: "388001", storeId: mandviStore?.id || 1, city: "Anand (Vidyanagar Road)", deliveryCharge: 60, estimatedDeliveryTime: "Within 24-36 Hours", isExpress: false },
+        // Gujarat Express Delivery Network
+        { pincode: "380001", storeId: kalolStore?.id || 1, city: "Ahmedabad (Old City / Bhadra)", deliveryCharge: 59, estimatedDeliveryTime: "Within 24 Hours", isExpress: true },
+        { pincode: "380009", storeId: kalolStore?.id || 1, city: "Ahmedabad (CG Road / Navrangpura)", deliveryCharge: 59, estimatedDeliveryTime: "Within 24 Hours", isExpress: true },
+        { pincode: "390001", storeId: kalolStore?.id || 1, city: "Vadodara (City Center)", deliveryCharge: 69, estimatedDeliveryTime: "Within 24-36 Hours", isExpress: false },
+        { pincode: "395001", storeId: kalolStore?.id || 1, city: "Surat (Ring Road)", deliveryCharge: 70, estimatedDeliveryTime: "Within 24-36 Hours", isExpress: false },
+        { pincode: "388001", storeId: kalolStore?.id || 1, city: "Anand (Vidyanagar Road)", deliveryCharge: 60, estimatedDeliveryTime: "Within 24-36 Hours", isExpress: false },
       ];
 
       for (const p of defaultPincodeList) {
@@ -1797,17 +1774,17 @@ async function seedInternal() {
     const userMapByEmail = new Map(allCurrentUsers.map((u) => [u.email, u.id]));
 
     const userAddressList = [
-      { email: "pratik@vardayini.com", label: "Home", line1: "14, Heritage Enclave, Near Mandvi Gate, Mandvi", city: "Vadodara", state: "Gujarat", pincode: "390001", phone: "9825019760" },
-      { email: "pratik@vardayini.com", label: "Office", line1: "Level 4, Karigar Corporate Hub, RC Dutt Road, Alkapuri", city: "Vadodara", state: "Gujarat", pincode: "390007", phone: "9825019760" },
-      { email: "aanya@vardayini.com", label: "Home", line1: "B-402, Samruddhi Heights, Alkapuri", city: "Vadodara", state: "Gujarat", pincode: "390007", phone: "9876543210" },
-      { email: "admin@vardayini.com", label: "Headquarters", line1: "12, Mandvi Pol, Opp. Mahalaxmi Temple, Mandvi", city: "Vadodara", state: "Gujarat", pincode: "390001", phone: "9000000000" },
-      { email: "rajesh@gmail.com", label: "Home", line1: "12, Shanti Kunj Society, Near Law Garden, Ellisbridge", city: "Ahmedabad", state: "Gujarat", pincode: "380006", phone: "9824155220" },
-      { email: "meera@gmail.com", label: "Home", line1: "7, Navrang Row House, Race Course Road", city: "Vadodara", state: "Gujarat", pincode: "390015", phone: "9909944331" },
-      { email: "bhavin@yahoo.com", label: "Home", line1: "45, Gokul Residency, Ring Road, Athwa Lines", city: "Surat", state: "Gujarat", pincode: "395001", phone: "9426011223" },
-      { email: "neha@gmail.com", label: "Home", line1: "23, Amrapali Bungalows, Gotri Sevasi Road", city: "Vadodara", state: "Gujarat", pincode: "390021", phone: "9825277889" },
-      { email: "chirag@mehta.com", label: "Home", line1: "58, Swastik Society, Navrangpura", city: "Ahmedabad", state: "Gujarat", pincode: "380009", phone: "9879512345" },
-      { email: "priya@parikh.in", label: "Home", line1: "19, Anand Vihar, Vidyanagar Road", city: "Anand", state: "Gujarat", pincode: "388001", phone: "9427098765" },
-      { email: "kirit@gandhi.com", label: "Home", line1: "88, Mahalaxmi Pol, Raopura", city: "Vadodara", state: "Gujarat", pincode: "390001", phone: "9825123456" },
+      { email: "pratik@vardayini.com", label: "Home", line1: "14, Navjivan Shopping Center, Station Road", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "6353119329" },
+      { email: "pratik@vardayini.com", label: "Office", line1: "Level 2, Karigar Complex, Garden City Road", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "6353119329" },
+      { email: "aanya@vardayini.com", label: "Home", line1: "B-402, Samruddhi Heights, Near Tower", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "9876543210" },
+      { email: "admin@vardayini.com", label: "Headquarters", line1: "6A, Navjivan Shopping Center, Kalol", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "6352119329" },
+      { email: "rajesh@gmail.com", label: "Home", line1: "12, Shanti Kunj Society, Near Vardayini Mata Mandir", city: "Kalol", state: "Gujarat", pincode: "382630", phone: "9824155220" },
+      { email: "meera@gmail.com", label: "Home", line1: "7, Navrang Row House, Station Road", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "9909944331" },
+      { email: "bhavin@yahoo.com", label: "Home", line1: "45, Gokul Residency, Highway Road", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "9426011223" },
+      { email: "neha@gmail.com", label: "Home", line1: "23, Amrapali Bungalows, GIDC Kalol", city: "Kalol", state: "Gujarat", pincode: "382722", phone: "9825277889" },
+      { email: "chirag@mehta.com", label: "Home", line1: "58, Swastik Society, Tower Bazar", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "9879512345" },
+      { email: "priya@parikh.in", label: "Home", line1: "19, Anand Vihar, Kadi Road", city: "Kalol", state: "Gujarat", pincode: "382715", phone: "9427098765" },
+      { email: "kirit@gandhi.com", label: "Home", line1: "88, Navjivan Market, Kalol", city: "Kalol", state: "Gujarat", pincode: "382721", phone: "9825123456" },
     ];
 
     for (const addr of userAddressList) {
@@ -1874,7 +1851,7 @@ async function seedInternal() {
       "Evening Fresh (5:30 PM – 8:30 PM)"
     ];
 
-    const cities = ["Vadodara", "Ahmedabad", "Surat", "Anand"];
+    const cities = ["Kalol", "Rupal", "Gandhinagar", "Kadi"];
 
     let seq = 1000;
     const now = Date.now();
@@ -2006,7 +1983,7 @@ async function seedInternal() {
             orderId,
             status: "placed",
             note: "Order placed successfully online",
-            location: "Vadodara Web Desk",
+            location: "Kalol Web Desk",
             changedBy: "system",
             createdAt: orderDate,
           });
@@ -2027,7 +2004,7 @@ async function seedInternal() {
               orderId,
               status: "packed",
               note: "Packaged in hygienic hermetic tins with aroma seal",
-              location: "Packaging Section, Vadodara",
+              location: "Packaging Section, Kalol",
               changedBy: "admin",
               createdAt: new Date(orderDate.getTime() + 4 * 3600 * 1000),
             });
@@ -2038,7 +2015,7 @@ async function seedInternal() {
               orderId,
               status: "shipped",
               note: `Handed over to Blue Dart Express (AWB: BD-${seq}789)`,
-              location: "Vadodara Logistics Hub",
+              location: "Kalol Logistics Hub",
               changedBy: "admin",
               createdAt: new Date(orderDate.getTime() + 8 * 3600 * 1000),
             });
@@ -2060,7 +2037,7 @@ async function seedInternal() {
               orderId,
               status: "cancelled",
               note: "Order cancelled by customer before dispatch",
-              location: "Vadodara Support Desk",
+              location: "Kalol Support Desk",
               changedBy: "customer",
               createdAt: new Date(orderDate.getTime() + 2 * 3600 * 1000),
             });

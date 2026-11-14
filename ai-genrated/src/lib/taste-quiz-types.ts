@@ -282,7 +282,7 @@ export const DEFAULT_QUESTIONS: QuizQuestionItem[] = [
       {
         key: "surprise_me",
         label: "Surprise Me!",
-        description: "Let the Vadodara sweet masters handpick a divine curation",
+        description: "Let the Kalol sweet masters handpick a divine curation",
         icon: "🪄",
         sortOrder: 4,
         tagMapping: { mithaiType: "surprise_me" },

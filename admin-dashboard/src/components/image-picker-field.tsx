@@ -18,7 +18,7 @@ export const PHOTO_GALLERY = [
 
   // Farsan
   { name: "Nylon Khaman Dhokla", url: "/images/khaman-showcase.jpg", category: "Farsan" },
-  { name: "Surati Khandvi Roll", url: "/images/khandvi-showcase.jpg", category: "Farsan" },
+  { name: "Kalol Khandvi Roll", url: "/images/khandvi-showcase.jpg", category: "Farsan" },
   { name: "Khaman Classic", url: "/images/khaman.jpg", category: "Farsan" },
   { name: "Khandvi Classic", url: "/images/khandvi.jpg", category: "Farsan" },
   { name: "Crispy Gujarati Namkeen", url: "/images/namkeen.jpg", category: "Farsan" },

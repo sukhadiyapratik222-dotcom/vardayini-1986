@@ -128,7 +128,7 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
             <span>👥</span> Customer Directory & Admin Access Management
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Registered patrons across Vadodara & Pan-India with delivery addresses, order analytics, and super admin access controls.
+            Registered patrons across Kalol & Pan-India with delivery addresses, order analytics, and super admin access controls.
           </p>
         </div>
 

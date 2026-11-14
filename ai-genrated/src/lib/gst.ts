@@ -1,6 +1,6 @@
 /**
  * GST Calculation Engine & Invoice Specifications
- * For Vardayini Sweets & Namkeen (Vadodara, Gujarat - State Code 24)
+ * For Vardayini Sweets & Namkeen (Kalol, Gujarat - State Code 24)
  * Compliant with Central Goods and Services Tax Act, 2017
  */
 
@@ -22,14 +22,14 @@ export interface SellerDetails {
 export const SELLER_DETAILS: SellerDetails = {
   legalName: "Vardayini Sweets & Namkeen Private Limited",
   tradeName: "Vardayini Sweets & Namkeen",
-  addressLine1: "Opp. Jubilee Baug, Raopura",
-  addressLine2: "Heritage Sweets Bazaar",
-  city: "Vadodara",
+  addressLine1: "6A, Navjivan Shopping Center",
+  addressLine2: "Navjivan Bazar",
+  city: "Kalol",
   state: "Gujarat",
   stateCode: "24",
-  pincode: "390001",
+  pincode: "382721",
   gstin: "24AAACV1234F1Z5",
-  phone: "+91 98250 12345",
+  phone: "+91 63531 19329",
   email: "billing@vardayinisweets.com",
   fssaiNumber: "10719024000123",
 };

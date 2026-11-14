@@ -66,7 +66,7 @@ export default async function KitchenSlipPage({ params }: Props) {
           <p className="text-[10px] uppercase font-bold tracking-widest text-slate-600">
             KITCHEN PREPARATION &amp; COUNTER SLIP
           </p>
-          <p className="text-[10px] text-slate-500 mt-1">Est. 1976 · Vadodara, Gujarat</p>
+          <p className="text-[10px] text-slate-500 mt-1">Est. 1986 · Kalol, Gujarat</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2 pb-3 border-b border-dashed border-slate-400">

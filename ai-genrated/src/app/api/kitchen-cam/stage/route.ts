@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     switch (newStage) {
       case "order_received":
         mappedStatus = "confirmed";
-        statusNote = "Order confirmed & queued in Vadodara kitchen";
+        statusNote = "Order confirmed & queued in Kalol kitchen";
         break;
       case "preparing":
         mappedStatus = "preparing";
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         orderId: order.id,
         status: mappedStatus,
         note: caption ? `${statusNote}: ${caption}` : statusNote,
-        location: "Vadodara Flagship Kitchen",
+        location: "Kalol Flagship Kitchen",
         changedBy: staffName,
       });
     } catch (hErr) {

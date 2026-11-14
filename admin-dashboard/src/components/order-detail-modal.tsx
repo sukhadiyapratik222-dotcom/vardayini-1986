@@ -635,7 +635,7 @@ export function OrderDetailModal({
                         <div>
                           <span className="text-slate-500 block font-medium">Branch Address:</span>
                           <p className="font-semibold text-slate-800">
-                            {order.store?.address || "R.V. Desai Road, Navapura, Vadodara, Gujarat"}
+                            {order.store?.address || "6A, Navjivan Shopping Center, Kalol, Gujarat 382721"}
                           </p>
                           {order.store?.phone && (
                             <a
@@ -1329,7 +1329,7 @@ export function OrderDetailModal({
                             type="text"
                             value={customLocation}
                             onChange={(e) => setCustomLocation(e.target.value)}
-                            placeholder="e.g. Vadodara Central Packing Station"
+                            placeholder="e.g. Kalol Central Packing Station"
                             className="w-full rounded-xl border border-slate-300 p-2 text-slate-800 outline-none focus:border-[#0b2f8a]"
                           />
                         </div>

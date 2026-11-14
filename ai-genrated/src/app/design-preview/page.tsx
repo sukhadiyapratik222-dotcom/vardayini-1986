@@ -242,19 +242,19 @@ export default function DesignPreviewPage() {
               </div>
             </div>
 
-            {/* Photo 4: Surati Khandvi */}
+            {/* Photo 4: Kalol Khandvi */}
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-slate-900/80 group">
               <div className="relative aspect-square w-full overflow-hidden bg-slate-800">
                 <Image
                   src="/images/khandvi-showcase.jpg"
-                  alt="Surati Khandvi"
+                  alt="Kalol Khandvi"
                   fill
                   className="object-cover group-hover:scale-105 transition duration-500"
                 />
               </div>
               <div className="p-4 space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#dfb755]">Live Farsan</span>
-                <h3 className="text-base font-semibold text-white">Surati Khandvi</h3>
+                <h3 className="text-base font-semibold text-white">Kalol Khandvi</h3>
                 <p className="text-xs text-slate-400">Silk gram flour rolls garnished with fresh coconut & coriander.</p>
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function DesignPreviewPage() {
               Footer Menu Structure (Sweets • Namkeen • Bakery • Policies)
             </h2>
             <p className="text-xs text-slate-400 mt-1">
-              Spacious 4-column menu layout with gold accent underlines, integrated seamlessly with your Vadodara brand and store locations:
+              Spacious 4-column menu layout with gold accent underlines, integrated seamlessly with your Kalol brand and store locations:
             </p>
           </div>
 

@@ -43,7 +43,7 @@ export function TestimonialsSection({
   const title = config?.title || "WHAT OUR CUSTOMERS SAY";
   const subtitle = config?.subtitle || "Real feedback and verified reviews from families across Gujarat & India.";
   const showTrustBadge = config?.showTrustBadge ?? true;
-  const trustBadgeText = config?.trustBadgeText || "Real Customer Reviews from Kalol, Vadodara, Ahmedabad & Surat";
+  const trustBadgeText = config?.trustBadgeText || "Real Customer Reviews from Kalol, Gandhinagar & Pan-Gujarat";
 
   const autoShowRealReviews = config?.autoShowRealReviews !== false;
 
@@ -95,7 +95,7 @@ export function TestimonialsSection({
   const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reviewerName, setReviewerName] = useState("");
-  const [reviewerCity, setReviewerCity] = useState("Vadodara");
+  const [reviewerCity, setReviewerCity] = useState("Kalol");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -180,7 +180,7 @@ export function TestimonialsSection({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userName: cleanName,
-          city: reviewerCity.trim() || "Vadodara",
+          city: reviewerCity.trim() || "Kalol",
           rating: reviewRating,
           comment: reviewComment.trim(),
         }),
@@ -197,7 +197,7 @@ export function TestimonialsSection({
       const newReview: CustomerReview = {
         id: String(data.review?.id || `client-${Date.now()}`),
         name: cleanName,
-        location: resolveCustomerLocation(cleanName, reviewerCity.trim() || "Vadodara"),
+        location: resolveCustomerLocation(cleanName, reviewerCity.trim() || "Kalol"),
         rating: reviewRating,
         quote: reviewComment.trim(),
         avatarUrl: getAvatarForName(cleanName) || undefined,
@@ -477,7 +477,7 @@ export function TestimonialsSection({
                       type="text"
                       value={reviewerCity}
                       onChange={(e) => setReviewerCity(e.target.value)}
-                      placeholder="e.g. Vadodara, Ahmedabad"
+                      placeholder="e.g. Kalol, Gandhinagar"
                       className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-xs text-neutral-800 focus:outline-none focus:border-[#3b1e54]"
                     />
                   </div>

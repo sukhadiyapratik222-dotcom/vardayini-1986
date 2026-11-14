@@ -176,7 +176,7 @@ export function KitchenCamHomepageSection() {
             </h3>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Since 1976, we have maintained open transparent counters in Vadodara. Our Live Kitchen Cam brings the warmth of our karahi and purity of our ingredients straight to your screen.
+              Since 1976, we have maintained open transparent counters in Kalol. Our Live Kitchen Cam brings the warmth of our karahi and purity of our ingredients straight to your screen.
             </p>
 
             <div className="space-y-3 pt-2">
@@ -213,7 +213,7 @@ export function KitchenCamHomepageSection() {
           </div>
 
           <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
-            <span>Vadodara Flagship Kitchen</span>
+            <span>Kalol Flagship Kitchen</span>
             <span className="font-bold text-[#0b2f8a]">Est. 1976</span>
           </div>
         </div>

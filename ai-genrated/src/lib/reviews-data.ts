@@ -12,17 +12,17 @@ export interface CustomerReview {
 
 export const KNOWN_CUSTOMER_CITIES: Record<string, string> = {
   "Pratik Sukhadiya": "Kalol, Gujarat",
-  "Rajeshbhai Shah": "Alkapuri, Vadodara",
-  "Aanya Patel": "Mandvi, Vadodara",
-  "Kiritbhai Gandhi": "Raopura, Vadodara",
-  "Bhavin Desai": "Surat, Gujarat",
-  "Dr. Meera Joshi": "Race Course, Vadodara",
-  "Meera Joshi": "Race Course, Vadodara",
-  "Chirag Mehta": "Ahmedabad, Gujarat",
-  "Hiren Mehta": "Surat, Gujarat",
-  "Pooja Patel": "Manjalpur, Vadodara",
-  "Nitin Trivedi": "Sayajigunj, Vadodara",
-  "Anand Parmar": "Karelibaug, Vadodara",
+  "Rajeshbhai Shah": "Navjivan, Kalol",
+  "Aanya Patel": "Station Road, Kalol",
+  "Kiritbhai Gandhi": "Bazar, Kalol",
+  "Bhavin Desai": "Kalol, Gujarat",
+  "Dr. Meera Joshi": "Garden City, Kalol",
+  "Meera Joshi": "Garden City, Kalol",
+  "Chirag Mehta": "Kalol, Gujarat",
+  "Hiren Mehta": "Kalol, Gujarat",
+  "Pooja Patel": "Panchvati, Kalol",
+  "Nitin Trivedi": "Kalol, Gujarat",
+  "Anand Parmar": "Rupal, Kalol",
 };
 
 export function resolveCustomerLocation(
@@ -41,7 +41,7 @@ export function resolveCustomerLocation(
     return `${city}, Gujarat`;
   }
 
-  return "Vadodara, Gujarat";
+  return "Kalol, Gujarat";
 }
 
 export function isAuthenticReview(
@@ -87,10 +87,10 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
   {
     id: "review-2",
     name: "Rajeshbhai Shah",
-    location: "Alkapuri, Vadodara",
+    location: "Navjivan, Kalol",
     rating: 5,
     quote:
-      "Ordered 5 kg Kaju Katli and Nylon Khaman for our family gathering in Alkapuri. Reached fresh, neatly packed in gold boxes, and every guest praised the pure Gir cow ghee aroma.",
+      "Ordered 5 kg Kaju Katli and Nylon Khaman for our family gathering in Kalol. Reached fresh, neatly packed in gold boxes, and every guest praised the pure Gir cow ghee aroma.",
     avatarUrl: "/images/avatars/rajesh.svg",
     productName: "Silver Leaf Kaju Katli Festive Box",
     isVerified: true,
@@ -98,10 +98,10 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
   {
     id: "review-3",
     name: "Aanya Patel",
-    location: "Mandvi, Vadodara",
+    location: "Station Road, Kalol",
     rating: 5,
     quote:
-      "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Vadodara heritage taste without excessive sweetness. Our family has been buying here for decades.",
+      "The Desi Ghee Motichoor Ladoo and Besan Mohanthal melt right in the mouth. Authentic Kalol heritage taste without excessive sweetness. Our family has been buying here for decades.",
     avatarUrl: "/images/avatars/ananya.svg",
     productName: "Shuddh Desi Ghee Mohanthal",
     isVerified: true,
@@ -109,10 +109,10 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
   {
     id: "review-4",
     name: "Kiritbhai Gandhi",
-    location: "Raopura, Vadodara",
+    location: "Bazar, Kalol",
     rating: 5,
     quote:
-      "Our family has been buying sweets from Vardayini since the 1980s at Mandvi Tower. The quality of dryfruit sweets, kesar peda and morning farsan has remained royal and 100% pure.",
+      "Our family has been buying sweets from Vardayini since 1986 at Kalol counter. The quality of dryfruit sweets, kesar peda and morning farsan has remained royal and 100% pure.",
     avatarUrl: "/images/avatars/rajesh.svg",
     productName: "Mathura Malai Penda",
     isVerified: true,
@@ -120,10 +120,10 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
   {
     id: "review-5",
     name: "Bhavin Desai",
-    location: "Surat, Gujarat",
+    location: "Kalol, Gujarat",
     rating: 5,
     quote:
-      "Ordered 40 festive celebration boxes for our corporate clients in Surat. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service, punctual delivery and royal presentation.",
+      "Ordered 40 festive celebration boxes for our corporate clients in Kalol. Vacuum-sealed packaging kept the sweets fresh for weeks. Excellent service, punctual delivery and royal presentation.",
     avatarUrl: "/images/avatars/rajesh.svg",
     productName: "Shahi Diwali Royal Sweets Hamper",
     isVerified: true,
@@ -131,7 +131,7 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
   {
     id: "review-6",
     name: "Dr. Meera Joshi",
-    location: "Race Course, Vadodara",
+    location: "Garden City, Kalol",
     rating: 5,
     quote:
       "Best Kesar Peda in Gujarat! Genuine Kashmiri saffron aroma, fresh buffalo milk mawa, and no artificial coloring. Highly recommended for Diwali and family occasions.",
@@ -142,7 +142,7 @@ export const DEFAULT_VERIFIED_REVIEWS: CustomerReview[] = [
   {
     id: "review-7",
     name: "Chirag Mehta",
-    location: "Ahmedabad, Gujarat",
+    location: "Kalol, Gujarat",
     rating: 5,
     quote:
       "The Shahi Gulab Jamun and Rasgullas are extraordinarily spongy and soft, soaked in natural cardamom syrup. Truly authentic Gujarati mithai perfection.",

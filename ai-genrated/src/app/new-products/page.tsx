@@ -6,7 +6,7 @@ import { getUiConfigSafe } from "@/lib/ui-config";
 export const metadata: Metadata = {
   title: "New Products 2026 Collection | Vardayini Sweet Mart",
   description:
-    "Discover newly launched royal sweets, authentic Gujarati farsan, and festive gift hampers handcrafted with 100% Shuddh Desi Ghee in Vadodara.",
+    "Discover newly launched royal sweets, authentic Gujarati farsan, and festive gift hampers handcrafted with 100% Shuddh Desi Ghee in Kalol, Gujarat.",
 };
 
 export default async function NewProductsPage() {

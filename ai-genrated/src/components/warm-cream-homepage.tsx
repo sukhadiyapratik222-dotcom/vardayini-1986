@@ -353,9 +353,9 @@ export function WarmCreamHomepage({
 
                 <div className="p-4 rounded-2xl bg-[#faf6ee] border border-slate-100 space-y-1.5">
                   <span className="text-2xl">⚡</span>
-                  <h3 className="font-bold text-[#24142e] text-sm">Vadodara Same-Day Delivery</h3>
+                  <h3 className="font-bold text-[#24142e] text-sm">Kalol Same-Day Delivery</h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Same-day delivery across Vadodara for orders before 2:00 PM. Express delivery pan-India.
+                    Same-day delivery across Kalol for orders before 2:00 PM. Express delivery pan-India.
                   </p>
                 </div>
               </div>

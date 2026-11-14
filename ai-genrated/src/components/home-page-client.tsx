@@ -258,7 +258,7 @@ export function HomePageClient({
           <div className="absolute top-0 right-0 -mr-20 -mt-20 h-80 w-80 rounded-full bg-white/5 blur-2xl pointer-events-none" />
           <div className="relative max-w-2xl space-y-4">
             <span className="inline-block rounded-full bg-[#dfb755]/20 px-4 py-1 text-xs font-bold uppercase tracking-wider text-[#dfb755]">
-              Our Heritage · Vadodara
+              Our Heritage · Kalol
             </span>
             <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl text-white">
               Three generations of uncompromising taste.

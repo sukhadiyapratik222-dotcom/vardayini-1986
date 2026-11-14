@@ -366,7 +366,7 @@ export async function PUT(request: Request, context: { params: Promise<{ orderNu
     existingOrder.id,
     historyStatus,
     historyNote,
-    body.location || "Vadodara Central Operations",
+    body.location || "Kalol Central Operations",
     "admin"
   );
 
@@ -676,7 +676,7 @@ export async function GET(request: Request, context: { params: Promise<{ orderNu
       orderId: order.id,
       status: order.status || "confirmed",
       note: "Order confirmed in system",
-      location: "Vadodara Operations Desk",
+      location: "Kalol Operations Desk",
       changedBy: "system",
       createdAt: order.createdAt || new Date(),
     });

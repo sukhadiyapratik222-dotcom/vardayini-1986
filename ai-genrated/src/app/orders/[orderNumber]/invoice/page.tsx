@@ -203,7 +203,7 @@ export default async function CustomerInvoicePage({ params }: PageProps) {
                 {uiConfig?.storeInfo?.tagline || "Since 1976 • Pure Desi Ghee Mithai & Traditional Farsan"}
               </p>
               <p className="text-[11px] text-slate-600 mt-1 max-w-sm leading-relaxed">
-                {safeSeller.addressLine1 || "Opp. Jubilee Baug, Raopura, Vadodara, Gujarat 390001"}
+                {safeSeller.addressLine1 || "6A, Navjivan Shopping Center, Kalol, Gujarat 382721"}
               </p>
               <p className="text-[11px] text-slate-600">
                 <strong>Tel:</strong> {safeSeller.phone} • <strong>Email:</strong> {safeSeller.email}

@@ -76,7 +76,7 @@ export function AnnouncementsTab({ config, onRefresh }: AnnouncementsTabProps) {
         <div className="rounded-xl overflow-hidden shadow-sm border border-[#0b2f8a]/10">
           <div className="bg-[#0b2f8a] text-white px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-2">
             <span className="hidden sm:inline text-white/80 font-medium">
-              Vadodara · Since 1976 · 100% Shuddh Desi Ghee
+              Kalol · Since 1986 · 100% Shuddh Desi Ghee
             </span>
             <span className="mx-auto sm:mx-0 font-medium text-[#dfb755] flex items-center gap-2 text-center">
               {badge && (

@@ -162,7 +162,7 @@ const DEFAULT_FESTIVAL_PAGES: Record<string, FestivalSpecificPageConfig> = {
       titlePrefix: "Celebrate Shubh Deepavali & New Year with",
       titleHighlight: "Royal Desi Ghee Mithai",
       subtitle:
-        "Handcrafted Diwali gift hampers, silver vark Kaju Katli, slow-roasted Mohanthal, and authentic Surati Ghari crafted with 100% pure Gir cow ghee.",
+        "Handcrafted Diwali gift hampers, silver vark Kaju Katli, slow-roasted Mohanthal, and authentic Kalol Ghari crafted with 100% pure Gir cow ghee.",
       button1Text: "Shop Diwali Hampers 🪔",
       button1Link: "#festive-catalog",
       button2Text: "Corporate Gifting 🎁",

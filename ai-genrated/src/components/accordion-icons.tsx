@@ -94,9 +94,9 @@ const CATEGORIES: CategoryItemConfig[] = [
     label: 'Bakery',
     href: '/shop?group=bakery',
     description:
-      'Artisanal bakery fresh delights, authentic Surat nankhatai, melt-in-mouth butter khari, and crispy tea-time rusks.',
+      'Artisanal bakery fresh delights, authentic Kalol nankhatai, melt-in-mouth butter khari, and crispy tea-time rusks.',
     subLinks: [
-      { name: 'Surat Nankhatai', href: '/shop?category=biscuits-and-cookies' },
+      { name: 'Kalol Nankhatai', href: '/shop?category=biscuits-and-cookies' },
       { name: 'Flaky Butter Khari', href: '/shop?category=toast-and-khari' },
       { name: 'Artisan Cookies & Biscuits', href: '/shop?category=biscuits-and-cookies' },
     ],
@@ -106,10 +106,10 @@ const CATEGORIES: CategoryItemConfig[] = [
     label: 'Stores',
     href: '/stores',
     description:
-      'Visit our physical boutique stores across Vadodara, Ahmedabad, Surat, and Anand. View live timings, directions, and tasting counters.',
+      'Visit our physical counter in Kalol (6A, Navjivan Shopping Center) & Rupal. View live timings, directions, and tasting counters.',
     subLinks: [
-      { name: 'Vadodara Flagship Store', href: '/stores' },
-      { name: 'Ahmedabad Outlets', href: '/stores' },
+      { name: 'Kalol Flagship Counter', href: '/stores' },
+      { name: 'Rupal Mandir Counter', href: '/stores' },
       { name: 'Store Timings & Contact', href: '/stores' },
     ],
   },

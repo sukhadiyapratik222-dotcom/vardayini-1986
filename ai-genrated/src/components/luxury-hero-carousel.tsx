@@ -53,7 +53,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     tagline: "Pure Desi Ghee & Golden Moments",
     title: "Crafting Memories With Every Bite",
     description:
-      "Generations of Vadodara families have trusted our dawn-prepared mithai platters, golden chakli, and saffron motichoor for life's most precious celebrations.",
+      "Generations of Kalol families have trusted our dawn-prepared mithai platters, golden chakli, and saffron motichoor for life's most precious celebrations.",
     buttonText: "Celebrate Now",
     buttonHref: "/shop",
     imageUrl: "/images/showcase/tradition-clean.jpg",

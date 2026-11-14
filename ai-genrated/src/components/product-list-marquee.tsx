@@ -8,7 +8,7 @@ export const STORE_PRODUCT_NAMES: string[] = [
   'Shahi Gulab Jamun',
   'Kesar Peda',
   'Pure Desi Ghee Mohanthal',
-  'Surat Special Nankhatai',
+  'Kalol Special Nankhatai',
   'Steamed Nylon Khaman',
   'Bhavnagari Gathiya',
   'Crispy Methi Khakhra',

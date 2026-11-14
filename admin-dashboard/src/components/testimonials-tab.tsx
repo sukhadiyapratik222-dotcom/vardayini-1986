@@ -25,7 +25,7 @@ export function TestimonialsTab({ config, onRefresh, currentUser }: Testimonials
   );
   const [showTrustBadge, setShowTrustBadge] = useState(currentCfg.showTrustBadge ?? true);
   const [trustBadgeText, setTrustBadgeText] = useState(
-    currentCfg.trustBadgeText || "Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India"
+    currentCfg.trustBadgeText || "Over 1,850+ verified reviews across Kalol, Gujarat & Pan-India"
   );
 
   // Initialize reviews: prioritize real database reviews if available
@@ -45,7 +45,7 @@ export function TestimonialsTab({ config, onRefresh, currentUser }: Testimonials
 
   // Form for adding new review
   const [newAuthor, setNewAuthor] = useState("");
-  const [newCity, setNewCity] = useState("Vadodara");
+  const [newCity, setNewCity] = useState("Kalol");
   const [newQuote, setNewQuote] = useState("");
   const [newRating, setNewRating] = useState(5);
   const [newProductName, setNewProductName] = useState("");
@@ -155,7 +155,7 @@ export function TestimonialsTab({ config, onRefresh, currentUser }: Testimonials
     // Prepend so it shows first!
     setReviews((prev) => [newRev, ...prev]);
     setNewAuthor("");
-    setNewCity("Vadodara");
+    setNewCity("Kalol");
     setNewQuote("");
     setNewProductName("");
     setShowAddForm(false);
@@ -445,7 +445,7 @@ export function TestimonialsTab({ config, onRefresh, currentUser }: Testimonials
                   value={trustBadgeText}
                   onChange={(e) => setTrustBadgeText(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-amber-600 disabled:bg-slate-50 disabled:text-slate-500 font-medium"
-                  placeholder="e.g. Over 1,850+ verified reviews across Vadodara, Gujarat & Pan-India"
+                  placeholder="e.g. Over 1,850+ verified reviews across Kalol, Gujarat & Pan-India"
                 />
               </div>
             )}
@@ -509,7 +509,7 @@ export function TestimonialsTab({ config, onRefresh, currentUser }: Testimonials
                     type="text"
                     value={newCity}
                     onChange={(e) => setNewCity(e.target.value)}
-                    placeholder="e.g. Vadodara"
+                    placeholder="e.g. Kalol"
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white"
                   />
                 </div>

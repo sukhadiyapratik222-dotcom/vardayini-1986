@@ -91,7 +91,7 @@ export async function logOrderStatusHistory(
       orderId,
       status,
       note: note || `Status updated to ${status}`,
-      location: location || "Vadodara Distribution Hub, Gujarat",
+      location: location || "Kalol Distribution Hub, Gujarat",
       changedBy,
     });
   } catch (err) {
@@ -159,9 +159,9 @@ export async function getOrCreateInvoice(orderId: number, customDb: AppDatabase 
     name: parsedAddress.name || order.guestName || "Valued Customer",
     phone: parsedAddress.phone || order.guestPhone || "",
     email: parsedAddress.email || undefined,
-    billingAddress: parsedAddress.line1 || "Vadodara",
-    shippingAddress: parsedAddress.line1 || "Vadodara",
-    city: parsedAddress.city || "Vadodara",
+    billingAddress: parsedAddress.line1 || "Kalol",
+    shippingAddress: parsedAddress.line1 || "Kalol",
+    city: parsedAddress.city || "Kalol",
     state: stateInfo.state,
     stateCode: stateInfo.stateCode,
     pincode: parsedAddress.pincode || "390001",

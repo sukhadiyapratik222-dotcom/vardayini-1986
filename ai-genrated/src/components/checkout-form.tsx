@@ -130,7 +130,7 @@ export function CheckoutForm({
 
   // Home Delivery fields
   const [line1, setLine1] = useState("");
-  const [city, setCity] = useState("Vadodara");
+  const [city, setCity] = useState("Kalol");
   const [state, setState] = useState("Gujarat");
   const [pincode, setPincode] = useState("390001");
   const [deliverySlot, setDeliverySlot] = useState(DELIVERY_SLOTS[0]);
@@ -827,7 +827,7 @@ export function CheckoutForm({
                     if (nextMode) {
                       setSelectedAddressId(null);
                       setLine1("");
-                      setCity("Vadodara");
+                      setCity("Kalol");
                       setState("Gujarat");
                       setPincode("390001");
                     } else if (savedAddresses.length > 0) {
@@ -934,7 +934,7 @@ export function CheckoutForm({
                       setCity(e.target.value);
                       clearFieldError("city");
                     }}
-                    placeholder="Vadodara"
+                    placeholder="Kalol"
                     className={`mt-1 w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm outline-none transition ${
                       fieldErrors.city
                         ? "border-rose-500 bg-rose-50/20 focus:border-rose-600"

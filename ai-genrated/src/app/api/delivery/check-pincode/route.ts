@@ -127,7 +127,7 @@ export async function GET(request: Request) {
       message: "Sorry! Home delivery is not available in your area.",
       deliveryCharge: null,
       pickupAlternativeAvailable: true,
-      pickupMessage: "Store Pickup is available if you visit any of our sweet mart branches in Vadodara or Kalol.",
+      pickupMessage: "Store Pickup is available if you visit any of our sweet mart counter in Kalol.",
     });
   } catch (err: unknown) {
     console.error("[Pincode Checker API Error]", err);

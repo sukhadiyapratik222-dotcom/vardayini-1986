@@ -203,7 +203,7 @@ export default async function OrderPage({
     name: order.guestName || "Customer",
     phone: order.guestPhone || "",
     line1: "",
-    city: "Vadodara",
+    city: "Kalol",
     state: "Gujarat",
     pincode: "",
   };
@@ -215,7 +215,7 @@ export default async function OrderPage({
         name: parsed.name || address.name,
         phone: parsed.phone || address.phone,
         line1: parsed.line1 || "",
-        city: parsed.city || "Vadodara",
+        city: parsed.city || "Kalol",
         state: parsed.state || "Gujarat",
         pincode: parsed.pincode || "",
       };
@@ -262,11 +262,11 @@ export default async function OrderPage({
 
   const directionsUrl = pickupStore?.latitude && pickupStore?.longitude
     ? `https://www.google.com/maps/dir/?api=1&destination=${pickupStore.latitude},${pickupStore.longitude}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Vadodara"))}`;
+    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Kalol"))}`;
 
   const mapUrl = pickupStore?.latitude && pickupStore?.longitude
     ? `https://www.google.com/maps/search/?api=1&query=${pickupStore.latitude},${pickupStore.longitude}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Vadodara"))}`;
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((pickupStore?.name || "Vardayini") + " " + (pickupStore?.address || "Kalol"))}`;
 
   return (
     <main className="mx-auto max-w-5xl px-3 sm:px-6 py-6 sm:py-10">
@@ -342,7 +342,7 @@ export default async function OrderPage({
                 Branch Address & Contact
               </span>
               <p className="font-medium text-[#2a1a12]/90 leading-relaxed">
-                {pickupStore?.address || "Main Road"}, {pickupStore?.city || "Vadodara"} - {pickupStore?.pincode || "390001"}
+                {pickupStore?.address || "Main Road"}, {pickupStore?.city || "Kalol"} - {pickupStore?.pincode || "382721"}
               </p>
               <p className="text-[#2a1a12]/70">📞 Store Phone: {pickupStore?.phone || "+91 98250 19760"}</p>
               <p className="text-[#2a1a12]/70">🕒 Hours: {pickupStore?.hours || "8:00 AM - 10:00 PM"}</p>

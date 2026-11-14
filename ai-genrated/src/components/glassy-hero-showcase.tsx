@@ -27,8 +27,8 @@ const PRODUCTS: ProductPhoto[] = [
     image: "/images/khaman-showcase.jpg",
   },
   {
-    id: "surati-khandvi",
-    name: "Surati Khandvi",
+    id: "kalol-khandvi",
+    name: "Kalol Khandvi",
     image: "/images/khandvi-showcase.jpg",
   },
   {

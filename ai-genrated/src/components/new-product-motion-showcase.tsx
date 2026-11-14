@@ -411,7 +411,7 @@ export function NewProductMotionShowcase({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-[#dfb755]">
-              Live From Vadodara Kitchens
+              Live From Kalol Kitchens
             </span>
             <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-white">
               Fresh Daily Rolling Carousel

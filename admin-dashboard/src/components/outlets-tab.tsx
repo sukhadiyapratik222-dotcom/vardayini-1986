@@ -8,10 +8,9 @@ import { getPublicStoreUrl } from "@/lib/store-url";
 const CITY_PRESETS = [
   { label: "Kalol (Navjivan Center)", lat: "23.246300", lng: "72.508600", city: "Kalol", pincode: "382721", mapUrl: "https://maps.google.com/maps?q=23.2463,72.5086" },
   { label: "Gandhinagar (Rupal)", lat: "23.310000", lng: "72.596900", city: "Gandhinagar", pincode: "382630", mapUrl: "https://maps.google.com/maps?q=23.3100,72.5969" },
-  { label: "Vadodara (Mandvi)", lat: "22.307200", lng: "73.181200", city: "Vadodara", pincode: "390001", mapUrl: "https://maps.app.goo.gl/9iCg12yLzFw4nC6f7" },
-  { label: "Vadodara (Alkapuri)", lat: "22.313500", lng: "73.171800", city: "Vadodara", pincode: "390007", mapUrl: "https://maps.app.goo.gl/5rVzJdGq4pZ6B38T8" },
-  { label: "Ahmedabad (CG Road)", lat: "23.033000", lng: "72.565000", city: "Ahmedabad", pincode: "380009", mapUrl: "https://maps.app.goo.gl/3wG28YxN44Jk5rK7A" },
-  { label: "Surat", lat: "21.170240", lng: "72.831061", city: "Surat", pincode: "395007", mapUrl: "https://maps.app.goo.gl/e4Ua8tZg4oZ6C71T9" },
+  { label: "Kalol (Station Road)", lat: "23.243500", lng: "72.501200", city: "Kalol", pincode: "382721", mapUrl: "https://maps.google.com/maps?q=23.2435,72.5012" },
+  { label: "Kalol (Tower Bazar)", lat: "23.245100", lng: "72.504300", city: "Kalol", pincode: "382721", mapUrl: "https://maps.google.com/maps?q=23.2451,72.5043" },
+  { label: "Kalol (Highway Express)", lat: "23.251000", lng: "72.518000", city: "Kalol", pincode: "382721", mapUrl: "https://maps.google.com/maps?q=23.2510,72.5180" },
   { label: "London, Ontario (Canada)", lat: "42.990897", lng: "-81.298634", city: "London, Ontario", pincode: "N6H 5T8", mapUrl: "https://maps.app.goo.gl/WwNxd8ZtkzKtKFqr5" },
 ];
 
@@ -29,12 +28,12 @@ export function OutletsTab() {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
-    city: "Vadodara",
-    pincode: "390001",
-    phone: "+91 265 242 1186",
-    hours: "8:00 AM – 10:30 PM (All 7 Days)",
-    lat: "22.307200",
-    lng: "73.181200",
+    city: "Kalol",
+    pincode: "382721",
+    phone: "+91 63531 19329",
+    hours: "8:00 AM – 8:30 PM (All 7 Days)",
+    lat: "23.246300",
+    lng: "72.508600",
     mapUrl: "",
     openingTime: "08:00",
     closingTime: "22:00",
@@ -98,12 +97,12 @@ export function OutletsTab() {
       setFormData({
         name: "",
         address: "",
-        city: "Vadodara",
-        pincode: "390001",
-        phone: "+91 265 242 1186",
-        hours: "8:00 AM – 10:30 PM (All 7 Days)",
-        lat: "22.307200",
-        lng: "73.181200",
+        city: "Kalol",
+        pincode: "382721",
+        phone: "+91 63531 19329",
+        hours: "8:00 AM – 8:30 PM (All 7 Days)",
+        lat: "23.246300",
+        lng: "72.508600",
         mapUrl: "",
         openingTime: "08:00",
         closingTime: "22:00",
@@ -448,7 +447,7 @@ export function OutletsTab() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Vadodara"
+                    placeholder="e.g. Kalol"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-amber-600 focus:outline-hidden"
@@ -459,7 +458,7 @@ export function OutletsTab() {
                   <input
                     type="text"
                     required
-                    placeholder="390001"
+                    placeholder="382721"
                     value={formData.pincode}
                     onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                     className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-amber-600 focus:outline-hidden"

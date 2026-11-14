@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { checkDeliveryAvailability, DeliveryCheckResult } from "@/lib/delivery";
 
 export function ShopDeliveryBanner() {
-  const [locationName, setLocationName] = useState("Vadodara, Gujarat");
-  const [pincode, setPincode] = useState("390001");
+  const [locationName, setLocationName] = useState("Kalol, Gujarat");
+  const [pincode, setPincode] = useState("382721");
   const [result, setResult] = useState<DeliveryCheckResult | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [inputPin, setInputPin] = useState("");
@@ -13,13 +13,13 @@ export function ShopDeliveryBanner() {
 
   useEffect(() => {
     try {
-      const savedLoc = localStorage.getItem("vsm_delivery_location") || "Vadodara, Gujarat";
-      const savedPin = localStorage.getItem("vsm_delivery_pincode") || "390001";
+      const savedLoc = localStorage.getItem("vsm_delivery_location") || "Kalol, Gujarat";
+      const savedPin = localStorage.getItem("vsm_delivery_pincode") || "382721";
       setLocationName(savedLoc);
       setPincode(savedPin);
       setResult(checkDeliveryAvailability(savedPin));
     } catch {
-      setResult(checkDeliveryAvailability("390001"));
+      setResult(checkDeliveryAvailability("382721"));
     }
   }, []);
 

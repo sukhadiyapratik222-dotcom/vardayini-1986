@@ -177,7 +177,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               The Vardayini Pure Ghee Promise
             </h3>
             <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Since 1986, every sweet from our Kalol and Vadodara counters is prepared in small batches using pure,
+              Since 1986, every sweet from our Kalol counter is prepared in small batches using pure,
               fragrant desi ghee, premium whole dry fruits, and slow-simmered dairy mawa. We deliver melt-in-mouth
               warmth to your family celebrations across Gujarat and all over India.
             </p>
