@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatInr } from "@/lib/money";
 import type { CartLine } from "@/lib/cart";
 
@@ -22,22 +22,75 @@ export function CartClient({ initial }: { initial: CartState }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function updateQty(itemId: number, quantity: number) {
+  // Re-sync with latest server cart on mount and on BFCache restore (browser back/forward button)
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncCart() {
+      try {
+        const res = await fetch("/api/cart", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setCart((prev) => ({
+              ...prev,
+              lines: data.items || [],
+              totals: data.totals || prev.totals,
+            }));
+            const newCount = (data.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
+            window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+          }
+        }
+      } catch (err) {
+        console.warn("[CartClient] Cart sync error:", err);
+      }
+    }
+
+    syncCart();
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      // e.persisted is true when restored from browser bfcache
+      syncCart();
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("focus", syncCart);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("focus", syncCart);
+    };
+  }, []);
+
+  async function updateQty(itemId: number, quantity: number, variantId?: number) {
     if (loading) return;
     setLoading(true);
     setError("");
+    const targetId = variantId || itemId;
     try {
-      const res = await fetch(`/api/cart/${itemId}`, {
+      const res = await fetch(`/api/cart/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity }),
       });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 404) {
+          // If 404, item was already removed; refresh cart from server
+          const freshRes = await fetch("/api/cart", { cache: "no-store" });
+          if (freshRes.ok) {
+            const freshData = await freshRes.json();
+            setCart((prev) => ({ ...prev, lines: freshData.items || [], totals: freshData.totals || prev.totals }));
+            const newCount = (freshData.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
+            window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+          }
+          return;
+        }
         setError(data.error || "Could not update quantity");
         return;
       }
-      setCart((prev) => ({ ...prev, lines: data.items, totals: data.totals }));
+      setCart((prev) => ({ ...prev, lines: data.items || [], totals: data.totals || prev.totals }));
       if (typeof window !== "undefined") {
         const newCount = (data.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
         window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
@@ -50,21 +103,40 @@ export function CartClient({ initial }: { initial: CartState }) {
     }
   }
 
-  async function remove(itemId: number) {
+  async function remove(itemId: number, variantId?: number) {
     if (loading) return;
     setLoading(true);
     setError("");
+    const targetId = variantId || itemId;
+
+    // Optimistically update UI so item is immediately hidden
+    setCart((prev) => ({
+      ...prev,
+      lines: prev.lines.filter((l) => l.id !== itemId && l.variantId !== targetId),
+    }));
+
     try {
-      const res = await fetch(`/api/cart/${itemId}`, { method: "DELETE" });
+      const res = await fetch(`/api/cart/${targetId}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         setError(data.error || "Could not remove item");
         return;
       }
-      setCart((prev) => ({ ...prev, lines: data.items, totals: data.totals }));
-      if (typeof window !== "undefined") {
-        const newCount = (data.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
-        window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+      if (data && data.items) {
+        setCart((prev) => ({ ...prev, lines: data.items, totals: data.totals }));
+        if (typeof window !== "undefined") {
+          const newCount = (data.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
+          window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+        }
+      } else {
+        // Fallback: sync fresh cart lines
+        const freshRes = await fetch("/api/cart", { cache: "no-store" });
+        if (freshRes.ok) {
+          const freshData = await freshRes.json();
+          setCart((prev) => ({ ...prev, lines: freshData.items || [], totals: freshData.totals || prev.totals }));
+          const newCount = (freshData.items || []).reduce((sum: number, line: any) => sum + (line.quantity || 0), 0);
+          window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count: newCount } }));
+        }
       }
       router.refresh();
     } catch {
@@ -184,7 +256,7 @@ export function CartClient({ initial }: { initial: CartState }) {
                     type="button"
                     aria-label="Decrease quantity"
                     disabled={loading}
-                    onClick={() => updateQty(line.id, line.quantity - 1)}
+                    onClick={() => updateQty(line.id, line.quantity - 1, line.variantId)}
                     className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 text-stone-700 border border-stone-200/80 flex items-center justify-center font-bold text-sm sm:text-base disabled:opacity-40 transition cursor-pointer active:scale-95 shadow-xs"
                   >
                     −
@@ -196,7 +268,7 @@ export function CartClient({ initial }: { initial: CartState }) {
                     type="button"
                     aria-label="Increase quantity"
                     disabled={loading}
-                    onClick={() => updateQty(line.id, line.quantity + 1)}
+                    onClick={() => updateQty(line.id, line.quantity + 1, line.variantId)}
                     className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 text-stone-700 border border-stone-200/80 flex items-center justify-center font-bold text-sm sm:text-base disabled:opacity-40 transition cursor-pointer active:scale-95 shadow-xs"
                   >
                     +
@@ -219,7 +291,7 @@ export function CartClient({ initial }: { initial: CartState }) {
                 <button
                   type="button"
                   disabled={loading}
-                  onClick={() => remove(line.id)}
+                  onClick={() => remove(line.id, line.variantId)}
                   aria-label={`Remove ${line.name} from cart`}
                   title="Remove item"
                   className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-rose-200 bg-rose-50/80 hover:bg-rose-100 hover:border-rose-300 text-rose-600 hover:text-rose-700 flex items-center justify-center transition cursor-pointer disabled:opacity-50 shrink-0 shadow-2xs group"

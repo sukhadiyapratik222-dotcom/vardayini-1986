@@ -85,9 +85,6 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
     return Response.json({ error: "Invalid item ID" }, { status: 400 });
   }
 
-  const item = await ownedItem(itemId);
-  if (!item) return Response.json({ error: "Item not found" }, { status: 404 });
-
   const body = await readJsonSafe<{ quantity?: unknown }>(request);
   if (!body || body.quantity === undefined) {
     return Response.json({ error: "Invalid JSON or missing quantity" }, { status: 400 });
@@ -96,6 +93,25 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
   const q = body.quantity;
   if (typeof q !== "number" || !Number.isInteger(q) || !Number.isSafeInteger(q) || isNaN(q) || q < 0) {
     return Response.json({ error: "Quantity must be a non-negative integer" }, { status: 400 });
+  }
+
+  const item = await ownedItem(itemId);
+  if (!item) {
+    // If reducing quantity to 0 on an already-deleted item, return 200 idempotent success
+    if (q === 0) {
+      try {
+        const { removeMongoCartItem } = await import("@/lib/mongodb");
+        const { user, sessionId } = await getCartIdentity();
+        await removeMongoCartItem({ userId: user?.id, sessionId, variantId: itemId });
+      } catch {}
+      const cart = await loadCartLines();
+      return Response.json({
+        items: cart.lines,
+        totals: cart.totals,
+        count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+      });
+    }
+    return Response.json({ error: "Item not found" }, { status: 404 });
   }
 
   if (q === 0) {
@@ -142,7 +158,21 @@ export async function DELETE(_request: Request, context: { params: Promise<{ ite
   }
 
   const item = await ownedItem(itemId);
-  if (!item) return Response.json({ error: "Item not found" }, { status: 404 });
+  if (!item) {
+    // Idempotent DELETE: If item is not found in local cart, ensure it is cleaned from MongoDB as well
+    try {
+      const { removeMongoCartItem } = await import("@/lib/mongodb");
+      const { user, sessionId } = await getCartIdentity();
+      await removeMongoCartItem({ userId: user?.id, sessionId, variantId: itemId });
+    } catch {}
+
+    const cart = await loadCartLines();
+    return Response.json({
+      items: cart.lines,
+      totals: cart.totals,
+      count: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+    });
+  }
 
   await db.delete(cartItems).where(eq(cartItems.id, item.id));
   try {

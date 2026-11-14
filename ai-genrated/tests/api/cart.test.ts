@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST as addToCartRoute } from "@/app/api/cart/route";
-import { PUT as updateCartItemRoute } from "@/app/api/cart/[itemId]/route";
+import { PUT as updateCartItemRoute, DELETE as deleteCartItemRoute } from "@/app/api/cart/[itemId]/route";
 import { addToCart, mergeGuestCart, loadCartLines, clearCartForIdentity } from "@/lib/cart";
 import { buildRequest, loginAs, logout, setGuestCart, getTestFixtures, mockCookieStore } from "../helpers";
 import { db } from "@/db";
@@ -149,6 +149,41 @@ describe("Cart Operations & Quantity Validation", () => {
       const line = mergedCart.lines.find((l) => l.variantId === variantId);
       expect(line).toBeDefined();
       expect(line!.quantity).toBeLessThanOrEqual(10);
+    });
+  });
+
+  describe("Idempotent Delete & Resilient Removal", () => {
+    it("DELETE on a non-existent or already-removed item returns 200 with current cart instead of failing with 404", async () => {
+      const nonExistentItemId = 999999;
+      const req = buildRequest({
+        method: "DELETE",
+        url: `/api/cart/${nonExistentItemId}`,
+      });
+      const res = await deleteCartItemRoute(req, {
+        params: Promise.resolve({ itemId: String(nonExistentItemId) }),
+      });
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveProperty("items");
+      expect(data).toHaveProperty("totals");
+    });
+
+    it("PUT with quantity 0 on non-existent item returns 200 idempotent success", async () => {
+      const nonExistentItemId = 999999;
+      const req = buildRequest({
+        method: "PUT",
+        url: `/api/cart/${nonExistentItemId}`,
+        body: { quantity: 0 },
+      });
+      const res = await updateCartItemRoute(req, {
+        params: Promise.resolve({ itemId: String(nonExistentItemId) }),
+      });
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveProperty("items");
+      expect(data).toHaveProperty("totals");
     });
   });
 });

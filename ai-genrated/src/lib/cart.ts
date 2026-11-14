@@ -39,42 +39,53 @@ export async function loadCartLines() {
       const { getSqliteDb } = await import("@/db");
       const sqlite = getSqliteDb();
 
-      if (mongoItems && mongoItems.length > 0) {
-        // Upsert into local SQLite preserving existing auto-increment IDs
-        for (const mItem of mongoItems) {
-          const existingRow = sqlite
-            .prepare(
-              user
-                ? "SELECT id FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id = ? LIMIT 1"
-                : "SELECT id FROM cart_items WHERE session_id = ? AND variant_id = ? LIMIT 1"
-            )
-            .get(...(user ? [user.id, sessionId, mItem.variantId] : [sessionId, mItem.variantId])) as any;
+      if (mongoItems) {
+        if (mongoItems.length > 0) {
+          // Upsert into local SQLite preserving existing auto-increment IDs
+          for (const mItem of mongoItems) {
+            const existingRow = sqlite
+              .prepare(
+                user
+                  ? "SELECT id FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id = ? LIMIT 1"
+                  : "SELECT id FROM cart_items WHERE session_id = ? AND variant_id = ? LIMIT 1"
+              )
+              .get(...(user ? [user.id, sessionId, mItem.variantId] : [sessionId, mItem.variantId])) as any;
 
-          if (existingRow) {
-            sqlite.prepare("UPDATE cart_items SET quantity = ? WHERE id = ?").run(mItem.quantity, existingRow.id);
-          } else {
-            sqlite
-              .prepare("INSERT INTO cart_items (user_id, session_id, variant_id, quantity) VALUES (?, ?, ?, ?)")
-              .run(
-                user?.id ?? mItem.userId ?? null,
-                user ? null : sessionId,
-                mItem.variantId,
-                mItem.quantity
-              );
+            if (existingRow) {
+              sqlite.prepare("UPDATE cart_items SET quantity = ? WHERE id = ?").run(mItem.quantity, existingRow.id);
+            } else {
+              sqlite
+                .prepare("INSERT INTO cart_items (user_id, session_id, variant_id, quantity) VALUES (?, ?, ?, ?)")
+                .run(
+                  user?.id ?? mItem.userId ?? null,
+                  user ? null : sessionId,
+                  mItem.variantId,
+                  mItem.quantity
+                );
+            }
           }
-        }
 
-        // Clean up local rows that were removed remotely in MongoDB only when mongoItems has a valid non-empty list
-        const mongoVariantIds = mongoItems.map((m) => m.variantId);
-        if (mongoVariantIds.length > 0) {
-          const placeholders = mongoVariantIds.map(() => "?").join(",");
+          // Clean up local rows that were removed remotely in MongoDB
+          const mongoVariantIds = mongoItems.map((m) => m.variantId);
+          if (mongoVariantIds.length > 0) {
+            const placeholders = mongoVariantIds.map(() => "?").join(",");
+            sqlite
+              .prepare(
+                user
+                  ? `DELETE FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id NOT IN (${placeholders})`
+                  : `DELETE FROM cart_items WHERE session_id = ? AND variant_id NOT IN (${placeholders})`
+              )
+              .run(...(user ? [user.id, sessionId, ...mongoVariantIds] : [sessionId, ...mongoVariantIds]));
+          }
+        } else {
+          // MongoDB confirmed 0 items for this user/session: clear local SQLite cart cache
           sqlite
             .prepare(
               user
-                ? `DELETE FROM cart_items WHERE (user_id = ? OR session_id = ?) AND variant_id NOT IN (${placeholders})`
-                : `DELETE FROM cart_items WHERE session_id = ? AND variant_id NOT IN (${placeholders})`
+                ? "DELETE FROM cart_items WHERE (user_id = ? OR session_id = ?)"
+                : "DELETE FROM cart_items WHERE session_id = ?"
             )
-            .run(...(user ? [user.id, sessionId, ...mongoVariantIds] : [sessionId, ...mongoVariantIds]));
+            .run(...(user ? [user.id, sessionId] : [sessionId]));
         }
       }
     } catch (mErr) {
