@@ -124,7 +124,7 @@ export async function GET(request: Request) {
           });
         }
       }
-    } catch {}
+    } catch { }
 
     const totalCount = allReviews.length;
     const avgRating =
@@ -186,9 +186,9 @@ export async function POST(request: Request) {
     const productId = parsePositiveInt(body.productId) || 1;
     const rating =
       typeof body.rating === "number" &&
-      Number.isInteger(body.rating) &&
-      body.rating >= 1 &&
-      body.rating <= 5
+        Number.isInteger(body.rating) &&
+        body.rating >= 1 &&
+        body.rating <= 5
         ? body.rating
         : 5;
     const comment = typeof body.comment === "string" ? body.comment.trim() : "";

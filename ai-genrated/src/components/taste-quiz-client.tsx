@@ -175,7 +175,17 @@ export function TasteQuizClient() {
     setLeadSubmitting(true);
 
     try {
-      // 1. Submit lead
+      // 1. Fetch matches first
+      const res = await fetch("/api/quiz/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers }),
+      });
+      const data = await res.json();
+      const matches: QuizMatchedProduct[] = data?.result?.matches || [];
+      const matchedIds = matches.map((m) => m.id);
+
+      // 2. Submit lead with matched product IDs & personality
       await fetch("/api/quiz/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -185,14 +195,30 @@ export function TasteQuizClient() {
           email: leadEmail,
           marketingConsent,
           answers,
+          personalitySlug: data?.result?.personality?.slug,
+          matchedProductIds: matchedIds,
         }),
       }).catch(() => null);
 
-      // 2. Fetch matches
-      await submitQuiz(answers);
+      if (data?.result) {
+        setResult(data.result);
+        setShowLeadCapture(false);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("vsm_last_mithai_match", JSON.stringify(data.result));
+            window.dispatchEvent(
+              new CustomEvent("vsm:quiz_completed", { detail: data.result })
+            );
+          } catch {}
+        }
+      } else {
+        await submitQuiz(answers);
+      }
     } catch {
       // Fallback to showing results directly
       await submitQuiz(answers);
+    } finally {
+      setLeadSubmitting(false);
     }
   };
 
@@ -494,7 +520,7 @@ export function TasteQuizClient() {
         </div>
 
         {/* Perfect Combo Box Bundle Offer */}
-        {result.comboBundle && (
+        {result.comboBundle && result.matches.length > 0 && result.comboBundle.bundlePrice > 0 && (
           <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-amber-50 via-amber-100/60 to-orange-50 border border-amber-300/80 shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 max-w-xl">
               <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-amber-400 text-stone-900">
