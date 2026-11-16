@@ -840,6 +840,29 @@ export async function ensureReviews() {
       return; // Never delete reviews! Preserve all existing customer reviews permanently.
     }
 
+    // Attempt to restore reviews from MongoDB Atlas if available
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const mReviews = await mongo.collection("reviews").find({}).sort({ createdAt: -1 }).toArray();
+        if (mReviews && mReviews.length > 0) {
+          for (const mr of mReviews) {
+            await db.insert(reviews).values({
+              productId: mr.productId || 1,
+              userId: mr.userId || null,
+              userName: mr.userName || mr.name || "Customer",
+              rating: mr.rating || 5,
+              comment: mr.comment || "",
+              isVerified: mr.isVerified ?? true,
+              createdAt: mr.createdAt ? new Date(mr.createdAt) : new Date(),
+            });
+          }
+          return;
+        }
+      }
+    } catch {}
+
     // Do not resurrect deleted reviews if the catalog or orders already exist.
     // If the database has products/orders and reviews is empty, it means the admin intentionally cleared all reviews.
     const checkStore = await db.select({ id: products.id }).from(products).limit(1);

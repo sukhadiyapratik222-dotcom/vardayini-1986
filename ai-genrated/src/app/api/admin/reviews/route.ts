@@ -44,6 +44,107 @@ export async function GET(request: Request) {
       .leftJoin(users, eq(reviews.userId, users.id))
       .orderBy(desc(reviews.createdAt));
 
+    const seenIds = new Set<number>(rows.map((r) => r.id));
+    const seenComments = new Set<string>(
+      rows.map((r) => `${(r.userName || "").toLowerCase().trim()}_${(r.comment || "").toLowerCase().trim()}`)
+    );
+
+    // Hydrate any reviews persisted in MongoDB Atlas into the admin list
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const mReviews = await mongo
+          .collection("reviews")
+          .find()
+          .sort({ createdAt: -1 })
+          .limit(100)
+          .toArray();
+
+        // Load products for resolving product name and thumbnail if missing
+        const allProds = await db
+          .select({
+            id: products.id,
+            name: products.name,
+            slug: products.slug,
+            imageUrl: products.imageUrl,
+          })
+          .from(products);
+        const prodMap = new Map(allProds.map((p) => [p.id, p]));
+
+        for (const mr of mReviews) {
+          const revId = mr.reviewId ? Number(mr.reviewId) : mr.id ? Number(mr.id) : null;
+          const author = mr.userName || mr.name || "Customer";
+          const comm = mr.comment || "";
+          const commentKey = `${author.toLowerCase().trim()}_${comm.toLowerCase().trim()}`;
+
+          if (revId && seenIds.has(revId)) continue;
+          if (seenComments.has(commentKey)) continue;
+
+          if (revId) seenIds.add(revId);
+          seenComments.add(commentKey);
+
+          const matchedProd = prodMap.get(mr.productId) || allProds[0];
+
+          // Also lazily sync into SQLite so local queries stay fast & durable
+          try {
+            const [insertRes] = await db.insert(reviews).values({
+              productId: mr.productId || matchedProd?.id || 1,
+              userId: mr.userId || null,
+              userName: author,
+              rating: mr.rating || 5,
+              comment: comm,
+              isVerified: mr.isVerified ?? true,
+              createdAt: mr.createdAt ? new Date(mr.createdAt) : new Date(),
+            });
+            const assignedId = (insertRes as any)?.insertId || revId || Date.now();
+            seenIds.add(assignedId);
+
+            rows.push({
+              id: assignedId,
+              productId: mr.productId || matchedProd?.id || 1,
+              productName: mr.productName || matchedProd?.name || "Royal Gujarati Mithai",
+              productSlug: mr.productSlug || matchedProd?.slug || "kaju-katli",
+              productImageUrl: matchedProd?.imageUrl || "/images/kaju-katli.jpg",
+              userId: mr.userId || null,
+              userName: author,
+              userEmail: mr.userEmail || null,
+              rating: mr.rating || 5,
+              comment: comm,
+              isVerified: mr.isVerified ?? true,
+              createdAt: mr.createdAt ? new Date(mr.createdAt) : new Date(),
+            });
+            continue;
+          } catch {}
+
+          rows.push({
+            id: revId || Date.now(),
+            productId: mr.productId || matchedProd?.id || 1,
+            productName: mr.productName || matchedProd?.name || "Royal Gujarati Mithai",
+            productSlug: mr.productSlug || matchedProd?.slug || "kaju-katli",
+            productImageUrl: matchedProd?.imageUrl || "/images/kaju-katli.jpg",
+            userId: mr.userId || null,
+            userName: author,
+            userEmail: mr.userEmail || null,
+            rating: mr.rating || 5,
+            comment: comm,
+            isVerified: mr.isVerified ?? true,
+            createdAt: mr.createdAt ? new Date(mr.createdAt) : new Date(),
+          });
+        }
+      }
+    } catch (mErr) {
+      console.warn("[Admin Reviews GET MongoDB notice]", mErr);
+    }
+
+    // Sort newest reviews first
+    rows.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA !== timeB) return timeB - timeA;
+      return Number(b.id) - Number(a.id);
+    });
+
     return NextResponse.json({ reviews: rows }, { headers: CORS_HEADERS });
   } catch (error: any) {
     console.error("[Admin Reviews GET Error]:", error);
