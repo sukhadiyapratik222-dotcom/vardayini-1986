@@ -199,6 +199,72 @@ export default async function OrderPage({
     } catch {}
   }
 
+  let productCatalog: any[] = [];
+  try {
+    const { products } = await import("@/db/schema");
+    productCatalog = await db.select().from(products);
+  } catch {}
+
+  const enrichedItems = items.map((item) => {
+    const nameLower = (item.productName || "").toLowerCase().trim();
+    const matched = productCatalog.find(
+      (p) =>
+        p.name.toLowerCase().trim() === nameLower ||
+        nameLower.includes(p.name.toLowerCase().trim()) ||
+        p.name.toLowerCase().trim().includes(nameLower)
+    );
+
+    let shelfLife = "Consume within 10 days for peak aroma";
+    let storageAdvice = "Store in a cool, dry place. Seal container tightly after opening.";
+    let dietaryBadge = "100% Pure Vegetarian";
+    let ingredientsHighlight = "Pure Desi Ghee, Farm Fresh Milk, Green Cardamom, Sugar";
+    let craftHighlight = "Handcrafted by Master Halwais · Kalol Heritage Since 1986";
+
+    if (nameLower.includes("namkeen") || nameLower.includes("chavanu") || nameLower.includes("sev") || nameLower.includes("khakhra") || nameLower.includes("gathiya") || nameLower.includes("bhakarwadi")) {
+      shelfLife = "Crisp for 45 days";
+      storageAdvice = "Keep away from moisture & direct sunlight. Store in an airtight container.";
+      dietaryBadge = "Pure Veg Namkeen · Zero Palm Oil";
+      ingredientsHighlight = "Gram Flour (Besan), Groundnut Oil, Ajwain, Black Pepper, Rock Salt";
+      craftHighlight = "Crunchy Traditional Gujarati Farsan";
+    } else if (nameLower.includes("bengali") || nameLower.includes("rasgulla") || nameLower.includes("chhena") || nameLower.includes("cham cham") || nameLower.includes("rasmalai")) {
+      shelfLife = "Consume within 3 to 4 days";
+      storageAdvice = "Keep strictly refrigerated at 4°C - 8°C. Do not freeze.";
+      dietaryBadge = "Fresh Chhena · 100% Veg";
+      ingredientsHighlight = "Pure Cow Milk Chhena, Saffron Sugar Syrup, Pistachio, Cardamom";
+      craftHighlight = "Soft & Spongy Hand-Rolled Chhena";
+    } else if (nameLower.includes("kaju") || nameLower.includes("katli") || nameLower.includes("cashew") || nameLower.includes("pista") || nameLower.includes("badam")) {
+      shelfLife = "Fresh for 15 to 20 days";
+      storageAdvice = "Store at room temperature in a dry place. In hot weather, keep in the refrigerator.";
+      dietaryBadge = "Grade-A Whole Cashews · Pure Veg";
+      ingredientsHighlight = "Goan Cashew Kernels, Sugar, Silver Foil (Vark), Cardamom";
+      craftHighlight = "Silken Diamond Cuts · Melt-in-Mouth Texture";
+    } else if (nameLower.includes("ladoo") || nameLower.includes("laddu") || nameLower.includes("motichoor") || nameLower.includes("mohanthal") || nameLower.includes("magas") || nameLower.includes("mesub") || nameLower.includes("mysore pak")) {
+      shelfLife = "Best within 12 to 14 days";
+      storageAdvice = "Store at room temperature in a dry container. Do not expose to direct heat.";
+      dietaryBadge = "100% Shuddh Desi Ghee";
+      ingredientsHighlight = "Gir Cow Bilona Ghee, Gram Flour, Kashmiri Kesar, Dry Fruits";
+      craftHighlight = "Slow-Roasted in Fragrant Bilona Desi Ghee";
+    } else if (nameLower.includes("penda") || nameLower.includes("peda") || nameLower.includes("barfi") || nameLower.includes("burfi") || nameLower.includes("mawa")) {
+      shelfLife = "Best within 7 to 10 days";
+      storageAdvice = "Store in a cool place or refrigerate to preserve natural dairy aroma.";
+      dietaryBadge = "Slow-Simmered Dairy Mawa";
+      ingredientsHighlight = "Pure Dairy Mawa (Khoya), Cardamom, Saffron Strands, Pistachios";
+      craftHighlight = "Caramelized Traditional Mawa Recipe";
+    }
+
+    return {
+      ...item,
+      slug: matched?.slug || "kaju-katli",
+      description: matched?.description || "Authentic Gujarati traditional mithai crafted with pure desi ghee and time-honored heritage recipes.",
+      tags: matched?.tags || "pure desi ghee, fresh daily",
+      shelfLife,
+      storageAdvice,
+      dietaryBadge,
+      ingredientsHighlight,
+      craftHighlight,
+    };
+  });
+
   let address = {
     name: order.guestName || "Customer",
     phone: order.guestPhone || "",
@@ -279,46 +345,86 @@ export default async function OrderPage({
 
   return (
     <main className="mx-auto max-w-5xl px-3 sm:px-6 py-6 sm:py-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">
+      {/* Clean, spacious Order Header without cluttered action buttons */}
+      <div className="border-b border-[#6b1d1d]/10 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26] font-semibold">
             {isPickup ? "🏪 Store Pickup Order" : "🚚 Doorstep Delivery"}
           </p>
-          <h1 className="mt-1 sm:mt-2 font-[family-name:var(--font-display)] text-xl sm:text-3xl text-[#6b1d1d] font-bold">
-            {statusHeading} — #{order.orderNumber}
-          </h1>
+          <span className="text-[11px] font-semibold text-slate-500 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+            Order Date: {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          </span>
         </div>
+        <h1 className="mt-1 sm:mt-2 font-[family-name:var(--font-display)] text-xl sm:text-3xl text-[#6b1d1d] font-bold">
+          {statusHeading} — #{order.orderNumber}
+        </h1>
+        <p className="mt-2 capitalize text-sm text-[#2a1a12]/70 flex items-center flex-wrap gap-2">
+          <span>Status:</span>
+          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+            order.status === "cancelled"
+              ? "bg-rose-100 text-rose-800 border border-rose-200"
+              : order.status === "delivered" || order.status === "picked_up"
+              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+              : "bg-amber-100 text-amber-900 border border-amber-200"
+          }`}>
+            <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+            {order.status.replace(/_/g, " ")}
+          </span>
+          <span className="text-slate-300">·</span>
+          <span>Payment: <strong className="font-semibold text-slate-800">{order.paymentStatus}</strong> ({order.paymentMethod.toUpperCase()})</span>
+        </p>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          ORDER SERVICES & QUICK ACTIONS (Relocated cleanly to dedicated action bar)
+         ───────────────────────────────────────────────────────────── */}
+      <section
+        aria-label="Order Quick Actions"
+        className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-amber-50/90 via-[#fffbf2] to-amber-50/90 border border-amber-200/80 p-3 sm:p-4 shadow-2xs"
+      >
         <div className="flex items-center gap-2 flex-wrap">
-          {kitchenCamUrl && (
-            <Link
-              href={kitchenCamUrl}
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#dfb755] to-[#c89d38] px-4 py-2 text-xs font-bold text-[#071c54] shadow-md hover:brightness-105 transition"
-            >
-              <span>🎥</span>
-              <span>Watch Order Prepared Live →</span>
-            </Link>
-          )}
-          <Link
-            href={`/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-300 px-4 py-2 text-xs font-bold text-amber-950 shadow-sm hover:bg-amber-100 transition"
-          >
-            <span>🧾</span>
-            <span>Tax Invoice</span>
-          </Link>
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-900/80 mr-1 flex items-center gap-1.5">
+            <span>⚡</span>
+            <span>Order Actions:</span>
+          </span>
           <Link
             href={`/track?orderId=${encodeURIComponent(order.orderNumber)}`}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#0b2f8a] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#071c54] transition"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0b2f8a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#071c54] transition"
           >
             <span>📍</span>
             <span>Track Order Live →</span>
           </Link>
+          <Link
+            href={`/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-amber-300 px-3.5 py-2 text-xs font-bold text-amber-950 shadow-xs hover:bg-amber-50 transition"
+          >
+            <span>🧾</span>
+            <span>Tax Invoice</span>
+          </Link>
+          {kitchenCamUrl && (
+            <Link
+              href={kitchenCamUrl}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#dfb755] to-[#c89d38] px-3.5 py-2 text-xs font-bold text-[#071c54] shadow-xs hover:brightness-105 transition"
+            >
+              <span>🎥</span>
+              <span>Watch Halwai Kitchen Cam →</span>
+            </Link>
+          )}
         </div>
-      </div>
 
-      <p className="mt-2 capitalize text-sm text-[#2a1a12]/70">
-        Status: <span className={order.status === "cancelled" ? "text-red-700 font-semibold" : "font-medium"}>{order.status.replace(/_/g, " ")}</span> · Payment: {order.paymentStatus} ({order.paymentMethod.toUpperCase()})
-      </p>
+        <a
+          href={`https://wa.me/918866169447?text=${encodeURIComponent(
+            `Namaste Vardayini Sweet Mart, I have an inquiry regarding my order #${order.orderNumber}.`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition"
+        >
+          <span>💬</span>
+          <span>WhatsApp Support</span>
+        </a>
+      </section>
 
       {/* ─────────────────────────────────────────────────────────────
           1. FULFILLMENT PROGRESS TIMELINE / STEPPER (PICKUP VS DELIVERY)
@@ -623,30 +729,155 @@ export default async function OrderPage({
         </section>
       )}
 
-      {/* Ordered Sweets Items */}
-      <div className="mithai-card mt-6 space-y-4 rounded-3xl p-6">
-        <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#6b1d1d] border-b border-[#6b1d1d]/10 pb-2">
-          Ordered Sweets &amp; Namkeen ({items.length})
-        </h3>
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center gap-4">
-            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-amber-50">
-              <Image src={item.imageUrl || "/images/kaju-katli.jpg"} alt={item.productName} fill className="object-cover" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-[#2a1a12]">{item.productName}</p>
-              <p className="text-xs text-[#2a1a12]/60">
-                {item.variantWeight} × {item.quantity}
-              </p>
-            </div>
-            <p className="font-semibold text-sm">{formatInr(item.unitPrice * item.quantity)}</p>
+      {/* ─────────────────────────────────────────────────────────────
+          4. ORDERED SWEETS & NAMKEEN (WITH RICH PRODUCT INFO & FEATURES)
+         ───────────────────────────────────────────────────────────── */}
+      <section
+        aria-label="Ordered Sweets and Namkeen"
+        className="mithai-card mt-6 rounded-3xl p-5 sm:p-7 shadow-xs border border-[#6b1d1d]/10"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#6b1d1d]/10 pb-3">
+          <div>
+            <h2 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-[#6b1d1d]">
+              Ordered Sweets &amp; Namkeen ({enrichedItems.length} {enrichedItems.length === 1 ? "Item" : "Items"})
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Handcrafted in Kalol with 100% Pure Desi Ghee and natural ingredients.
+            </p>
           </div>
-        ))}
-        <div className="flex justify-between border-t border-[#6b1d1d]/10 pt-4 font-bold text-base text-[#6b1d1d]">
-          <span>Total Paid / Payable</span>
-          <span>{formatInr(order.total)}</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <span className="h-2 w-2 rounded-full bg-emerald-600"></span>
+            <span>100% Pure Vegetarian</span>
+          </span>
         </div>
-      </div>
+
+        <div className="mt-5 divide-y divide-[#6b1d1d]/10 space-y-5">
+          {enrichedItems.map((item) => (
+            <div key={item.id} className="pt-5 first:pt-0 flex flex-col md:flex-row gap-4 items-start">
+              {/* Product Thumbnail */}
+              <div className="relative h-24 w-24 sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-2xl bg-amber-50 border border-amber-200/60 shadow-2xs group">
+                <Image
+                  src={item.imageUrl || "/images/kaju-katli.jpg"}
+                  alt={item.productName}
+                  fill
+                  className="object-cover group-hover:scale-105 transition duration-300"
+                />
+                <span
+                  className="absolute top-1.5 left-1.5 h-3.5 w-3.5 rounded-full bg-white border border-emerald-600 flex items-center justify-center p-0.5 shadow-2xs"
+                  title="Pure Vegetarian"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                </span>
+              </div>
+
+              {/* Product Details & Information */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <Link
+                      href={`/shop/${item.slug}`}
+                      className="font-[family-name:var(--font-display)] font-bold text-base sm:text-lg text-[#140638] hover:text-[#c45c26] transition flex items-center gap-1.5"
+                    >
+                      <span>{item.productName}</span>
+                      <span className="text-xs text-slate-400 group-hover:text-[#c45c26]">↗</span>
+                    </Link>
+                    <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-base text-[#6b1d1d]">{formatInr(item.unitPrice * item.quantity)}</p>
+                    <p className="text-[11px] text-slate-500">
+                      {formatInr(item.unitPrice)} / {item.variantWeight}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badges Strip */}
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-100/70 text-amber-900 font-semibold border border-amber-200">
+                    👑 {item.dietaryBadge}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-orange-50 text-[#c45c26] font-medium border border-orange-200">
+                    ✨ {item.craftHighlight}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                    Pack: {item.variantWeight} × {item.quantity} {item.quantity > 1 ? "boxes" : "box"}
+                  </span>
+                </div>
+
+                {/* Storage & Freshness Advisory (Product Information Feature) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/80">
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-amber-700 shrink-0 mt-0.5">🕒</span>
+                    <div>
+                      <strong className="text-slate-800">Shelf Life:</strong>{" "}
+                      <span className="text-slate-600">{item.shelfLife}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-blue-700 shrink-0 mt-0.5">🧊</span>
+                    <div>
+                      <strong className="text-slate-800">Storage Advice:</strong>{" "}
+                      <span className="text-slate-600">{item.storageAdvice}</span>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2 flex items-start gap-1.5 pt-1 border-t border-amber-200/50">
+                    <span className="text-emerald-700 shrink-0 mt-0.5">🌾</span>
+                    <div>
+                      <strong className="text-slate-800">Key Ingredients:</strong>{" "}
+                      <span className="text-slate-600">{item.ingredientsHighlight}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Product Action Buttons (New Features) */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <Link
+                    href={`/shop/${item.slug}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-100/80 hover:bg-amber-200 text-[#6b1d1d] text-xs font-bold transition shadow-2xs"
+                  >
+                    <span>🔄</span>
+                    <span>Reorder Sweet</span>
+                  </Link>
+                  <Link
+                    href={`/shop/${item.slug}#reviews`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-amber-400 text-slate-700 hover:text-amber-900 text-xs font-medium transition shadow-2xs"
+                  >
+                    <span>⭐</span>
+                    <span>Rate &amp; Review</span>
+                  </Link>
+                  <Link
+                    href={`/shop/${item.slug}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-slate-600 hover:text-[#c45c26] text-xs font-medium transition"
+                  >
+                    <span>View Product Details →</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Invoice Summary and Tax Invoice Button */}
+        <div className="mt-6 border-t border-[#6b1d1d]/10 pt-4 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-amber-50/70 to-white p-4 rounded-2xl border border-amber-200/60">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+              Billing Summary · Inclusive of all GST Taxes
+            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="font-bold text-sm text-[#2a1a12]">Total Paid / Payable:</span>
+              <span className="font-extrabold text-xl sm:text-2xl text-[#6b1d1d]">{formatInr(order.total)}</span>
+            </div>
+          </div>
+          <Link
+            href={`/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
+            target="_blank"
+            className="inline-flex items-center gap-2 rounded-xl bg-white border border-amber-300 hover:border-amber-500 px-4 py-2.5 text-xs font-bold text-amber-950 shadow-xs hover:bg-amber-50 transition"
+          >
+            <span>🧾</span>
+            <span>View &amp; Print GST Tax Invoice</span>
+          </Link>
+        </div>
+      </section>
 
       {/* Delivery or Recipient Info Grid */}
       <div className="mt-6 grid gap-4 text-sm md:grid-cols-2">
