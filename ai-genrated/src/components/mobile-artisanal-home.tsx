@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useMotionValueEvent } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,6 +36,21 @@ export function MobileArtisanalHome({
   const [likedMap, setLikedMap] = useState<Record<string | number, boolean>>({});
   const [burstingId, setBurstingId] = useState<string | number | null>(null);
   const cardLastTapRef = useRef<Record<string | number, number>>({});
+  const { scrollY } = useScroll();
+  const [headerHidden, setHeaderHidden] = useState(false);
+
+  useMotionValueEvent(scrollY, "change", (current) => {
+    const previous = scrollY.getPrevious() ?? 0;
+    if (mobileMenuOpen || searchOpen) {
+      setHeaderHidden(false);
+      return;
+    }
+    if (current > previous && current > 150) {
+      setHeaderHidden(true);
+    } else {
+      setHeaderHidden(false);
+    }
+  });
 
   useEffect(() => {
     try {
@@ -362,7 +378,17 @@ export function MobileArtisanalHome({
       {/* ─────────────────────────────────────────────────────────────
           2. STICKY MOBILE APP HEADER
          ───────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#0B1B4F]/10 px-4 py-2.5 flex items-center justify-between shadow-2xs">
+      <motion.header
+        className="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#0B1B4F]/10 px-4 py-2.5 flex items-center justify-between shadow-2xs"
+        animate={{
+          y: headerHidden ? "-100%" : 0,
+          opacity: headerHidden ? 0 : 1,
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        style={{
+          pointerEvents: headerHidden ? "none" : "auto",
+        }}
+      >
         {/* Hamburger Menu Trigger */}
         <button
           type="button"
@@ -418,7 +444,7 @@ export function MobileArtisanalHome({
             )}
           </Link>
         </div>
-      </header>
+      </motion.header>
 
       {/* Quick Search Drawer (Expandable) */}
       {searchOpen && (

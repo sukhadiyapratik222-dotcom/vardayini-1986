@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { motion, useScroll, useMotionValueEvent } from "motion/react";
 
 type Me = { id: number; name: string; role: string } | null;
 
@@ -204,6 +205,21 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
   const [sweetsDropdownOpen, setSweetsDropdownOpen] = useState(false);
   const sweetsDropdownRef = useRef<HTMLDivElement | null>(null);
   const [currentSearch, setCurrentSearch] = useState("");
+  const { scrollY } = useScroll();
+  const [hidden, setHidden] = useState(false);
+
+  useMotionValueEvent(scrollY, "change", (current) => {
+    const previous = scrollY.getPrevious() ?? 0;
+    if (open || sweetsDropdownOpen) {
+      setHidden(false);
+      return;
+    }
+    if (current > previous && current > 150) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  });
 
   const FALLBACK_CONFIG = {
     announcement: {
@@ -335,7 +351,17 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full shadow-sm">
+    <motion.header
+      className="sticky top-0 z-40 w-full shadow-sm"
+      animate={{
+        y: hidden ? "-100%" : 0,
+        opacity: hidden ? 0 : 1,
+      }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      style={{
+        pointerEvents: hidden ? "none" : "auto",
+      }}
+    >
       {/* 1. TOP ANNOUNCEMENT BANNER */}
       {configLoaded && uiConfig?.announcement?.enabled !== false && (
         <div className="bg-[#0b1b4f] text-white border-b border-[#dfb755]/20 overflow-hidden">
@@ -899,6 +925,6 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
           </div>
         </div>
       )}
-    </header>
+    </motion.header>
   );
 }
