@@ -1333,6 +1333,17 @@ async function seedInternal() {
             isPublished: true,
           },
         ]);
+      } else {
+        // Ensure any legacy references to Vadodara in CMS pages are updated to Kalol
+        try {
+          await db
+            .update(cmsPages)
+            .set({
+              content: sql`REPLACE(REPLACE(${cmsPages.content}, 'Vadodara', 'Kalol'), 'vadodara', 'kalol')`,
+              metaTitle: sql`REPLACE(REPLACE(${cmsPages.metaTitle}, 'Vadodara', 'Kalol'), 'vadodara', 'kalol')`,
+            })
+            .where(sql`${cmsPages.content} LIKE '%Vadodara%' OR ${cmsPages.content} LIKE '%vadodara%' OR ${cmsPages.metaTitle} LIKE '%Vadodara%'`);
+        } catch {}
       }
     } catch (err) {
       console.warn("RBAC seed notice:", err);

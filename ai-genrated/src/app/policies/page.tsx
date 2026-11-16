@@ -260,7 +260,7 @@ function PoliciesContent() {
         <div className="pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#fbf3db]/60 border border-[#dfb755]/30">
           <div>
             <p className="text-xs font-bold text-[#b89130]">Need help with an existing order?</p>
-            <p className="text-xs text-[#5e6d82]">Our Mandvi & Alkapuri counters are open daily 8:00 AM – 10:30 PM</p>
+            <p className="text-xs text-[#5e6d82]">Our Kalol flagship counter (Navjivan Shopping Center) is open daily 8:00 AM – 8:30 PM</p>
           </div>
           <Link
             href="/stores"
