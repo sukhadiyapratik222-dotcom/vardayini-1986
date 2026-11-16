@@ -72,6 +72,21 @@ export function MobileArtisanalHome({
     }
     try {
       localStorage.setItem("vsm_wishlist_ids", JSON.stringify(newMap));
+      const storedItems = localStorage.getItem("vsm_guest_wishlist_items");
+      const itemsMap: Record<string | number, any> = storedItems ? JSON.parse(storedItems) : {};
+      if (nextState) {
+        itemsMap[pid] = {
+          id: product.id || pid,
+          productId: product.id || pid,
+          name: product.name,
+          imageUrl: product.imageUrl || "/images/kaju-katli.jpg",
+          slug: product.slug,
+        };
+      } else {
+        delete itemsMap[pid];
+      }
+      localStorage.setItem("vsm_guest_wishlist_items", JSON.stringify(itemsMap));
+
       if (typeof product.id === "number") {
         fetch("/api/wishlist", {
           method: "POST",

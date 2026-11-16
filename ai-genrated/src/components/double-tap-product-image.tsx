@@ -46,7 +46,7 @@ function HeartBurst({ x, y, rotate, onDone }: Burst & { onDone: () => void }) {
     // A bouncy spring overshoots, so the heart pops
     animate(
       element,
-      { scale: [0, 1.15, 1], opacity: [0, 1], rotate: [0, rotate] },
+      { scale: [0, 1], opacity: [0, 1], rotate: [0, rotate] },
       {
         type: "spring",
         visualDuration: 0.3,
@@ -147,7 +147,7 @@ export function DoubleTapProductImage({
         setIsLiked(true);
         setLikesCount((prev) => prev + 1);
         if (likeButton.current) {
-          animateLike(likeButton.current, { scale: [1, 1.35, 1] }, lively);
+          animateLike(likeButton.current, { scale: [1, 1.35, 1] }, { duration: 0.35, ease: "easeInOut" });
         }
 
         // Sync with Wishlist API if productId exists
@@ -157,6 +157,18 @@ export function DoubleTapProductImage({
             const map = stored ? JSON.parse(stored) : {};
             map[productId] = true;
             localStorage.setItem("vsm_wishlist_ids", JSON.stringify(map));
+
+            const storedItems = localStorage.getItem("vsm_guest_wishlist_items");
+            const itemsMap: Record<number, any> = storedItems ? JSON.parse(storedItems) : {};
+            itemsMap[productId] = {
+              id: productId,
+              productId,
+              name: alt,
+              imageUrl: src,
+              slug: alt.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+            };
+            localStorage.setItem("vsm_guest_wishlist_items", JSON.stringify(itemsMap));
+
             fetch("/api/wishlist", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -166,7 +178,7 @@ export function DoubleTapProductImage({
         }
       }
     },
-    [animateLike, isLiked, likeButton, productId],
+    [alt, animateLike, isLiked, likeButton, productId, src],
   );
 
   const toggleLiked = () => {
@@ -175,15 +187,35 @@ export function DoubleTapProductImage({
     setLikesCount((prev) => (nextState ? prev + 1 : Math.max(0, prev - 1)));
 
     if (nextState && likeButton.current) {
-      animateLike(likeButton.current, { scale: [1, 1.35, 1] }, lively);
+      animateLike(likeButton.current, { scale: [1, 1.35, 1] }, { duration: 0.35, ease: "easeInOut" });
     }
 
     if (productId && typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("vsm_wishlist_ids");
         const map = stored ? JSON.parse(stored) : {};
-        map[productId] = nextState;
+        if (nextState) {
+          map[productId] = true;
+        } else {
+          delete map[productId];
+        }
         localStorage.setItem("vsm_wishlist_ids", JSON.stringify(map));
+
+        const storedItems = localStorage.getItem("vsm_guest_wishlist_items");
+        const itemsMap: Record<number, any> = storedItems ? JSON.parse(storedItems) : {};
+        if (nextState) {
+          itemsMap[productId] = {
+            id: productId,
+            productId,
+            name: alt,
+            imageUrl: src,
+            slug: alt.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          };
+        } else {
+          delete itemsMap[productId];
+        }
+        localStorage.setItem("vsm_guest_wishlist_items", JSON.stringify(itemsMap));
+
         fetch("/api/wishlist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

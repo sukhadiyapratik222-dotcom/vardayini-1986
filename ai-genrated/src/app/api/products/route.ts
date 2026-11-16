@@ -24,6 +24,13 @@ export async function GET(request: Request) {
     tag: searchParams.get("tag") || undefined,
     featured: searchParams.get("featured") === "true",
     limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
+    ids: searchParams.get("ids")
+      ? searchParams
+          .get("ids")!
+          .split(",")
+          .map((id) => Number(id.trim()))
+          .filter((n) => !isNaN(n) && n > 0)
+      : undefined,
   });
   return NextResponse.json({ products }, { headers: CORS_HEADERS });
 }
