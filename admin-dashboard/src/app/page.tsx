@@ -161,10 +161,12 @@ export default function AdminDashboardPage() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [reportsOpen, setReportsOpen] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [homeAccordionOpen, setHomeAccordionOpen] = useState(true);
+  const [shopAccordionOpen, setShopAccordionOpen] = useState(true);
   const [productStockFilter, setProductStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">("all");
 
   const handleTabChange = useCallback((tab: string) => {
-    if (tab === "testimonials-manager") {
+    if (tab === "testimonials-manager" || tab === "category-showcase" || tab === "preview") {
       setActiveTab("overview");
       setIsMobileSidebarOpen(false);
       return;
@@ -172,9 +174,16 @@ export default function AdminDashboardPage() {
     if (tab === "out_of_stock") {
       setProductStockFilter("out_of_stock");
       setActiveTab("products");
+      setShopAccordionOpen(true);
     } else {
       if (tab === "products") {
         setProductStockFilter("all");
+      }
+      if (["hero", "announcements", "bestsellers", "special-items", "welcome-offer", "weekly-slogans", "branding"].includes(tab)) {
+        setHomeAccordionOpen(true);
+      }
+      if (["products", "categories"].includes(tab)) {
+        setShopAccordionOpen(true);
       }
       setActiveTab(tab as TabId);
     }
@@ -869,75 +878,23 @@ export default function AdminDashboardPage() {
     });
   }, []);
 
-  const navItems: { id: TabId; label: string; icon: string; badge?: string | number }[] = [
-    {
-      id: "overview",
-      label: "Dashboard Overview",
-      icon: "🌟",
-      badge: unreadNotificationCount > 0 ? `🔔 ${unreadNotificationCount}` : undefined,
-    },
-    { id: "branding", label: "Change Logo & Identity", icon: "✨" },
-    {
-      id: "outlets",
-      label: "Outlets & Stores",
-      icon: "📍",
-      badge: "Manage",
-    },
-    {
-      id: "hero",
-      label: "Change Hero Banner",
-      icon: "🖼️",
-    },
+  // Page-Wise Website Sections
+  const homeSections = useMemo<{ id: TabId; label: string; icon: string }[]>(() => [
+    { id: "hero", label: "Hero Banner", icon: "🖼️" },
     { id: "announcements", label: "Banners & Promos", icon: "📢" },
+    { id: "bestsellers", label: "Customer Bestsellers", icon: "💎" },
+    { id: "special-items", label: "Our Special Items", icon: "⭐" },
+    { id: "welcome-offer", label: "Welcome Offer (10%)", icon: "🎁" },
+    { id: "weekly-slogans", label: "Weekly Slogans", icon: "👑" },
+    { id: "branding", label: "Logo & Brand Identity", icon: "✨" },
+  ], []);
+
+  const shopSections = useMemo<{ id: TabId; label: string; icon: string; badge?: string | number }[]>(() => [
     {
-      id: "mobile-management",
-      label: "Mobile Management",
-      icon: "📱",
-      badge: "App Studio",
-    },
-    {
-      id: "weekly-slogans",
-      label: "Weekly Slogans",
-      icon: "👑",
-      badge: "Sweet of Week",
-    },
-    {
-      id: "bestsellers",
-      label: "Customer Bestsellers",
-      icon: "💎",
-      badge: "Most Loved",
-    },
-    {
-      id: "welcome-offer",
-      label: "Welcome Offer (10% Off)",
-      icon: "🎁",
-      badge: "Promo",
-    },
-    {
-      id: "new-launches",
-      label: "New Launches (2026)",
-      icon: "🚀",
-      badge: "Page",
-    },
-    {
-      id: "special-items",
-      label: "Our Special Items",
-      icon: "⭐",
-      badge: config?.specialItems?.productIds?.length
-        ? `${config.specialItems.productIds.length} items`
-        : undefined,
-    },
-    {
-      id: "festivals",
-      label: "Festival Specials",
-      icon: "🪔",
-      badge: "Manage",
-    },
-    {
-      id: "taste-quiz",
-      label: "Taste Quiz Builder",
-      icon: "✨",
-      badge: "Mithai Match",
+      id: "products",
+      label: "Products & Stock",
+      icon: "🍬",
+      badge: inventory.lowStock?.length ? `⚠️ ${inventory.lowStock.length}` : undefined,
     },
     {
       id: "categories",
@@ -945,12 +902,17 @@ export default function AdminDashboardPage() {
       icon: "📁",
       badge: categories.length || undefined,
     },
-    {
-      id: "products",
-      label: "Products & Stock",
-      icon: "🍬",
-      badge: inventory.lowStock?.length ? `⚠️ ${inventory.lowStock.length}` : undefined,
-    },
+  ], [inventory.lowStock?.length, categories.length]);
+
+  const otherPages = useMemo<{ id: TabId; label: string; icon: string; path: string; badge?: string }[]>(() => [
+    { id: "festivals", label: "Festivals Page", icon: "🪔", path: "/festivals", badge: "Manage" },
+    { id: "new-launches", label: "New Launches (2026)", icon: "🚀", path: "/new-launches", badge: "2026" },
+    { id: "taste-quiz", label: "Taste Quiz Page", icon: "✨", path: "/find-your-mithai", badge: "Mithai Match" },
+    { id: "outlets", label: "Outlets & Stores", icon: "📍", path: "/stores", badge: "Manage" },
+    { id: "pages", label: "CMS Pages & Policies", icon: "📄", path: "/about" },
+  ], []);
+
+  const storeOperations = useMemo<{ id: TabId; label: string; icon: string; badge?: string | number }[]>(() => [
     {
       id: "orders",
       label: "Orders Desk",
@@ -964,19 +926,62 @@ export default function AdminDashboardPage() {
       badge: "Live",
     },
     {
-      id: "reviews",
-      label: "Customer Reviews",
-      icon: "⭐",
-    },
-    {
       id: "customers",
       label: "Customer Directory",
       icon: "👥",
       badge: customers.filter((c) => c.role !== "admin" && c.role !== "super_admin").length || undefined,
     },
-    { id: "pages", label: "CMS Pages & Policies", icon: "📄" },
-    { id: "preview", label: "Live Store Preview", icon: "👁️" },
-  ];
+    {
+      id: "reviews",
+      label: "Customer Reviews",
+      icon: "⭐",
+    },
+  ], [orders, customers]);
+
+  const marketingAndApps = useMemo<{ id: TabId; label: string; icon: string; badge?: string }[]>(() => [
+    {
+      id: "mobile-management",
+      label: "Mobile Management",
+      icon: "📱",
+      badge: "App Studio",
+    },
+    {
+      id: "sms-wallet",
+      label: "SMS Wallet & Credits",
+      icon: "💬",
+    },
+  ], []);
+
+  const isHomeSection = useCallback((tab: TabId) => {
+    return ["hero", "announcements", "bestsellers", "special-items", "welcome-offer", "weekly-slogans", "branding"].includes(tab);
+  }, []);
+
+  const isShopSection = useCallback((tab: TabId) => {
+    return ["products", "categories"].includes(tab);
+  }, []);
+
+  const hasAnyHomePermitted = useMemo(() => {
+    return homeSections.some((s) => isModulePermitted(s.id));
+  }, [homeSections, isModulePermitted]);
+
+  const hasAnyShopPermitted = useMemo(() => {
+    return shopSections.some((s) => isModulePermitted(s.id));
+  }, [shopSections, isModulePermitted]);
+
+  // Master list of all navigable items for lookup and fallback
+  const navItems = useMemo<{ id: TabId; label: string; icon: string; badge?: string | number }[]>(() => [
+    {
+      id: "overview",
+      label: "Dashboard Overview",
+      icon: "🌟",
+      badge: unreadNotificationCount > 0 ? `🔔 ${unreadNotificationCount}` : undefined,
+    },
+    ...homeSections,
+    ...shopSections,
+    ...otherPages,
+    ...storeOperations,
+    ...marketingAndApps,
+  ], [unreadNotificationCount, homeSections, shopSections, otherPages, storeOperations, marketingAndApps]);
 
   const reportMenuItems: { id: TabId; label: string }[] = [
     { id: "report-sales", label: "Sales Report" },
@@ -1201,6 +1206,10 @@ export default function AdminDashboardPage() {
                 ? `Report: ${reportMenuItems.find((m) => m.id === activeTab)?.label || ""}`
                 : activeTab === "sms-wallet"
                 ? "SMS Wallet"
+                : isHomeSection(activeTab)
+                ? `Home / ${homeSections.find((s) => s.id === activeTab)?.label}`
+                : isShopSection(activeTab)
+                ? `Shop / ${shopSections.find((s) => s.id === activeTab)?.label}`
                 : navItems.find((n) => n.id === activeTab)?.label || activeTab}
             </span>
           </div>
@@ -1281,10 +1290,10 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Navigation Links */}
-            <nav className="space-y-1.5">
+            <nav className="space-y-3">
               {/* Super Admin Control Center */}
               {currentUser?.role === "super_admin" && (
-                <div className="pb-2.5 mb-2 border-b border-[#0b2f8a]/10 space-y-1">
+                <div className="pb-2.5 mb-1 border-b border-[#0b2f8a]/10 space-y-1">
                   <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-[#b89130] uppercase flex items-center justify-between">
                     <span>👑 Super Admin Controls</span>
                     <span className="bg-[#dfb755]/20 text-[#b89130] px-1.5 py-0.2 rounded text-[9px] font-extrabold">
@@ -1324,49 +1333,302 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              {visibleNavItems.map((item) => {
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleTabChange(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
-                      isActive
-                        ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
-                        : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </div>
+              {/* Dashboard Overview */}
+              {isModulePermitted("overview") && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("overview")}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                    activeTab === "overview"
+                      ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                      : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-base">🌟</span>
+                    <span>Dashboard Overview</span>
+                  </div>
+                  {unreadNotificationCount > 0 && (
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        activeTab === "overview"
+                          ? "bg-[#dfb755] text-[#071c54]"
+                          : "bg-[#0b2f8a]/10 text-[#0b2f8a]"
+                      }`}
+                    >
+                      🔔 {unreadNotificationCount}
+                    </span>
+                  )}
+                </button>
+              )}
 
-                    {item.badge !== undefined && (
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                          isActive
-                            ? "bg-[#dfb755] text-[#071c54]"
-                            : "bg-[#0b2f8a]/10 text-[#0b2f8a]"
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
+              {/* SECTION: Website Pages (Page-Wise Management) */}
+              <div className="space-y-1.5 pt-1">
+                <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-[#b89130] uppercase flex items-center justify-between border-b border-[#0b2f8a]/10 pb-1">
+                  <span>🌐 Website Pages</span>
+                  <span className="text-[9px] font-semibold text-[#5e6d82] lowercase">Page-Wise</span>
+                </div>
+
+                {/* 1. Home Page Group (with sub-sections accordion) */}
+                {hasAnyHomePermitted && (
+                  <div className={`rounded-2xl border transition-all ${
+                    isHomeSection(activeTab)
+                      ? "border-amber-300 bg-amber-50/50 shadow-xs"
+                      : "border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/50"
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isHomeSection(activeTab)) {
+                          handleTabChange("hero");
+                        }
+                        setHomeAccordionOpen((prev) => !prev);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isHomeSection(activeTab)
+                          ? "text-[#6b1d1d]"
+                          : "text-slate-700 hover:text-[#6b1d1d]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base">🏠</span>
+                        <div className="text-left">
+                          <span className="block leading-tight">Home Page</span>
+                          <span className="block text-[9px] font-normal text-slate-500">Page: /</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-200/80 text-amber-900 font-extrabold">
+                          7 sections
+                        </span>
+                        <span className={`text-[10px] text-slate-400 transition-transform ${homeAccordionOpen ? "rotate-0" : "-rotate-90"}`}>
+                          ▼
+                        </span>
+                      </div>
+                    </button>
+
+                    {homeAccordionOpen && (
+                      <div className="px-2 pb-2 pt-0.5 space-y-0.5 border-t border-amber-200/40 mt-1">
+                        {homeSections.filter((s) => isModulePermitted(s.id)).map((sec) => {
+                          const isActive = activeTab === sec.id;
+                          return (
+                            <button
+                              key={sec.id}
+                              type="button"
+                              onClick={() => handleTabChange(sec.id)}
+                              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition flex items-center justify-between ${
+                                isActive
+                                  ? "bg-[#6b1d1d] text-white font-bold shadow-xs"
+                                  : "text-slate-600 hover:text-slate-900 hover:bg-white"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs">{sec.icon}</span>
+                                <span>{sec.label}</span>
+                              </div>
+                              {isActive && <span className="text-[9px] text-amber-300">●</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
-                );
-              })}
+                  </div>
+                )}
+
+                {/* 2. Shop & Catalog Page Group */}
+                {hasAnyShopPermitted && (
+                  <div className={`rounded-2xl border transition-all ${
+                    isShopSection(activeTab)
+                      ? "border-blue-300 bg-blue-50/50 shadow-xs"
+                      : "border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/50"
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isShopSection(activeTab)) {
+                          handleTabChange("products");
+                        }
+                        setShopAccordionOpen((prev) => !prev);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition ${
+                        isShopSection(activeTab)
+                          ? "text-[#0b2f8a]"
+                          : "text-slate-700 hover:text-[#0b2f8a]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base">🛍️</span>
+                        <div className="text-left">
+                          <span className="block leading-tight">Shop Catalog</span>
+                          <span className="block text-[9px] font-normal text-slate-500">Page: /shop</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {inventory.lowStock?.length ? (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-bold">
+                            ⚠️ {inventory.lowStock.length} Low
+                          </span>
+                        ) : null}
+                        <span className={`text-[10px] text-slate-400 transition-transform ${shopAccordionOpen ? "rotate-0" : "-rotate-90"}`}>
+                          ▼
+                        </span>
+                      </div>
+                    </button>
+
+                    {shopAccordionOpen && (
+                      <div className="px-2 pb-2 pt-0.5 space-y-0.5 border-t border-blue-200/40 mt-1">
+                        {shopSections.filter((s) => isModulePermitted(s.id)).map((sec) => {
+                          const isActive = activeTab === sec.id;
+                          return (
+                            <button
+                              key={sec.id}
+                              type="button"
+                              onClick={() => handleTabChange(sec.id)}
+                              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition flex items-center justify-between ${
+                                isActive
+                                  ? "bg-[#0b2f8a] text-white font-bold shadow-xs"
+                                  : "text-slate-600 hover:text-slate-900 hover:bg-white"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs">{sec.icon}</span>
+                                <span>{sec.label}</span>
+                              </div>
+                              {sec.badge && (
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                                  isActive ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-700"
+                                }`}>
+                                  {sec.badge}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. Dedicated Other Pages */}
+                {otherPages.filter((p) => isModulePermitted(p.id)).map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabChange(item.id)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                          : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-base">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            isActive
+                              ? "bg-[#dfb755] text-[#071c54]"
+                              : "bg-[#0b2f8a]/10 text-[#0b2f8a]"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* SECTION: Store Operations */}
+              <div className="space-y-1 pt-2 border-t border-[#0b2f8a]/10">
+                <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-[#5e6d82] uppercase flex items-center justify-between">
+                  <span>📦 Store Operations</span>
+                </div>
+
+                {storeOperations.filter((o) => isModulePermitted(o.id)).map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabChange(item.id)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                          : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-base">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge !== undefined && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            isActive
+                              ? "bg-[#dfb755] text-[#071c54]"
+                              : "bg-[#0b2f8a]/10 text-[#0b2f8a]"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* SECTION: Marketing & Communications */}
+              <div className="space-y-1 pt-2 border-t border-[#0b2f8a]/10">
+                <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-[#5e6d82] uppercase">
+                  <span>📱 Marketing &amp; Apps</span>
+                </div>
+
+                {marketingAndApps.filter((m) => isModulePermitted(m.id)).map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabChange(item.id)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                          : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-base">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            isActive
+                              ? "bg-[#dfb755] text-[#071c54]"
+                              : "bg-[#0b2f8a]/10 text-[#0b2f8a]"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
 
               {/* Exact Reports Accordion matching user screenshot - Gated by reports:view */}
               {isModulePermitted("report-sales") && (
-                <div className="pt-2">
+                <div className="pt-2 border-t border-[#0b2f8a]/10">
                   <button
                     type="button"
                     onClick={() => setReportsOpen((prev) => !prev)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold bg-[#00681c] hover:bg-[#005417] text-white shadow-sm transition"
+                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold bg-[#00681c] hover:bg-[#005417] text-white shadow-sm transition cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="text-sm">📊</span>
-                      <span className="text-[13px] tracking-wide">Reports</span>
+                      <span className="text-[13px] tracking-wide">Reports &amp; Analytics</span>
                     </div>
                     <span
                       className={`text-[10px] transition-transform duration-200 ${
@@ -1386,7 +1648,7 @@ export default function AdminDashboardPage() {
                             key={item.id}
                             type="button"
                             onClick={() => handleTabChange(item.id)}
-                            className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between ${
+                            className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between cursor-pointer ${
                               isSelected
                                 ? "bg-white text-[#00681c] font-bold shadow-sm border border-slate-200/80"
                                 : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
@@ -1400,25 +1662,6 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* SMS Wallet & Credits item - Gated by settings:manage */}
-              {isModulePermitted("sms-wallet") && (
-                <button
-                  type="button"
-                  onClick={() => handleTabChange("sms-wallet")}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold transition mt-1.5 ${
-                    activeTab === "sms-wallet"
-                      ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
-                      : "text-slate-700 hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base text-[#0b2f8a]">💬</span>
-                    <span className="text-[12px]">SMS Wallet & Credits</span>
-                  </div>
-                  <span className="text-sm font-bold opacity-60">›</span>
-                </button>
               )}
             </nav>
           </div>
@@ -1453,30 +1696,86 @@ export default function AdminDashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#0b2f8a]/10">
             <div>
               <div className="flex items-center gap-2 text-xs text-[#5e6d82]">
-                <span className="hover:text-[#0b2f8a] cursor-pointer">Vardayini Admin Desk</span>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("overview")}
+                  className="hover:text-[#0b2f8a] cursor-pointer"
+                >
+                  Admin Desk
+                </button>
                 <span>/</span>
-                <span className="text-[#0b2f8a] font-semibold capitalize">
-                  {activeTab === "admin-management"
-                    ? "Super Admin / Administrators"
-                    : activeTab === "activity-logs"
-                    ? "Super Admin / Activity Logs"
-                    : activeTab === "pages"
-                    ? "Content / CMS Pages"
-                    : activeTab === "reviews"
-                    ? "Customer Reviews & Ratings"
-                    : activeTab.startsWith("report-")
-                    ? "Reports"
-                    : activeTab === "sms-wallet"
-                    ? "Communications"
-                    : navItems.find((n) => n.id === activeTab)?.label}
-                </span>
-                {activeTab.startsWith("report-") && (
+                {isHomeSection(activeTab) ? (
                   <>
+                    <span className="text-[#b89130] font-semibold">Website Pages</span>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("hero")}
+                      className="text-[#6b1d1d] hover:underline cursor-pointer font-semibold"
+                    >
+                      Home Page (/)
+                    </button>
+                    <span>/</span>
+                    <span className="text-[#0b2f8a] font-bold">
+                      {homeSections.find((s) => s.id === activeTab)?.label}
+                    </span>
+                  </>
+                ) : isShopSection(activeTab) ? (
+                  <>
+                    <span className="text-[#b89130] font-semibold">Website Pages</span>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("products")}
+                      className="text-[#0b2f8a] hover:underline cursor-pointer font-semibold"
+                    >
+                      Shop Page (/shop)
+                    </button>
+                    <span>/</span>
+                    <span className="text-[#0b2f8a] font-bold">
+                      {shopSections.find((s) => s.id === activeTab)?.label}
+                    </span>
+                  </>
+                ) : otherPages.some((p) => p.id === activeTab) ? (
+                  <>
+                    <span className="text-[#b89130] font-semibold">Website Pages</span>
+                    <span>/</span>
+                    <span className="text-[#0b2f8a] font-bold">
+                      {otherPages.find((p) => p.id === activeTab)?.label}
+                    </span>
+                  </>
+                ) : storeOperations.some((o) => o.id === activeTab) ? (
+                  <>
+                    <span className="text-[#5e6d82] font-semibold">Store Operations</span>
+                    <span>/</span>
+                    <span className="text-[#0b2f8a] font-bold">
+                      {storeOperations.find((o) => o.id === activeTab)?.label}
+                    </span>
+                  </>
+                ) : marketingAndApps.some((m) => m.id === activeTab) ? (
+                  <>
+                    <span className="text-[#5e6d82] font-semibold">Marketing &amp; Apps</span>
+                    <span>/</span>
+                    <span className="text-[#0b2f8a] font-bold">
+                      {marketingAndApps.find((m) => m.id === activeTab)?.label}
+                    </span>
+                  </>
+                ) : activeTab.startsWith("report-") ? (
+                  <>
+                    <span className="text-[#00681c] font-semibold">Reports &amp; Analytics</span>
                     <span>/</span>
                     <span className="text-[#00681c] font-bold">
                       {reportMenuItems.find((m) => m.id === activeTab)?.label}
                     </span>
                   </>
+                ) : (
+                  <span className="text-[#0b2f8a] font-bold capitalize">
+                    {activeTab === "admin-management"
+                      ? "Super Admin / Administrators & RBAC"
+                      : activeTab === "activity-logs"
+                      ? "Super Admin / Security Audit Logs"
+                      : "Dashboard Overview"}
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-3 mt-1">
@@ -1492,6 +1791,10 @@ export default function AdminDashboardPage() {
                       ? "📊"
                       : activeTab === "sms-wallet"
                       ? "💬"
+                      : isHomeSection(activeTab)
+                      ? "🏠"
+                      : isShopSection(activeTab)
+                      ? "🛍️"
                       : navItems.find((n) => n.id === activeTab)?.icon}
                   </span>
                   <span>
@@ -1505,6 +1808,10 @@ export default function AdminDashboardPage() {
                       ? reportMenuItems.find((m) => m.id === activeTab)?.label
                       : activeTab === "sms-wallet"
                       ? "SMS Wallet & Credits"
+                      : isHomeSection(activeTab)
+                      ? `Home Page • ${homeSections.find((s) => s.id === activeTab)?.label}`
+                      : isShopSection(activeTab)
+                      ? `Shop Catalog • ${shopSections.find((s) => s.id === activeTab)?.label}`
                       : navItems.find((n) => n.id === activeTab)?.label}
                   </span>
                 </h1>
@@ -1515,7 +1822,7 @@ export default function AdminDashboardPage() {
               <button
                 onClick={loadData}
                 disabled={isLoading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-[#0b2f8a]/5 text-[#0b2f8a] border border-[#0b2f8a]/15 shadow-sm transition disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-[#0b2f8a]/5 text-[#0b2f8a] border border-[#0b2f8a]/15 shadow-sm transition disabled:opacity-50 cursor-pointer"
                 title="Synchronize live data with customer storefront"
               >
                 <span className={isLoading ? "animate-spin" : ""}>🔄</span>
@@ -1539,7 +1846,7 @@ export default function AdminDashboardPage() {
               <button
                 type="button"
                 onClick={() => setErrorMessage(null)}
-                className="font-bold text-rose-900 hover:text-rose-700 ml-4 px-2 py-0.5 rounded"
+                className="font-bold text-rose-900 hover:text-rose-700 ml-4 px-2 py-0.5 rounded cursor-pointer"
               >
                 Dismiss
               </button>
@@ -1574,6 +1881,229 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                 )}
+
+              {/* Page-Wise Management Header Bar for Home Page */}
+              {isHomeSection(activeTab) && (
+                <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50 via-white to-amber-50/50 p-4 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/60">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6b1d1d] text-white font-bold text-base shadow-xs">
+                        🏠
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="font-bold text-sm text-[#6b1d1d]">
+                            Home Page Content Manager
+                          </h2>
+                          <span className="px-2 py-0.5 rounded-full bg-amber-100 text-[#6b1d1d] text-[10px] font-bold border border-amber-300/60">
+                            Page: /
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#5e6d82] mt-0.5">
+                          Manage all 7 sections appearing on your customer-facing homepage
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={getPublicStoreUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100/70 text-[#6b1d1d] border border-amber-300/80 text-xs font-bold transition shadow-xs shrink-0"
+                    >
+                      <span>Preview Live Home Page</span>
+                      <span>↗</span>
+                    </a>
+                  </div>
+
+                  {/* Horizontal sub-navigation pills */}
+                  <div className="flex items-center gap-2 pt-3 overflow-x-auto no-scrollbar">
+                    {homeSections.filter((s) => isModulePermitted(s.id)).map((sec) => {
+                      const isSelected = activeTab === sec.id;
+                      return (
+                        <button
+                          key={sec.id}
+                          type="button"
+                          onClick={() => handleTabChange(sec.id)}
+                          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 cursor-pointer ${
+                            isSelected
+                              ? "bg-[#6b1d1d] text-white shadow-xs font-bold scale-[1.02]"
+                              : "bg-white text-slate-700 hover:bg-amber-100/60 border border-slate-200"
+                          }`}
+                        >
+                          <span>{sec.icon}</span>
+                          <span>{sec.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Shop & Catalog Page Manager Top Bar */}
+              {isShopSection(activeTab) && (
+                <div className="rounded-2xl border border-blue-300/80 bg-gradient-to-r from-blue-50 via-white to-blue-50/50 p-4 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-200/60">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0b2f8a] text-white font-bold text-base shadow-xs">
+                        🛍️
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="font-bold text-sm text-[#0b2f8a]">
+                            Shop &amp; Catalog Page Manager
+                          </h2>
+                          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#0b2f8a] text-[10px] font-bold border border-blue-300/60">
+                            Page: /shop
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#5e6d82] mt-0.5">
+                          Manage products, inventory variants, stock warnings, and categories
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={`${getPublicStoreUrl()}/shop`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-blue-100/70 text-[#0b2f8a] border border-blue-300/80 text-xs font-bold transition shadow-xs shrink-0"
+                    >
+                      <span>Preview Live Shop</span>
+                      <span>↗</span>
+                    </a>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-3 overflow-x-auto no-scrollbar">
+                    {shopSections.filter((s) => isModulePermitted(s.id)).map((sec) => {
+                      const isSelected = activeTab === sec.id;
+                      return (
+                        <button
+                          key={sec.id}
+                          type="button"
+                          onClick={() => handleTabChange(sec.id)}
+                          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 cursor-pointer ${
+                            isSelected
+                              ? "bg-[#0b2f8a] text-white shadow-xs font-bold scale-[1.02]"
+                              : "bg-white text-slate-700 hover:bg-blue-100/60 border border-slate-200"
+                          }`}
+                        >
+                          <span>{sec.icon}</span>
+                          <span>{sec.label}</span>
+                          {sec.badge && (
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                              isSelected ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-700"
+                            }`}>
+                              {sec.badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Dedicated Top Bars for Other Website Pages */}
+              {activeTab === "festivals" && (
+                <div className="rounded-2xl border border-amber-300/60 bg-amber-50/60 p-3.5 flex items-center justify-between text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">🪔</span>
+                    <div>
+                      <span className="font-bold text-[#6b1d1d] block">Festivals Page Manager</span>
+                      <span className="text-[11px] text-slate-500 font-mono">Route: /festivals</span>
+                    </div>
+                  </div>
+                  <a
+                    href={`${getPublicStoreUrl()}/festivals`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-[#6b1d1d] border border-amber-300 text-[11px] font-bold transition shadow-xs"
+                  >
+                    View Live Page ↗
+                  </a>
+                </div>
+              )}
+
+              {activeTab === "new-launches" && (
+                <div className="rounded-2xl border border-indigo-300/60 bg-indigo-50/60 p-3.5 flex items-center justify-between text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">🚀</span>
+                    <div>
+                      <span className="font-bold text-indigo-900 block">New Launches (2026) Page Manager</span>
+                      <span className="text-[11px] text-slate-500 font-mono">Route: /new-launches</span>
+                    </div>
+                  </div>
+                  <a
+                    href={`${getPublicStoreUrl()}/new-launches`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 text-[11px] font-bold transition shadow-xs"
+                  >
+                    View Live Page ↗
+                  </a>
+                </div>
+              )}
+
+              {activeTab === "taste-quiz" && (
+                <div className="rounded-2xl border border-purple-300/60 bg-purple-50/60 p-3.5 flex items-center justify-between text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">✨</span>
+                    <div>
+                      <span className="font-bold text-purple-900 block">Taste Quiz &amp; Mithai Match Page Manager</span>
+                      <span className="text-[11px] text-slate-500 font-mono">Route: /find-your-mithai</span>
+                    </div>
+                  </div>
+                  <a
+                    href={`${getPublicStoreUrl()}/find-your-mithai`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-purple-100 text-purple-900 border border-purple-300 text-[11px] font-bold transition shadow-xs"
+                  >
+                    View Live Page ↗
+                  </a>
+                </div>
+              )}
+
+              {activeTab === "outlets" && (
+                <div className="rounded-2xl border border-slate-300/60 bg-slate-50/60 p-3.5 flex items-center justify-between text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">📍</span>
+                    <div>
+                      <span className="font-bold text-slate-900 block">Stores &amp; Outlets Page Manager</span>
+                      <span className="text-[11px] text-slate-500 font-mono">Route: /stores</span>
+                    </div>
+                  </div>
+                  <a
+                    href={`${getPublicStoreUrl()}/stores`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 text-[11px] font-bold transition shadow-xs"
+                  >
+                    View Live Page ↗
+                  </a>
+                </div>
+              )}
+
+              {activeTab === "pages" && (
+                <div className="rounded-2xl border border-emerald-300/60 bg-emerald-50/60 p-3.5 flex items-center justify-between text-xs shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">📄</span>
+                    <div>
+                      <span className="font-bold text-emerald-950 block">CMS Content Pages &amp; Policies</span>
+                      <span className="text-[11px] text-slate-500 font-mono">Routes: /about, /policies/*</span>
+                    </div>
+                  </div>
+                  <a
+                    href={`${getPublicStoreUrl()}/about`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-100 text-emerald-950 border border-emerald-300 text-[11px] font-bold transition shadow-xs"
+                  >
+                    View Live Page ↗
+                  </a>
+                </div>
+              )}
 
               {activeTab === "overview" && (
                 isModulePermitted("overview") ? (
