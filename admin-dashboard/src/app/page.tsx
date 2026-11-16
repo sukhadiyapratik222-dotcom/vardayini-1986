@@ -1674,7 +1674,7 @@ export default function AdminDashboardPage() {
 
               {activeTab === "new-launches" && (
                 isModulePermitted("new-launches") ? (
-                  <NewLaunchTab config={config} onRefresh={loadData} />
+                  <NewLaunchTab config={config} products={products} onRefresh={loadData} />
                 ) : (
                   <AccessRestrictedCard moduleName="New Launches (2026)" currentUser={currentUser} />
                 )

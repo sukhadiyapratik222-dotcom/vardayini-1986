@@ -963,13 +963,65 @@
     "badge": "NEW 2026 COLLECTION",
     "title": "Newly Launched Royal Sweets & Snacks",
     "subtitle": "Handcrafted dawn batches celebrating modern tastes with three generations of pure desi ghee heritage.",
+    "primaryCtaText": "👑 Inspect Signature Creation",
+    "secondaryCtaText": "Browse All Releases ↓",
     "tickerTexts": [
       "Handcrafted with 100% Shuddh Gir Cow Desi Ghee",
       "Adorned with Pure Edible 24K Silver Leaf & Iranian Saffron",
       "Fresh Morning Batches Direct for Mandvi & Alkapuri Customers",
       "Zero Artificial Essence · 100% Wholesome Authentic Purity",
       "Vacuum Sealed & Delivered Fresh Across Gujarat & India"
-    ]
+    ],
+    "countdown": {
+      "enabled": true,
+      "title": "⚡ Next Fresh Morning Dispatch Batch In",
+      "targetDate": "2026-11-20T12:00",
+      "promoCode": "LAUNCH10",
+      "promoText": "Use coupon for 10% instant off on all 2026 collection batches"
+    },
+    "spotlight": {
+      "enabled": true,
+      "productId": 1,
+      "eyebrow": "Flagship of the Season",
+      "heading": "The Gold Standard of Purity",
+      "customBadge": "👑 Signature Batch 2026",
+      "reviewRating": "★ 5.0 (420+ Reviews)",
+      "highlight1Label": "Ghee Purity",
+      "highlight1Value": "100% Desi Gir Cow",
+      "highlight2Label": "Cashew Grade",
+      "highlight2Value": "Whole W-240",
+      "highlight3Label": "Shelf Life",
+      "highlight3Value": "20 Days Fresh"
+    },
+    "marquee": {
+      "enabled": true,
+      "badge": "Live From Kalol Kitchens",
+      "title": "Fresh Daily Rolling Carousel",
+      "subtitle": "Hover to pause · Click card to inspect details",
+      "cardCount": 16
+    },
+    "promoBanner": {
+      "enabled": true,
+      "badge": "Special Launch Gift",
+      "headline": "Complimentary Pure Kaju Katli Box on all New Launch orders above ₹999",
+      "couponCode": "ROYAL1976",
+      "buttonText": "Claim Offer",
+      "buttonLink": "#catalogue"
+    },
+    "catalogue": {
+      "badge": "Complete 2026 Release",
+      "title": "Discover Every New Masterpiece",
+      "subtitle": "Each recipe has been carefully calibrated for purity, balanced sweetness, and exquisite texture.",
+      "enableSearch": true,
+      "enableSort": true,
+      "categoryTabs": [
+        { "id": "all", "label": "🌟 All New Releases", "active": true },
+        { "id": "sweets", "label": "👑 Royal Mithai", "active": true },
+        { "id": "farsan", "label": "🥟 Crisp Farsan", "active": true },
+        { "id": "sugarless", "label": "🍃 Sugar-Free", "active": true },
+        { "id": "hampers", "label": "🎁 Luxury Hampers", "active": true }
+      ]
+    }
   },
   "culinaryPillars": {
     "enabled": true,

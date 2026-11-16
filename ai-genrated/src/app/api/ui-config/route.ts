@@ -275,12 +275,76 @@ const TestimonialsSectionSchema = z.object({
   realDbReviews: z.array(TestimonialItemSchema).optional(),
 }).passthrough().optional();
 
+const NewLaunchCategoryTabSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  active: z.boolean().optional(),
+}).passthrough();
+
+const NewLaunchCountdownSchema = z.object({
+  enabled: z.boolean().optional(),
+  title: z.string().optional(),
+  targetDate: z.string().optional(),
+  promoCode: z.string().optional(),
+  promoText: z.string().optional(),
+}).passthrough().optional();
+
+const NewLaunchSpotlightSchema = z.object({
+  enabled: z.boolean().optional(),
+  eyebrow: z.string().optional(),
+  heading: z.string().optional(),
+  productId: z.number().optional(),
+  customTitle: z.string().optional(),
+  customDescription: z.string().optional(),
+  customBadge: z.string().optional(),
+  reviewRating: z.string().optional(),
+  highlight1Label: z.string().optional(),
+  highlight1Value: z.string().optional(),
+  highlight2Label: z.string().optional(),
+  highlight2Value: z.string().optional(),
+  highlight3Label: z.string().optional(),
+  highlight3Value: z.string().optional(),
+}).passthrough().optional();
+
+const NewLaunchMarqueeSchema = z.object({
+  enabled: z.boolean().optional(),
+  badge: z.string().optional(),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  cardCount: z.number().optional(),
+}).passthrough().optional();
+
+const NewLaunchPromoBannerSchema = z.object({
+  enabled: z.boolean().optional(),
+  badge: z.string().optional(),
+  headline: z.string().optional(),
+  couponCode: z.string().optional(),
+  buttonText: z.string().optional(),
+  buttonLink: z.string().optional(),
+}).passthrough().optional();
+
+const NewLaunchCatalogueSchema = z.object({
+  badge: z.string().optional(),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  enableSearch: z.boolean().optional(),
+  enableSort: z.boolean().optional(),
+  categoryTabs: z.array(NewLaunchCategoryTabSchema).optional(),
+}).passthrough().optional();
+
 const NewLaunchPageSchema = z.object({
   enabled: z.boolean().optional(),
   badge: z.string().optional(),
   title: z.string().optional(),
   subtitle: z.string().optional(),
   tickerTexts: z.array(z.string()).optional(),
+  primaryCtaText: z.string().optional(),
+  secondaryCtaText: z.string().optional(),
+  countdown: NewLaunchCountdownSchema,
+  spotlight: NewLaunchSpotlightSchema,
+  marquee: NewLaunchMarqueeSchema,
+  promoBanner: NewLaunchPromoBannerSchema,
+  catalogue: NewLaunchCatalogueSchema,
 }).passthrough().optional();
 
 const CulinaryPillarItemSchema = z.object({

@@ -299,12 +299,76 @@ export interface TestimonialsSectionConfig {
   realDbReviews?: TestimonialConfigItem[];
 }
 
+export interface NewLaunchCategoryTab {
+  id: string;
+  label: string;
+  active?: boolean;
+}
+
+export interface NewLaunchCountdownConfig {
+  enabled?: boolean;
+  title?: string;
+  targetDate?: string;
+  promoCode?: string;
+  promoText?: string;
+}
+
+export interface NewLaunchSpotlightConfig {
+  enabled?: boolean;
+  eyebrow?: string;
+  heading?: string;
+  productId?: number;
+  customTitle?: string;
+  customDescription?: string;
+  customBadge?: string;
+  reviewRating?: string;
+  highlight1Label?: string;
+  highlight1Value?: string;
+  highlight2Label?: string;
+  highlight2Value?: string;
+  highlight3Label?: string;
+  highlight3Value?: string;
+}
+
+export interface NewLaunchMarqueeConfig {
+  enabled?: boolean;
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  cardCount?: number;
+}
+
+export interface NewLaunchPromoBannerConfig {
+  enabled?: boolean;
+  badge?: string;
+  headline?: string;
+  couponCode?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+export interface NewLaunchCatalogueConfig {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  enableSearch?: boolean;
+  enableSort?: boolean;
+  categoryTabs?: NewLaunchCategoryTab[];
+}
+
 export interface NewLaunchPageConfig {
   enabled?: boolean;
   badge?: string;
   title?: string;
   subtitle?: string;
   tickerTexts?: string[];
+  primaryCtaText?: string;
+  secondaryCtaText?: string;
+  countdown?: NewLaunchCountdownConfig;
+  spotlight?: NewLaunchSpotlightConfig;
+  marquee?: NewLaunchMarqueeConfig;
+  promoBanner?: NewLaunchPromoBannerConfig;
+  catalogue?: NewLaunchCatalogueConfig;
 }
 
 export interface CulinaryPillarItem {

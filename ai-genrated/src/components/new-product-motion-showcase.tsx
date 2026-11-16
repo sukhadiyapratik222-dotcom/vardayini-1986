@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -36,12 +36,76 @@ export interface ShowcaseProduct {
   ingredients?: string;
 }
 
+export interface NewLaunchCategoryTab {
+  id: string;
+  label: string;
+  active?: boolean;
+}
+
+export interface NewLaunchCountdownConfig {
+  enabled?: boolean;
+  title?: string;
+  targetDate?: string;
+  promoCode?: string;
+  promoText?: string;
+}
+
+export interface NewLaunchSpotlightConfig {
+  enabled?: boolean;
+  eyebrow?: string;
+  heading?: string;
+  productId?: number;
+  customTitle?: string;
+  customDescription?: string;
+  customBadge?: string;
+  reviewRating?: string;
+  highlight1Label?: string;
+  highlight1Value?: string;
+  highlight2Label?: string;
+  highlight2Value?: string;
+  highlight3Label?: string;
+  highlight3Value?: string;
+}
+
+export interface NewLaunchMarqueeConfig {
+  enabled?: boolean;
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  cardCount?: number;
+}
+
+export interface NewLaunchPromoBannerConfig {
+  enabled?: boolean;
+  badge?: string;
+  headline?: string;
+  couponCode?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+export interface NewLaunchCatalogueConfig {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  enableSearch?: boolean;
+  enableSort?: boolean;
+  categoryTabs?: NewLaunchCategoryTab[];
+}
+
 export interface NewLaunchConfig {
   enabled?: boolean;
   badge?: string;
   title?: string;
   subtitle?: string;
+  primaryCtaText?: string;
+  secondaryCtaText?: string;
   tickerTexts?: string[];
+  countdown?: NewLaunchCountdownConfig;
+  spotlight?: NewLaunchSpotlightConfig;
+  marquee?: NewLaunchMarqueeConfig;
+  promoBanner?: NewLaunchPromoBannerConfig;
+  catalogue?: NewLaunchCatalogueConfig;
 }
 
 interface NewProductMotionShowcaseProps {
@@ -50,7 +114,7 @@ interface NewProductMotionShowcaseProps {
   welcomeOfferConfig?: any;
 }
 
-const TEXT_LOOP_ITEMS = [
+const DEFAULT_TICKERS = [
   "Handcrafted with 100% Shuddh Gir Cow Desi Ghee",
   "Adorned with Pure Edible 24K Silver Leaf & Iranian Saffron",
   "Fresh Morning Batches Direct for Mandvi & Alkapuri Customers",
@@ -58,12 +122,12 @@ const TEXT_LOOP_ITEMS = [
   "Vacuum Sealed & Delivered Fresh Across Gujarat & India",
 ];
 
-const CATEGORY_TABS = [
-  { id: "all", label: "🌟 All New Releases" },
-  { id: "sweets", label: "👑 Royal Mithai" },
-  { id: "farsan", label: "🥟 Crisp Farsan" },
-  { id: "sugarless", label: "🍃 Sugar-Free" },
-  { id: "hampers", label: "🎁 Luxury Hampers" },
+const DEFAULT_CATEGORY_TABS: NewLaunchCategoryTab[] = [
+  { id: "all", label: "🌟 All New Releases", active: true },
+  { id: "sweets", label: "👑 Royal Mithai", active: true },
+  { id: "farsan", label: "🥟 Crisp Farsan", active: true },
+  { id: "sugarless", label: "🍃 Sugar-Free", active: true },
+  { id: "hampers", label: "🎁 Luxury Hampers", active: true },
 ];
 
 export function NewProductMotionShowcase({
@@ -71,18 +135,21 @@ export function NewProductMotionShowcase({
   config,
   welcomeOfferConfig,
 }: NewProductMotionShowcaseProps) {
+  // Page Hero Configuration
   const activeTickerItems =
     config?.tickerTexts && config.tickerTexts.length > 0
       ? config.tickerTexts
-      : TEXT_LOOP_ITEMS;
+      : DEFAULT_TICKERS;
 
   const pageBadge = config?.badge || "Fresh 2026 Collection · Customers' Choice Batch";
   const pageTitle = config?.title || "New Artisanal Creations, Crafted in Pure Motion.";
   const pageSubtitle =
     config?.subtitle ||
     "Explore our latest limited-run batches. Tap any creation below to experience our interactive morphing inspection, ingredient sourcing stories, and authentic royal flavors.";
+  const primaryCtaText = config?.primaryCtaText || "👑 Inspect Signature Creation";
+  const secondaryCtaText = config?.secondaryCtaText || "Browse All Releases ↓";
 
-  // 1. Text Loop State
+  // 1. Animated Text Loop State
   const [textIndex, setTextIndex] = useState(0);
 
   useEffect(() => {
@@ -92,10 +159,118 @@ export function NewProductMotionShowcase({
     return () => clearInterval(interval);
   }, [activeTickerItems]);
 
-  // 2. Tab Filter State
-  const [activeTab, setActiveTab] = useState("all");
+  // 2. Countdown Timer State
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  // 3. Morphing Dialog State
+  useEffect(() => {
+    if (config?.countdown?.enabled === false) return;
+    const target = config?.countdown?.targetDate
+      ? new Date(config.countdown.targetDate).getTime()
+      : Date.now() + 3 * 24 * 3600 * 1000;
+
+    function update() {
+      const diff = Math.max(0, target - Date.now());
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      setTimeLeft({ days, hours, minutes, seconds });
+    }
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [config?.countdown?.targetDate, config?.countdown?.enabled]);
+
+  function handleCopyPromoCode(code: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2500);
+    }
+  }
+
+  // 3. Category Tabs State
+  const activeTabsList = useMemo(() => {
+    if (
+      config?.catalogue?.categoryTabs &&
+      config.catalogue.categoryTabs.length > 0
+    ) {
+      const filtered = config.catalogue.categoryTabs.filter(
+        (t) => t.active !== false
+      );
+      return filtered.length > 0 ? filtered : DEFAULT_CATEGORY_TABS;
+    }
+    return DEFAULT_CATEGORY_TABS;
+  }, [config?.catalogue?.categoryTabs]);
+
+  const [activeTab, setActiveTab] = useState(activeTabsList[0]?.id || "all");
+
+  // Keep activeTab valid if tabs change
+  useEffect(() => {
+    if (!activeTabsList.some((t) => t.id === activeTab)) {
+      setActiveTab(activeTabsList[0]?.id || "all");
+    }
+  }, [activeTabsList, activeTab]);
+
+  // 4. Search & Sort State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<
+    "featured" | "price-asc" | "price-desc" | "name"
+  >("featured");
+
+  // 5. Wishlist Map State
+  const [wishlistMap, setWishlistMap] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = localStorage.getItem("vsm_wishlist_ids");
+      if (stored) setWishlistMap(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  const handleToggleWishlist = (e: React.MouseEvent, p: ShowcaseProduct) => {
+    e.stopPropagation();
+    const nextState = !wishlistMap[p.id];
+    const nextMap = { ...wishlistMap, [p.id]: nextState };
+    if (!nextState) delete nextMap[p.id];
+    setWishlistMap(nextMap);
+
+    try {
+      localStorage.setItem("vsm_wishlist_ids", JSON.stringify(nextMap));
+      const storedItems = localStorage.getItem("vsm_guest_wishlist_items");
+      const itemsMap: Record<number, any> = storedItems ? JSON.parse(storedItems) : {};
+      if (nextState) {
+        itemsMap[p.id] = {
+          id: p.id,
+          productId: p.id,
+          name: p.name,
+          imageUrl: p.imageUrl,
+          slug: p.slug,
+        };
+      } else {
+        delete itemsMap[p.id];
+      }
+      localStorage.setItem("vsm_guest_wishlist_items", JSON.stringify(itemsMap));
+
+      fetch("/api/wishlist", {
+        method: nextState ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: p.id }),
+      }).catch(() => {});
+
+      window.dispatchEvent(new Event("wishlist-updated"));
+    } catch {}
+  };
+
+  // 6. Morphing Dialog State
   const [selectedProduct, setSelectedProduct] = useState<ShowcaseProduct | null>(null);
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -105,9 +280,7 @@ export function NewProductMotionShowcase({
   // Close modal on Escape
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedProduct(null);
-      }
+      if (e.key === "Escape") setSelectedProduct(null);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -121,44 +294,99 @@ export function NewProductMotionShowcase({
     }
   }, [selectedProduct]);
 
-  // Filter products based on active tab
-  const filteredProducts = products.filter((p) => {
-    if (activeTab === "all") return true;
-    const catSlug = (p.categorySlug || "").toLowerCase();
-    const pTags = (p.tags || "").toLowerCase();
-    const pName = (p.name || "").toLowerCase();
+  // 7. Filter & Sort Products
+  const filteredProducts = useMemo(() => {
+    let result = (products || []).filter((p) => {
+      const catSlug = (p.categorySlug || "").toLowerCase();
+      const pTags = (p.tags || "").toLowerCase();
+      const pName = (p.name || "").toLowerCase();
+      const pDesc = (p.description || "").toLowerCase();
 
-    if (activeTab === "sweets") {
-      return (
-        catSlug.includes("kaju") ||
-        catSlug.includes("mawa") ||
-        catSlug.includes("penda") ||
-        catSlug.includes("ghee") ||
-        catSlug.includes("sweet")
-      );
-    }
-    if (activeTab === "farsan") {
-      return (
-        catSlug.includes("namkeen") ||
-        catSlug.includes("khakhra") ||
-        catSlug.includes("sev") ||
-        catSlug.includes("farali") ||
-        catSlug.includes("roasted") ||
-        catSlug.includes("millet") ||
-        catSlug.includes("farsan")
-      );
-    }
-    if (activeTab === "sugarless") {
-      return catSlug.includes("sugarless") || pTags.includes("sugarless");
-    }
-    if (activeTab === "hampers") {
-      return catSlug.includes("packed") || pName.includes("hamper") || pName.includes("box");
-    }
-    return true;
-  });
+      // Tab Filtering
+      if (activeTab !== "all") {
+        if (activeTab === "sweets") {
+          const match =
+            catSlug.includes("kaju") ||
+            catSlug.includes("mawa") ||
+            catSlug.includes("penda") ||
+            catSlug.includes("ghee") ||
+            catSlug.includes("sweet");
+          if (!match) return false;
+        } else if (activeTab === "farsan") {
+          const match =
+            catSlug.includes("namkeen") ||
+            catSlug.includes("khakhra") ||
+            catSlug.includes("sev") ||
+            catSlug.includes("farali") ||
+            catSlug.includes("roasted") ||
+            catSlug.includes("millet") ||
+            catSlug.includes("farsan");
+          if (!match) return false;
+        } else if (activeTab === "sugarless") {
+          const match =
+            catSlug.includes("sugarless") || pTags.includes("sugarless");
+          if (!match) return false;
+        } else if (activeTab === "hampers") {
+          const match =
+            catSlug.includes("packed") ||
+            pName.includes("hamper") ||
+            pName.includes("box");
+          if (!match) return false;
+        } else {
+          // Custom tab match
+          const tId = activeTab.toLowerCase();
+          const match =
+            catSlug.includes(tId) ||
+            pTags.includes(tId) ||
+            pName.includes(tId);
+          if (!match) return false;
+        }
+      }
 
-  // Flagship Hero Product (First featured sweet or default to first product)
-  const heroProduct = (products || []).find((p) => (p.name || "").toLowerCase().includes("kaju katli")) || products?.[0];
+      // Search Query Filtering
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesQuery =
+          pName.includes(q) ||
+          pDesc.includes(q) ||
+          catSlug.includes(q) ||
+          pTags.includes(q) ||
+          (p.ingredients && p.ingredients.toLowerCase().includes(q)) ||
+          (p.tasteNotes && p.tasteNotes.toLowerCase().includes(q));
+        if (!matchesQuery) return false;
+      }
+
+      return true;
+    });
+
+    // Sorting
+    if (sortBy === "price-asc") {
+      result = [...result].sort((a, b) => a.fromPrice - b.fromPrice);
+    } else if (sortBy === "price-desc") {
+      result = [...result].sort((a, b) => b.fromPrice - a.fromPrice);
+    } else if (sortBy === "name") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // "featured": prioritize featured items
+      result = [...result].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    }
+
+    return result;
+  }, [products, activeTab, searchQuery, sortBy]);
+
+  // 8. Flagship Spotlight Product Selection
+  const spotlightCfg = config?.spotlight;
+  const heroProduct = useMemo(() => {
+    if (spotlightCfg?.productId) {
+      const match = (products || []).find((p) => p.id === spotlightCfg.productId);
+      if (match) return match;
+    }
+    return (
+      (products || []).find((p) => (p.name || "").toLowerCase().includes("kaju katli")) ||
+      products?.[0]
+    );
+  }, [products, spotlightCfg?.productId]);
+
   const [heroVariantIdx, setHeroVariantIdx] = useState(0);
   const heroVariant = heroProduct?.variants?.[heroVariantIdx] || heroProduct?.variants?.[0];
   const heroPrice = heroVariant
@@ -192,12 +420,19 @@ export function NewProductMotionShowcase({
     }
   }
 
+  // Marquee products
+  const marqueeCount = config?.marquee?.cardCount || 16;
+  const marqueeProducts = useMemo(() => {
+    const list = [...(products || []), ...(products || [])];
+    return list.slice(0, marqueeCount);
+  }, [products, marqueeCount]);
+
   return (
     <div className="relative min-h-screen bg-[#faf8f5] text-[#182230] selection:bg-[#dfb755]/30">
       {/* ─────────────────────────────────────────────────────────────
           1. HERO HEADER: TextShimmer + TextEffect + TextLoop
          ───────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-[#0b2f8a]/10">
+      <section className="relative overflow-hidden pt-12 pb-14 sm:pt-20 sm:pb-20 border-b border-[#0b2f8a]/10">
         {/* Soft Radial Ambient Lighting */}
         <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] bg-[radial-gradient(ellipse_at_center,rgba(223,183,85,0.18)_0%,rgba(11,47,138,0.06)_50%,transparent_70%)] blur-3xl" />
 
@@ -261,34 +496,104 @@ export function NewProductMotionShowcase({
               href="#flagship"
               className="btn-primary rounded-full px-6 py-2.5 text-xs sm:text-sm font-semibold shadow-lg shadow-[#0b2f8a]/20 hover:scale-105 transition active:scale-95"
             >
-              👑 Inspect Signature Creation
+              {primaryCtaText}
             </a>
             <a
               href="#catalogue"
               className="rounded-full bg-white border border-slate-200 px-6 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:border-[#0b2f8a] hover:text-[#0b2f8a] shadow-2xs hover:scale-105 transition active:scale-95"
             >
-              Browse All Releases (42) ↓
+              {secondaryCtaText} ({products.length})
             </a>
           </motion.div>
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. FLAGSHIP HERO SPOTLIGHT: Card with BorderTrail Glowing Beam
+          2. LIMITED BATCH LAUNCH COUNTDOWN TIMER BAR
          ───────────────────────────────────────────────────────────── */}
-      {heroProduct && (
+      {config?.countdown?.enabled !== false && (
+        <div className="bg-gradient-to-r from-[#071c54] via-[#0b2f8a] to-[#1a3fa3] text-white py-3.5 px-4 border-b border-[#dfb755]/30">
+          <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-[#dfb755] animate-ping" />
+              <span className="text-xs sm:text-sm font-bold tracking-wide text-white">
+                {config?.countdown?.title || "⚡ Next Fresh Morning Dispatch Batch In"}:
+              </span>
+            </div>
+
+            {/* Digits Display */}
+            <div className="flex items-center gap-2 font-mono">
+              <div className="bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 text-center min-w-[48px]">
+                <span className="text-sm sm:text-base font-bold text-[#dfb755]">
+                  {String(timeLeft.days).padStart(2, "0")}
+                </span>
+                <span className="block text-[9px] uppercase text-white/60">Days</span>
+              </div>
+              <span className="text-[#dfb755] font-bold">:</span>
+              <div className="bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 text-center min-w-[48px]">
+                <span className="text-sm sm:text-base font-bold text-[#dfb755]">
+                  {String(timeLeft.hours).padStart(2, "0")}
+                </span>
+                <span className="block text-[9px] uppercase text-white/60">Hours</span>
+              </div>
+              <span className="text-[#dfb755] font-bold">:</span>
+              <div className="bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 text-center min-w-[48px]">
+                <span className="text-sm sm:text-base font-bold text-[#dfb755]">
+                  {String(timeLeft.minutes).padStart(2, "0")}
+                </span>
+                <span className="block text-[9px] uppercase text-white/60">Mins</span>
+              </div>
+              <span className="text-[#dfb755] font-bold">:</span>
+              <div className="bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 text-center min-w-[48px]">
+                <span className="text-sm sm:text-base font-bold text-[#dfb755]">
+                  {String(timeLeft.seconds).padStart(2, "0")}
+                </span>
+                <span className="block text-[9px] uppercase text-white/60">Secs</span>
+              </div>
+            </div>
+
+            {/* Promo Code & Copy Action */}
+            {config?.countdown?.promoCode && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/80 hidden lg:inline">
+                  {config?.countdown?.promoText || "Use coupon code:"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCopyPromoCode(config?.countdown?.promoCode || "LAUNCH10")
+                  }
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dfb755] text-[#0b2f8a] text-xs font-bold hover:bg-[#b89130] transition active:scale-95 cursor-pointer shadow-sm"
+                >
+                  <span className="font-mono tracking-wider">
+                    {config?.countdown?.promoCode}
+                  </span>
+                  <span className="text-[10px]">
+                    {copiedCode ? "✓ Copied!" : "📋 Copy"}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          3. FLAGSHIP HERO SPOTLIGHT: Card with BorderTrail Glowing Beam
+         ───────────────────────────────────────────────────────────── */}
+      {heroProduct && config?.spotlight?.enabled !== false && (
         <section id="flagship" className="py-16 sm:py-20 bg-white/60 border-b border-[#0b2f8a]/10">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-xl mx-auto mb-10">
               <span className="text-xs font-bold uppercase tracking-widest text-[#b89130]">
-                Flagship of the Season
+                {config?.spotlight?.eyebrow || "Flagship of the Season"}
               </span>
               <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#0b2f8a]">
-                The Gold Standard of Purity
+                {config?.spotlight?.heading || "The Gold Standard of Purity"}
               </h2>
             </div>
 
-            {/* Glowing Border Trail Container (Inspired by Motion-Primitives BorderTrail) */}
+            {/* Glowing Border Trail Container */}
             <div className="mx-auto max-w-4xl p-[2px] rounded-3xl border-trail-glow shadow-2xl">
               <div className="border-trail-glow-inner p-6 sm:p-10 rounded-[22px] grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
                 {/* Left: Interactive Image Showcase */}
@@ -303,10 +608,10 @@ export function NewProductMotionShowcase({
                   />
                   <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-[#0b2f8a]/90 backdrop-blur-md text-[#dfb755] px-3 py-1 text-xs font-bold shadow-md">
                     <span>👑</span>
-                    <span>Signature Batch 2026</span>
+                    <span>{config?.spotlight?.customBadge || "Signature Batch 2026"}</span>
                   </div>
                   <div className="absolute bottom-3 right-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-[#b89130] shadow-sm backdrop-blur-md">
-                    ★ 5.0 (420+ Reviews)
+                    {config?.spotlight?.reviewRating || "★ 5.0 (420+ Reviews)"}
                   </div>
                 </div>
 
@@ -317,27 +622,39 @@ export function NewProductMotionShowcase({
                       {heroProduct.categoryName}
                     </span>
                     <h3 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#0b2f8a] leading-tight">
-                      {heroProduct.name}
+                      {config?.spotlight?.customTitle || heroProduct.name}
                     </h3>
                   </div>
 
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    {heroProduct.description}
+                    {config?.spotlight?.customDescription || heroProduct.description}
                   </p>
 
                   {/* Highlights Grid */}
                   <div className="grid grid-cols-3 gap-2.5 py-2 border-y border-slate-100 text-center">
                     <div className="bg-[#faf8f5] p-2 rounded-xl border border-amber-100/50">
-                      <p className="text-[10px] text-slate-400 font-medium">Ghee Purity</p>
-                      <p className="text-xs font-bold text-[#0b2f8a]">100% Desi Gir Cow</p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {config?.spotlight?.highlight1Label || "Ghee Purity"}
+                      </p>
+                      <p className="text-xs font-bold text-[#0b2f8a]">
+                        {config?.spotlight?.highlight1Value || "100% Desi Gir Cow"}
+                      </p>
                     </div>
                     <div className="bg-[#faf8f5] p-2 rounded-xl border border-amber-100/50">
-                      <p className="text-[10px] text-slate-400 font-medium">Cashew Grade</p>
-                      <p className="text-xs font-bold text-[#0b2f8a]">Whole W-240</p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {config?.spotlight?.highlight2Label || "Cashew Grade"}
+                      </p>
+                      <p className="text-xs font-bold text-[#0b2f8a]">
+                        {config?.spotlight?.highlight2Value || "Whole W-240"}
+                      </p>
                     </div>
                     <div className="bg-[#faf8f5] p-2 rounded-xl border border-amber-100/50">
-                      <p className="text-[10px] text-slate-400 font-medium">Shelf Life</p>
-                      <p className="text-xs font-bold text-[#0b2f8a]">20 Days Fresh</p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {config?.spotlight?.highlight3Label || "Shelf Life"}
+                      </p>
+                      <p className="text-xs font-bold text-[#0b2f8a]">
+                        {config?.spotlight?.highlight3Value || "20 Days Fresh"}
+                      </p>
                     </div>
                   </div>
 
@@ -351,10 +668,11 @@ export function NewProductMotionShowcase({
                             key={v.id}
                             type="button"
                             onClick={() => setHeroVariantIdx(idx)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${heroVariantIdx === idx
-                              ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20 scale-102"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                              }`}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                              heroVariantIdx === idx
+                                ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20 scale-102"
+                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            }`}
                           >
                             {v.weight} — ₹{v.discountedPrice || v.price}
                           </button>
@@ -381,7 +699,9 @@ export function NewProductMotionShowcase({
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5">✓ In Stock &amp; Freshly Packed</p>
+                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                        ✓ In Stock &amp; Freshly Packed
+                      </p>
                     </div>
 
                     <Magnetic>
@@ -406,81 +726,132 @@ export function NewProductMotionShowcase({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          3. INFINITE SLIDER: Seamless Continuous Horizontal Marquee
+          4. INFINITE SLIDER: Seamless Continuous Horizontal Marquee
          ───────────────────────────────────────────────────────────── */}
-      <section className="py-12 bg-[#071c54] text-white overflow-hidden border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#dfb755]">
-              Live From Kalol Kitchens
-            </span>
-            <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-white">
-              Fresh Daily Rolling Carousel
-            </h3>
+      {config?.marquee?.enabled !== false && (
+        <section className="py-12 bg-[#071c54] text-white overflow-hidden border-b border-white/10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-[#dfb755]">
+                {config?.marquee?.badge || "Live From Kalol Kitchens"}
+              </span>
+              <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-white">
+                {config?.marquee?.title || "Fresh Daily Rolling Carousel"}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-300">
+              {config?.marquee?.subtitle || "Hover to pause · Click card to inspect details"}
+            </p>
           </div>
-          <p className="text-xs text-slate-300">
-            Hover to pause · Click card to inspect details
-          </p>
-        </div>
 
-        {/* Infinite Marquee Track */}
-        <div className="relative w-full overflow-hidden">
-          <div className="animate-marquee gap-5 py-2">
-            {[...(products || []), ...(products || [])].slice(0, 16).map((product, idx) => (
-              <button
-                key={`${product.id}-${idx}`}
-                type="button"
-                onClick={() => setSelectedProduct(product)}
-                className="group relative flex w-[230px] shrink-0 flex-col overflow-hidden rounded-2xl bg-white/10 p-2.5 backdrop-blur-md border border-white/15 text-left transition hover:bg-white/20 hover:scale-103 cursor-pointer"
-              >
-                <div className="relative aspect-[16/11] w-full overflow-hidden rounded-xl bg-white/5">
-                  <Image
-                    src={product.imageUrl || "/images/kaju-katli.jpg"}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition duration-500 group-hover:scale-110"
-                    sizes="230px"
-                  />
-                  <div className="absolute top-2 left-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-[#dfb755] uppercase">
-                    New Launch
+          {/* Infinite Marquee Track */}
+          <div className="relative w-full overflow-hidden">
+            <div className="animate-marquee gap-5 py-2">
+              {marqueeProducts.map((product, idx) => (
+                <button
+                  key={`${product.id}-${idx}`}
+                  type="button"
+                  onClick={() => setSelectedProduct(product)}
+                  className="group relative flex w-[230px] shrink-0 flex-col overflow-hidden rounded-2xl bg-white/10 p-2.5 backdrop-blur-md border border-white/15 text-left transition hover:bg-white/20 hover:scale-103 cursor-pointer"
+                >
+                  <div className="relative aspect-[16/11] w-full overflow-hidden rounded-xl bg-white/5">
+                    <Image
+                      src={product.imageUrl || "/images/kaju-katli.jpg"}
+                      alt={product.name}
+                      fill
+                      className="object-cover transition duration-500 group-hover:scale-110"
+                      sizes="230px"
+                    />
+                    <div className="absolute top-2 left-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[9px] font-bold text-[#dfb755] uppercase">
+                      New Launch
+                    </div>
                   </div>
-                </div>
-                <div className="mt-2.5 space-y-0.5">
-                  <p className="text-xs font-bold text-white truncate group-hover:text-[#dfb755] transition">
-                    {product.name}
-                  </p>
-                  <p className="text-[10px] text-slate-300 truncate">
-                    {product.categoryName}
-                  </p>
-                  <p className="text-xs font-bold text-[#dfb755] pt-0.5">
-                    From {formatInr(product.fromPrice)}
-                  </p>
-                </div>
-              </button>
-            ))}
+                  <div className="mt-2.5 space-y-0.5">
+                    <p className="text-xs font-bold text-white truncate group-hover:text-[#dfb755] transition">
+                      {product.name}
+                    </p>
+                    <p className="text-[10px] text-slate-300 truncate">
+                      {product.categoryName}
+                    </p>
+                    <p className="text-xs font-bold text-[#dfb755] pt-0.5">
+                      From {formatInr(product.fromPrice)}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
-          4. INTERACTIVE CATALOGUE: AnimatedBackground Sliding Pill Tabs
+          5. PROMOTIONAL FESTIVE BANNER
+         ───────────────────────────────────────────────────────────── */}
+      {config?.promoBanner?.enabled !== false && (
+        <section className="py-8 bg-gradient-to-r from-[#dfb755]/15 via-amber-100/40 to-[#0b2f8a]/10 border-b border-[#dfb755]/30">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-lg border border-[#dfb755]/40 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-1.5 text-center md:text-left">
+                <span className="inline-block rounded-full bg-amber-100 text-amber-900 px-3 py-0.5 text-xs font-bold uppercase tracking-wider">
+                  {config?.promoBanner?.badge || "Special Launch Gift"}
+                </span>
+                <h3 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold text-[#0b2f8a]">
+                  {config?.promoBanner?.headline ||
+                    "Complimentary Pure Kaju Katli Box on all New Launch orders above ₹999"}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Automatically applied at checkout with coupon code{" "}
+                  <span className="font-mono font-bold text-[#0b2f8a] bg-slate-100 px-2 py-0.5 rounded">
+                    {config?.promoBanner?.couponCode || "ROYAL1976"}
+                  </span>
+                  . Handcrafted daily in Kalol.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCopyPromoCode(
+                      config?.promoBanner?.couponCode || "ROYAL1976"
+                    )
+                  }
+                  className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2.5 text-xs font-bold transition active:scale-95 cursor-pointer"
+                >
+                  {copiedCode ? "✓ Copied" : "Copy Code"}
+                </button>
+                <a
+                  href={config?.promoBanner?.buttonLink || "#catalogue"}
+                  className="btn-gold rounded-full px-5 py-2.5 text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition"
+                >
+                  {config?.promoBanner?.buttonText || "Claim Offer"} →
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          6. INTERACTIVE CATALOGUE: Search, Sort, Tabs & Grid
          ───────────────────────────────────────────────────────────── */}
       <section id="catalogue" className="py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-widest text-[#b89130]">
-              Complete 2026 Release
+              {config?.catalogue?.badge || "Complete 2026 Release"}
             </span>
             <h2 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold text-[#0b2f8a]">
-              Discover Every New Masterpiece
+              {config?.catalogue?.title || "Discover Every New Masterpiece"}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-slate-500">
-              Each recipe has been carefully calibrated for purity, balanced sweetness, and exquisite texture.
+              {config?.catalogue?.subtitle ||
+                "Each recipe has been carefully calibrated for purity, balanced sweetness, and exquisite texture."}
             </p>
 
-            {/* Sliding Pill Segmented Control (AnimatedBackground) */}
+            {/* Sliding Pill Segmented Control */}
             <div className="mt-8 inline-flex flex-wrap items-center justify-center p-1.5 rounded-full bg-slate-200/80 backdrop-blur-md border border-slate-300/60 shadow-inner gap-1">
-              {CATEGORY_TABS.map((tab) => {
+              {activeTabsList.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
@@ -497,8 +868,11 @@ export function NewProductMotionShowcase({
                       />
                     )}
                     <span
-                      className={`relative z-10 transition-colors ${isActive ? "text-white font-bold" : "text-slate-700 hover:text-slate-950"
-                        }`}
+                      className={`relative z-10 transition-colors ${
+                        isActive
+                          ? "text-white font-bold"
+                          : "text-slate-700 hover:text-slate-950"
+                      }`}
                     >
                       {tab.label}
                     </span>
@@ -508,96 +882,192 @@ export function NewProductMotionShowcase({
             </div>
           </div>
 
-          {/* ─────────────────────────────────────────────────────────────
-              5. MORPHING DIALOG CARDS GRID: Click to Expand Card
-             ───────────────────────────────────────────────────────────── */}
-          <motion.div
-            layout
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          >
-            {filteredProducts.map((product) => {
-              return (
-                <motion.div
-                  layout
-                  layoutId={`product-card-${product.id}`}
-                  key={product.id}
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.35 }}
-                  onClick={() => setSelectedProduct(product)}
-                  className="mithai-card group relative flex flex-col justify-between overflow-hidden bg-white p-3.5 rounded-2xl cursor-pointer hover:border-[#dfb755]/50 transition-all hover:shadow-xl"
-                >
-                  <div>
-                    {/* Image Container with Morphing Image LayoutId */}
-                    <div className="relative aspect-[16/11] w-full overflow-hidden rounded-xl bg-[#faf7f0]">
-                      <motion.div
-                        layoutId={`product-image-${product.id}`}
-                        className="h-full w-full relative"
-                      >
-                        <Image
-                          src={product.imageUrl || "/images/kaju-katli.jpg"}
-                          alt={product.name}
-                          fill
-                          className="object-cover transition duration-500 group-hover:scale-108"
-                          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
-                        />
-                      </motion.div>
+          {/* Search & Sort Toolbar */}
+          <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="flex items-center gap-3 w-full sm:w-auto flex-1 max-w-md">
+              {config?.catalogue?.enableSearch !== false && (
+                <div className="relative w-full">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search sweets, farsan, ingredients..."
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#0b2f8a] focus:bg-white transition"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs p-1"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
-                      <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
-                        <span className="rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#0b2f8a] shadow-sm backdrop-blur-sm">
-                          {product.categoryName}
-                        </span>
+            <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
+                Showing <strong className="text-slate-800">{filteredProducts.length}</strong> creations
+              </span>
+
+              {config?.catalogue?.enableSort !== false && (
+                <div className="flex items-center gap-2">
+                  <label htmlFor="sort-dropdown" className="text-xs text-slate-500 font-medium">Sort:</label>
+                  <select
+                    id="sort-dropdown"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none focus:border-[#0b2f8a]"
+                  >
+                    <option value="featured">Featured First</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name">Name (A-Z)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────────
+              7. MORPHING DIALOG CARDS GRID: Click to Expand Card
+             ───────────────────────────────────────────────────────────── */}
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 max-w-md mx-auto space-y-3">
+              <span className="text-4xl">🍬</span>
+              <h3 className="font-bold text-slate-800 text-lg">
+                No creations match your search
+              </h3>
+              <p className="text-xs text-slate-500">
+                Try selecting &quot;All New Releases&quot; or clearing your search keywords.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveTab("all");
+                }}
+                className="rounded-full bg-[#0b2f8a] text-white px-5 py-2 text-xs font-bold hover:bg-[#1a3fa3] transition"
+              >
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            <motion.div
+              layout
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            >
+              {filteredProducts.map((product) => {
+                const isWishlisted = !!wishlistMap[product.id];
+                return (
+                  <motion.div
+                    layout
+                    layoutId={`product-card-${product.id}`}
+                    key={product.id}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.35 }}
+                    onClick={() => setSelectedProduct(product)}
+                    className="mithai-card group relative flex flex-col justify-between overflow-hidden bg-white p-3.5 rounded-2xl cursor-pointer hover:border-[#dfb755]/50 transition-all hover:shadow-xl"
+                  >
+                    <div>
+                      {/* Image Container with Morphing Image LayoutId */}
+                      <div className="relative aspect-[16/11] w-full overflow-hidden rounded-xl bg-[#faf7f0]">
+                        <motion.div
+                          layoutId={`product-image-${product.id}`}
+                          className="h-full w-full relative"
+                        >
+                          <Image
+                            src={product.imageUrl || "/images/kaju-katli.jpg"}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition duration-500 group-hover:scale-108"
+                            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
+                          />
+                        </motion.div>
+
+                        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
+                          <span className="rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#0b2f8a] shadow-sm backdrop-blur-sm">
+                            {product.categoryName}
+                          </span>
+                        </div>
+
+                        {/* Wishlist Heart Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleWishlist(e, product)}
+                          className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md backdrop-blur-md transition-transform hover:scale-115 active:scale-90 cursor-pointer"
+                          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill={isWishlisted ? "#ff3b5c" : "none"}
+                            stroke={isWishlisted ? "#ff3b5c" : "currentColor"}
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          </svg>
+                        </button>
+
+                        {/* Expand '+' Button (Motion-Primitives Style) */}
+                        <button
+                          type="button"
+                          className="absolute bottom-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-slate-800 shadow-md backdrop-blur-md transition-all group-hover:bg-[#0b2f8a] group-hover:text-white group-hover:scale-110 active:scale-95"
+                          aria-label="Inspect creation"
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                        </button>
                       </div>
 
-                      {/* Expand '+' Button (Motion-Primitives Style) */}
-                      <button
-                        type="button"
-                        className="absolute bottom-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-slate-800 shadow-md backdrop-blur-md transition-all group-hover:bg-[#0b2f8a] group-hover:text-white group-hover:scale-110 active:scale-95"
-                        aria-label="Inspect creation"
-                      >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="12" y1="5" x2="12" y2="19" />
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                      </button>
+                      {/* Title & Description */}
+                      <div className="mt-3 space-y-1">
+                        <motion.h4
+                          layoutId={`product-title-${product.id}`}
+                          className="font-[family-name:var(--font-display)] text-base font-bold text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-2 min-h-[2.5rem]"
+                        >
+                          {product.name}
+                        </motion.h4>
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                          {product.description}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Title & Description */}
-                    <div className="mt-3 space-y-1">
-                      <motion.h4
-                        layoutId={`product-title-${product.id}`}
-                        className="font-[family-name:var(--font-display)] text-base font-bold text-[#182230] group-hover:text-[#0b2f8a] transition leading-snug line-clamp-2 min-h-[2.5rem]"
-                      >
-                        {product.name}
-                      </motion.h4>
-                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                        {product.description}
-                      </p>
+                    {/* Price Bar */}
+                    <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                      <div>
+                        <span className="text-xs text-slate-400">Starting at</span>
+                        <p className="text-base font-bold text-[#0b2f8a]">
+                          {formatInr(product.fromPrice)}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold text-[#b89130] group-hover:underline">
+                        Quick View →
+                      </span>
                     </div>
-                  </div>
-
-                  {/* Price Bar */}
-                  <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                    <div>
-                      <span className="text-xs text-slate-400">Starting at</span>
-                      <p className="text-base font-bold text-[#0b2f8a]">
-                        {formatInr(product.fromPrice)}
-                      </p>
-                    </div>
-                    <span className="text-xs font-semibold text-[#b89130] group-hover:underline">
-                      Quick View →
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          6. EXPANDABLE MORPHING DIALOG MODAL (The core of motion-primitives)
+          8. EXPANDABLE MORPHING DIALOG MODAL (Motion-Primitives)
          ───────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {selectedProduct && (
@@ -679,7 +1149,7 @@ export function NewProductMotionShowcase({
                   </div>
 
                   {/* Weight Selector */}
-                  {selectedProduct.variants.length > 0 && (
+                  {selectedProduct.variants && selectedProduct.variants.length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-slate-100">
                       <p className="text-xs font-bold text-slate-700">Choose Weight Variant:</p>
                       <div className="grid grid-cols-2 gap-2">
@@ -691,10 +1161,11 @@ export function NewProductMotionShowcase({
                               key={v.id}
                               type="button"
                               onClick={() => setSelectedVariantIdx(i)}
-                              className={`p-2 rounded-xl text-left border text-xs transition cursor-pointer ${isSelected
-                                ? "border-[#0b2f8a] bg-[#0b2f8a]/5 ring-1 ring-[#0b2f8a]"
-                                : "border-slate-200 bg-white hover:border-slate-300"
-                                }`}
+                              className={`p-2 rounded-xl text-left border text-xs transition cursor-pointer ${
+                                isSelected
+                                  ? "border-[#0b2f8a] bg-[#0b2f8a]/5 ring-1 ring-[#0b2f8a]"
+                                  : "border-slate-200 bg-white hover:border-slate-300"
+                              }`}
                             >
                               <p className="font-bold text-slate-900">{v.weight}</p>
                               <p className="text-[11px] text-[#0b2f8a] font-semibold">
@@ -708,7 +1179,7 @@ export function NewProductMotionShowcase({
                   )}
 
                   {/* Quantity & Total Price */}
-                  {selectedProduct.variants[selectedVariantIdx] && (
+                  {selectedProduct.variants && selectedProduct.variants[selectedVariantIdx] && (
                     <div className="pt-2 flex items-center justify-between">
                       <Stepper
                         value={quantity}
@@ -768,7 +1239,7 @@ export function NewProductMotionShowcase({
       </AnimatePresence>
 
       {/* ─────────────────────────────────────────────────────────────
-          7. FLOATING ADDED-TO-CART TOAST NOTIFICATION
+          9. FLOATING ADDED-TO-CART TOAST NOTIFICATION
          ───────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {addedToast && (
