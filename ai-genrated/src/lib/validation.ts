@@ -78,11 +78,12 @@ export const LoginSchema = z.object({
     .string()
     .min(1, "Email or phone number is required.")
     .trim()
+    .toLowerCase()
     .max(254, "Identifier cannot exceed 254 characters.")
     .refine(
       (val) => {
         const clean = val.replace(/^(?:\+91|91|0)/, "").replace(/\D/g, "");
-        return EMAIL_REGEX.test(val.toLowerCase()) || /^[6-9]\d{9}$/.test(clean);
+        return EMAIL_REGEX.test(val) || /^[6-9]\d{9}$/.test(clean);
       },
       { message: "Please provide a valid email address or 10-digit mobile number." }
     )
@@ -90,7 +91,7 @@ export const LoginSchema = z.object({
   password: z
     .string()
     .min(1, "Password is required.")
-    .min(6, "Password must be at least 6 characters.")
+    .min(8, "Password must be at least 8 characters.")
     .max(64, "Password cannot exceed 64 characters."),
 });
 
