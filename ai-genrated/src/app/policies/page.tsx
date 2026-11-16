@@ -61,15 +61,23 @@ const POLICIES = {
   },
   cancellation: {
     title: "Cancellation Policy",
-    badge: "Order Changes",
+    badge: "Order Changes & Cancellations",
     content: [
       {
-        heading: "1. Fresh Products Window",
-        text: "Because our sweets and farsan are made fresh each morning with pure cow ghee and no artificial preservatives, order cancellations can be made within 1 hour of placing the order.",
+        heading: "1. Cancellation Window & Online 1-Click Cancel",
+        text: "You can easily cancel an order directly from your order tracking page or by messaging our WhatsApp support desk (+91 88661 69447) while the order is in 'Confirmed' or 'Preparing' status before the box is sealed and dispatched.",
       },
       {
-        heading: "2. How to Cancel",
-        text: "To cancel an order, please contact our dispatch desk at +91 98250 19760 or via WhatsApp with your Order ID before the package is handed over to our delivery partners.",
+        heading: "2. Fresh Perishable Sweets & FSSAI Standards",
+        text: "All our mithai and farsan are prepared fresh daily using 100% Shuddh Desi Ghee and pure dairy ingredients without chemical preservatives. In compliance with FSSAI food safety regulations, cancellations cannot be accepted once the parcel has been dispatched with our delivery fleet or collected from our store counter.",
+      },
+      {
+        heading: "3. Store Pickup (Click & Collect) Cancellations",
+        text: "For in-store pickup orders from our Kalol flagship branch, orders can be cancelled anytime before the counter packaging is completed and handed to the customer.",
+      },
+      {
+        heading: "4. Automated Kitchen & Inventory Restock",
+        text: "Upon confirming cancellation, our Kalol kitchen desk receives an automated high-priority alert to immediately halt preparation, and all items are promptly restocked into available inventory.",
       },
     ],
   },
@@ -78,12 +86,12 @@ const POLICIES = {
     badge: "Fresh Food Guidelines",
     content: [
       {
-        heading: "1. Perishable Food Items",
-        text: "In accordance with FSSAI regulations, perishable food items (fresh mithai, live farsan, dairy-based sweets) cannot be returned once delivered and opened.",
+        heading: "1. Perishable Food Items Policy",
+        text: "In accordance with FSSAI regulations, perishable food items (fresh traditional mithai, mawa sweets, Bengali chhena, live farsan) cannot be returned once delivered and opened.",
       },
       {
-        heading: "2. Transit Damage & Issues",
-        text: "If your parcel arrives damaged or with broken packaging, please photograph the package and notify us within 6 hours of delivery for an immediate free replacement or credit voucher.",
+        heading: "2. Transit Damage & Tamper Seal Guarantee",
+        text: "If your parcel arrives damaged, wet, or with a broken tamper-evident ghee seal, photograph the box and notify us within 6 hours of delivery on WhatsApp (+91 88661 69447) for an immediate free fresh replacement or store credit voucher.",
       },
     ],
   },
@@ -92,12 +100,16 @@ const POLICIES = {
     badge: "Customer Assurance",
     content: [
       {
-        heading: "1. Eligible Refunds",
-        text: "Refunds are processed promptly for cancelled orders (within policy window) or in the rare event of delivery non-fulfillment.",
+        heading: "1. 100% Refund on Eligible Cancellations",
+        text: "Prepaid orders cancelled before dispatch receive a full 100% refund. Cash on Delivery (COD) orders require ₹0 payment and incur zero cancellation penalties.",
       },
       {
         heading: "2. Processing Timeline",
-        text: "Prepaid UPI or card refunds are credited directly back to the original source account within 3 to 5 business days.",
+        text: "Prepaid UPI, Credit/Debit Card, or Netbanking refunds are credited directly back to the original source bank/wallet within 2 to 4 business days.",
+      },
+      {
+        heading: "3. Escalations & Support",
+        text: "For any billing or refund assistance, our Kalol store team is reachable via WhatsApp at +91 88661 69447 or by visiting our counter at 6A, Navjivan Shopping Center, Kalol, Gujarat.",
       },
     ],
   },
