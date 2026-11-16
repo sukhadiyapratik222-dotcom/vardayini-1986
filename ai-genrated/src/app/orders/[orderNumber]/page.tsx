@@ -376,57 +376,6 @@ export default async function OrderPage({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          ORDER SERVICES & QUICK ACTIONS (Relocated cleanly to dedicated action bar)
-         ───────────────────────────────────────────────────────────── */}
-      <section
-        aria-label="Order Quick Actions"
-        className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-amber-50/90 via-[#fffbf2] to-amber-50/90 border border-amber-200/80 p-3 sm:p-4 shadow-2xs"
-      >
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-900/80 mr-1 flex items-center gap-1.5">
-            <span>⚡</span>
-            <span>Order Actions:</span>
-          </span>
-          <Link
-            href={`/track?orderId=${encodeURIComponent(order.orderNumber)}`}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0b2f8a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#071c54] transition"
-          >
-            <span>📍</span>
-            <span>Track Order Live →</span>
-          </Link>
-          <Link
-            href={`/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-amber-300 px-3.5 py-2 text-xs font-bold text-amber-950 shadow-xs hover:bg-amber-50 transition"
-          >
-            <span>🧾</span>
-            <span>Tax Invoice</span>
-          </Link>
-          {kitchenCamUrl && (
-            <Link
-              href={kitchenCamUrl}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#dfb755] to-[#c89d38] px-3.5 py-2 text-xs font-bold text-[#071c54] shadow-xs hover:brightness-105 transition"
-            >
-              <span>🎥</span>
-              <span>Watch Halwai Kitchen Cam →</span>
-            </Link>
-          )}
-        </div>
-
-        <a
-          href={`https://wa.me/918866169447?text=${encodeURIComponent(
-            `Namaste Vardayini Sweet Mart, I have an inquiry regarding my order #${order.orderNumber}.`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition"
-        >
-          <span>💬</span>
-          <span>WhatsApp Support</span>
-        </a>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────
           1. FULFILLMENT PROGRESS TIMELINE / STEPPER (PICKUP VS DELIVERY)
          ───────────────────────────────────────────────────────────── */}
       {!isCancelled && (
