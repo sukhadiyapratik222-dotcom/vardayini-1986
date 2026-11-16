@@ -35,11 +35,15 @@ interface TrackingData {
   orderNumber: string;
   fulfillmentType: string;
   status: string;
+  isCancelled?: boolean;
+  cancelReason?: string | null;
+  cancelledAt?: string | null;
   currentStage: string;
   createdAt: string;
   pickupDate: string;
   pickupSlot: string;
   pickupOtp?: string | null;
+  deliverySlot?: string | null;
   isReady: boolean;
   store: {
     name: string;
@@ -47,6 +51,20 @@ interface TrackingData {
     phone: string;
     hours: string;
   };
+  address?: {
+    name: string;
+    phone: string;
+    line1: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  paymentMethod?: string;
+  paymentStatus?: string;
+  subtotal?: number;
+  deliveryFee?: number;
+  tax?: number;
+  total?: number;
   items: Array<{
     name: string;
     weight?: string;
@@ -179,7 +197,7 @@ export function PickupCamClient({ initialData, token }: Props) {
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="text-[11px] font-bold text-emerald-800 tracking-wide uppercase bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
-              Live Pickup Prep Tracker
+              {data.fulfillmentType === "delivery" ? "🚚 Live Delivery Prep Tracker" : "🏪 Live Pickup Prep Tracker"}
             </span>
             {currentTimeIst && (
               <span className="hidden sm:inline-block font-mono text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
@@ -191,6 +209,39 @@ export function PickupCamClient({ initialData, token }: Props) {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
+        {/* Cancelled Order Notice Banner */}
+        {(data.status === "cancelled" || data.isCancelled) && (
+          <section className="rounded-3xl p-5 sm:p-6 bg-rose-50 border-2 border-rose-300 text-rose-900 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
+            <div className="flex items-start gap-3.5">
+              <span className="text-3xl shrink-0 mt-0.5">🛑</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-bold text-base sm:text-lg text-rose-900">
+                    Order #{data.orderNumber} Was Cancelled
+                  </h2>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-200 text-rose-900 px-2.5 py-0.5 rounded-full border border-rose-300">
+                    Preparation Halted
+                  </span>
+                </div>
+                <p className="text-xs text-rose-800 leading-relaxed">
+                  Kitchen preparation and dispatch at our Kalol workshop have been stopped. All reserved inventory has been returned to stock.
+                </p>
+                {data.cancelReason && (
+                  <p className="text-xs text-rose-700 bg-white/80 px-3 py-1.5 rounded-xl border border-rose-200 font-medium inline-block mt-1">
+                    <strong>Cancellation Reason:</strong> {data.cancelReason}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Link
+              href={`/orders/${encodeURIComponent(data.orderNumber)}`}
+              className="shrink-0 px-4 py-2.5 rounded-xl bg-white border border-rose-300 text-rose-900 text-xs font-bold hover:bg-rose-100 transition shadow-xs"
+            >
+              View Order Details →
+            </Link>
+          </section>
+        )}
+
         {/* Main Hero Header Card */}
         <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#071c54] via-[#0b2f8a] to-[#143d99] text-white shadow-xl border border-white/20">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-[#dfb755]/10 blur-3xl pointer-events-none" />
@@ -206,8 +257,8 @@ export function PickupCamClient({ initialData, token }: Props) {
               </h1>
               <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
                 {data.fulfillmentType === "delivery"
-                  ? "Every sweet is handcrafted with 100% Shuddh Desi Ghee in our Kalol kitchen and sealed in aroma-lock insulated packaging for express doorstep delivery."
-                  : "Every sweet is rolled with 100% Shuddh Desi Ghee in our Kalol kitchen. Follow live milestones, inspect your freshly packed box, and collect with OTP."}
+                  ? "Every sweet and savory namkeen is handcrafted with pure ingredients in our Kalol kitchen and sealed in aroma-lock insulated packaging for express doorstep delivery."
+                  : "Every sweet and savory namkeen is handcrafted with 100% Shuddh Desi Ghee in our Kalol kitchen. Follow live milestones, inspect your freshly packed box, and collect with OTP."}
               </p>
             </div>
 
@@ -220,50 +271,92 @@ export function PickupCamClient({ initialData, token }: Props) {
                 {data.orderNumber}
               </span>
               <span className="block text-[11px] text-white/70 mt-1">
-                {data.fulfillmentType === "delivery" ? "🚚 Kalol Express Fleet" : `📅 ${data.pickupDate} • ${data.pickupSlot}`}
+                {data.fulfillmentType === "delivery"
+                  ? `🚚 Slot: ${data.deliverySlot || "Same Day Express"}`
+                  : `📅 ${data.pickupDate} • ${data.pickupSlot}`}
               </span>
             </div>
           </div>
 
-          {/* Pickup Store & Counter Details */}
-          <div className="mt-6 pt-5 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="flex items-start gap-2.5">
-              <span className="text-base">🏪</span>
-              <div>
-                <span className="font-bold text-white block">{data.store.name}</span>
-                <span className="text-white/70 block mt-0.5 leading-relaxed">{data.store.address}</span>
+          {/* Fulfillment Destination / Store Details */}
+          {data.fulfillmentType === "delivery" ? (
+            <div className="mt-6 pt-5 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="flex items-start gap-2.5">
+                <span className="text-base">📍</span>
+                <div>
+                  <span className="font-bold text-white block">Delivery Destination</span>
+                  <span className="text-white/80 block mt-0.5 leading-relaxed">
+                    {data.address?.line1
+                      ? `${data.address.line1}, ${data.address.city}, ${data.address.state} - ${data.address.pincode}`
+                      : "6A, Navjivan Shopping Center, Kalol, Gujarat - 382630"}
+                  </span>
+                  <span className="text-[#dfb755] block mt-1 font-medium">
+                    👤 Recipient: {data.address?.name || "Customer"} ({data.address?.phone || "Phone provided"})
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 sm:border-l sm:border-white/15 sm:pl-4">
+                <span className="text-base">🛵</span>
+                <div>
+                  <span className="font-bold text-white block">Dispatch Fleet &amp; Station</span>
+                  <span className="text-white/80 block mt-0.5">
+                    Delivery Slot: <strong className="text-white">{data.deliverySlot || "Today, 5:00–7:00 PM"}</strong>
+                  </span>
+                  <span className="text-white/80 block">
+                    Dispatch Hub: Vardayini Sweet Mart (Kalol Flagship)
+                  </span>
+                  <span className="text-[#dfb755] block mt-1 font-medium">
+                    Support Helpline: +91 88661 69447
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-2.5 sm:border-l sm:border-white/15 sm:pl-4">
-              <span className="text-base">🕒</span>
-              <div>
-                <span className="font-bold text-white block">Timings & Contact</span>
-                <span className="text-white/70 block mt-0.5">Counter Hours: {data.store.hours}</span>
-                <span className="text-white/70 block">Helpline: {data.store.phone}</span>
+          ) : (
+            <div className="mt-6 pt-5 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="flex items-start gap-2.5">
+                <span className="text-base">🏪</span>
+                <div>
+                  <span className="font-bold text-white block">{data.store.name}</span>
+                  <span className="text-white/80 block mt-0.5 leading-relaxed">{data.store.address}</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 sm:border-l sm:border-white/15 sm:pl-4">
+                <span className="text-base">🕒</span>
+                <div>
+                  <span className="font-bold text-white block">Counter Timings &amp; Contact</span>
+                  <span className="text-white/80 block mt-0.5">Counter Hours: {data.store.hours}</span>
+                  <span className="text-[#dfb755] block mt-1 font-medium">Helpline: {data.store.phone}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* Counter Pickup OTP or Express Delivery Badge */}
         {data.fulfillmentType === "delivery" ? (
-          <section className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 border border-emerald-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <section className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-blue-50 via-white to-blue-50 border border-blue-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800 text-2xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-800 text-2xl shadow-2xs">
                 🚚
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-sm text-[#071c54]">Express Doorstep Delivery Across Kalol</h3>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    EXPRESS FLEET
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                    {data.deliverySlot || "Today, 5:00–7:00 PM"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Your sweets are freshly prepared, packed in food-grade insulated boxes, and dispatched with tamper-evident seals.
+                  Your sweets and namkeen are freshly packed in tamper-evident food-grade containers and dispatched with insulated protection.
                 </p>
               </div>
             </div>
+            <Link
+              href={`/orders/${encodeURIComponent(data.orderNumber)}`}
+              className="shrink-0 px-4 py-2 rounded-xl bg-[#0b2f8a] text-white text-xs font-bold hover:bg-[#071c54] transition shadow-xs"
+            >
+              View Order Summary →
+            </Link>
           </section>
         ) : data.pickupOtp ? (
           <section className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-2 border-dashed border-[#dfb755] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -298,6 +391,9 @@ export function PickupCamClient({ initialData, token }: Props) {
               >
                 {copiedOtp ? "✓ Copied!" : "📋 Copy"}
               </button>
+            </div>
+          </section>
+        ) : null}
             </div>
           </section>
         ) : null}
@@ -464,10 +560,17 @@ export function PickupCamClient({ initialData, token }: Props) {
         {/* Order Items Drawer */}
         <section className="rounded-3xl p-6 bg-white/80 border border-slate-200/80 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <h3 className="font-bold text-sm text-[#071c54]">
-              Items in this Pickup Order ({data.items.length})
-            </h3>
-            <span className="text-xs text-slate-500">Pure Cow Desi Ghee</span>
+            <div>
+              <h3 className="font-bold text-sm text-[#071c54]">
+                Items in this Order ({data.items.length})
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {data.fulfillmentType === "delivery" ? "🚚 Express Doorstep Delivery" : "🏪 In-Store Counter Pickup"}
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              100% Shuddh &amp; Pure Veg
+            </span>
           </div>
 
           <div className="divide-y divide-slate-100">
@@ -490,19 +593,36 @@ export function PickupCamClient({ initialData, token }: Props) {
             ))}
           </div>
 
+          {/* Billing Summary */}
+          {data.total !== undefined && data.total > 0 && (
+            <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs bg-amber-50/60 p-3 rounded-2xl">
+              <span className="text-slate-600">
+                Payment: <strong className="uppercase text-slate-900">{data.paymentMethod || "COD"}</strong> ({data.paymentStatus || "pending"})
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Order Total:</span>
+                <span className="font-extrabold text-base text-[#6b1d1d]">
+                  ₹{Number(data.total).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
             <a
-              href="https://wa.me/919825012345?text=Hello%20Vardayini%20Sweet%20Mart,%20I%20have%20a%20question%20regarding%20my%20pickup%20order."
+              href={`https://wa.me/918866169447?text=${encodeURIComponent(
+                `Namaste Vardayini Sweet Mart, I have a question regarding my order #${data.orderNumber}.`
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition"
             >
               <span>💬</span>
-              <span>Need Help? Chat on WhatsApp</span>
+              <span>Need Help? Chat on WhatsApp (+91 88661 69447)</span>
             </a>
 
             <p className="text-[11px] text-slate-500 italic">
-              FSSAI Lic. 10719024000123 • Vardayini Sweets Since 1976
+              FSSAI Lic. 10719024000123 • Vardayini Sweet Mart · Kalol, Gujarat (Est. 1976)
             </p>
           </div>
         </section>

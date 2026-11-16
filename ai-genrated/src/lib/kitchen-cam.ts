@@ -333,11 +333,35 @@ export async function getCustomerTrackingDataByToken(token: string) {
   // Default flagship store fallback if none mapped
   if (!storeDetail) {
     storeDetail = {
-      name: "Mandvi Main Counter & Heritage Flagship",
-      address: "6A, Navjivan Shopping Center, Kalol, Gujarat 382721",
-      phone: "+91 98250 12345",
-      hours: "7:00 AM – 8:30 PM (All 7 Days)",
+      name: "Vardayini Sweet Mart (Kalol Flagship)",
+      address: "6A, Navjivan Shopping Center, Kalol, Gujarat - 382721",
+      phone: "+91 88661 69447",
+      hours: "8:00 AM – 8:30 PM (All 7 Days)",
     };
+  }
+
+  // Parse delivery address snapshot
+  let customerAddress = {
+    name: order.guestName || "Customer",
+    phone: order.guestPhone || "",
+    line1: "",
+    city: "Kalol",
+    state: "Gujarat",
+    pincode: "",
+  };
+
+  if (order.addressSnapshot) {
+    try {
+      const snap = JSON.parse(order.addressSnapshot);
+      customerAddress = {
+        name: snap.name || customerAddress.name,
+        phone: snap.phone || customerAddress.phone,
+        line1: snap.line1 || "",
+        city: snap.city || "Kalol",
+        state: snap.state || "Gujarat",
+        pincode: snap.pincode || "",
+      };
+    } catch {}
   }
 
   // 4. Fetch order items
@@ -485,13 +509,24 @@ export async function getCustomerTrackingDataByToken(token: string) {
     orderNumber: order.orderNumber,
     fulfillmentType: order.fulfillmentType || "pickup",
     status: order.status,
+    isCancelled: order.status === "cancelled",
+    cancelReason: order.cancelReason || null,
+    cancelledAt: safeIsoDate(order.cancelledAt),
     currentStage: currentStageKey,
     createdAt: safeIsoDate(order.createdAt, new Date().toISOString())!,
     pickupDate: order.pickupDate || "Today",
-    pickupSlot: order.pickupSlot || "Standard Store Hours (7:00 AM – 8:30 PM)",
+    pickupSlot: order.pickupSlot || "Standard Store Hours (8:00 AM – 8:30 PM)",
     pickupOtp: order.pickupOtp || null,
+    deliverySlot: order.deliverySlot || "Today, 5:00–7:00 PM",
     isReady: order.status === "ready_for_pickup" || order.status === "delivered",
     store: storeDetail,
+    address: customerAddress,
+    paymentMethod: order.paymentMethod || "cod",
+    paymentStatus: order.paymentStatus || "pending",
+    subtotal: order.subtotal || 0,
+    deliveryFee: order.deliveryFee || 0,
+    tax: order.tax || 0,
+    total: order.total || 0,
     items: items.map((it) => ({
       name: it.productName,
       weight: it.variantWeight,
