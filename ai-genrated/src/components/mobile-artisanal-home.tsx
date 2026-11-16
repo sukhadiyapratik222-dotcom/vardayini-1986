@@ -876,6 +876,7 @@ export function MobileArtisanalHome({
         {/* Quick Links */}
         <div className="flex justify-center flex-wrap gap-4 text-xs text-slate-300 mt-6 pt-5 border-t border-white/10">
           <Link href="/shop" className="hover:text-[#DFB755] transition">Shop All</Link>
+          <Link href="/our-story" className="hover:text-[#DFB755] transition">Our Story</Link>
           <Link href="/find-your-sweet" className="hover:text-[#DFB755] transition">Mithai Quiz</Link>
           <Link href="/outlets" className="hover:text-[#DFB755] transition">Stores</Link>
           <Link href="/orders" className="hover:text-[#DFB755] transition">Track Order</Link>

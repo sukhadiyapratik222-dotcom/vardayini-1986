@@ -110,6 +110,7 @@ interface MenuBarLink {
 
 const MENU_BAR_LINKS: MenuBarLink[] = [
   { href: "/shop", label: "All Items" },
+  { href: "/our-story", label: "Our Story", icon: "🏛️" },
   { href: "/new-products", label: "New Launches", icon: "✨", isPill: true },
   { href: "/find-your-mithai", label: "Taste Quiz", icon: "🪄", isPill: true },
   { href: "/festivals", label: "Festive Season", icon: "🪔" },

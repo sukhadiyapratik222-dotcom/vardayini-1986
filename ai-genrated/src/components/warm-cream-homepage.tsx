@@ -11,7 +11,6 @@ import { ProductListMarquee } from "@/components/product-list-marquee";
 import { ShopByCategoryStrip } from "@/components/shop-by-category-strip";
 import { LuxuryBestsellersSection } from "@/components/luxury-bestsellers-section";
 import { WeeklySloganSection } from "@/components/weekly-slogan-section";
-import { OurStoryHeritageSection } from "@/components/our-story-heritage-section";
 import { FestivalCollectionsSection } from "@/components/festival-collections-section";
 import { CulinaryExperienceSection } from "@/components/culinary-experience-section";
 import { Magnetic } from "@/components/core/magnetic";
@@ -163,12 +162,7 @@ export function WarmCreamHomepage({
       />
 
       {/* ─────────────────────────────────────────────────────────────
-          4. OUR STORY / JOURNEY OF 75 YEARS (Olive Green Card)
-         ───────────────────────────────────────────────────────────── */}
-      <OurStoryHeritageSection />
-
-      {/* ─────────────────────────────────────────────────────────────
-          5. FESTIVAL BANNER & 4 COLLECTIONS (Raksha Bandhan / Diwali)
+          4. FESTIVAL BANNER & 4 COLLECTIONS (Raksha Bandhan / Diwali)
          ───────────────────────────────────────────────────────────── */}
       <FestivalCollectionsSection />
 

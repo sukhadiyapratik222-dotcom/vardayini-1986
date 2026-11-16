@@ -86,7 +86,7 @@ export function OurStoryHeritageSection() {
               {/* Read More Pill Button */}
               <div className="pt-2">
                 <Link
-                  href="/about"
+                  href="/our-story"
                   className="inline-flex items-center gap-2 rounded-full bg-white text-[#283618] hover:bg-[#dfb755] hover:text-[#140638] px-7 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 shadow-lg active:scale-95 cursor-pointer"
                 >
                   <span>READ MORE</span>
@@ -147,7 +147,7 @@ export function OurStoryHeritageSection() {
                 <div className="absolute bottom-4 left-4 right-4 glass-badge p-3 rounded-2xl flex items-center justify-between text-xs text-white">
                   <div>
                     <p className="font-bold">Handcrafted Daily</p>
-                    <p className="text-[10px] text-slate-300">Mandvi &amp; Alkapuri Flagships</p>
+                    <p className="text-[10px] text-slate-300">Navjivan &amp; Station Road Flagships, Kalol</p>
                   </div>
                   <span className="text-xl">🪔</span>
                 </div>
