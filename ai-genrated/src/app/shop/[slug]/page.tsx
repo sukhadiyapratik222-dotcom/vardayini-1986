@@ -6,6 +6,7 @@ import { ReviewForm } from "@/components/review-form";
 import { WishlistButton } from "@/components/wishlist-button";
 import { VariantPicker } from "@/components/variant-picker";
 import { ProductDeliveryCard } from "@/components/product-delivery-card";
+import { DoubleTapProductImage } from "@/components/double-tap-product-image";
 import { getProductBySlug, listProducts } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -53,18 +54,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <div className="grid gap-8 lg:gap-12 md:grid-cols-2 items-start w-full max-w-full">
           {/* Left Column: Image & Authenticity Highlights */}
           <div className="space-y-4 w-full min-w-0 max-w-full">
-            <div className="relative aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border border-amber-900/10 bg-white">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-700 hover:scale-105"
-                priority
-                sizes="(min-width: 1024px) 50vw, 100vw"
-              />
-
+            <DoubleTapProductImage
+              src={product.imageUrl}
+              alt={product.name}
+              productId={product.id}
+              initialLikesCount={1248 + ((product.id * 37) % 520)}
+              priority
+            >
               {/* Heritage Pure Ghee Badge */}
-              <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1.5">
+              <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1.5 pointer-events-none">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold tracking-wide uppercase bg-gradient-to-r from-[#140638] to-[#250d54] text-[#dfb755] border border-[#dfb755]/50 shadow-md backdrop-blur-md">
                   <span>👑</span>
                   <span>Pure Desi Ghee</span>
@@ -74,7 +72,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <span>100% Shuddh Mawa</span>
                 </span>
               </div>
-            </div>
+            </DoubleTapProductImage>
 
             {/* Freshness & Quality Badges */}
             <div className="grid grid-cols-3 gap-2 p-3 sm:p-4 rounded-2xl border border-amber-900/10 bg-white/90 shadow-2xs text-center w-full min-w-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,39 @@ export function MobileArtisanalHome({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterDone, setNewsletterDone] = useState(false);
+  const [likedMap, setLikedMap] = useState<Record<string | number, boolean>>({});
+  const [burstingId, setBurstingId] = useState<string | number | null>(null);
+  const cardLastTapRef = useRef<Record<string | number, number>>({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("vsm_wishlist_ids");
+      if (stored) setLikedMap(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  const handleToggleLike = (e: React.MouseEvent | React.TouchEvent, product: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const pid = product.id || product.slug;
+    const nextState = !likedMap[pid];
+    const newMap = { ...likedMap, [pid]: nextState };
+    setLikedMap(newMap);
+    if (nextState) {
+      setBurstingId(pid);
+      setTimeout(() => setBurstingId(null), 900);
+    }
+    try {
+      localStorage.setItem("vsm_wishlist_ids", JSON.stringify(newMap));
+      if (typeof product.id === "number") {
+        fetch("/api/wishlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: product.id }),
+        }).catch(() => {});
+      }
+    } catch {}
+  };
 
   // Read mobile configuration from uiConfig or customPageData
   const mobileConfig = customPageData || uiConfig?.mobileManagement || {};
@@ -581,19 +614,56 @@ export function MobileArtisanalHome({
                     {product.badge || "BEST SELLER"}
                   </span>
 
-                  {/* Image Link */}
-                  <Link
-                    href={`/shop/${product.slug}`}
-                    className="h-32 sm:h-36 rounded-lg bg-[#eae8e4] mb-2.5 overflow-hidden relative block"
+                  {/* Top-Right Heart Like Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleLike(e, product)}
+                    className="absolute top-3.5 right-3.5 z-10 h-7 w-7 rounded-full bg-white/95 backdrop-blur-xs shadow-xs border border-amber-900/10 flex items-center justify-center cursor-pointer transition active:scale-75 hover:bg-white"
+                    aria-label={likedMap[product.id || product.slug] ? "Unlike" : "Like"}
                   >
-                    <Image
-                      src={product.imageUrl || "/images/kaju-katli.jpg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, 250px"
-                    />
-                  </Link>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill={likedMap[product.id || product.slug] ? "#ff3b5c" : "none"}
+                      stroke={likedMap[product.id || product.slug] ? "#ff3b5c" : "#140638"}
+                      strokeWidth="2.2"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 6.9 4.5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.5 0 5.5 3.5 4.2 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" />
+                    </svg>
+                  </button>
+
+                  {/* Image Link with Double Tap to Like */}
+                  <div
+                    className="h-32 sm:h-36 rounded-lg bg-[#eae8e4] mb-2.5 overflow-hidden relative block select-none cursor-pointer"
+                    onDoubleClick={(e) => handleToggleLike(e, product)}
+                    onTouchEnd={(e) => {
+                      const pid = product.id || product.slug;
+                      const now = Date.now();
+                      if (now - (cardLastTapRef.current[pid] || 0) < 320) {
+                        handleToggleLike(e, product);
+                        cardLastTapRef.current[pid] = 0;
+                      } else {
+                        cardLastTapRef.current[pid] = now;
+                      }
+                    }}
+                  >
+                    <Link href={`/shop/${product.slug}`} className="block w-full h-full">
+                      <Image
+                        src={product.imageUrl || "/images/kaju-katli.jpg"}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105 pointer-events-none"
+                        sizes="(max-width: 640px) 50vw, 250px"
+                      />
+                    </Link>
+                    {burstingId === (product.id || product.slug) && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 animate-in zoom-in-50 fade-in duration-200">
+                        <span className="text-4xl filter drop-shadow-[0_4px_12px_rgba(255,59,92,0.6)]">💖</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Info & Add-to-Cart */}
                   <div>
