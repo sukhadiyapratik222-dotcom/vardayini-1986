@@ -11,6 +11,7 @@ import { AccountAddressManager, AddressItem } from "@/components/account-address
 import { AccountProfileManager } from "@/components/account-profile-manager";
 import { AccountSecurityManager } from "@/components/account-security-manager";
 import { AccountReorderButton } from "@/components/account-reorder-button";
+import { MithaiPointsInfoButton } from "@/components/mithai-points-info-button";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const dynamic = "force-dynamic";
@@ -224,7 +225,8 @@ export default async function AccountPage() {
             </p>
           </div>
 
-          <div className="shrink-0 flex flex-col sm:flex-row gap-2.5">
+          <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <MithaiPointsInfoButton />
             <Link
               href="/shop"
               className="rounded-full bg-[#0b2f8a] hover:bg-[#082266] text-white text-xs font-bold px-5 py-2.5 text-center transition shadow-xs"
