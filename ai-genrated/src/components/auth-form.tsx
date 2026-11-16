@@ -14,8 +14,8 @@ export function AuthForm({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Mode & Tabs
-  const [loginMethod, setLoginMethod] = useState<"otp" | "password">("otp");
+  // Mode & Tabs - Default to ID & Password login first
+  const [loginMethod, setLoginMethod] = useState<"otp" | "password">("password");
 
   // General state
   const [error, setError] = useState("");
@@ -349,7 +349,7 @@ export function AuthForm({
     }
   }
 
-  // 5. Standard Password Login (Legacy & Admin fallback)
+  // 5. Standard ID & Password Login
   async function handlePasswordLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (loading) return;
@@ -359,8 +359,9 @@ export function AuthForm({
 
     try {
       const form = new FormData(event.currentTarget);
+      const identifier = String(form.get("identifier") || form.get("email") || "").trim();
       const payload = {
-        email: String(form.get("email") || ""),
+        email: identifier,
         password: String(form.get("password") || ""),
       };
 
@@ -400,6 +401,21 @@ export function AuthForm({
           <button
             type="button"
             onClick={() => {
+              setLoginMethod("password");
+              setError("");
+              setOtpStep("input");
+            }}
+            className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              loginMethod === "password"
+                ? "bg-white text-[#6b1d1d] shadow-sm border border-[#6b1d1d]/10"
+                : "text-[#2a1a12]/60 hover:text-[#6b1d1d]"
+            }`}
+          >
+            <span>🔑</span> ID &amp; Password Login
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               setLoginMethod("otp");
               setError("");
               setOtpStep("input");
@@ -411,21 +427,6 @@ export function AuthForm({
             }`}
           >
             <span>📱</span> Mobile OTP Login
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setLoginMethod("password");
-              setError("");
-              setOtpStep("input");
-            }}
-            className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-              loginMethod === "password"
-                ? "bg-white text-[#6b1d1d] shadow-sm border border-[#6b1d1d]/10"
-                : "text-[#2a1a12]/60 hover:text-[#6b1d1d]"
-            }`}
-          >
-            <span>🔑</span> Password Login
           </button>
         </div>
 
@@ -697,20 +698,25 @@ export function AuthForm({
           </div>
         )}
 
-        {/* TAB 2: PASSWORD LOGIN */}
+        {/* TAB 1: ID & PASSWORD LOGIN */}
         {loginMethod === "password" && (
           <form onSubmit={handlePasswordLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-[#6b1d1d] mb-1">Email Address</label>
+              <label className="block text-xs font-bold text-[#6b1d1d] mb-1">
+                Email Address or Mobile Number
+              </label>
               <input
-                name="email"
-                type="email"
+                name="identifier"
+                type="text"
                 required
-                placeholder="patron@vardayini.com"
+                autoComplete="username"
+                placeholder="patron@vardayini.com or 9876543210"
                 className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3.5 py-2.5 text-sm bg-white focus:border-[#c45c26] focus:outline-none focus:ring-2 focus:ring-[#c45c26]/20"
               />
-              {fieldErrors.email && (
-                <p className="text-xs text-red-600 mt-1 ml-1">{fieldErrors.email}</p>
+              {(fieldErrors.identifier || fieldErrors.email || fieldErrors.phone) && (
+                <p className="text-xs text-red-600 mt-1 ml-1">
+                  {fieldErrors.identifier || fieldErrors.email || fieldErrors.phone}
+                </p>
               )}
             </div>
 
@@ -720,6 +726,7 @@ export function AuthForm({
                 name="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 placeholder="••••••••"
                 className="w-full rounded-2xl border border-[#6b1d1d]/15 px-3.5 py-2.5 text-sm bg-white focus:border-[#c45c26] focus:outline-none focus:ring-2 focus:ring-[#c45c26]/20"
               />
@@ -731,9 +738,9 @@ export function AuthForm({
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full rounded-full py-3 text-sm font-semibold shadow-sm transition"
+              className="btn-primary w-full rounded-full py-3 text-sm font-semibold shadow-sm transition cursor-pointer"
             >
-              {loading ? "Signing in..." : "Login with Password"}
+              {loading ? "Signing in..." : "Login with ID & Password →"}
             </button>
           </form>
         )}

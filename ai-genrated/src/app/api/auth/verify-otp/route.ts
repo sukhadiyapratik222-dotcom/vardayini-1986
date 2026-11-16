@@ -188,7 +188,37 @@ export async function POST(request: Request) {
     });
     await mergeGuestCart(user.id);
 
-    // Record login/registration activity
+    // Link past guest orders placed with this phone number to this user
+    if (cleanPhone) {
+      try {
+        const { getSqliteDb } = await import("@/db");
+        const sqlite = getSqliteDb();
+        sqlite
+          .prepare("UPDATE orders SET user_id = ? WHERE guest_phone = ? AND user_id IS NULL")
+          .run(user.id, cleanPhone);
+      } catch (linkErr) {
+        console.warn("[Verify OTP] Past orders link notice:", linkErr);
+      }
+    }
+
+    // Record login/registration activity in activity_logs for Admin Reports
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    import("@/lib/auth")
+      .then(({ logActivity }) => {
+        logActivity({
+          userId: user.id,
+          userName: user.name,
+          userEmail: user.email,
+          userRole: user.role,
+          action: isNewUser ? "CUSTOMER_REGISTER_OTP" : "CUSTOMER_LOGIN_OTP",
+          module: "auth",
+          details: `Mobile OTP login for ${user.name} (${cleanPhone})`,
+          ipAddress: clientIp,
+        }).catch(() => {});
+      })
+      .catch(() => {});
+
+    // Record admin notification
     try {
       void recordAdminNotification({
         type: isNewUser ? "user_registered" : "user_login",

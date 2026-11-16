@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, or, sql } from "drizzle-orm";
 import { db, ensureDbMigrations } from "@/db";
 import { addresses, orders, users } from "@/db/schema";
 import { getAuthUser } from "@/lib/auth";
@@ -78,7 +78,18 @@ export default async function AccountPage() {
     userAddresses = rows.map((r) => ({ ...r, gstin: null })) as AddressItem[];
   }
 
-  // Fetch user's full order history
+  // Link any past guest orders placed with this phone number to the user account
+  if (authUser.phone) {
+    try {
+      const { getSqliteDb } = await import("@/db");
+      const sqlite = getSqliteDb();
+      sqlite
+        .prepare("UPDATE orders SET user_id = ? WHERE guest_phone = ? AND user_id IS NULL")
+        .run(authUser.id, authUser.phone);
+    } catch {}
+  }
+
+  // Fetch user's full order history (both user_id and matching guest_phone)
   const userOrders = await db
     .select({
       id: orders.id,
@@ -97,8 +108,71 @@ export default async function AccountPage() {
       createdAt: orders.createdAt,
     })
     .from(orders)
-    .where(eq(orders.userId, authUser.id))
+    .where(
+      authUser.phone
+        ? or(eq(orders.userId, authUser.id), eq(orders.guestPhone, authUser.phone))
+        : eq(orders.userId, authUser.id)
+    )
     .orderBy(desc(orders.createdAt));
+
+  // If user has no saved addresses in addresses table, extract from their order history
+  if (userAddresses.length === 0 && userOrders.length > 0) {
+    const seenLines = new Set<string>();
+    for (const ord of userOrders) {
+      if (ord.addressSnapshot) {
+        try {
+          const snap =
+            typeof ord.addressSnapshot === "string"
+              ? JSON.parse(ord.addressSnapshot)
+              : ord.addressSnapshot;
+          if (snap && snap.line1 && !seenLines.has(snap.line1)) {
+            seenLines.add(snap.line1);
+            try {
+              const [ins] = await db.insert(addresses).values({
+                userId: authUser.id,
+                label: "Delivery Address",
+                line1: snap.line1,
+                city: snap.city || "Kalol",
+                state: snap.state || "Gujarat",
+                stateCode: "24",
+                pincode: snap.pincode || "382630",
+                phone: snap.phone || authUser.phone || "",
+                gstin: null,
+                latitude: null,
+                longitude: null,
+                addressType: "home",
+              });
+              userAddresses.push({
+                id: (ins as any)?.insertId || 900000 + ord.id,
+                userId: authUser.id,
+                label: "Delivery Address",
+                line1: snap.line1,
+                city: snap.city || "Kalol",
+                state: snap.state || "Gujarat",
+                stateCode: "24",
+                pincode: snap.pincode || "382630",
+                phone: snap.phone || authUser.phone || "",
+                gstin: null,
+              });
+            } catch {
+              userAddresses.push({
+                id: 900000 + ord.id,
+                userId: authUser.id,
+                label: "Delivery Address",
+                line1: snap.line1,
+                city: snap.city || "Kalol",
+                state: snap.state || "Gujarat",
+                stateCode: "24",
+                pincode: snap.pincode || "382630",
+                phone: snap.phone || authUser.phone || "",
+                gstin: null,
+              });
+            }
+          }
+        } catch {}
+      }
+    }
+  }
 
   const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const memberSince = userProfile?.createdAt

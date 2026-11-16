@@ -25,11 +25,11 @@ export async function GET(req: Request) {
         const rawSql = `
           SELECT 
             id,
-            COALESCE(user_name, 'Admin (Karigar Desk)') as user,
-            COALESCE(user_email, 'admin@vardayini.com') as email,
-            COALESCE(user_role, 'admin') as role,
+            COALESCE(user_name, 'Patron') as user,
+            COALESCE(user_email, 'customer@vardayini.com') as email,
+            COALESCE(user_role, 'customer') as role,
             COALESCE(ip_address, '127.0.0.1') as ip,
-            COALESCE(details, 'Web Dashboard Session') as device,
+            COALESCE(details, 'Web Dashboard / Storefront Session') as device,
             created_at as time,
             CASE 
               WHEN action LIKE '%FAIL%' OR action LIKE '%DENIED%' THEN 'Failed (Unauthorized)'
