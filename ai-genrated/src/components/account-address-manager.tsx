@@ -11,8 +11,10 @@ export interface AddressItem {
   line1: string;
   city: string;
   state: string;
+  stateCode?: string | null;
   pincode: string;
   phone: string;
+  gstin?: string | null;
 }
 
 interface AccountAddressManagerProps {
@@ -33,14 +35,19 @@ export function AccountAddressManager({
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const cleanInitialName =
+    userName && !/^\s*Patron\s*\d+\s*$/i.test(userName)
+      ? userName
+      : "";
+
   // Form State
   const [label, setLabel] = useState("Home");
-  const [fullName, setFullName] = useState(userName || "");
+  const [fullName, setFullName] = useState(cleanInitialName);
   const [line1, setLine1] = useState("");
   const [line2, setLine2] = useState("");
   const [city, setCity] = useState("Kalol");
   const [state, setState] = useState("Gujarat");
-  const [pincode, setPincode] = useState("390001");
+  const [pincode, setPincode] = useState("382630");
   const [phone, setPhone] = useState(userPhone || "");
   const [country] = useState("India");
 
@@ -58,9 +65,14 @@ export function AccountAddressManager({
     setGlobalError(null);
     setFieldErrors({});
 
+    const rawName = fullName.trim() || cleanInitialName || "Valued Patron";
+    const validName = /^\s*Patron\s*\d+\s*$/i.test(rawName)
+      ? "Valued Patron"
+      : rawName.replace(/\d+/g, "").trim() || "Valued Patron";
+
     // Client-Side Validation using Zod
     const payload: any = {
-      fullName: fullName.trim() || userName || "Patron",
+      fullName: validName,
       phone: phone.trim(),
       line1: line1.trim(),
       line2: line2.trim(),
@@ -148,9 +160,13 @@ export function AccountAddressManager({
       });
       if (res.ok) {
         setAddresses((prev) => prev.filter((a) => a.id !== id));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setGlobalError(data.error || "Failed to remove address.");
       }
     } catch (err) {
       console.error("Failed to delete address", err);
+      setGlobalError("Network error while deleting address. Please try again.");
     }
   };
 

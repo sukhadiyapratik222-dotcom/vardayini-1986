@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as getProfile, PUT as updateProfile } from "@/app/api/account/profile/route";
-import { GET as getAddresses, POST as createAddress } from "@/app/api/account/addresses/route";
+import { GET as getAddresses, POST as createAddress, PUT as updateAddress, DELETE as deleteAddress } from "@/app/api/account/addresses/route";
+import { POST as changePassword } from "@/app/api/auth/change-password/route";
 import { setAuthCookie } from "@/lib/auth";
 import { buildRequest, loginAs } from "../helpers";
 import { db } from "@/db";
@@ -103,5 +104,58 @@ describe("Customer Profile & Address Lifecycle", () => {
     const getBody = await getRes.json();
     expect(getBody.addresses.length).toBeGreaterThanOrEqual(1);
     expect(getBody.addresses[0].city).toBe("Vadodara");
+
+    // 1. Edit (PUT) Address
+    const editReq = buildRequest({
+      method: "PUT",
+      url: "http://localhost:3000/api/account/addresses",
+      body: {
+        id: addBody.address.id,
+        label: "Office",
+        line1: "45, Navrang Complex, Kalol",
+        city: "Kalol",
+        state: "Gujarat",
+        pincode: "382630",
+        phone: testPhone,
+      },
+    });
+    const editRes = await updateAddress(editReq);
+    expect(editRes.status).toBe(200);
+    const editData = await editRes.json();
+    expect(editData.success).toBe(true);
+    expect(editData.address.line1).toBe("45, Navrang Complex, Kalol");
+    expect(editData.address.label).toBe("Office");
+
+    // 2. Delete (DELETE) Address
+    const delReq = buildRequest({
+      method: "DELETE",
+      url: `http://localhost:3000/api/account/addresses?id=${addBody.address.id}`,
+    });
+    const delRes = await deleteAddress(delReq);
+    expect(delRes.status).toBe(200);
+    const delData = await delRes.json();
+    expect(delData.success).toBe(true);
+
+    // Verify it is removed
+    const verifyGet = await getAddresses();
+    const verifyBody = await verifyGet.json();
+    expect(verifyBody.addresses.some((a: any) => a.id === addBody.address.id)).toBe(false);
+  });
+
+  it("allows setting a new password for OTP-registered user without existing password", async () => {
+    await loginAs(testUserId);
+
+    const changeReq = buildRequest({
+      method: "POST",
+      url: "http://localhost:3000/api/auth/change-password",
+      body: {
+        newPassword: "SecurePassword123!",
+      },
+    });
+
+    const res = await changePassword(changeReq);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
   });
 });

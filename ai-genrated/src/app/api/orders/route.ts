@@ -603,6 +603,29 @@ export async function POST(request: Request) {
             paymentStatus: "pending",
           });
 
+        if (user?.id && line1) {
+          try {
+            const existing = await tx
+              .select({ id: addresses.id })
+              .from(addresses)
+              .where(and(eq(addresses.userId, user.id), eq(addresses.line1, line1.trim())))
+              .limit(1);
+            if (!existing.length) {
+              await tx.insert(addresses).values({
+                userId: user.id,
+                label: "Delivery Address",
+                line1: line1.trim(),
+                city: city || "Kalol",
+                state: state || "Gujarat",
+                stateCode: "24",
+                pincode: pincode || "382630",
+                phone: phone || user.phone || "",
+                addressType: "home",
+              });
+            }
+          } catch {}
+        }
+
         const ord = {
           id: insertOrdRes.insertId,
           orderNumber: orderNum,

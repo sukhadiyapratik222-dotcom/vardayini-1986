@@ -252,7 +252,10 @@ function initSqliteTables(sqlite: DatabaseSync) {
       state_code TEXT NOT NULL DEFAULT '24',
       pincode TEXT NOT NULL,
       phone TEXT NOT NULL,
-      gstin TEXT DEFAULT NULL
+      gstin TEXT DEFAULT NULL,
+      latitude REAL DEFAULT NULL,
+      longitude REAL DEFAULT NULL,
+      address_type TEXT DEFAULT 'home'
     );
 
     CREATE TABLE IF NOT EXISTS wishlist_items (
@@ -1010,6 +1013,51 @@ function initSqliteTables(sqlite: DatabaseSync) {
       }
     } catch (addrMigErr) {
       console.warn("[Addresses Migration Notice]", addrMigErr);
+    }
+
+    // Migration safeguard: Seed addresses from past orders for users who have orders but 0 saved addresses
+    try {
+      const addrCount = (sqlite.prepare("SELECT count(*) as count FROM addresses").get() as any)?.count || 0;
+      if (addrCount === 0) {
+        const orderRows = sqlite.prepare("SELECT id, user_id, guest_phone, address_snapshot FROM orders WHERE address_snapshot IS NOT NULL").all() as any[];
+        const userRows = sqlite.prepare("SELECT id, phone FROM users").all() as any[];
+        const phoneToUserId = new Map<string, number>();
+        for (const u of userRows) {
+          if (u.phone) phoneToUserId.set(u.phone, u.id);
+        }
+
+        const insertAddrStmt = sqlite.prepare(`
+          INSERT INTO addresses (user_id, label, line1, city, state, state_code, pincode, phone, address_type)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const seenKeys = new Set<string>();
+        for (const ord of orderRows) {
+          try {
+            const snap = typeof ord.address_snapshot === "string" ? JSON.parse(ord.address_snapshot) : ord.address_snapshot;
+            const userId = ord.user_id || (ord.guest_phone ? phoneToUserId.get(ord.guest_phone) : null);
+            if (userId && snap && snap.line1) {
+              const dedupeKey = `${userId}:${snap.line1.trim().toLowerCase()}`;
+              if (!seenKeys.has(dedupeKey)) {
+                seenKeys.add(dedupeKey);
+                insertAddrStmt.run(
+                  userId,
+                  "Home",
+                  snap.line1.trim(),
+                  snap.city || "Kalol",
+                  snap.state || "Gujarat",
+                  "24",
+                  snap.pincode || "382630",
+                  snap.phone || ord.guest_phone || "",
+                  "home"
+                );
+              }
+            }
+          } catch {}
+        }
+      }
+    } catch (addrSeedErr) {
+      console.warn("[Addresses Seed from Orders Notice]", addrSeedErr);
     }
 
     // Migration safeguard: Ensure orders table has distance_km, assigned_store_id

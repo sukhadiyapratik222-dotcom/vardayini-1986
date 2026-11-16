@@ -30,15 +30,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // If current password provided, verify it
-    if (currentPassword) {
+    const hasExistingPassword = Boolean(dbUser.passwordHash && dbUser.passwordHash.length > 5);
+
+    // If user has an existing password and is not flagged for forced change, verify current password
+    if (hasExistingPassword && !dbUser.mustChangePassword) {
+      if (!currentPassword) {
+        return NextResponse.json({ error: "Current password is required." }, { status: 400 });
+      }
       const match = await bcrypt.compare(currentPassword, dbUser.passwordHash);
       if (!match) {
         return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
       }
-    } else if (!dbUser.mustChangePassword) {
-      // If user is not flagged for forced change, current password is required
-      return NextResponse.json({ error: "Current password is required." }, { status: 400 });
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
