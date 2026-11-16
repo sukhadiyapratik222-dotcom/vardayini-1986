@@ -217,8 +217,10 @@ export default async function AccountPage() {
               Mithai Rewards Balance: <span className="text-[#0b2f8a]">{rewardPoints} Points</span>
             </h3>
             <p className="text-xs text-[#2a1a12]/75 max-w-xl leading-relaxed">
-              Earn 1 Mithai Point for every ₹20 spent. Redemption rate: <strong className="text-[#6b1d1d] font-bold">1,000 Points = ₹100 Discount</strong>. Your current balance is worth approx.{" "}
-              <strong className="text-[#6b1d1d] font-bold">₹{pointsRupeeValue}</strong> in sweet discounts!
+              Earn 1 Mithai Point for every ₹20 spent. Redemption rate: <strong className="text-[#6b1d1d] font-bold">1,000 Points = ₹100 Discount</strong>.
+            </p>
+            <p className="text-xs text-[#2a1a12]/90 max-w-xl leading-relaxed font-medium mt-1">
+              Your current balance is worth approx. <strong className="text-[#6b1d1d] font-bold">₹{pointsRupeeValue}</strong> in sweet discounts!
             </p>
           </div>
 
