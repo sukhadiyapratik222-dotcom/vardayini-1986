@@ -394,9 +394,6 @@ export function PickupCamClient({ initialData, token }: Props) {
             </div>
           </section>
         ) : null}
-            </div>
-          </section>
-        ) : null}
 
         {/* Mode 2: Optional Live Stream Camera Feed */}
         {showLiveStream && (
