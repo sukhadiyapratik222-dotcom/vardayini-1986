@@ -121,8 +121,8 @@ export default async function AccountPage() {
   }
 
   const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-  const rewardPoints = Math.floor(totalSpent / 10);
-  const pointsRupeeValue = Math.floor(rewardPoints / 2);
+  const rewardPoints = Math.floor(totalSpent); // 1 Mithai Point per ₹1 spent
+  const pointsRupeeValue = Math.floor(rewardPoints / 10); // 1,000 Points = ₹100 discount (10 pts = ₹1)
 
   const tierName =
     totalSpent >= 5000
@@ -192,7 +192,7 @@ export default async function AccountPage() {
           <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
             <p className="text-[10px] uppercase font-bold tracking-wider text-white/60">Mithai Points</p>
             <p className="text-2xl font-bold text-amber-300 mt-0.5 font-mono">
-              {rewardPoints} <span className="text-xs font-normal text-white/70">pts</span>
+              {rewardPoints} <span className="text-xs font-normal text-white/70">pts (₹{pointsRupeeValue})</span>
             </p>
           </div>
 
@@ -217,8 +217,8 @@ export default async function AccountPage() {
               Mithai Rewards Balance: <span className="text-[#0b2f8a]">{rewardPoints} Points</span>
             </h3>
             <p className="text-xs text-[#2a1a12]/75 max-w-xl leading-relaxed">
-              You earn 1 Mithai Point for every ₹10 spent. Your points are worth approx.{" "}
-              <strong className="text-[#6b1d1d] font-bold">₹{pointsRupeeValue}</strong> in festive discounts and special halwai hampers.
+              Earn 1 Mithai Point for every ₹1 spent. Redemption rate: <strong className="text-[#6b1d1d] font-bold">1,000 Points = ₹100 Discount</strong> (10 points = ₹1). Your current balance is worth approx.{" "}
+              <strong className="text-[#6b1d1d] font-bold">₹{pointsRupeeValue}</strong> in sweet discounts!
             </p>
           </div>
 
