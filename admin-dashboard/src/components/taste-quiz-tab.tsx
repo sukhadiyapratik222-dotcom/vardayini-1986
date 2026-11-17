@@ -3,8 +3,101 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { api } from "@/lib/api";
+import { toast } from "@/lib/toast";
 
 type SubTab = "tagging" | "builder" | "personalities" | "settings" | "simulator" | "leads";
+
+const QUESTION_TEMPLATES = [
+  {
+    id: "festival_season",
+    title: "Which sacred festival or family celebration are you preparing for?",
+    subtitle: "Tailors recommendations for auspicious occasions, rituals, and gifts",
+    icon: "🪔",
+    badge: "Festivals & Poojas",
+    weight: 25,
+    isStrictFilter: false,
+    options: [
+      { key: "diwali", label: "Diwali & New Year Splendour", description: "Rich Golden Kesar Kaju Katli & Royal Hampers", icon: "🎆", tagMapping: { occasions: "festival" } },
+      { key: "rakhi", label: "Raksha Bandhan Sibling Bond", description: "Velvety Mawa Pedas, Pistachio Rolls & Sweets", icon: "🧵", tagMapping: { occasions: "festival" } },
+      { key: "ganesh", label: "Ganesh Utsav & Home Pooja", description: "Pure Desi Cow Ghee Modaks & Shuddh Boondi Ladoos", icon: "🌺", tagMapping: { occasions: "festival" } },
+      { key: "wedding", label: "Wedding & Milestone Gift Box", description: "Luxury Assorted Dry Fruit Gift Hampers", icon: "💍", tagMapping: { occasions: "wedding_gifting" } },
+      { key: "everyday", label: "Everyday Evening Tea Cravings", description: "Fresh Mohanthal, Kopra Pak & Crisp Namkeen", icon: "☕", tagMapping: { occasions: "everyday" } },
+    ],
+  },
+  {
+    id: "texture_preference",
+    title: "What mouthfeel texture delights your sweet tooth the most?",
+    subtitle: "Every recipe has its own tactile signature and richness",
+    icon: "🌰",
+    badge: "Texture & Feel",
+    weight: 20,
+    isStrictFilter: false,
+    options: [
+      { key: "melt_in_mouth", label: "Silky Melt-in-Mouth", description: "Ultra-fine Cashew dough & delicate Kesar Penda", icon: "🧈", tagMapping: { texture: "melt_in_mouth" } },
+      { key: "crisp_flaky", label: "Crisp & Golden Flaky", description: "Honeycomb Mysore Pak & Desi Ghee Mohanthal", icon: "🥞", tagMapping: { texture: "crisp" } },
+      { key: "nutty_crunch", label: "Nut-Rich & Crunchy", description: "Almond Katli, Pista Rolls & Roasted Dry Fruit Bites", icon: "🥜", tagMapping: { containsNuts: "yes" } },
+      { key: "rich_chewy", label: "Rich & Soft Chewy", description: "Anjeer Dry Fruit Halwa & Traditional Ladoos", icon: "🍯", tagMapping: { texture: "chewy" } },
+    ],
+  },
+  {
+    id: "dietary_lifestyle",
+    title: "Do you have any dietary or health preferences?",
+    subtitle: "We craft pure treats tailored to wellness-conscious sweet lovers",
+    icon: "🌿",
+    badge: "Diet & Health",
+    weight: 30,
+    isStrictFilter: false,
+    options: [
+      { key: "sugarless", label: "Sugar-Free / Natural Fig & Dates", description: "Zero refined cane sugar, sweetened only with anjeer & dates", icon: "🍃", tagMapping: { sweetnessLevel: "low", dietaryTags: "sugar_free" } },
+      { key: "pure_cow_ghee", label: "100% Gir Cow Desi Ghee", description: "Golden aroma, nourishing and traditional heritage purity", icon: "🥛", tagMapping: { dietaryTags: "pure_ghee" } },
+      { key: "dryfruit_dense", label: "Nut & Protein Dense", description: "Loaded with California Almonds & Whole W-240 Cashews", icon: "🌰", tagMapping: { containsNuts: "yes" } },
+      { key: "classic_festive", label: "Classic Heritage Richness", description: "Authentic full festive sweet intensity with chandi varq", icon: "👑", tagMapping: { sweetnessLevel: "high" } },
+    ],
+  },
+  {
+    id: "gifting_intent",
+    title: "Who is this royal sweet box meant for?",
+    subtitle: "We customize packaging elegance and flavour balance for your recipient",
+    icon: "🎁",
+    badge: "Gifting Recipient",
+    weight: 20,
+    isStrictFilter: false,
+    options: [
+      { key: "elders", label: "Elders & Traditional Connoisseurs", description: "Nostalgic 1976 recipes like Magas, Mohanthal & Penda", icon: "👴", tagMapping: { occasions: "everyday,festival" } },
+      { key: "corporate", label: "Corporate VIP Clients & Colleagues", description: "Sophisticated luxury packaging & dry fruit assortment", icon: "💼", tagMapping: { occasions: "wedding_gifting" } },
+      { key: "family", label: "Family & Cousins Gathering", description: "Crowd-pleasers: Kaju Katli, Motichoor Ladoo & Crisp Sev", icon: "👨‍👩‍👧‍👦", tagMapping: { occasions: "festival" } },
+      { key: "self", label: "Personal Weekend Sweet Indulgence", description: "Fresh morning batch handcrafted just for you", icon: "🛋️", tagMapping: { occasions: "everyday" } },
+    ],
+  },
+  {
+    id: "sweet_savory_balance",
+    title: "Do you crave pure sweets or a sweet + crunchy farsan pairing?",
+    subtitle: "The timeless Gujarati custom of sweet and crisp balance",
+    icon: "🌶️",
+    badge: "Sweet vs Savory",
+    weight: 25,
+    isStrictFilter: false,
+    options: [
+      { key: "sweet_only", label: "Pure Sweets Only", description: "100% decadent royal mithai indulgence", icon: "🍬", tagMapping: { categorySlug: "sweets" } },
+      { key: "sweet_and_salty", label: "Sweet & Crunchy Farsan Duet", description: "Mithai paired with Banana Wafers & Farsi Puri crisps", icon: "🥟", tagMapping: { occasions: "everyday" } },
+      { key: "farsan_focused", label: "Crisp Farsan & Savory Focus", description: "Tikha Gathiya, Nylon Khaman & Roasted crisps", icon: "🧂", tagMapping: { categorySlug: "farsan" } },
+    ],
+  },
+  {
+    id: "culinary_era",
+    title: "Which culinary generation speaks to your palate?",
+    subtitle: "Choose between authentic 1976 recipes or contemporary chef creations",
+    icon: "🏛️",
+    badge: "Heritage vs Modern",
+    weight: 20,
+    isStrictFilter: false,
+    options: [
+      { key: "classic_1976", label: "Authentic 1976 Heritage Recipes", description: "Pure Desi Ghee Mohanthal, Kopra Pak & Boondi Ladoo", icon: "📜", tagMapping: { dietaryTags: "pure_ghee" } },
+      { key: "modern_fusion", label: "2026 Modern Artisanal Twists", description: "Baked Kaju Tarts, Mango Bites & Fusion Halwa", icon: "🎨", tagMapping: { dietaryTags: "modern" } },
+      { key: "both_worlds", label: "Best of Both Generations", description: "Curated harmonious balance of heritage & new launches", icon: "⚖️", tagMapping: {} },
+    ],
+  },
+];
 
 export function TasteQuizTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>("tagging");
@@ -21,6 +114,26 @@ export function TasteQuizTab() {
   // 2. Questions Builder State
   const [questions, setQuestions] = useState<any[]>([]);
   const [savingQuestions, setSavingQuestions] = useState(false);
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [genMode, setGenMode] = useState<"preset" | "ai" | "custom">("preset");
+  const [aiTopic, setAiTopic] = useState("");
+  const [generatingAi, setGeneratingAi] = useState(false);
+  const [expandedOptionsQKey, setExpandedOptionsQKey] = useState<string | null>(null);
+
+  const [newQuestionDraft, setNewQuestionDraft] = useState({
+    key: "",
+    title: "",
+    subtitle: "",
+    icon: "✨",
+    weight: 20,
+    isStrictFilter: false,
+    isEnabled: true,
+    options: [
+      { key: "opt_1", label: "Option 1", description: "", icon: "🍯", tagMapping: {} },
+      { key: "opt_2", label: "Option 2", description: "", icon: "🌰", tagMapping: {} },
+      { key: "opt_3", label: "Option 3", description: "", icon: "✨", tagMapping: {} },
+    ],
+  });
 
   // 3. Personalities State
   const [personalities, setPersonalities] = useState<any[]>([]);
@@ -142,14 +255,199 @@ export function TasteQuizTab() {
     }
   };
 
-  // Save Questions
+  // ─────────────────────────────────────────────────────────────
+  // QUESTION GENERATION & MANAGEMENT HANDLERS
+  // ─────────────────────────────────────────────────────────────
+
+  // Select a preset curated template
+  const handleSelectPresetTemplate = (tpl: (typeof QUESTION_TEMPLATES)[0]) => {
+    const cleanKey = `${tpl.id}_${Date.now().toString().slice(-4)}`;
+    setNewQuestionDraft({
+      key: cleanKey,
+      title: tpl.title,
+      subtitle: tpl.subtitle,
+      icon: tpl.icon,
+      weight: tpl.weight,
+      isStrictFilter: tpl.isStrictFilter,
+      isEnabled: true,
+      options: tpl.options.map((opt) => ({ ...opt })),
+    });
+    toast.success(`Loaded "${tpl.badge}" template! Review details below and click Add.`);
+  };
+
+  // Generate question using AI prompt
+  const handleGenerateAiQuestion = () => {
+    if (!aiTopic.trim()) {
+      toast.error("Please enter a topic or theme to generate a question.");
+      return;
+    }
+    setGeneratingAi(true);
+
+    const topic = aiTopic.trim().toLowerCase();
+    const cleanKey = `q_${topic.replace(/[^a-z0-9]+/g, "_").slice(0, 30)}_${Date.now().toString().slice(-4)}`;
+
+    setTimeout(() => {
+      let icon = "✨";
+      let title = `What is your preference regarding ${aiTopic.trim()}?`;
+      let subtitle = `Personalize your mithai box with your preferred ${aiTopic.trim()}`;
+      let options = [
+        { key: "opt_classic", label: `Traditional ${aiTopic.trim()}`, description: "Authentic traditional style with time-honored preparation", icon: "👑", tagMapping: {} },
+        { key: "opt_light", label: `Light & Subtle ${aiTopic.trim()}`, description: "Milder, balanced profile for everyday enjoyment", icon: "🍃", tagMapping: {} },
+        { key: "opt_premium", label: `Royal Premium ${aiTopic.trim()}`, description: "Richly crafted with premium ingredients and nuts", icon: "⭐", tagMapping: {} },
+      ];
+
+      if (topic.includes("spice") || topic.includes("namkeen") || topic.includes("farsan") || topic.includes("chili")) {
+        icon = "🌶️";
+        title = "What spiciness and crispness level do you enjoy in your farsan?";
+        subtitle = "From mild aromatic crunch to bold Gujarati peppery punch";
+        options = [
+          { key: "mild", label: "Mild & Buttery Crunch", description: "Bhavnagari Gathiya & Salted Banana Wafers", icon: "🥟", tagMapping: { categorySlug: "farsan" } },
+          { key: "medium", label: "Medium Spiced & Tangy", description: "Nylon Khaman & Mixed Farsan with green chillies", icon: "🥗", tagMapping: { categorySlug: "farsan" } },
+          { key: "spicy", label: "Bold & Peppery Tikha", description: "Tikha Gathiya & Mari Black Pepper Farsi Puri", icon: "🔥", tagMapping: { categorySlug: "farsan" } },
+        ];
+      } else if (topic.includes("ghee") || topic.includes("milk") || topic.includes("dairy") || topic.includes("mawa")) {
+        icon = "🥛";
+        title = "Do you prefer Desi Ghee richness or creamy milk Mawa sweets?";
+        subtitle = "The two foundations of Gujarat's finest royal sweet-making";
+        options = [
+          { key: "ghee", label: "Pure Desi Cow Ghee Dominance", description: "Aromatic Mohanthal, Mysore Pak & Churma Ladoo", icon: "🧈", tagMapping: { mithaiType: "ghee_based" } },
+          { key: "mawa", label: "Velvety Milk Mawa / Khoya", description: "Kesar Penda, Mathura Peda & Gulab Jamun", icon: "🥛", tagMapping: { mithaiType: "milk_based" } },
+          { key: "dryfruit", label: "Dry Fruit Base (Ghee & Mawa Light)", description: "Kaju Katli, Badam Bites & Anjeer Rolls", icon: "🌰", tagMapping: { mithaiType: "dry" } },
+        ];
+      } else if (topic.includes("winter") || topic.includes("cold") || topic.includes("gundar") || topic.includes("adadiya")) {
+        icon = "❄️";
+        title = "Which seasonal winter warmth treats do you relish?";
+        subtitle = "Nutrient-packed winter vitality batches crafted with warming herbs";
+        options = [
+          { key: "adadiya", label: "Adadiya Pak", description: "Rich black urad & warming ayurvedic spices", icon: "🥣", tagMapping: { occasions: "winter" } },
+          { key: "gundar", label: "Gundar Pak & Methi Ladoo", description: "Edible gum, almond & pure ghee strength", icon: "💪", tagMapping: { occasions: "winter" } },
+          { key: "khajur", label: "Khajur Dry Fruit Roll", description: "Natural dates, figs & toasted sesame crunch", icon: "🌴", tagMapping: { occasions: "winter" } },
+        ];
+      } else if (topic.includes("packaging") || topic.includes("box") || topic.includes("hamper") || topic.includes("gift")) {
+        icon = "📦";
+        title = "What style of gift packaging suits your celebration?";
+        subtitle = "From eco-conscious craft boxes to luxury gold foil hampers";
+        options = [
+          { key: "heritage_tin", label: "Royal Heritage Tin / Crest Box", description: "Keepsake embossed tin box with satin ribbon", icon: "🎖️", tagMapping: { occasions: "wedding_gifting" } },
+          { key: "luxury_hamper", label: "Luxury Tiered Festival Hamper", description: "Multi-compartment velvet box with sweets & farsan", icon: "🎁", tagMapping: { occasions: "wedding_gifting" } },
+          { key: "eco_fresh", label: "Fresh Daily Eco-Kraft Box", description: "Recyclable minimal box designed for immediate serving", icon: "🌿", tagMapping: { occasions: "everyday" } },
+        ];
+      }
+
+      setNewQuestionDraft({
+        key: cleanKey,
+        title,
+        subtitle,
+        icon,
+        weight: 20,
+        isStrictFilter: false,
+        isEnabled: true,
+        options,
+      });
+
+      setGeneratingAi(false);
+      toast.success("✨ Question generated! You can preview and edit it below.");
+    }, 450);
+  };
+
+  // Add the newly created draft question to active quiz flow
+  const handleAddQuestionToQuiz = () => {
+    if (!newQuestionDraft.title.trim()) {
+      toast.error("Question title is required.");
+      return;
+    }
+    const finalKey = (newQuestionDraft.key || `q_${Date.now()}`).trim();
+    if (questions.some((q) => q.key === finalKey)) {
+      toast.error(`Question key "${finalKey}" already exists. Please choose a unique key.`);
+      return;
+    }
+    const newQ = {
+      ...newQuestionDraft,
+      key: finalKey,
+      stepNumber: questions.length + 1,
+      isNew: true,
+    };
+    setQuestions((prev) => [...prev, newQ]);
+    setShowQuestionModal(false);
+    toast.success(`✓ Question added as Step ${questions.length + 1}! Click "Save & Make Live" to publish.`);
+  };
+
+  // Step reordering
+  const handleMoveQUp = (idx: number) => {
+    if (idx <= 0) return;
+    setQuestions((prev) => {
+      const copy = [...prev];
+      const temp = copy[idx - 1];
+      copy[idx - 1] = copy[idx];
+      copy[idx] = temp;
+      return copy.map((q, i) => ({ ...q, stepNumber: i + 1 }));
+    });
+  };
+
+  const handleMoveQDown = (idx: number) => {
+    if (idx >= questions.length - 1) return;
+    setQuestions((prev) => {
+      const copy = [...prev];
+      const temp = copy[idx + 1];
+      copy[idx + 1] = copy[idx];
+      copy[idx] = temp;
+      return copy.map((q, i) => ({ ...q, stepNumber: i + 1 }));
+    });
+  };
+
+  // Delete question
+  const handleDeleteQuestion = (qKey: string) => {
+    if (!confirm(`Are you sure you want to delete this question?`)) return;
+    setQuestions((prev) =>
+      prev
+        .filter((q) => q.key !== qKey)
+        .map((q, i) => ({ ...q, stepNumber: i + 1 }))
+    );
+    toast.info("Question removed from flow. Click Save to apply live.");
+  };
+
+  // Option management for existing questions
+  const handleAddOptionToQuestion = (qKey: string) => {
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.key !== qKey) return q;
+        const opts = q.options || [];
+        const newOpt = {
+          key: `opt_${Date.now().toString().slice(-4)}`,
+          label: `New Choice ${opts.length + 1}`,
+          description: "Freshly added taste choice",
+          icon: "✨",
+          sortOrder: opts.length + 1,
+          tagMapping: {},
+        };
+        return { ...q, options: [...opts, newOpt] };
+      })
+    );
+  };
+
+  const handleDeleteOptionFromQuestion = (qKey: string, optKey: string) => {
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.key !== qKey) return q;
+        const opts = (q.options || []).filter((o: any) => o.key !== optKey);
+        return { ...q, options: opts };
+      })
+    );
+  };
+
+  // Master Save Questions to DB
   const handleSaveQuestions = async () => {
     try {
       setSavingQuestions(true);
-      await api.updateQuizQuestions(questions);
-      showNotice("success", "Quiz questions updated!");
+      const res = await api.updateQuizQuestions(questions);
+      if (res?.questions) {
+        setQuestions(res.questions);
+      }
+      showNotice("success", "✓ Taste Quiz questions saved and now LIVE on /find-your-mithai!");
+      toast.success("✓ Taste Quiz updated! New questions are now LIVE on /find-your-mithai");
     } catch (err: any) {
       showNotice("error", err.message || "Failed to update questions");
+      toast.error(err.message || "Failed to update questions");
     } finally {
       setSavingQuestions(false);
     }
@@ -491,136 +789,632 @@ export function TasteQuizTab() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          SUBTAB 2: QUIZ QUESTIONS & WEIGHTS BUILDER
+          SUBTAB 2: QUIZ QUESTIONS & WEIGHTS BUILDER + GENERATOR
          ───────────────────────────────────────────────────────────── */}
       {activeSubTab === "builder" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Quiz Questions &amp; Weights</h2>
-              <p className="text-xs text-slate-500">Edit titles, options, weights and strict filter flags.</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🪄</span>
+                <h2 className="text-base font-bold text-slate-900">Quiz Questions &amp; Recommendation Flow</h2>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0b2f8a]">
+                  {questions.length} Steps
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Generate new questions, reorder steps, edit choices, and publish live to <code>/find-your-mithai</code>.
+              </p>
             </div>
-            <button
-              type="button"
-              disabled={savingQuestions}
-              onClick={handleSaveQuestions}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0b2f8a] text-white hover:bg-[#071c54] transition shadow-md disabled:opacity-50"
-            >
-              {savingQuestions ? "Saving..." : "Save Questions"}
-            </button>
+
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQuestionModal(true);
+                  setGenMode("preset");
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-sm transition active:scale-95 cursor-pointer"
+              >
+                <span>✨</span>
+                <span>Generate New Question</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={savingQuestions}
+                onClick={handleSaveQuestions}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                <span>{savingQuestions ? "Saving..." : "Save & Make Live 🚀"}</span>
+              </button>
+            </div>
           </div>
 
+          {/* Question Cards List */}
           <div className="space-y-4">
-            {questions.map((q, idx) => (
-              <div key={q.key || idx} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl p-2 rounded-xl bg-slate-100">{q.icon || "🍯"}</span>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Step {q.stepNumber}</span>
-                      <h3 className="text-sm font-bold text-slate-900">{q.title}</h3>
+            {questions.map((q, idx) => {
+              const isOptionsExpanded = expandedOptionsQKey === q.key;
+              return (
+                <div
+                  key={q.key || idx}
+                  className={`p-5 rounded-2xl bg-white border shadow-xs space-y-4 transition ${
+                    q.isNew ? "border-amber-400 bg-amber-50/20" : "border-slate-200"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl p-2 rounded-xl bg-slate-100">{q.icon || "🍯"}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase font-bold text-slate-400">
+                            Step {idx + 1} of {questions.length}
+                          </span>
+                          {q.isNew && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                              🌟 New (Unsaved)
+                            </span>
+                          )}
+                          <span className="text-[10px] font-mono text-slate-400">key: {q.key}</span>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900">{q.title}</h3>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs flex-wrap">
+                      {/* Step Reordering Controls */}
+                      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleMoveQUp(idx)}
+                          title="Move step up"
+                          className="h-7 w-7 rounded-lg bg-white disabled:opacity-30 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shadow-2xs transition"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === questions.length - 1}
+                          onClick={() => handleMoveQDown(idx)}
+                          title="Move step down"
+                          className="h-7 w-7 rounded-lg bg-white disabled:opacity-30 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shadow-2xs transition"
+                        >
+                          ↓
+                        </button>
+                      </div>
+
+                      <label className="flex items-center gap-1.5 font-semibold text-slate-700">
+                        <span>Weight:</span>
+                        <input
+                          type="number"
+                          value={q.weight ?? 20}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setQuestions((prev) =>
+                              prev.map((item) => (item.key === q.key ? { ...item, weight: val } : item))
+                            );
+                          }}
+                          className="w-16 px-2 py-1 rounded-lg border border-slate-200 text-xs font-mono"
+                        />
+                      </label>
+
+                      <label className="flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(q.isStrictFilter)}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setQuestions((prev) =>
+                              prev.map((item) => (item.key === q.key ? { ...item, isStrictFilter: val } : item))
+                            );
+                          }}
+                          className="rounded text-[#0b2f8a]"
+                        />
+                        <span>Strict Filter</span>
+                      </label>
+
+                      <label className="flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={q.isEnabled !== false}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setQuestions((prev) =>
+                              prev.map((item) => (item.key === q.key ? { ...item, isEnabled: val } : item))
+                            );
+                          }}
+                          className="rounded text-[#0b2f8a]"
+                        />
+                        <span>Live</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteQuestion(q.key)}
+                        title="Delete question"
+                        className="h-8 w-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center justify-center text-xs transition cursor-pointer"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs">
-                    <label className="flex items-center gap-1.5 font-semibold text-slate-700">
-                      <span>Weight:</span>
+                  {/* Question Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Question Title</label>
                       <input
-                        type="number"
-                        value={q.weight ?? 20}
+                        type="text"
+                        value={q.title || ""}
                         onChange={(e) => {
-                          const val = Number(e.target.value);
+                          const val = e.target.value;
                           setQuestions((prev) =>
-                            prev.map((item) => (item.key === q.key ? { ...item, weight: val } : item))
+                            prev.map((item) => (item.key === q.key ? { ...item, title: val } : item))
                           );
                         }}
-                        className="w-16 px-2 py-1 rounded-lg border border-slate-200 text-xs font-mono"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
                       />
-                    </label>
+                    </div>
 
-                    <label className="flex items-center gap-1.5 font-semibold text-slate-700">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Subtitle / Hint</label>
                       <input
-                        type="checkbox"
-                        checked={Boolean(q.isStrictFilter)}
+                        type="text"
+                        value={q.subtitle || ""}
                         onChange={(e) => {
-                          const val = e.target.checked;
+                          const val = e.target.value;
                           setQuestions((prev) =>
-                            prev.map((item) => (item.key === q.key ? { ...item, isStrictFilter: val } : item))
+                            prev.map((item) => (item.key === q.key ? { ...item, subtitle: val } : item))
                           );
                         }}
-                        className="rounded text-[#0b2f8a]"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
                       />
-                      <span>Strict Filter</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 font-semibold text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={q.isEnabled !== false}
-                        onChange={(e) => {
-                          const val = e.target.checked;
-                          setQuestions((prev) =>
-                            prev.map((item) => (item.key === q.key ? { ...item, isEnabled: val } : item))
-                          );
-                        }}
-                        className="rounded text-[#0b2f8a]"
-                      />
-                      <span>Enabled</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Question Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Question Title</label>
-                    <input
-                      type="text"
-                      value={q.title || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setQuestions((prev) =>
-                          prev.map((item) => (item.key === q.key ? { ...item, title: val } : item))
-                        );
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                    />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Subtitle / Hint</label>
-                    <input
-                      type="text"
-                      value={q.subtitle || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setQuestions((prev) =>
-                          prev.map((item) => (item.key === q.key ? { ...item, subtitle: val } : item))
-                        );
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                    />
-                  </div>
-                </div>
-
-                {/* Options List */}
-                <div className="pt-2 border-t border-slate-100 space-y-2">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Options ({q.options?.length || 0})</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {q.options?.map((opt: any) => (
-                      <div key={opt.key} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-                        <div className="flex items-center gap-2 font-bold text-slate-800">
-                          <span>{opt.icon || "✨"}</span>
-                          <span>{opt.label}</span>
-                        </div>
-                        {opt.description && <p className="text-[10px] text-slate-500 line-clamp-1">{opt.description}</p>}
+                  {/* Options List & Editor */}
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-slate-400">
+                        Choices &amp; Options ({q.options?.length || 0})
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAddOptionToQuestion(q.key)}
+                          className="text-[11px] font-bold text-[#0b2f8a] hover:underline"
+                        >
+                          + Add Choice
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedOptionsQKey(isOptionsExpanded ? null : q.key)}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-800"
+                        >
+                          {isOptionsExpanded ? "Collapse Editor ▲" : "Edit Choices Details ▼"}
+                        </button>
                       </div>
-                    ))}
+                    </div>
+
+                    {isOptionsExpanded ? (
+                      <div className="space-y-2">
+                        {q.options?.map((opt: any, optIdx: number) => (
+                          <div
+                            key={opt.key || optIdx}
+                            className="p-3 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center text-xs"
+                          >
+                            <div className="sm:col-span-1">
+                              <input
+                                type="text"
+                                value={opt.icon || "✨"}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setQuestions((prev) =>
+                                    prev.map((item) => {
+                                      if (item.key !== q.key) return item;
+                                      const nextOpts = item.options.map((o: any) =>
+                                        o.key === opt.key ? { ...o, icon: val } : o
+                                      );
+                                      return { ...item, options: nextOpts };
+                                    })
+                                  );
+                                }}
+                                className="w-full text-center px-2 py-1.5 rounded-lg border border-slate-200"
+                              />
+                            </div>
+                            <div className="sm:col-span-4">
+                              <input
+                                type="text"
+                                value={opt.label || ""}
+                                placeholder="Choice Label"
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setQuestions((prev) =>
+                                    prev.map((item) => {
+                                      if (item.key !== q.key) return item;
+                                      const nextOpts = item.options.map((o: any) =>
+                                        o.key === opt.key ? { ...o, label: val } : o
+                                      );
+                                      return { ...item, options: nextOpts };
+                                    })
+                                  );
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-bold"
+                              />
+                            </div>
+                            <div className="sm:col-span-6">
+                              <input
+                                type="text"
+                                value={opt.description || ""}
+                                placeholder="Description / Hint"
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setQuestions((prev) =>
+                                    prev.map((item) => {
+                                      if (item.key !== q.key) return item;
+                                      const nextOpts = item.options.map((o: any) =>
+                                        o.key === opt.key ? { ...o, description: val } : o
+                                      );
+                                      return { ...item, options: nextOpts };
+                                    })
+                                  );
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200"
+                              />
+                            </div>
+                            <div className="sm:col-span-1 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteOptionFromQuestion(q.key, opt.key)}
+                                className="text-rose-600 hover:text-rose-800 font-bold text-xs"
+                                title="Remove choice"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {q.options?.map((opt: any) => (
+                          <div
+                            key={opt.key}
+                            className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1"
+                          >
+                            <div className="flex items-center gap-2 font-bold text-slate-800">
+                              <span>{opt.icon || "✨"}</span>
+                              <span>{opt.label}</span>
+                            </div>
+                            {opt.description && (
+                              <p className="text-[10px] text-slate-500 line-clamp-1">{opt.description}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────────
+              MODAL: GENERATE NEW QUESTION (TEMPLATES + AI + CUSTOM)
+             ───────────────────────────────────────────────────────────── */}
+          {showQuestionModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+              <div className="max-w-3xl w-full bg-white rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto no-scrollbar">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-lg text-amber-800">
+                      ✨
+                    </span>
+                    <div>
+                      <h3 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-slate-900">
+                        Generate New Taste Quiz Question
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        Choose a pre-calibrated heritage template or let AI draft a custom question.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuestionModal(false)}
+                    className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Mode Selector Tabs */}
+                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setGenMode("preset")}
+                    className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      genMode === "preset" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    🎯 Heritage Templates (6)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGenMode("ai")}
+                    className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      genMode === "ai" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    🤖 Smart AI Generator
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGenMode("custom")}
+                    className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      genMode === "custom" ? "bg-white text-[#0b2f8a] shadow-xs" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    ✏️ Blank Custom Draft
+                  </button>
+                </div>
+
+                {/* MODE 1: PRESET TEMPLATES */}
+                {genMode === "preset" && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-slate-700">
+                      Select one of our 6 pre-configured Vardayini Sweet Mart question models:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {QUESTION_TEMPLATES.map((tpl) => (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() => handleSelectPresetTemplate(tpl)}
+                          className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 hover:border-[#0b2f8a] hover:bg-blue-50/30 text-left transition shadow-2xs group cursor-pointer"
+                        >
+                          <span className="text-2xl p-2 rounded-xl bg-slate-100 group-hover:bg-amber-100 transition shrink-0">
+                            {tpl.icon}
+                          </span>
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                              {tpl.badge}
+                            </span>
+                            <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#0b2f8a] transition leading-snug">
+                              {tpl.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 line-clamp-1">{tpl.subtitle}</p>
+                            <p className="text-[10px] font-medium text-emerald-700">
+                              ✓ {tpl.options.length} calibrated choices included
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* MODE 2: AI PROMPT GENERATOR */}
+                {genMode === "ai" && (
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-200 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🤖</span>
+                      <h4 className="text-xs font-bold text-[#0b2f8a]">
+                        Type any sweet, snack, or customer taste preference topic:
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={aiTopic}
+                        onChange={(e) => setAiTopic(e.target.value)}
+                        placeholder="e.g., Spicy farsan crunch, Winter warm sweets, Wedding favor packaging, Ghee vs Mawa"
+                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-blue-200 bg-white text-xs"
+                      />
+                      <button
+                        type="button"
+                        disabled={generatingAi}
+                        onClick={handleGenerateAiQuestion}
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0b2f8a] text-white hover:bg-[#071c54] transition shadow-xs disabled:opacity-50 shrink-0 cursor-pointer"
+                      >
+                        {generatingAi ? "Generating..." : "Generate ✨"}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap text-[11px] text-slate-500">
+                      <span>Quick ideas:</span>
+                      {["Spicy farsan", "Winter vitality", "Pure Cow Ghee", "Luxury packaging"].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setAiTopic(t)}
+                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-[#0b2f8a] text-slate-700"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* DRAFT PREVIEW & EDITING AREA */}
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">
+                      📝 Question Preview &amp; Configuration:
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Review and customize before appending to quiz flow
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#faf8f5] border border-amber-200/70 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Icon</label>
+                        <input
+                          type="text"
+                          value={newQuestionDraft.icon}
+                          onChange={(e) =>
+                            setNewQuestionDraft({ ...newQuestionDraft, icon: e.target.value })
+                          }
+                          className="w-full text-center px-3 py-2 rounded-xl border border-slate-200 bg-white text-base"
+                        />
+                      </div>
+                      <div className="sm:col-span-7">
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Question Title</label>
+                        <input
+                          type="text"
+                          value={newQuestionDraft.title}
+                          placeholder="e.g. Which festival or occasion are you celebrating?"
+                          onChange={(e) =>
+                            setNewQuestionDraft({ ...newQuestionDraft, title: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Key (Slug)</label>
+                        <input
+                          type="text"
+                          value={newQuestionDraft.key}
+                          placeholder="festival_season"
+                          onChange={(e) =>
+                            setNewQuestionDraft({ ...newQuestionDraft, key: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono text-[11px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-xs">
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Subtitle / Customer Guidance
+                      </label>
+                      <input
+                        type="text"
+                        value={newQuestionDraft.subtitle}
+                        placeholder="Subtle guidance explaining why we ask this..."
+                        onChange={(e) =>
+                          setNewQuestionDraft({ ...newQuestionDraft, subtitle: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
+                      />
+                    </div>
+
+                    {/* Choices in Draft */}
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-700">
+                          Question Choices ({newQuestionDraft.options.length}):
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newOpt = {
+                              key: `opt_${Date.now().toString().slice(-4)}`,
+                              label: `Choice ${newQuestionDraft.options.length + 1}`,
+                              description: "",
+                              icon: "✨",
+                              tagMapping: {},
+                            };
+                            setNewQuestionDraft({
+                              ...newQuestionDraft,
+                              options: [...newQuestionDraft.options, newOpt],
+                            });
+                          }}
+                          className="text-[11px] font-bold text-[#0b2f8a] hover:underline"
+                        >
+                          + Add Another Choice
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {newQuestionDraft.options.map((opt, optIdx) => (
+                          <div
+                            key={opt.key || optIdx}
+                            className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1 relative group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={opt.icon || "✨"}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const updated = newQuestionDraft.options.map((o, i) =>
+                                    i === optIdx ? { ...o, icon: val } : o
+                                  );
+                                  setNewQuestionDraft({ ...newQuestionDraft, options: updated });
+                                }}
+                                className="w-8 text-center px-1 py-0.5 rounded border border-slate-200 text-sm"
+                              />
+                              <input
+                                type="text"
+                                value={opt.label}
+                                placeholder="Choice Label"
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const updated = newQuestionDraft.options.map((o, i) =>
+                                    i === optIdx ? { ...o, label: val } : o
+                                  );
+                                  setNewQuestionDraft({ ...newQuestionDraft, options: updated });
+                                }}
+                                className="flex-1 px-2 py-0.5 rounded border border-slate-200 font-bold"
+                              />
+                              {newQuestionDraft.options.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = newQuestionDraft.options.filter((_, i) => i !== optIdx);
+                                    setNewQuestionDraft({ ...newQuestionDraft, options: updated });
+                                  }}
+                                  className="text-slate-400 hover:text-rose-600 text-xs font-bold"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              value={opt.description || ""}
+                              placeholder="Description hint"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const updated = newQuestionDraft.options.map((o, i) =>
+                                  i === optIdx ? { ...o, description: val } : o
+                                );
+                                setNewQuestionDraft({ ...newQuestionDraft, options: updated });
+                              }}
+                              className="w-full px-2 py-0.5 rounded border border-slate-200 text-[11px] text-slate-600"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuestionModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddQuestionToQuiz}
+                    className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-md transition active:scale-95 cursor-pointer"
+                  >
+                    Add to Quiz Flow →
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -533,6 +533,7 @@ export async function calculateQuizMatch(
 
   await ensureQuizDataSeeded();
   const settings = await getQuizSettings();
+  const configuredQuestions = await getQuizQuestions();
 
   const maxItems = Math.min(Math.max(settings.maxResults || 4, 3), 5);
   const strictNoNuts = answers.nuts === "no_nuts";
@@ -720,6 +721,42 @@ export async function calculateQuizMatch(
     // Featured / Best Seller bonus
     if (item.isFeatured || item.isFeaturedInQuiz) {
       score += 10;
+    }
+
+    // Dynamic matching for custom & AI-generated questions
+    for (const [qKey, selectedOptKey] of Object.entries(answers)) {
+      if (["sweetness", "type", "occasion", "budget", "nuts"].includes(qKey)) continue;
+      const matchedQ = configuredQuestions.find((q) => q.key === qKey);
+      if (matchedQ) {
+        const selectedOpt = matchedQ.options?.find((opt) => opt.key === selectedOptKey);
+        if (selectedOpt) {
+          const qWeight = matchedQ.weight || 20;
+          if (selectedOpt.tagMapping && Object.keys(selectedOpt.tagMapping).length > 0) {
+            for (const [targetKey, targetVal] of Object.entries(selectedOpt.tagMapping)) {
+              const itemVal = String((item as any)[targetKey] || "").toLowerCase();
+              const targetValStr = String(targetVal).toLowerCase();
+              if (itemVal.includes(targetValStr)) {
+                score += qWeight;
+              } else if (
+                String(item.name || "").toLowerCase().includes(targetValStr) ||
+                String(item.categoryName || "").toLowerCase().includes(targetValStr) ||
+                String(item.dietaryTags || "").toLowerCase().includes(targetValStr)
+              ) {
+                score += Math.round(qWeight * 0.7);
+              }
+            }
+          } else {
+            const optWords = (selectedOpt.label || "").toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+            const prodText = (item.name + " " + item.categoryName + " " + (item.quizDescription || "")).toLowerCase();
+            for (const word of optWords) {
+              if (prodText.includes(word)) {
+                score += Math.round(qWeight * 0.5);
+                break;
+              }
+            }
+          }
+        }
+      }
     }
 
     return score;
