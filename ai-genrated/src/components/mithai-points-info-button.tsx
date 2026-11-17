@@ -1,9 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function MithaiPointsInfoButton() {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+
+    // Lock body scroll when modal is open
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   return (
     <>
@@ -20,36 +38,45 @@ export function MithaiPointsInfoButton() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="relative w-full max-w-lg rounded-3xl bg-white p-4 sm:p-5 shadow-2xl border border-[#dfb755]/30 space-y-3 max-h-[92vh] overflow-y-auto hide-scrollbar"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            data-mithai-modal="true"
+            className="relative w-full max-w-lg rounded-3xl bg-white p-4 sm:p-5 shadow-2xl border border-[#dfb755]/30 space-y-2.5 max-h-[92vh] overflow-y-auto no-scrollbar"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <style>{`
-              .hide-scrollbar::-webkit-scrollbar {
+              [data-mithai-modal]::-webkit-scrollbar,
+              .no-scrollbar::-webkit-scrollbar {
                 display: none !important;
                 width: 0 !important;
                 height: 0 !important;
+                background: transparent !important;
               }
-              .hide-scrollbar {
+              [data-mithai-modal],
+              .no-scrollbar {
                 -ms-overflow-style: none !important;
                 scrollbar-width: none !important;
               }
             `}</style>
+
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-[#2a1a12]/10 pb-3">
+            <div className="flex items-start justify-between border-b border-[#2a1a12]/10 pb-2.5">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-lg text-amber-700">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-base text-amber-700">
                   🍯
                 </span>
                 <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-[#6b1d1d]">
+                  <h3 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold text-[#6b1d1d] leading-tight">
                     How to Get Mithai Points
                   </h3>
-                  <p className="text-[11px] text-[#2a1a12]/60">
+                  <p className="text-[11px] text-[#2a1a12]/60 leading-tight mt-0.5">
                     Vardayini Sweet Mart Royal Loyalty Program
                   </p>
                 </div>
@@ -65,8 +92,8 @@ export function MithaiPointsInfoButton() {
             </div>
 
             {/* Steps & Info */}
-            <div className="space-y-2.5 text-xs text-[#2a1a12]/80">
-              <div className="flex items-start gap-2.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 p-3">
+            <div className="space-y-2 text-xs text-[#2a1a12]/80">
+              <div className="flex items-start gap-2.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 p-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-bold text-[11px]">
                   1
                 </span>
@@ -78,7 +105,7 @@ export function MithaiPointsInfoButton() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 p-3">
+              <div className="flex items-start gap-2.5 rounded-2xl bg-blue-50/70 border border-blue-200/60 p-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0b2f8a] text-white font-bold text-[11px]">
                   2
                 </span>
@@ -90,7 +117,7 @@ export function MithaiPointsInfoButton() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 p-3">
+              <div className="flex items-start gap-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 p-2.5">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-[11px]">
                   3
                 </span>
@@ -102,11 +129,11 @@ export function MithaiPointsInfoButton() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#2a1a12]/10 bg-[#faf8f5] p-3 space-y-1.5">
+              <div className="rounded-2xl border border-[#2a1a12]/10 bg-[#faf8f5] p-2.5 space-y-1">
                 <p className="font-bold text-[#6b1d1d] text-xs flex items-center gap-1.5">
                   <span>🎁</span> Extra Ways to Earn Bonus Points:
                 </p>
-                <ul className="space-y-1 pl-4 list-disc text-[11px] text-[#2a1a12]/70">
+                <ul className="space-y-0.5 pl-4 list-disc text-[11px] text-[#2a1a12]/70">
                   <li><strong>Welcome Bonus:</strong> 10% off welcome code on your first sweet order.</li>
                   <li><strong>Complete Profile:</strong> Save your verified name and delivery addresses for express 1-click dispatch.</li>
                   <li><strong>Festive Pre-Orders:</strong> Exclusive double point events during Diwali, Raksha Bandhan, and Ganesh Utsav.</li>

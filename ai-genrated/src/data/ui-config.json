@@ -981,7 +981,7 @@
     },
     "spotlight": {
       "enabled": true,
-      "productId": 1,
+      "productId": 5,
       "eyebrow": "Flagship of the Season",
       "heading": "The Gold Standard of Purity",
       "customBadge": "👑 Signature Batch 2026",
@@ -1015,13 +1015,42 @@
       "enableSearch": true,
       "enableSort": true,
       "categoryTabs": [
-        { "id": "all", "label": "🌟 All New Releases", "active": true },
-        { "id": "sweets", "label": "👑 Royal Mithai", "active": true },
-        { "id": "farsan", "label": "🥟 Crisp Farsan", "active": true },
-        { "id": "sugarless", "label": "🍃 Sugar-Free", "active": true },
-        { "id": "hampers", "label": "🎁 Luxury Hampers", "active": true }
+        {
+          "id": "all",
+          "label": "🌟 All New Releases",
+          "active": true
+        },
+        {
+          "id": "sweets",
+          "label": "👑 Royal Mithai",
+          "active": true
+        },
+        {
+          "id": "farsan",
+          "label": "🥟 Crisp Farsan",
+          "active": true
+        },
+        {
+          "id": "sugarless",
+          "label": "🍃 Sugar-Free",
+          "active": true
+        },
+        {
+          "id": "hampers",
+          "label": "🎁 Luxury Hampers",
+          "active": true
+        }
+      ],
+      "productIds": [
+        67,
+        68
       ]
-    }
+    },
+    "productIds": [
+      67,
+      68
+    ],
+    "filterMode": "all"
   },
   "culinaryPillars": {
     "enabled": true,

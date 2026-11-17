@@ -23,6 +23,7 @@ import { OrdersTab } from "@/components/orders-tab";
 import { CustomersTab } from "@/components/customers-tab";
 import { LivePreviewTab } from "@/components/live-preview-tab";
 import { ToastPopup, ToastData } from "@/components/toast-popup";
+import { Toaster } from "sonner";
 import { toast } from "@/lib/toast";
 import { NotificationCenter } from "@/components/notification-center";
 import { getPublicStoreUrl } from "@/lib/store-url";
@@ -1214,8 +1215,21 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fdfcfa] relative">
-      {/* Global Floating Popup Notification */}
-      <ToastPopup toast={activeToast} onClose={() => setActiveToast(null)} />
+      {/* Sonner Global Floating Popup Notification */}
+      <Toaster
+        position="bottom-right"
+        theme="dark"
+        closeButton
+        richColors
+        toastOptions={{
+          style: {
+            background: "rgba(15, 23, 42, 0.95)",
+            border: "1px solid rgba(16, 185, 129, 0.4)",
+            color: "#ffffff",
+          },
+          className: "shadow-2xl backdrop-blur-xl rounded-2xl",
+        }}
+      />
 
       {/* Top Brand Announcement Banner matching Storefront */}
       <header className="bg-[#0b2f8a] text-white">
