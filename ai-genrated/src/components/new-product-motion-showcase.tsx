@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -444,7 +444,19 @@ export function NewProductMotionShowcase({
     }
   }
 
-  // Marquee products
+  // Marquee products: strictly unique creations (no duplicates)
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isCarouselHovered, setIsCarouselHovered] = useState(false);
+
+  const handleScrollCarousel = (direction: "left" | "right") => {
+    if (!carouselRef.current) return;
+    const scrollAmount = 260 * 2;
+    carouselRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
   const marqueeCount = config?.marquee?.cardCount || 16;
   const marqueeProducts = useMemo(() => {
     const configuredIds = config?.productIds || config?.catalogue?.productIds;
@@ -464,9 +476,32 @@ export function NewProductMotionShowcase({
         baseList = matched;
       }
     }
-    const list = [...baseList, ...baseList];
-    return list.slice(0, marqueeCount);
+
+    // Deduplicate by product id so no product is ever shown twice
+    const uniqueMap = new Map<number, ShowcaseProduct>();
+    for (const p of baseList) {
+      if (!uniqueMap.has(p.id)) {
+        uniqueMap.set(p.id, p);
+      }
+    }
+    return Array.from(uniqueMap.values()).slice(0, marqueeCount);
   }, [products, marqueeCount, config?.productIds, config?.catalogue?.productIds, config?.filterMode]);
+
+  // Gentle auto-advance for the rolling carousel when there are multiple products
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el || isCarouselHovered || marqueeProducts.length <= 3) return;
+
+    const timer = setInterval(() => {
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 15) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        el.scrollBy({ left: 260, behavior: "smooth" });
+      }
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, [isCarouselHovered, marqueeProducts.length]);
 
   return (
     <div className="relative min-h-screen bg-[#faf8f5] text-[#182230] selection:bg-[#dfb755]/30">
@@ -771,7 +806,7 @@ export function NewProductMotionShowcase({
          ───────────────────────────────────────────────────────────── */}
       {config?.marquee?.enabled !== false && (
         <section className="py-12 bg-[#071c54] text-white overflow-hidden border-b border-white/10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-[#dfb755]">
                 {config?.marquee?.badge || "Live From Kalol Kitchens"}
@@ -780,17 +815,45 @@ export function NewProductMotionShowcase({
                 {config?.marquee?.title || "Fresh Daily Rolling Carousel"}
               </h3>
             </div>
-            <p className="text-xs text-slate-300">
-              {config?.marquee?.subtitle || "Hover to pause · Click card to inspect details"}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-slate-300">
+                {config?.marquee?.subtitle || "Hover to pause · Click card to inspect details"}
+              </p>
+              {marqueeProducts.length > 3 && (
+                <div className="hidden sm:flex items-center gap-1.5 ml-2">
+                  <button
+                    type="button"
+                    onClick={() => handleScrollCarousel("left")}
+                    className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white flex items-center justify-center text-sm font-bold transition cursor-pointer border border-white/15"
+                    aria-label="Previous creations"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleScrollCarousel("right")}
+                    className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white flex items-center justify-center text-sm font-bold transition cursor-pointer border border-white/15"
+                    aria-label="Next creations"
+                  >
+                    ›
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Infinite Marquee Track */}
+          {/* Carousel Track: Each Product Shown Once */}
           <div className="relative w-full overflow-hidden">
-            <div className="animate-marquee gap-5 py-2">
-              {marqueeProducts.map((product, idx) => (
+            <div
+              ref={carouselRef}
+              onMouseEnter={() => setIsCarouselHovered(true)}
+              onMouseLeave={() => setIsCarouselHovered(false)}
+              className="flex items-stretch gap-5 overflow-x-auto no-scrollbar py-2 px-4 sm:px-6 lg:px-8 scroll-smooth"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {marqueeProducts.map((product) => (
                 <button
-                  key={`${product.id}-${idx}`}
+                  key={`marquee-${product.id}`}
                   type="button"
                   onClick={() => setSelectedProduct(product)}
                   className="group relative flex w-[230px] shrink-0 flex-col overflow-hidden rounded-2xl bg-white/10 p-2.5 backdrop-blur-md border border-white/15 text-left transition hover:bg-white/20 hover:scale-103 cursor-pointer"
