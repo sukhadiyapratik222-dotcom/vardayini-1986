@@ -71,7 +71,11 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
   const [selectedProductIds, setSelectedProductIds] =
     useState<number[]>(initialProductIds);
   const [filterMode, setFilterMode] = useState<"curated" | "all">(
-    currentCfg.filterMode || (initialProductIds.length > 0 ? "curated" : "all")
+    currentCfg.filterMode === "all" && initialProductIds.length === 0
+      ? "all"
+      : initialProductIds.length > 0
+      ? "curated"
+      : currentCfg.filterMode || "curated"
   );
   const [productSearch, setProductSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -98,18 +102,24 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
   }, [selectedProductIds, productMap]);
 
   const handleToggleProduct = (id: number) => {
-    setSelectedProductIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setSelectedProductIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      if (next.length > 0) {
+        setFilterMode("curated");
+      }
+      return next;
+    });
   };
 
   const handleSelectAll = () => {
     setSelectedProductIds(uniqueProducts.map((p) => p.productId || p.id));
+    setFilterMode("all");
     toast.success(`Selected all ${uniqueProducts.length} products for New Launches`);
   };
 
   const handleDeselectAll = () => {
     setSelectedProductIds([]);
+    setFilterMode("all");
     toast.info("Cleared product selection for New Launches");
   };
 
@@ -117,11 +127,13 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
     setSelectedProductIds(
       uniqueProducts.slice(0, n).map((p) => p.productId || p.id)
     );
+    setFilterMode("curated");
     toast.success(`Selected top ${n} products for New Launches`);
   };
 
   const handleMoveProductUp = (index: number) => {
     if (index <= 0) return;
+    setFilterMode("curated");
     setSelectedProductIds((prev) => {
       const next = [...prev];
       const temp = next[index - 1];
@@ -133,6 +145,7 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
 
   const handleMoveProductDown = (index: number) => {
     if (index >= selectedProductIds.length - 1) return;
+    setFilterMode("curated");
     setSelectedProductIds((prev) => {
       const next = [...prev];
       const temp = next[index + 1];
@@ -360,6 +373,12 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
   async function handleSave() {
     setSaving(true);
     try {
+      // Ensure filterMode is "curated" if user selected a custom set of products
+      const effectiveFilterMode: "curated" | "all" =
+        selectedProductIds.length > 0 && selectedProductIds.length < uniqueProducts.length
+          ? "curated"
+          : filterMode;
+
       const payload: NewLaunchPageConfig = {
         enabled,
         badge,
@@ -369,7 +388,7 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
         primaryCtaText,
         secondaryCtaText,
         productIds: selectedProductIds,
-        filterMode,
+        filterMode: effectiveFilterMode,
         countdown: {
           enabled: countdownEnabled,
           title: countdownTitle,
@@ -623,12 +642,16 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
           {/* Currently Selected Products (Order Preview) */}
           {selectedProductIds.length > 0 && (
             <div className="bg-[#faf8f5] rounded-3xl p-5 sm:p-6 border border-[#dfb755]/40 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xl">🏆</span>
                   <h4 className="font-bold text-sm text-[#6b1d1d]">
                     Curated Launch Display Order ({selectedProductsList.length} Selected)
                   </h4>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                    Live Curated Mode Active
+                  </span>
                 </div>
                 <span className="text-[11px] text-slate-500">
                   Use ↑ / ↓ to adjust display order on public showcase

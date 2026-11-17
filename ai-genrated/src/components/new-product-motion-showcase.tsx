@@ -300,7 +300,14 @@ export function NewProductMotionShowcase({
   // 7. Filter & Sort Products
   const filteredProducts = useMemo(() => {
     const configuredIds = config?.productIds || config?.catalogue?.productIds;
-    const isCurated = config?.filterMode === "curated" || (configuredIds && configuredIds.length > 0 && config?.filterMode !== "all");
+    // CRITICAL: If the admin selected curated products, always honor the curated list
+    // unless explicitly "all" and no products are selected.
+    const hasCuratedSelection = Boolean(
+      configuredIds &&
+        configuredIds.length > 0 &&
+        (config?.filterMode === "curated" || configuredIds.length < (products?.length || 0))
+    );
+    const isCurated = config?.filterMode === "curated" || hasCuratedSelection;
 
     let baseList = products || [];
     if (isCurated && configuredIds && configuredIds.length > 0) {
@@ -376,15 +383,15 @@ export function NewProductMotionShowcase({
       return true;
     });
 
-    // Sorting
+    // Sorting: when curated, default preserves the exact curated order from admin (↑ / ↓)
     if (sortBy === "price-asc") {
       result = [...result].sort((a, b) => a.fromPrice - b.fromPrice);
     } else if (sortBy === "price-desc") {
       result = [...result].sort((a, b) => b.fromPrice - a.fromPrice);
     } else if (sortBy === "name") {
       result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      // "featured": prioritize featured items
+    } else if (!isCurated) {
+      // Only re-sort by featured if not using custom curated display order
       result = [...result].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
     }
 
@@ -441,7 +448,12 @@ export function NewProductMotionShowcase({
   const marqueeCount = config?.marquee?.cardCount || 16;
   const marqueeProducts = useMemo(() => {
     const configuredIds = config?.productIds || config?.catalogue?.productIds;
-    const isCurated = config?.filterMode === "curated" || (configuredIds && configuredIds.length > 0 && config?.filterMode !== "all");
+    const hasCuratedSelection = Boolean(
+      configuredIds &&
+        configuredIds.length > 0 &&
+        (config?.filterMode === "curated" || configuredIds.length < (products?.length || 0))
+    );
+    const isCurated = config?.filterMode === "curated" || hasCuratedSelection;
     let baseList = products || [];
     if (isCurated && configuredIds && configuredIds.length > 0) {
       const idMap = new Map((products || []).map((p) => [p.id, p]));
@@ -531,7 +543,7 @@ export function NewProductMotionShowcase({
               href="#catalogue"
               className="rounded-full bg-white border border-slate-200 px-6 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:border-[#0b2f8a] hover:text-[#0b2f8a] shadow-2xs hover:scale-105 transition active:scale-95"
             >
-              {secondaryCtaText} ({products.length})
+              {secondaryCtaText} ({filteredProducts.length})
             </a>
           </motion.div>
         </div>

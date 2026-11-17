@@ -9,6 +9,8 @@ export const metadata: Metadata = {
     "Discover newly launched royal sweets, authentic Gujarati farsan, and festive gift hampers handcrafted with 100% Shuddh Desi Ghee in Kalol, Gujarat.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function NewProductsPage() {
   const products = await listProducts({ limit: 100 });
   const uiConfig = getUiConfigSafe();
