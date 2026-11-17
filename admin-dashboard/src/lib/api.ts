@@ -1233,6 +1233,17 @@ export const api = {
     return data.category;
   },
 
+  async createCategoriesBulk(cats: Partial<CategoryItem>[]): Promise<{ categories: CategoryItem[]; count: number }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ categories: cats }),
+    });
+    return handleResponse<{ categories: CategoryItem[]; count: number }>(res, "Failed to bulk create categories");
+  },
+
   async updateCategory(cat: Partial<CategoryItem>): Promise<CategoryItem> {
     const res = await fetch(`${PROXY_BASE}/api/admin/categories`, {
       method: "PUT",

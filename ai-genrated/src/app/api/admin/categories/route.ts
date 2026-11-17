@@ -61,9 +61,75 @@ export async function POST(request: Request) {
     description?: string;
     imageUrl?: string;
     sortOrder?: number | string;
+    categories?: Array<{
+      name?: string;
+      slug?: string;
+      description?: string;
+      imageUrl?: string;
+      sortOrder?: number | string;
+    }>;
   }>(request);
 
-  if (!body || !body.name || typeof body.name !== "string" || body.name.trim() === "") {
+  if (!body) {
+    return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+  }
+
+  // Support batch / bulk category addition
+  if (body.categories && Array.isArray(body.categories)) {
+    const rawList = body.categories;
+    const existingCats = await db.select().from(categories);
+    const existingSlugs = new Set(existingCats.map((c) => c.slug.toLowerCase()));
+    const existingNames = new Set(existingCats.map((c) => c.name.toLowerCase()));
+    let maxSortOrder = existingCats.reduce((max, c) => Math.max(max, c.sortOrder ?? 0), 0);
+
+    const inserted: Array<typeof categories.$inferSelect> = [];
+    for (const item of rawList) {
+      if (!item || !item.name || typeof item.name !== "string" || item.name.trim() === "") continue;
+      const name = item.name.trim();
+      if (existingNames.has(name.toLowerCase())) continue; // Skip exact name duplicates
+
+      let baseSlug = (item.slug && typeof item.slug === "string" && item.slug.trim() !== "")
+        ? item.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+        : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      if (!baseSlug) baseSlug = `cat-${Date.now()}`;
+
+      let slug = baseSlug;
+      let counter = 1;
+      while (existingSlugs.has(slug)) {
+        slug = `${baseSlug}-${counter++}`;
+      }
+      existingSlugs.add(slug);
+      existingNames.add(name.toLowerCase());
+
+      maxSortOrder += 1;
+      const sortOrder = item.sortOrder !== undefined ? parseNonNegativeInt(item.sortOrder) ?? maxSortOrder : maxSortOrder;
+      const description = typeof item.description === "string" ? item.description.trim() : "";
+      const imageUrl = typeof item.imageUrl === "string" && item.imageUrl.trim() !== ""
+        ? item.imageUrl.trim()
+        : "/images/kaju-katli.jpg";
+
+      const [insertRes] = await db.insert(categories).values({
+        name,
+        slug,
+        description,
+        imageUrl,
+        sortOrder,
+      });
+
+      const [newRow] = await db.select().from(categories).where(eq(categories.id, insertRes.insertId)).limit(1);
+      if (newRow) {
+        inserted.push(newRow);
+        try {
+          await syncCategoryToMysql(newRow);
+        } catch {}
+      }
+    }
+
+    return NextResponse.json({ categories: inserted, count: inserted.length }, { status: 201 });
+  }
+
+  // Single category creation
+  if (!body.name || typeof body.name !== "string" || body.name.trim() === "") {
     return NextResponse.json({ error: "Category name is required" }, { status: 400 });
   }
 
