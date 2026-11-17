@@ -8,27 +8,34 @@ const defaultStoreUrl = getPublicStoreUrl();
 
 export const toast = {
   show(data: ToastData) {
-    listeners.forEach((listener) => listener(data));
+    const payload: ToastData = {
+      ...data,
+      id: data.id || `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    };
+    listeners.forEach((listener) => listener(payload));
   },
-  success(message: string, linkUrl: string = defaultStoreUrl) {
+  success(message: string, linkUrl?: string, onClick?: () => void) {
     toast.show({
       type: "success",
       message,
-      linkUrl,
+      linkUrl: linkUrl || defaultStoreUrl,
+      onClick,
     });
   },
-  error(message: string, linkUrl?: string) {
+  error(message: string, linkUrl?: string, onClick?: () => void) {
     toast.show({
       type: "error",
       message,
       linkUrl,
+      onClick,
     });
   },
-  info(message: string, linkUrl: string = defaultStoreUrl) {
+  info(message: string, linkUrl?: string, onClick?: () => void) {
     toast.show({
       type: "info",
       message,
-      linkUrl,
+      linkUrl: linkUrl || defaultStoreUrl,
+      onClick,
     });
   },
   dismiss() {

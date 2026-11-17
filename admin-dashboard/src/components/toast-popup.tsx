@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { getPublicStoreUrl } from "@/lib/store-url";
 
 export interface ToastData {
@@ -18,79 +18,141 @@ interface ToastPopupProps {
 
 export function ToastPopup({ toast, onClose }: ToastPopupProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (!toast || isHovered) return;
+  // Clear timer safely
+  const clearDismissTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
-    // Auto-dismiss after 6 seconds (pauses when user hovers to click)
-    const timer = setTimeout(() => {
+  // Dismiss with smooth fade-out
+  const handleDismiss = useCallback(() => {
+    clearDismissTimer();
+    setIsExiting(true);
+    setTimeout(() => {
       onClose();
-    }, 6000);
+      setIsExiting(false);
+    }, 200);
+  }, [clearDismissTimer, onClose]);
 
-    return () => clearTimeout(timer);
-  }, [toast, onClose, isHovered]);
+  // Handle action (Arrow button) click
+  const handleAction = useCallback(() => {
+    if (toast?.onClick) {
+      toast.onClick();
+    } else if (toast?.linkUrl) {
+      if (toast.linkUrl.startsWith("#")) {
+        const el = document.querySelector(toast.linkUrl);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      } else {
+        const targetUrl = toast.linkUrl.startsWith("http")
+          ? toast.linkUrl
+          : `${getPublicStoreUrl()}${toast.linkUrl.startsWith("/") ? "" : "/"}${toast.linkUrl}`;
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    handleDismiss();
+  }, [toast, handleDismiss]);
+
+  // Auto-dismiss after 5 seconds, pauses on mouse hover
+  useEffect(() => {
+    if (!toast) return;
+
+    // Reset exit animation whenever toast data changes
+    setIsExiting(false);
+
+    if (isHovered) {
+      clearDismissTimer();
+      return;
+    }
+
+    timerRef.current = setTimeout(() => {
+      handleDismiss();
+    }, 5000);
+
+    return () => clearDismissTimer();
+  }, [toast?.id, toast?.message, isHovered, handleDismiss, clearDismissTimer]);
+
+  // Accessibility: Close on Escape key
+  useEffect(() => {
+    if (!toast) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleDismiss();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toast, handleDismiss]);
 
   if (!toast) return null;
 
   const isSuccess = toast.type === "success";
   const isError = toast.type === "error";
-  const targetUrl = toast.linkUrl || getPublicStoreUrl();
-
-  const handleClick = () => {
-    if (toast.onClick) {
-      toast.onClick();
-    } else if (targetUrl) {
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
-    }
-    onClose();
-  };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-md pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div
+      role="status"
+      aria-live="polite"
+      className={`fixed bottom-6 right-6 z-[9999] max-w-md pointer-events-auto transition-all duration-200 ease-out ${
+        isExiting
+          ? "opacity-0 translate-y-3 scale-95 pointer-events-none"
+          : "opacity-100 translate-y-0 scale-100 animate-in fade-in slide-in-from-bottom-4 duration-300"
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div
-        role="button"
-        tabIndex={0}
-        onClick={handleClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        title={`Click to view live on ${targetUrl}`}
-        className={`group cursor-pointer flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl backdrop-blur-xl border transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] select-none ${
+        className={`flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl shadow-2xl backdrop-blur-xl border select-none ${
           isSuccess
-            ? "bg-slate-900/95 text-white border-emerald-500/40 shadow-emerald-950/25 hover:border-emerald-400"
+            ? "bg-slate-900/95 text-white border-emerald-500/40 shadow-emerald-950/25"
             : isError
-            ? "bg-rose-950/95 text-white border-rose-500/40 shadow-rose-950/25 hover:border-rose-400"
-            : "bg-[#0b2f8a]/95 text-white border-white/20 shadow-blue-950/25 hover:border-white/40"
+            ? "bg-rose-950/95 text-white border-rose-500/40 shadow-rose-950/25"
+            : "bg-[#0b2f8a]/95 text-white border-white/20 shadow-blue-950/25"
         }`}
       >
         {/* Status Icon */}
-        <span className="text-base shrink-0">
+        <span className="text-base shrink-0 select-none" aria-hidden="true">
           {isSuccess ? "✅" : isError ? "⚠️" : "ℹ️"}
         </span>
 
-        {/* Action Performed Message */}
+        {/* Message */}
         <p className="text-xs font-semibold leading-snug tracking-wide text-white pr-1">
           {toast.message}
         </p>
 
-        {/* Click indicator arrow */}
-        <span
-          className="text-xs text-white/50 group-hover:text-white transition shrink-0 ml-auto mr-1"
-          title={`Click to open ${targetUrl}`}
-        >
-          ↗
-        </span>
-
-        {/* Manual Dismiss button (stops propagation so clicking X only closes) */}
+        {/* Action / Arrow Button: Real accessible button with min 44px tap target on mobile */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 transition text-xs font-bold shrink-0"
-          aria-label="Close notification"
-          title="Dismiss"
+          type="button"
+          onClick={handleAction}
+          aria-label="View reviews"
+          title="View reviews"
+          className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center rounded-xl text-white/70 hover:text-white hover:bg-white/10 active:bg-white/20 transition cursor-pointer shrink-0 ml-auto focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
-          ✕
+          <span className="text-sm font-bold" aria-hidden="true">↗</span>
+        </button>
+
+        {/* Dismiss / Close Button: Real accessible button with min 44px tap target on mobile */}
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Close notification"
+          title="Close notification"
+          className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center rounded-xl text-white/60 hover:text-white hover:bg-white/10 active:bg-white/20 transition text-xs font-bold shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-slate-900"
+        >
+          <span aria-hidden="true">✕</span>
         </button>
       </div>
     </div>

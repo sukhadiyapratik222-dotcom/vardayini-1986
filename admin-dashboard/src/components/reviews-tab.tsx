@@ -36,15 +36,30 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
 
   const handleDelete = async () => {
     if (!reviewToDelete) return;
-    setDeletingId(reviewToDelete.id);
+    const targetId = reviewToDelete.id;
+    setDeletingId(targetId);
     try {
-      await api.deleteReview(reviewToDelete.id);
-      toast.success("Review successfully removed");
+      const res = await api.deleteReview(targetId);
+      if (!res || res.success === false) {
+        throw new Error("Could not remove review");
+      }
+      // Optimistically remove from screen instantly (updates review count and product avg rating without refresh)
+      setReviews((prev) => prev.filter((r) => r.id !== targetId));
       setReviewToDelete(null);
+
+      toast.success("Review successfully removed", "#reviews-list", () => {
+        const listEl = document.getElementById("reviews-list") || document.querySelector("table");
+        if (listEl) {
+          listEl.scrollIntoView({ behavior: "smooth" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+
       await loadReviews();
       if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete review");
+    } catch {
+      toast.error("Could not remove review, please try again");
     } finally {
       setDeletingId(null);
     }
@@ -53,13 +68,17 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
   const handleDeleteAll = async () => {
     setDeletingAll(true);
     try {
-      await api.deleteAllReviews();
-      toast.success("All reviews permanently deleted from store & database");
+      const res = await api.deleteAllReviews();
+      if (!res || res.success === false) {
+        throw new Error("Could not remove reviews");
+      }
+      setReviews([]);
       setShowDeleteAllConfirm(false);
+      toast.success("All reviews permanently deleted from store & database");
       await loadReviews();
       if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete all reviews");
+    } catch {
+      toast.error("Could not remove reviews, please try again");
     } finally {
       setDeletingAll(false);
     }
@@ -288,7 +307,7 @@ export function ReviewsTab({ onRefresh }: ReviewsTabProps) {
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div id="reviews-list" className="space-y-3">
           {filteredReviews.map((rev) => (
             <div
               key={rev.id}
