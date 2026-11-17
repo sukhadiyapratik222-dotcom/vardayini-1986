@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import {
   UiConfig,
@@ -36,10 +36,117 @@ const DEFAULT_CATEGORY_TABS: NewLaunchCategoryTab[] = [
 export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabProps) {
   const currentCfg: NewLaunchPageConfig = config?.newLaunchPage || {};
 
-  // Active section tab in admin UI for smooth navigation
+  // Active section tab in admin UI: default to products curation
   const [adminTab, setAdminTab] = useState<
-    "hero" | "countdown" | "spotlight" | "marquee" | "promo" | "catalogue"
-  >("hero");
+    "products" | "hero" | "countdown" | "spotlight" | "marquee" | "promo" | "catalogue"
+  >("products");
+
+  // Deduped unique store products map
+  const productMap = useMemo(() => {
+    const map = new Map<number, ProductItem>();
+    for (const p of products) {
+      const pid = p.productId || p.id;
+      if (!map.has(pid)) {
+        map.set(pid, p);
+      }
+    }
+    return map;
+  }, [products]);
+
+  const uniqueProducts = useMemo(() => {
+    return Array.from(productMap.values());
+  }, [productMap]);
+
+  const categoriesList = useMemo(() => {
+    const cats = new Set<string>();
+    for (const p of uniqueProducts) {
+      if (p.categoryName) cats.add(p.categoryName);
+    }
+    return Array.from(cats);
+  }, [uniqueProducts]);
+
+  // Curated Products Selection for New Launches (2026)
+  const initialProductIds: number[] =
+    currentCfg.productIds || currentCfg.catalogue?.productIds || [];
+  const [selectedProductIds, setSelectedProductIds] =
+    useState<number[]>(initialProductIds);
+  const [filterMode, setFilterMode] = useState<"curated" | "all">(
+    currentCfg.filterMode || (initialProductIds.length > 0 ? "curated" : "all")
+  );
+  const [productSearch, setProductSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const filteredCatalogProducts = useMemo(() => {
+    return uniqueProducts.filter((p) => {
+      const q = productSearch.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        (p.categoryName || "").toLowerCase().includes(q) ||
+        (p.tags || "").toLowerCase().includes(q) ||
+        (p.sku || "").toLowerCase().includes(q);
+      const matchCat =
+        selectedCategory === "all" || p.categoryName === selectedCategory;
+      return matchSearch && matchCat;
+    });
+  }, [uniqueProducts, productSearch, selectedCategory]);
+
+  const selectedProductsList = useMemo(() => {
+    return selectedProductIds
+      .map((id) => productMap.get(id))
+      .filter((p): p is ProductItem => p !== undefined);
+  }, [selectedProductIds, productMap]);
+
+  const handleToggleProduct = (id: number) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedProductIds(uniqueProducts.map((p) => p.productId || p.id));
+    toast.success(`Selected all ${uniqueProducts.length} products for New Launches`);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedProductIds([]);
+    toast.info("Cleared product selection for New Launches");
+  };
+
+  const handleSelectFirstN = (n = 8) => {
+    setSelectedProductIds(
+      uniqueProducts.slice(0, n).map((p) => p.productId || p.id)
+    );
+    toast.success(`Selected top ${n} products for New Launches`);
+  };
+
+  const handleMoveProductUp = (index: number) => {
+    if (index <= 0) return;
+    setSelectedProductIds((prev) => {
+      const next = [...prev];
+      const temp = next[index - 1];
+      next[index - 1] = next[index];
+      next[index] = temp;
+      return next;
+    });
+  };
+
+  const handleMoveProductDown = (index: number) => {
+    if (index >= selectedProductIds.length - 1) return;
+    setSelectedProductIds((prev) => {
+      const next = [...prev];
+      const temp = next[index + 1];
+      next[index + 1] = next[index];
+      next[index] = temp;
+      return next;
+    });
+  };
+
+  const handleSetSpotlight = (id: number) => {
+    setSpotlightProductId(id);
+    setSpotlightEnabled(true);
+    toast.success("Set as Flagship Spotlight Sweet!");
+  };
 
   // 1. General & Hero
   const [enabled, setEnabled] = useState(currentCfg.enabled ?? true);
@@ -261,6 +368,8 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
         tickerTexts,
         primaryCtaText,
         secondaryCtaText,
+        productIds: selectedProductIds,
+        filterMode,
         countdown: {
           enabled: countdownEnabled,
           title: countdownTitle,
@@ -306,6 +415,7 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
           enableSearch,
           enableSort,
           categoryTabs,
+          productIds: selectedProductIds,
         },
       };
 
@@ -371,6 +481,7 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
          ───────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
         {[
+          { id: "products", label: `🍬 Curate Our Products (${selectedProductIds.length})`, icon: "📦" },
           { id: "hero", label: "👑 Hero & Tickers", icon: "✨" },
           { id: "countdown", label: "⚡ Urgency Countdown", icon: "⏳" },
           { id: "spotlight", label: "⭐ Flagship Spotlight", icon: "🏅" },
@@ -393,6 +504,276 @@ export function NewLaunchTab({ config, products = [], onRefresh }: NewLaunchTabP
           </button>
         ))}
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION 0: CURATE OUR PRODUCTS (CHECK & MANAGE)
+         ───────────────────────────────────────────────────────────── */}
+      {adminTab === "products" && (
+        <div className="space-y-6">
+          {/* Top Control Bar */}
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0b2f8a]/10 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <span>🍬</span>
+                  <span>Our New Launch Products Collection (2026)</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Check and select which products appear on the public New Launches page (<code>/new-launches</code> &amp; <code>/new-products</code>).
+                </p>
+              </div>
+
+              {/* Selection Mode Switch */}
+              <div className="flex items-center gap-2 bg-[#faf8f5] p-1.5 rounded-2xl border border-slate-200 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setFilterMode("curated")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    filterMode === "curated"
+                      ? "bg-[#0b2f8a] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  🎯 Curated ({selectedProductIds.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterMode("all")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    filterMode === "all"
+                      ? "bg-[#0b2f8a] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  🌐 Show All ({uniqueProducts.length})
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Action Buttons & Search */}
+            <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#0b2f8a] bg-blue-50 hover:bg-blue-100 border border-blue-200 transition cursor-pointer"
+                >
+                  ✓ Select All ({uniqueProducts.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectFirstN(8)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition cursor-pointer"
+                >
+                  ✨ Select Top 8
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeselectAll}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition cursor-pointer"
+                >
+                  ✕ Clear Selection
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Search by name, category, SKU..."
+                  className="px-3.5 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#0b2f8a] w-full sm:w-64"
+                />
+              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("all")}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                  selectedCategory === "all"
+                    ? "bg-[#0b2f8a] text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                All Categories ({uniqueProducts.length})
+              </button>
+              {categoriesList.map((cat) => {
+                const count = uniqueProducts.filter((p) => p.categoryName === cat).length;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                      selectedCategory === cat
+                        ? "bg-[#0b2f8a] text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {cat} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Currently Selected Products (Order Preview) */}
+          {selectedProductIds.length > 0 && (
+            <div className="bg-[#faf8f5] rounded-3xl p-5 sm:p-6 border border-[#dfb755]/40 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏆</span>
+                  <h4 className="font-bold text-sm text-[#6b1d1d]">
+                    Curated Launch Display Order ({selectedProductsList.length} Selected)
+                  </h4>
+                </div>
+                <span className="text-[11px] text-slate-500">
+                  Use ↑ / ↓ to adjust display order on public showcase
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-80 overflow-y-auto p-1">
+                {selectedProductsList.map((p, idx) => {
+                  const pid = p.productId || p.id;
+                  const isSpotlight = Number(spotlightProductId) === pid;
+                  return (
+                    <div
+                      key={`selected-${pid}`}
+                      className={`relative flex items-center gap-2.5 p-2.5 rounded-2xl bg-white border shadow-2xs transition ${
+                        isSpotlight ? "border-amber-400 ring-2 ring-amber-300" : "border-slate-200"
+                      }`}
+                    >
+                      <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
+                        <Image
+                          src={p.imageUrl || "/images/kaju-katli.jpg"}
+                          alt={p.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
+                        <p className="text-[10px] text-slate-500 font-mono">₹{p.price}</p>
+                        {isSpotlight && (
+                          <span className="inline-block text-[9px] font-black uppercase text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded mt-0.5">
+                            ⭐ Spotlight
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveProductUp(idx)}
+                          disabled={idx === 0}
+                          className="h-5 w-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 text-[10px] font-bold flex items-center justify-center transition cursor-pointer"
+                          title="Move earlier"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveProductDown(idx)}
+                          disabled={idx === selectedProductsList.length - 1}
+                          className="h-5 w-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 text-[10px] font-bold flex items-center justify-center transition cursor-pointer"
+                          title="Move later"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Interactive Products Checklist Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredCatalogProducts.map((p) => {
+              const pid = p.productId || p.id;
+              const isChecked = selectedProductIds.includes(pid);
+              const isSpotlight = Number(spotlightProductId) === pid;
+
+              return (
+                <div
+                  key={`catalog-${pid}`}
+                  onClick={() => handleToggleProduct(pid)}
+                  className={`group relative p-4 rounded-3xl bg-white border transition-all duration-200 flex flex-col justify-between cursor-pointer shadow-xs select-none ${
+                    isChecked
+                      ? "border-emerald-500 ring-2 ring-emerald-400/40 bg-emerald-50/15"
+                      : "border-slate-200 hover:border-[#0b2f8a]/40 hover:shadow-md"
+                  }`}
+                >
+                  {/* Top Status & Checkbox */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full truncate">
+                      {p.categoryName || "Mithai"}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {}} // Handled by card click
+                      className="h-5 w-5 rounded text-[#0b2f8a] focus:ring-[#0b2f8a] border-slate-300 pointer-events-none"
+                    />
+                  </div>
+
+                  {/* Thumbnail & Info */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                      <Image
+                        src={p.imageUrl || "/images/kaju-katli.jpg"}
+                        alt={p.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug line-clamp-2">
+                        {p.name}
+                      </h4>
+                      <p className="text-xs font-mono font-bold text-[#0b2f8a] mt-1">
+                        ₹{p.price}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Badges & Actions */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isChecked
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {isChecked ? "✓ Selected (2026)" : "○ Not Selected"}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSetSpotlight(pid);
+                      }}
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-xl transition cursor-pointer ${
+                        isSpotlight
+                          ? "bg-amber-400 text-amber-950 shadow-xs"
+                          : "bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-800"
+                      }`}
+                      title="Showcase this sweet as the Flagship Spotlight creation"
+                    >
+                      {isSpotlight ? "⭐ Spotlight" : "Set Spotlight"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           SECTION 1: HERO & ANIMATED CRAFTSMANSHIP LOOP

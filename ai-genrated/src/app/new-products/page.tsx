@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewProductsPage() {
-  const products = await listProducts({ limit: 42 });
+  const products = await listProducts({ limit: 100 });
   const uiConfig = getUiConfigSafe();
 
   return (

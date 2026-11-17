@@ -91,6 +91,7 @@ export interface NewLaunchCatalogueConfig {
   enableSearch?: boolean;
   enableSort?: boolean;
   categoryTabs?: NewLaunchCategoryTab[];
+  productIds?: number[];
 }
 
 export interface NewLaunchConfig {
@@ -106,6 +107,8 @@ export interface NewLaunchConfig {
   marquee?: NewLaunchMarqueeConfig;
   promoBanner?: NewLaunchPromoBannerConfig;
   catalogue?: NewLaunchCatalogueConfig;
+  productIds?: number[];
+  filterMode?: "curated" | "all";
 }
 
 interface NewProductMotionShowcaseProps {
@@ -296,7 +299,21 @@ export function NewProductMotionShowcase({
 
   // 7. Filter & Sort Products
   const filteredProducts = useMemo(() => {
-    let result = (products || []).filter((p) => {
+    const configuredIds = config?.productIds || config?.catalogue?.productIds;
+    const isCurated = config?.filterMode === "curated" || (configuredIds && configuredIds.length > 0 && config?.filterMode !== "all");
+
+    let baseList = products || [];
+    if (isCurated && configuredIds && configuredIds.length > 0) {
+      const idMap = new Map((products || []).map((p) => [p.id, p]));
+      const matched = configuredIds
+        .map((id) => idMap.get(id))
+        .filter((p): p is ShowcaseProduct => p !== undefined);
+      if (matched.length > 0) {
+        baseList = matched;
+      }
+    }
+
+    let result = baseList.filter((p) => {
       const catSlug = (p.categorySlug || "").toLowerCase();
       const pTags = (p.tags || "").toLowerCase();
       const pName = (p.name || "").toLowerCase();
@@ -372,7 +389,7 @@ export function NewProductMotionShowcase({
     }
 
     return result;
-  }, [products, activeTab, searchQuery, sortBy]);
+  }, [products, activeTab, searchQuery, sortBy, config?.productIds, config?.catalogue?.productIds, config?.filterMode]);
 
   // 8. Flagship Spotlight Product Selection
   const spotlightCfg = config?.spotlight;
@@ -423,9 +440,21 @@ export function NewProductMotionShowcase({
   // Marquee products
   const marqueeCount = config?.marquee?.cardCount || 16;
   const marqueeProducts = useMemo(() => {
-    const list = [...(products || []), ...(products || [])];
+    const configuredIds = config?.productIds || config?.catalogue?.productIds;
+    const isCurated = config?.filterMode === "curated" || (configuredIds && configuredIds.length > 0 && config?.filterMode !== "all");
+    let baseList = products || [];
+    if (isCurated && configuredIds && configuredIds.length > 0) {
+      const idMap = new Map((products || []).map((p) => [p.id, p]));
+      const matched = configuredIds
+        .map((id) => idMap.get(id))
+        .filter((p): p is ShowcaseProduct => p !== undefined);
+      if (matched.length > 0) {
+        baseList = matched;
+      }
+    }
+    const list = [...baseList, ...baseList];
     return list.slice(0, marqueeCount);
-  }, [products, marqueeCount]);
+  }, [products, marqueeCount, config?.productIds, config?.catalogue?.productIds, config?.filterMode]);
 
   return (
     <div className="relative min-h-screen bg-[#faf8f5] text-[#182230] selection:bg-[#dfb755]/30">

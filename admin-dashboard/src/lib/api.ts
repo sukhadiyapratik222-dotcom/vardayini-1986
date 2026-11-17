@@ -354,6 +354,7 @@ export interface NewLaunchCatalogueConfig {
   enableSearch?: boolean;
   enableSort?: boolean;
   categoryTabs?: NewLaunchCategoryTab[];
+  productIds?: number[];
 }
 
 export interface NewLaunchPageConfig {
@@ -369,6 +370,8 @@ export interface NewLaunchPageConfig {
   marquee?: NewLaunchMarqueeConfig;
   promoBanner?: NewLaunchPromoBannerConfig;
   catalogue?: NewLaunchCatalogueConfig;
+  productIds?: number[];
+  filterMode?: "curated" | "all";
 }
 
 export interface CulinaryPillarItem {
