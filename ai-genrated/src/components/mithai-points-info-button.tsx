@@ -24,9 +24,21 @@ export function MithaiPointsInfoButton() {
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl border border-[#dfb755]/30 space-y-3.5 max-h-[92vh] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="relative w-full max-w-lg rounded-3xl bg-white p-4 sm:p-5 shadow-2xl border border-[#dfb755]/30 space-y-3 max-h-[92vh] overflow-y-auto hide-scrollbar"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             onClick={(e) => e.stopPropagation()}
           >
+            <style>{`
+              .hide-scrollbar::-webkit-scrollbar {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+              }
+              .hide-scrollbar {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+              }
+            `}</style>
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-[#2a1a12]/10 pb-3">
               <div className="flex items-center gap-2.5">

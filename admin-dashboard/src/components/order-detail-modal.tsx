@@ -353,6 +353,28 @@ export function OrderDetailModal({
     }
   };
 
+  // Update Return / Exchange Status Action
+  const handleReturnAction = async (newReturnStatus: string) => {
+    if (!order) return;
+    try {
+      setIsPending(true);
+      const updated = await api.updateOrderReturnStatus(
+        order.orderNumber,
+        newReturnStatus,
+        order.returnReason || undefined,
+        newReturnStatus === "refunded" ? "refunded" : undefined,
+        newReturnStatus === "refunded" ? order.total : undefined
+      );
+      setOrder((prev) => ({ ...(prev || {}), ...updated }));
+      toast.success(`Return status updated to ${newReturnStatus.toUpperCase()}`);
+      onUpdated?.();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update return status");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   const isPickup =
     order?.fulfillmentType === "pickup" || Boolean(order?.pickupStoreId);
   const statusInfo =
@@ -588,6 +610,64 @@ export function OrderDetailModal({
                   </div>
                 )}
               </div>
+
+              {/* Return / Exchange Customer Request Banner & Actions */}
+              {order.returnStatus && order.returnStatus !== "none" && (
+                <div className="p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-300 text-amber-950 shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl p-2 rounded-xl bg-amber-200/80">🔄</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm uppercase tracking-wide text-amber-950">
+                            Customer Return / Exchange Request
+                          </h4>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase ${
+                            order.returnStatus === "requested" ? "bg-amber-200 text-amber-900 border border-amber-400" :
+                            order.returnStatus === "approved" ? "bg-emerald-200 text-emerald-900 border border-emerald-400" :
+                            order.returnStatus === "rejected" ? "bg-rose-200 text-rose-900 border border-rose-400" :
+                            "bg-purple-200 text-purple-900 border border-purple-400"
+                          }`}>
+                            {order.returnStatus}
+                          </span>
+                        </div>
+                        <p className="text-xs text-amber-900/80 mt-1 leading-relaxed">
+                          <strong>Reason / Note:</strong> {order.returnReason || "No specific reason provided by customer."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions for return status */}
+                  <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-amber-300/60">
+                    <span className="text-xs font-bold text-amber-900">Manage Request:</span>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleReturnAction("approved")}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      ✓ Approve Reverse Pickup
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleReturnAction("rejected")}
+                      className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      ✕ Reject Request
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleReturnAction("refunded")}
+                      className="px-3.5 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      💰 Issue / Mark Refund (₹{order.total})
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* 2-Column Responsive Body */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

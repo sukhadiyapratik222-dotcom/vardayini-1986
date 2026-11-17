@@ -366,7 +366,11 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
   };
 
   const filtered = useMemo(() => {
-    return orders.filter((o) => filter === "all" || o.status === filter);
+    return orders.filter((o) => {
+      if (filter === "all") return true;
+      if (filter === "returns") return o.returnStatus && o.returnStatus !== "none";
+      return o.status === filter;
+    });
   }, [orders, filter]);
 
   const paginatedOrders = useMemo(() => {
@@ -424,6 +428,9 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
               className="text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-4 py-2 text-[#182230] focus:border-[#0b2f8a] outline-none shadow-sm"
             >
               <option value="all">All Orders ({orders.length})</option>
+              <option value="returns">
+                🔄 Return / Exchanges ({orders.filter((o) => o.returnStatus && o.returnStatus !== "none").length})
+              </option>
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
               <option value="packed">Packed</option>
@@ -508,6 +515,18 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusStyle}`}>
                           {order.status}
                         </span>
+                        {order.returnStatus && order.returnStatus !== "none" && (
+                          <div className="mt-1">
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold ${
+                              order.returnStatus === "requested" ? "bg-amber-100 text-amber-900 border border-amber-300" :
+                              order.returnStatus === "approved" ? "bg-emerald-100 text-emerald-900 border border-emerald-300" :
+                              order.returnStatus === "rejected" ? "bg-rose-100 text-rose-900 border border-rose-300" :
+                              "bg-purple-100 text-purple-900 border border-purple-300"
+                            }`}>
+                              🔄 {order.returnStatus.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <select

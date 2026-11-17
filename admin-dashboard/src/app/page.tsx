@@ -41,6 +41,7 @@ import { CategoryShowcaseTab } from "@/components/category-showcase-tab";
 import { BestsellersTab } from "@/components/bestsellers-tab";
 import { WelcomeOfferTab } from "@/components/welcome-offer-tab";
 import { TestimonialsTab } from "@/components/testimonials-tab";
+import { CulinaryPillarsTab } from "@/components/culinary-pillars-tab";
 import { NewLaunchTab } from "@/components/new-launch-tab";
 import { WeeklySlogansTab } from "@/components/weekly-slogans-tab";
 import { MobileManagementTab } from "@/components/mobile-management-tab";
@@ -62,6 +63,7 @@ export type TabId =
   | "bestsellers"
   | "welcome-offer"
   | "testimonials-manager"
+  | "culinary-pillars"
   | "new-launches"
   | "special-items"
   | "branding"
@@ -163,10 +165,11 @@ export default function AdminDashboardPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [homeAccordionOpen, setHomeAccordionOpen] = useState(true);
   const [shopAccordionOpen, setShopAccordionOpen] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [productStockFilter, setProductStockFilter] = useState<"all" | "out_of_stock" | "low_stock" | "in_stock">("all");
 
   const handleTabChange = useCallback((tab: string) => {
-    if (tab === "testimonials-manager" || tab === "category-showcase" || tab === "preview") {
+    if (tab === "category-showcase" || tab === "preview") {
       setActiveTab("overview");
       setIsMobileSidebarOpen(false);
       return;
@@ -179,7 +182,7 @@ export default function AdminDashboardPage() {
       if (tab === "products") {
         setProductStockFilter("all");
       }
-      if (["hero", "announcements", "bestsellers", "special-items", "welcome-offer", "weekly-slogans", "branding"].includes(tab)) {
+      if (["hero", "announcements", "bestsellers", "special-items", "welcome-offer", "weekly-slogans", "testimonials-manager", "culinary-pillars", "branding"].includes(tab)) {
         setHomeAccordionOpen(true);
       }
       if (["products", "categories"].includes(tab)) {
@@ -419,6 +422,18 @@ export default function AdminDashboardPage() {
             perms.includes("settings")
           );
 
+        // 8B. Culinary Experience Pillars
+        case "culinary-pillars":
+          return (
+            perms.includes("branding:view") ||
+            perms.includes("branding:manage") ||
+            perms.includes("branding") ||
+            perms.includes("settings:manage") ||
+            perms.includes("settings") ||
+            currentUser?.role === "admin" ||
+            currentUser?.role === "super_admin"
+          );
+
         // 9. New Launches (2026)
         case "new-launches":
           return (
@@ -602,6 +617,8 @@ export default function AdminDashboardPage() {
           return perms.includes("welcome_offer:manage") || perms.includes("settings:manage");
         case "testimonials-manager":
           return perms.includes("testimonials:manage") || perms.includes("settings:manage");
+        case "culinary-pillars":
+          return perms.includes("branding:manage") || perms.includes("settings:manage") || currentUser.role === "super_admin";
         case "new-launches":
           return perms.includes("new_launches:manage") || perms.includes("settings:manage");
         case "special-items":
@@ -691,11 +708,9 @@ export default function AdminDashboardPage() {
           errors.push(`${label}: ${err instanceof Error ? err.message : String(err)}`);
         };
 
-        const canManageProducts = canManageModule("products");
-        const canManageCategories = canManageModule("categories") || canManageProducts;
-
         const canOrders = isModulePermitted("orders");
         const canProducts = isModulePermitted("products");
+        const canCategories = isModulePermitted("categories");
         const canCustomers = isModulePermitted("customers");
         const canSettings =
           isModulePermitted("branding") ||
@@ -704,6 +719,7 @@ export default function AdminDashboardPage() {
           isModulePermitted("bestsellers") ||
           isModulePermitted("welcome-offer") ||
           isModulePermitted("testimonials-manager") ||
+          isModulePermitted("culinary-pillars") ||
           isModulePermitted("new-launches") ||
           isModulePermitted("special-items") ||
           isModulePermitted("festivals") ||
@@ -729,7 +745,7 @@ export default function AdminDashboardPage() {
                 return [];
               })
             : Promise.resolve([]),
-          canManageProducts
+          canProducts
             ? api.getInventory().catch((err) => {
                 recordErr(err, "Inventory");
                 return { variants: [], lowStock: [] };
@@ -741,7 +757,7 @@ export default function AdminDashboardPage() {
                 return null;
               })
             : Promise.resolve(null),
-          canManageCategories
+          canCategories
             ? api.getCategories().catch((err) => {
                 recordErr(err, "Categories");
                 return [];
@@ -816,6 +832,24 @@ export default function AdminDashboardPage() {
     setIsLoading(false);
   }, [isModulePermitted, canManageModule]);
 
+  const handleManualSync = useCallback(async () => {
+    setIsSyncing(true);
+    toast.info("Connecting to storefront server on port 9449...");
+    try {
+      await loadData();
+      const online = await api.checkConnection();
+      if (online) {
+        toast.success("✓ Store synchronized successfully! Live products, categories, orders & UI config refreshed.");
+      } else {
+        toast.info("Sync completed with cached data. Storefront (port 9449) is currently offline.");
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Sync encountered an issue");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [loadData]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
     loadData();
@@ -886,6 +920,8 @@ export default function AdminDashboardPage() {
     { id: "special-items", label: "Our Special Items", icon: "⭐" },
     { id: "welcome-offer", label: "Welcome Offer (10%)", icon: "🎁" },
     { id: "weekly-slogans", label: "Weekly Slogans", icon: "👑" },
+    { id: "testimonials-manager", label: "Customer Testimonials", icon: "💬" },
+    { id: "culinary-pillars", label: "Heritage Pillars", icon: "🏛️" },
     { id: "branding", label: "Logo & Brand Identity", icon: "✨" },
   ], []);
 
@@ -953,7 +989,17 @@ export default function AdminDashboardPage() {
   ], []);
 
   const isHomeSection = useCallback((tab: TabId) => {
-    return ["hero", "announcements", "bestsellers", "special-items", "welcome-offer", "weekly-slogans", "branding"].includes(tab);
+    return [
+      "hero",
+      "announcements",
+      "bestsellers",
+      "special-items",
+      "welcome-offer",
+      "weekly-slogans",
+      "testimonials-manager",
+      "culinary-pillars",
+      "branding",
+    ].includes(tab);
   }, []);
 
   const isShopSection = useCallback((tab: TabId) => {
@@ -1399,7 +1445,7 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-200/80 text-amber-900 font-extrabold">
-                          7 sections
+                          {homeSections.length} sections
                         </span>
                         <span className={`text-[10px] text-slate-400 transition-transform ${homeAccordionOpen ? "rotate-0" : "-rotate-90"}`}>
                           ▼
@@ -1820,13 +1866,14 @@ export default function AdminDashboardPage() {
 
             <div className="flex items-center gap-3">
               <button
-                onClick={loadData}
-                disabled={isLoading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-[#0b2f8a]/5 text-[#0b2f8a] border border-[#0b2f8a]/15 shadow-sm transition disabled:opacity-50 cursor-pointer"
-                title="Synchronize live data with customer storefront"
+                type="button"
+                onClick={handleManualSync}
+                disabled={isLoading || isSyncing}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+                title="Synchronize live products, orders and configurations with customer storefront"
               >
-                <span className={isLoading ? "animate-spin" : ""}>🔄</span>
-                <span>Sync with Store</span>
+                <span className={isLoading || isSyncing ? "animate-spin" : ""}>🔄</span>
+                <span>{isSyncing ? "Syncing Store..." : "Sync with Store"}</span>
               </button>
 
               {/* Notification Bell Icon on right side corner */}
@@ -2199,6 +2246,30 @@ export default function AdminDashboardPage() {
                   <WelcomeOfferTab config={config} onRefresh={loadData} />
                 ) : (
                   <AccessRestrictedCard moduleName="Welcome Offer (10% Off)" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "testimonials-manager" && (
+                isModulePermitted("testimonials-manager") ? (
+                  <TestimonialsTab
+                    config={config}
+                    onRefresh={loadData}
+                    currentUser={currentUser}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Customer Testimonials" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "culinary-pillars" && (
+                isModulePermitted("culinary-pillars") ? (
+                  <CulinaryPillarsTab
+                    config={config}
+                    onRefresh={loadData}
+                    isReadOnly={!canManageModule("culinary-pillars")}
+                  />
+                ) : (
+                  <AccessRestrictedCard moduleName="Culinary Experience Pillars" currentUser={currentUser} />
                 )
               )}
 

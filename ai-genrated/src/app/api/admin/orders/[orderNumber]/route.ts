@@ -49,6 +49,11 @@ export async function PUT(request: Request, context: { params: Promise<{ orderNu
     actualReadyAt?: string | null;
     pickupVerifiedBy?: string;
     verifyPickup?: boolean;
+    // Return & Exchange management
+    returnStatus?: string | null;
+    returnReason?: string | null;
+    refundStatus?: string | null;
+    refundAmount?: number;
     // Tracking milestone note
     note?: string;
     location?: string;
@@ -198,6 +203,13 @@ export async function PUT(request: Request, context: { params: Promise<{ orderNu
       patch.paymentStatus = "paid";
     }
   }
+
+  // Return & Exchange management
+  if (body.returnStatus !== undefined) patch.returnStatus = body.returnStatus;
+  if (body.returnReason !== undefined) patch.returnReason = body.returnReason;
+  if (body.refundStatus !== undefined) patch.refundStatus = body.refundStatus;
+  if (body.refundAmount !== undefined) patch.refundAmount = body.refundAmount;
+  if (body.cancelReason !== undefined) patch.cancelReason = body.cancelReason;
 
   const targetStatus = body.status;
 

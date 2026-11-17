@@ -551,6 +551,9 @@ export interface OrderItem {
   courierName?: string | null;
   trackingNumber?: string | null;
   trackingUrl?: string | null;
+  returnStatus?: string | null;
+  returnReason?: string | null;
+  cancelReason?: string | null;
   createdAt: string;
 }
 
@@ -668,6 +671,10 @@ export interface UpdateOrderTrackingPayload {
   paymentMethod?: string;
   paymentStatus?: string;
   cancelReason?: string;
+  returnStatus?: string;
+  returnReason?: string;
+  refundStatus?: string;
+  refundAmount?: number;
   // Tracking
   courierName?: string;
   trackingNumber?: string;
@@ -1070,6 +1077,29 @@ export const api = {
       body: JSON.stringify({ ...payload, orderNumber: (orderNumber || "").replace(/^#/, "").trim() }),
     });
     const data = await handleResponse<{ order: FullOrderDetail }>(res, "Failed to update order tracking");
+    return data.order;
+  },
+
+  async updateOrderReturnStatus(
+    orderNumber: string,
+    returnStatus: string,
+    returnReason?: string,
+    refundStatus?: string,
+    refundAmount?: number
+  ): Promise<FullOrderDetail> {
+    const cleanNum = cleanOrderParam(orderNumber);
+    const res = await fetch(`${PROXY_BASE}/api/admin/orders/${cleanNum}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        returnStatus,
+        returnReason,
+        refundStatus,
+        refundAmount,
+        orderNumber: (orderNumber || "").replace(/^#/, "").trim(),
+      }),
+    });
+    const data = await handleResponse<{ order: FullOrderDetail }>(res, "Failed to update return status");
     return data.order;
   },
 
