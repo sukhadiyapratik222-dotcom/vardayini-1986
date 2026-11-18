@@ -18,6 +18,11 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
 
   // Ensure path is properly formatted with single api/ prefix
   let subPath = path.join("/");
+  // Strip duplicate store/api or api/store prefixes if mistakenly sent e.g. "api/store/api/quiz" -> "api/quiz"
+  subPath = subPath
+    .replace(/^api\/+store\/+api\//, "api/")
+    .replace(/^store\/+api\//, "api/")
+    .replace(/^api\/+store\//, "api/");
   if (!subPath.startsWith("api/") && !subPath.startsWith("/")) {
     subPath = `api/${subPath}`;
   }
