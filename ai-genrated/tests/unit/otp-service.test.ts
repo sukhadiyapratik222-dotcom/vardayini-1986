@@ -198,6 +198,18 @@ describe("Fast2SMS OTP Service - Vardayini Sweet Mart", () => {
         generatedOtp
       );
 
+      try {
+        const { getMongoDb } = await import("../../src/lib/mongodb");
+        const db = await getMongoDb();
+        if (db) {
+          const pastDate = new Date(Date.now() - 6 * 60 * 1000);
+          await db.collection("otp_logs").updateMany(
+            { phone: testPhone, otp_code: generatedOtp },
+            { $set: { createdAt: pastDate, expiresAt: new Date(Date.now() - 1000) } }
+          );
+        }
+      } catch {}
+
       const verifyRes = await verifyOTP(testPhone, generatedOtp, "register");
       expect(verifyRes.success).toBe(false);
       expect(verifyRes.error).toContain("expired (5-minute validity)");

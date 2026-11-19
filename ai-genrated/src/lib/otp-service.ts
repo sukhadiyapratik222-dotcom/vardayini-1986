@@ -432,14 +432,16 @@ export async function verifyOTP(
 
   // Resolve target OTP code and expiration
   const targetCode = mongoRecord?.otp_code || sqlRecord?.otp_code;
-  let isExpired = false;
+  const isMongoExpired = mongoRecord?.expiresAt
+    ? Date.now() > new Date(mongoRecord.expiresAt).getTime()
+    : false;
+  const isSqlExpired = sqlRecord?.created_at
+    ? Date.now() - new Date(sqlRecord.created_at.replace(" ", "T") + "Z").getTime() > OTP_EXPIRATION_MS
+    : false;
 
-  if (mongoRecord?.expiresAt) {
-    isExpired = Date.now() > new Date(mongoRecord.expiresAt).getTime();
-  } else if (sqlRecord?.created_at) {
-    const createdAtMs = new Date(sqlRecord.created_at.replace(" ", "T") + "Z").getTime();
-    isExpired = Date.now() - createdAtMs > OTP_EXPIRATION_MS;
-  }
+  const isExpired = mongoRecord && sqlRecord
+    ? (isMongoExpired || isSqlExpired)
+    : (mongoRecord ? isMongoExpired : isSqlExpired);
 
   // If database record exists but expired
   if (targetCode && isExpired) {
