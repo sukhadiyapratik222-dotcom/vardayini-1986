@@ -1022,17 +1022,12 @@
         },
         {
           "id": "sweets",
-          "label": "👑 Royal Mithai",
+          "label": "👑 Royal farsan",
           "active": true
         },
         {
           "id": "farsan",
           "label": "🥟 Crisp Farsan",
-          "active": true
-        },
-        {
-          "id": "sugarless",
-          "label": "🍃 Sugar-Free",
           "active": true
         },
         {
@@ -1042,15 +1037,25 @@
         }
       ],
       "productIds": [
-        52,
-        67,
-        68
+        3,
+        4,
+        5,
+        7,
+        8,
+        9,
+        10,
+        11
       ]
     },
     "productIds": [
-      52,
-      67,
-      68
+      3,
+      4,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11
     ],
     "filterMode": "curated"
   },

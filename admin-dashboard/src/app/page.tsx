@@ -197,8 +197,8 @@ export default function AdminDashboardPage() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [loginEmail, setLoginEmail] = useState("admin@vardayini.com");
-  const [loginPassword, setLoginPassword] = useState("");
+  const [loginEmail, setLoginEmail] = useState("pratik222@gmail.com");
+  const [loginPassword, setLoginPassword] = useState("Pratik@#123");
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -1143,6 +1143,38 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
+              {/* Quick Select Super Admin / Store Admin */}
+              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail("pratik222@gmail.com");
+                    setLoginPassword("Pratik@#123");
+                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    loginEmail === "pratik222@gmail.com"
+                      ? "bg-amber-500 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                  }`}
+                >
+                  <span>👑 Super Admin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail("admin@vardayini.com");
+                    setLoginPassword("admin123");
+                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    loginEmail === "admin@vardayini.com"
+                      ? "bg-[#0b2f8a] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                  }`}
+                >
+                  <span>🛡️ Store Admin</span>
+                </button>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-[#182230]">
                   Admin Email
@@ -1324,24 +1356,24 @@ export default function AdminDashboardPage() {
               <div className="mt-3 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${currentUser?.role === "super_admin" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${currentUser?.role === "super_admin" || currentUser?.email === "pratik222@gmail.com" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
                     <span className="font-bold text-[#0b2f8a] text-[11px] truncate">
-                      {currentUser?.name || "Admin"}
+                      {currentUser?.name || "Pratik Sukhadiya"}
                     </span>
-                    {currentUser?.role === "super_admin" && (
+                    {(currentUser?.role === "super_admin" || currentUser?.email === "pratik222@gmail.com") && (
                       <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold uppercase bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-xs">
                         👑 Super Admin
                       </span>
                     )}
                   </div>
                   <span className="block text-[10px] text-[#5e6d82] truncate">
-                    {currentUser?.email || "admin@vardayini.com"}
+                    {currentUser?.email || "pratik222@gmail.com"}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="px-2 py-0.5 rounded text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition shrink-0"
+                  className="px-2 py-0.5 rounded text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition shrink-0 cursor-pointer"
                   title="Sign out of Admin Desk"
                 >
                   Sign Out
@@ -1878,16 +1910,16 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={handleManualSync}
                 disabled={isLoading || isSyncing}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0b2f8a] hover:bg-[#071c54] text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
                 title="Synchronize live products, orders and configurations with customer storefront"
               >
                 <span className={isLoading || isSyncing ? "animate-spin" : ""}>🔄</span>
-                <span>{isSyncing ? "Syncing Store..." : "Sync with Store"}</span>
+                <span>{isSyncing ? "Syncing..." : "Sync Store"}</span>
               </button>
 
               {/* Notification Bell Icon on right side corner */}
@@ -1895,6 +1927,59 @@ export default function AdminDashboardPage() {
                 onUnreadChange={setUnreadNotificationCount}
                 onNavigateTab={handleTabChange}
               />
+
+              {/* Top Header Super Admin Profile Pill */}
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                <div
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50/60 border border-amber-200/90 shadow-2xs hover:shadow-xs transition select-none"
+                  title={`Logged in as ${currentUser?.name || "Pratik Sukhadiya (Super Admin)"} (${currentUser?.role === "super_admin" || currentUser?.email === "pratik222@gmail.com" ? "Super Admin" : "Admin"})`}
+                >
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#0b2f8a] to-[#2563eb] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                      {currentUser?.name
+                        ? currentUser.name
+                            .split(" ")
+                            .map((p) => p[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase()
+                        : "PS"}
+                    </div>
+                    {(currentUser?.role === "super_admin" || currentUser?.email === "pratik222@gmail.com") && (
+                      <span className="absolute -top-1.5 -right-1.5 text-xs drop-shadow-sm select-none" title="Super Admin Crown">
+                        👑
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="hidden md:flex flex-col text-left leading-tight min-w-0 max-w-[150px] lg:max-w-[200px]">
+                    <div className="flex items-center gap-1">
+                      <span className="font-extrabold text-[#071c54] text-xs truncate">
+                        {currentUser?.name || "Pratik Sukhadiya"}
+                      </span>
+                      {(currentUser?.role === "super_admin" || currentUser?.email === "pratik222@gmail.com") && (
+                        <span className="shrink-0 px-1 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-2xs">
+                          Super
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-[#5e6d82] truncate">
+                      {currentUser?.email || "pratik222@gmail.com"}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition text-xs font-bold shrink-0 cursor-pointer"
+                  title="Sign out of Admin Dashboard"
+                  aria-label="Sign out"
+                >
+                  <span className="hidden lg:inline text-[11px] text-rose-600 font-semibold mr-1">Logout</span>
+                  🚪
+                </button>
+              </div>
             </div>
           </div>
 

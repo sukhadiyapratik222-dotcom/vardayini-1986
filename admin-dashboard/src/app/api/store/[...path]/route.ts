@@ -2,10 +2,47 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { STORE_URL_CONFIG_ERROR, getStoreApiBase } from "@/lib/store-url";
 
+import path from "node:path";
+import fs from "node:fs";
+
 export const dynamic = "force-dynamic";
 
 interface RouteContext {
   params: Promise<{ path: string[] }>;
+}
+
+function getLocalNotificationsFallback(limit: number = 50) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DatabaseSync } = require("node:sqlite");
+    const possiblePaths = [
+      path.resolve(process.cwd(), "ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), "../ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), ".data/vardayini_local.db"),
+    ];
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        const db = new DatabaseSync(p);
+        const rows = db.prepare(`SELECT * FROM admin_notifications ORDER BY id DESC LIMIT ?`).all(limit);
+        const unread = db.prepare(`SELECT COUNT(*) as count FROM admin_notifications WHERE is_read = 0`).get() as { count?: number };
+        return {
+          notifications: rows.map((r: any) => ({
+            id: r.id,
+            type: r.type,
+            title: r.title,
+            message: r.message,
+            data: r.data,
+            isRead: Boolean(r.is_read),
+            createdAt: r.created_at,
+          })),
+          unreadCount: Number(unread?.count || 0),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("[Store Proxy] SQLite notifications fallback notice:", err);
+  }
+  return null;
 }
 
 async function forwardRequest(req: NextRequest, ctx: RouteContext) {
@@ -100,9 +137,9 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
       try {
         const text = new TextDecoder().decode(responseData).toLowerCase();
         if (
-          response.status === 401 ||
           text.includes("account deactivated") ||
-          text.includes("account inactive")
+          text.includes("account inactive") ||
+          (cleanSubPath.startsWith("api/auth/") && response.status === 401)
         ) {
           cookieStore.delete("vsm_admin_session");
         }
@@ -142,6 +179,11 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
             });
           }
         } catch {}
+      } else if (cleanSubPath === "api/admin/notifications") {
+        const fallback = getLocalNotificationsFallback();
+        if (fallback) {
+          return NextResponse.json(fallback);
+        }
       } else if (cleanSubPath === "api/admin/customers") {
         return NextResponse.json({ customers: [] });
       }
@@ -166,6 +208,13 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
       );
     } else {
       console.error(`Store proxy error forwarding to ${targetUrl}:`, error);
+    }
+
+    if (cleanSubPath === "api/admin/notifications" && req.method === "GET") {
+      const fallback = getLocalNotificationsFallback();
+      if (fallback) {
+        return NextResponse.json(fallback);
+      }
     }
     return NextResponse.json(
       {

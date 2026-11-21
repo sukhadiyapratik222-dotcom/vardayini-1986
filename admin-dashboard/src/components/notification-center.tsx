@@ -137,7 +137,9 @@ export function playNotificationSound(tone: SoundTone = "fahhh") {
 
 function formatRelativeTime(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
+    const cleanStr = typeof dateStr === "string" ? dateStr.replace(" ", "T") : dateStr;
+    const date = new Date(cleanStr);
+    if (isNaN(date.getTime())) return dateStr;
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffSec = Math.floor(diffMs / 1000);
