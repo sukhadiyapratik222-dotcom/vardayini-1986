@@ -45,6 +45,84 @@ function getLocalNotificationsFallback(limit: number = 50) {
   return null;
 }
 
+function updateLocalNotificationFallback(id?: number, all?: boolean) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DatabaseSync } = require("node:sqlite");
+    const possiblePaths = [
+      path.resolve(process.cwd(), "ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), "../ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), ".data/vardayini_local.db"),
+    ];
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        const db = new DatabaseSync(p);
+        if (all) {
+          db.prepare(`UPDATE admin_notifications SET is_read = 1`).run();
+        } else if (id !== undefined && !isNaN(id)) {
+          db.prepare(`UPDATE admin_notifications SET is_read = 1 WHERE id = ?`).run(id);
+        }
+        return { success: true };
+      }
+    }
+  } catch (err) {
+    console.warn("[Store Proxy] SQLite update notification notice:", err);
+  }
+  return null;
+}
+
+function deleteLocalNotificationFallback(id?: number, all?: boolean) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DatabaseSync } = require("node:sqlite");
+    const possiblePaths = [
+      path.resolve(process.cwd(), "ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), "../ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), ".data/vardayini_local.db"),
+    ];
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        const db = new DatabaseSync(p);
+        if (all) {
+          db.prepare(`DELETE FROM admin_notifications`).run();
+        } else if (id !== undefined && !isNaN(id)) {
+          db.prepare(`DELETE FROM admin_notifications WHERE id = ?`).run(id);
+        }
+        return { success: true };
+      }
+    }
+  } catch (err) {
+    console.warn("[Store Proxy] SQLite delete notification notice:", err);
+  }
+  return null;
+}
+
+function insertLocalNotificationFallback(payload: { type?: string; title: string; message: string; data?: any }) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DatabaseSync } = require("node:sqlite");
+    const possiblePaths = [
+      path.resolve(process.cwd(), "ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), "../ai-genrated/.data/vardayini_local.db"),
+      path.resolve(process.cwd(), ".data/vardayini_local.db"),
+    ];
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        const db = new DatabaseSync(p);
+        const dataStr = payload.data ? JSON.stringify(payload.data) : null;
+        db.prepare(`
+          INSERT INTO admin_notifications (type, title, message, data, is_read, created_at)
+          VALUES (?, ?, ?, ?, 0, datetime('now'))
+        `).run(payload.type || "system", payload.title, payload.message, dataStr);
+        return { success: true };
+      }
+    }
+  } catch (err) {
+    console.warn("[Store Proxy] SQLite insert notification notice:", err);
+  }
+  return null;
+}
+
 async function forwardRequest(req: NextRequest, ctx: RouteContext) {
   const { path } = await ctx.params;
   const storeApiBase = getStoreApiBase().replace(/\/api\/?$/, "");
@@ -180,9 +258,29 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
           }
         } catch {}
       } else if (cleanSubPath === "api/admin/notifications") {
-        const fallback = getLocalNotificationsFallback();
-        if (fallback) {
-          return NextResponse.json(fallback);
+        if (req.method === "GET") {
+          const fallback = getLocalNotificationsFallback();
+          if (fallback) return NextResponse.json(fallback);
+        } else if (req.method === "PUT") {
+          const urlObj = new URL(req.url);
+          const all = urlObj.searchParams.get("all") === "true";
+          const idParam = urlObj.searchParams.get("id");
+          const id = idParam ? parseInt(idParam, 10) : undefined;
+          const res = updateLocalNotificationFallback(id, all);
+          if (res) return NextResponse.json({ success: true, message: "Notification updated." });
+        } else if (req.method === "DELETE") {
+          const urlObj = new URL(req.url);
+          const all = urlObj.searchParams.get("all") === "true";
+          const idParam = urlObj.searchParams.get("id");
+          const id = idParam ? parseInt(idParam, 10) : undefined;
+          const res = deleteLocalNotificationFallback(id, all);
+          if (res) return NextResponse.json({ success: true, message: "Notification deleted." });
+        } else if (req.method === "POST") {
+          try {
+            const body = await req.json();
+            const res = insertLocalNotificationFallback(body);
+            if (res) return NextResponse.json({ success: true, message: "Notification created." });
+          } catch {}
         }
       } else if (cleanSubPath === "api/admin/customers") {
         return NextResponse.json({ customers: [] });
@@ -210,10 +308,30 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
       console.error(`Store proxy error forwarding to ${targetUrl}:`, error);
     }
 
-    if (cleanSubPath === "api/admin/notifications" && req.method === "GET") {
-      const fallback = getLocalNotificationsFallback();
-      if (fallback) {
-        return NextResponse.json(fallback);
+    if (cleanSubPath === "api/admin/notifications") {
+      if (req.method === "GET") {
+        const fallback = getLocalNotificationsFallback();
+        if (fallback) return NextResponse.json(fallback);
+      } else if (req.method === "PUT") {
+        const urlObj = new URL(req.url);
+        const all = urlObj.searchParams.get("all") === "true";
+        const idParam = urlObj.searchParams.get("id");
+        const id = idParam ? parseInt(idParam, 10) : undefined;
+        const res = updateLocalNotificationFallback(id, all);
+        if (res) return NextResponse.json({ success: true, message: "Notification updated." });
+      } else if (req.method === "DELETE") {
+        const urlObj = new URL(req.url);
+        const all = urlObj.searchParams.get("all") === "true";
+        const idParam = urlObj.searchParams.get("id");
+        const id = idParam ? parseInt(idParam, 10) : undefined;
+        const res = deleteLocalNotificationFallback(id, all);
+        if (res) return NextResponse.json({ success: true, message: "Notification deleted." });
+      } else if (req.method === "POST") {
+        try {
+          const body = await req.json();
+          const res = insertLocalNotificationFallback(body);
+          if (res) return NextResponse.json({ success: true, message: "Notification created." });
+        } catch {}
       }
     }
     return NextResponse.json(

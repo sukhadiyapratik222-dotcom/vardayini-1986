@@ -3,7 +3,7 @@ import { db, ensureDbMigrations } from "@/db";
 import { adminNotifications } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { readJsonSafe } from "@/lib/validation";
-import { ensureNotificationTable } from "@/lib/notifications";
+import { ensureNotificationTable, recordAdminNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +61,35 @@ export async function GET(request: Request) {
     notifications,
     unreadCount: Number(unreadResult?.count || 0),
   });
+}
+
+export async function POST(request: Request) {
+  await ensureDbMigrations();
+  await ensureNotificationTable();
+  const auth = await requireAdmin(request);
+  if (auth.error) {
+    return auth.error;
+  }
+
+  const body = await readJsonSafe<{
+    type?: string;
+    title: string;
+    message: string;
+    data?: any;
+  }>(request);
+
+  if (!body || !body.title || !body.message) {
+    return Response.json({ error: "title and message are required" }, { status: 400 });
+  }
+
+  await recordAdminNotification({
+    type: (body.type as any) || "system",
+    title: body.title,
+    message: body.message,
+    data: body.data || null,
+  });
+
+  return Response.json({ success: true, message: "Notification created." });
 }
 
 export async function PUT(request: Request) {

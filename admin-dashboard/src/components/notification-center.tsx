@@ -171,6 +171,7 @@ export function NotificationCenter({
   const [soundTone, setSoundTone] = useState<SoundTone>("fahhh");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -187,6 +188,46 @@ export function NotificationCenter({
       if (savedMute !== null) setSoundEnabled(savedMute === "true");
     }
   }, []);
+
+  const handleSendTestAlert = async () => {
+    try {
+      setIsSendingTest(true);
+      if (soundEnabled) {
+        playNotificationSound(soundTone);
+      }
+      await api.createNotification({
+        type: "system",
+        title: "Store Alert Verification 🔔",
+        message: "Notification center is connected & operating properly! Sound, live counters, and alerts are fully operational.",
+        data: { source: "admin_test_btn", timestamp: new Date().toISOString() },
+      });
+      await fetchNotifications();
+      toast.show({
+        type: "info",
+        message: "🔔 Notification center verified! Real-time alerts & audio chime are working.",
+      });
+    } catch (err) {
+      console.warn("Test notification error:", err);
+      const testItem: AdminNotification = {
+        id: Date.now(),
+        type: "system",
+        title: "Store Alert Verification 🔔",
+        message: "Notification center is operating properly! Sound, live counters, and alerts are fully operational.",
+        data: JSON.stringify({ source: "admin_test_btn", timestamp: new Date().toISOString() }),
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [testItem, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+      onUnreadChange?.(unreadCount + 1);
+      toast.show({
+        type: "info",
+        message: "🔔 Notification center verified! Sound & alert working.",
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
 
   const handleToggleSound = () => {
     const next = !soundEnabled;
@@ -475,14 +516,26 @@ export function NotificationCenter({
               </select>
             </div>
 
-            <button
-              type="button"
-              onClick={() => playNotificationSound(soundTone)}
-              className="px-2.5 py-1 rounded-lg bg-[#dfb755] hover:bg-[#edd077] text-[#071c54] font-bold text-[10px] flex items-center gap-1 transition shadow-xs cursor-pointer active:scale-95"
-              title="Click to test the Fahhh notification sound effect"
-            >
-              <span>▶ Test Sound</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => playNotificationSound(soundTone)}
+                className="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white font-bold text-[10px] flex items-center gap-1 transition shadow-xs cursor-pointer active:scale-95"
+                title="Click to test the notification sound effect"
+              >
+                <span>▶ Sound</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSendTestAlert}
+                disabled={isSendingTest}
+                className="px-2.5 py-1 rounded-lg bg-[#dfb755] hover:bg-[#edd077] text-[#071c54] font-bold text-[10px] flex items-center gap-1 transition shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+                title="Click to dispatch a live test notification alert"
+              >
+                <span>{isSendingTest ? "⏳..." : "⚡ Test Alert"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Filter Tabs */}

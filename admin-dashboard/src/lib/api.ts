@@ -1338,6 +1338,15 @@ export const api = {
     return handleResponse<{ success: boolean }>(res, "Failed to delete notification");
   },
 
+  async createNotification(payload: { type?: string; title: string; message: string; data?: any }): Promise<{ success: boolean }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/notifications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<{ success: boolean }>(res, "Failed to create notification");
+  },
+
   // Stores / Outlets Management
   async getStores(): Promise<AdminStoreOutlet[]> {
     const res = await fetch(`${PROXY_BASE}/api/stores`, {
