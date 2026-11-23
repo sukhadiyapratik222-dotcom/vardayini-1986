@@ -91,6 +91,7 @@ export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
   const policiesMenu = [
     { label: "Our Story (75 Years)", href: "/our-story" },
     { label: "Track Your Order", href: "/track" },
+    { label: "24-Hr Return Policy", href: "/return-policy" },
     { label: "Terms & Conditions", href: "/policies?tab=terms" },
     { label: "Shipping Policy (Free > ₹799)", href: "/policies?tab=shipping" },
     { label: "Privacy Policy", href: "/policies?tab=privacy" },

@@ -480,6 +480,24 @@ const MobileManagementSchema = z.object({
   customPages: z.array(MobileCustomPageSchema).optional(),
 }).passthrough().optional();
 
+const ReturnPolicySchema = z.object({
+  title: z.string().optional(),
+  badge: z.string().optional(),
+  windowHours: z.number().optional(),
+  overview: z.string().optional(),
+  eligibleReasons: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string(),
+  }).passthrough()).optional(),
+  ineligibleReasons: z.array(z.string()).optional(),
+  claimProcess: z.array(z.string()).optional(),
+  refundTurnaround: z.string().optional(),
+  noticeNote: z.string().optional(),
+  supportPhone: z.string().optional(),
+  supportEmail: z.string().optional(),
+}).passthrough().optional();
+
 const UiConfigUpdateSchema = z.object({
   heroPhotos: z.array(HeroPhotoSchema).optional(),
   heroSettings: HeroSettingsSchema.optional(),
@@ -499,6 +517,7 @@ const UiConfigUpdateSchema = z.object({
   newLaunchPage: NewLaunchPageSchema.optional(),
   culinaryPillars: CulinaryPillarsSchema.optional(),
   mobileManagement: MobileManagementSchema.optional(),
+  returnPolicy: ReturnPolicySchema.optional(),
 }).strict();
 
 function deepMerge(target: any, source: any): any {

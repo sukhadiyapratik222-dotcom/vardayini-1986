@@ -59,11 +59,15 @@ interface OrderTrackingData {
   deliverySlot: string;
   paymentMethod: string;
   paymentStatus: string;
-  createdAt: string;
+  createdAt: string | null;
   expectedDeliveryDate?: string | null;
   deliveredAt?: string | null;
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  returnStatus?: string | null;
+  returnReason?: string | null;
+  refundStatus?: string | null;
+  refundAmount?: number | null;
   kitchenCamToken?: string | null;
   kitchenCamUrl?: string | null;
   pickupDetails?: PickupDetails | null;
@@ -151,6 +155,30 @@ export function OrderTrackerClient() {
   const [copiedOtp, setCopiedOtp] = useState(false);
   const [locatingUserRoute, setLocatingUserRoute] = useState(false);
   const [routeMsg, setRouteMsg] = useState("");
+
+  // 24-Hour Perishable Return & Exchange Claim State
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnType, setReturnType] = useState<"return" | "exchange">("exchange");
+  const [returnReason, setReturnReason] = useState("wrong_item");
+  const [returnDescription, setReturnDescription] = useState("");
+  const [returnPhoto, setReturnPhoto] = useState("");
+  const [returnPhotoName, setReturnPhotoName] = useState("");
+  const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnSuccessMsg, setReturnSuccessMsg] = useState<string | null>(null);
+
+  const placedAt = orderData?.createdAt ? new Date(orderData.createdAt) : null;
+  const placedAtText =
+    placedAt && Number.isFinite(placedAt.getTime())
+      ? placedAt.toLocaleDateString("en-IN", {
+          weekday: "short",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "Date unavailable";
 
   const initialOrderId = searchParams.get("orderId") || searchParams.get("id") || "";
 
@@ -241,6 +269,85 @@ export function OrderTrackerClient() {
       },
       { timeout: 8000 }
     );
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setReturnError("Please upload a valid image file (JPG, PNG, or WebP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setReturnError("Photo exceeds the 5MB size limit. Please choose a smaller photo.");
+      return;
+    }
+
+    setReturnError(null);
+    setReturnPhotoName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setReturnPhoto((event.target?.result as string) || "");
+    };
+    reader.onerror = () => {
+      setReturnError("Failed to read the selected photo. Please try again.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleReturnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderData) return;
+
+    if (returnDescription.trim().length < 10) {
+      setReturnError("Please provide a detailed description (minimum 10 characters).");
+      return;
+    }
+
+    if (!returnPhoto) {
+      setReturnError("Photo proof is mandatory for perishable food claims. Please attach a photo.");
+      return;
+    }
+
+    setReturnSubmitting(true);
+    setReturnError(null);
+
+    try {
+      const res = await fetch(`/api/orders/${orderData.orderNumber}/return`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: returnType,
+          reason: returnReason,
+          description: returnDescription.trim(),
+          photo: returnPhoto,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setReturnError(data.error || "Failed to submit claim.");
+      } else {
+        setReturnSuccessMsg(data.message || "Claim submitted successfully.");
+        setOrderData((prev) =>
+          prev
+            ? {
+                ...prev,
+                returnStatus: "requested",
+                returnReason: `${returnType === "exchange" ? "Exchange" : "Return"}: ${returnReason} - ${returnDescription.trim()}`,
+              }
+            : null
+        );
+        setShowReturnModal(false);
+      }
+    } catch {
+      setReturnError("Network error while submitting claim. Please check your connection.");
+    } finally {
+      setReturnSubmitting(false);
+    }
   };
 
   const getStatusColor = (status: string, isCancelled: boolean) => {
@@ -432,15 +539,7 @@ export function OrderTrackerClient() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Placed on{" "}
-                  {new Date(orderData.createdAt).toLocaleDateString("en-IN", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  Placed on {placedAtText}
                 </p>
               </div>
 
@@ -994,6 +1093,376 @@ export function OrderTrackerClient() {
             </div>
           </div>
 
+          {/* ─────────────────────────────────────────────────────────────
+              PERISHABLE SWEETS EXCHANGE & RETURN SECTION (24-HOUR SLA)
+             ───────────────────────────────────────────────────────────── */}
+          {(() => {
+            const isDelivered = orderData.status === "delivered";
+            const deliveryTime = orderData.deliveredAt
+              ? new Date(orderData.deliveredAt).getTime()
+              : isDelivered && orderData.createdAt
+              ? new Date(orderData.createdAt).getTime()
+              : null;
+            const timeSinceDelivery = deliveryTime ? Date.now() - deliveryTime : null;
+            const isWithin24Hours = timeSinceDelivery !== null && timeSinceDelivery <= 24 * 60 * 60 * 1000;
+            const hoursSinceDelivery = timeSinceDelivery !== null ? Math.floor(timeSinceDelivery / (3600 * 1000)) : 0;
+            const hoursRemaining = Math.max(0, 24 - hoursSinceDelivery);
+            const hasActiveReturn = Boolean(orderData.returnStatus && orderData.returnStatus !== "none");
+
+            return (
+              <div className="space-y-4">
+                {/* Success Notification */}
+                {returnSuccessMsg && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 flex items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span>✓</span>
+                      <span>{returnSuccessMsg}</span>
+                    </div>
+                    <button
+                      onClick={() => setReturnSuccessMsg(null)}
+                      className="text-emerald-700 hover:text-emerald-900 font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* Case 1: Return Already Requested / In Progress */}
+                {hasActiveReturn && (
+                  <div className="rounded-3xl border border-[#071c54]/15 bg-white p-6 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">🔄</span>
+                        <div>
+                          <h4 className="font-bold text-sm text-[#071c54]">
+                            Exchange &amp; Return Status Tracker
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Claim filed for Order #{orderData.orderNumber}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                          orderData.returnStatus === "requested"
+                            ? "bg-amber-100 text-amber-900 border border-amber-300"
+                            : orderData.returnStatus === "under_review"
+                            ? "bg-blue-100 text-blue-900 border border-blue-300"
+                            : orderData.returnStatus === "approved"
+                            ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                            : orderData.returnStatus === "refunded"
+                            ? "bg-teal-100 text-teal-900 border border-teal-300"
+                            : orderData.returnStatus === "replaced"
+                            ? "bg-purple-100 text-purple-900 border border-purple-300"
+                            : "bg-rose-100 text-rose-900 border border-rose-300"
+                        }`}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {orderData.returnStatus === "under_review" ? "Under Review" : orderData.returnStatus}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100 space-y-1">
+                        <span className="text-slate-500 font-medium block text-[11px]">Reason &amp; Details</span>
+                        <p className="font-semibold text-slate-800">
+                          {orderData.returnReason || "Exchange / Return requested by customer."}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100 space-y-1">
+                        <span className="text-slate-500 font-medium block text-[11px]">Resolution &amp; Refund SLA</span>
+                        <p className="font-semibold text-slate-800">
+                          {orderData.refundStatus === "refunded"
+                            ? `Refund of ${formatInr(orderData.refundAmount || orderData.total)} issued.`
+                            : orderData.returnStatus === "approved"
+                            ? "Approved · Refund processing in 5-7 working days."
+                            : "Our Kalol quality desk is inspecting the photo proof."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 text-[11px] text-slate-500 flex items-center justify-between flex-wrap gap-2">
+                      <span>Need to update details? Contact our support desk below.</span>
+                      <Link href="/return-policy" className="text-[#071c54] font-semibold underline hover:text-[#c45c26]">
+                        View Return Policy Guidelines →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {/* Case 2: Delivered and Within 24-Hour Window */}
+                {isDelivered && isWithin24Hours && !hasActiveReturn && (
+                  <div className="rounded-3xl border border-amber-300 bg-gradient-to-r from-amber-50/90 via-white to-amber-50/50 p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="h-11 w-11 rounded-2xl bg-[#071c54] text-[#dfb755] flex items-center justify-center font-bold text-xl shrink-0 shadow-xs">
+                        🛡️
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-sm sm:text-base text-[#071c54]">
+                            24-Hour Freshness Guarantee &amp; Return Window
+                          </h4>
+                          <span className="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                            ⏱️ {hoursRemaining}h remaining to claim
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
+                          Sweets are perishable items. If you received the wrong item, damaged box, spoiled sweet, or missing items, submit a claim within 24 hours of delivery with photo proof.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                      <Link
+                        href="/return-policy"
+                        className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 text-xs font-semibold transition"
+                      >
+                        Policy Details
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowReturnModal(true);
+                          setReturnError(null);
+                        }}
+                        className="rounded-xl bg-[#071c54] hover:bg-[#05143b] text-[#dfb755] px-4 py-2 text-xs font-bold transition shadow-xs"
+                      >
+                        Request Exchange / Return →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Case 3: Delivered but > 24 Hours Ago */}
+                {isDelivered && !isWithin24Hours && !hasActiveReturn && (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-xs text-slate-600 flex items-start gap-3">
+                    <span className="text-base shrink-0">ℹ️</span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-800">
+                        Exchange &amp; Return Window Closed
+                      </p>
+                      <p className="leading-relaxed">
+                        Under our perishable food policy, claims must be filed within 24 hours of delivery. This order was delivered over {Math.floor(hoursSinceDelivery / 24)} day(s) ago. For special quality inquiries, please contact our counter support desk below.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Case 4: Not Delivered Yet */}
+                {!isDelivered && !orderData.isCancelled && (
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-[11px] text-slate-500 flex items-center justify-between flex-wrap gap-2">
+                    <span className="flex items-center gap-1.5">
+                      <span>🛡️</span>
+                      <span><strong>Perishable Quality Guarantee:</strong> Exchange/refund requests open upon delivery for 24 hours.</span>
+                    </span>
+                    <Link href="/return-policy" className="text-[#071c54] font-semibold underline hover:text-[#c45c26]">
+                      Review 24-Hour Policy →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* ─────────────────────────────────────────────────────────────
+              REQUEST RETURN / EXCHANGE MODAL
+             ───────────────────────────────────────────────────────────── */}
+          {showReturnModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+              <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 space-y-5 my-8">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">🛡️</span>
+                    <div>
+                      <h3 className="font-bold text-base text-[#071c54]">
+                        Request Exchange or Return
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        Order #{orderData.orderNumber} · 24-Hour Perishable SLA
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowReturnModal(false)}
+                    className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Return Form */}
+                <form onSubmit={handleReturnSubmit} className="space-y-4 text-xs">
+                  {/* Request Type Selector */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1.5">
+                      Resolution Preference <span className="text-rose-600">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setReturnType("exchange")}
+                        className={`rounded-xl p-2.5 border font-semibold flex items-center justify-center gap-2 transition ${
+                          returnType === "exchange"
+                            ? "border-[#071c54] bg-[#071c54] text-[#dfb755] shadow-xs"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span>🔄</span>
+                        <span>Fresh Replacement</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setReturnType("return")}
+                        className={`rounded-xl p-2.5 border font-semibold flex items-center justify-center gap-2 transition ${
+                          returnType === "return"
+                            ? "border-[#071c54] bg-[#071c54] text-[#dfb755] shadow-xs"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span>💳</span>
+                        <span>Bank / UPI Refund</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Reason Dropdown */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1.5">
+                      Reason for Claim <span className="text-rose-600">*</span>
+                    </label>
+                    <select
+                      value={returnReason}
+                      onChange={(e) => setReturnReason(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-800 focus:border-[#071c54] focus:outline-hidden"
+                      required
+                    >
+                      <option value="wrong_item">Wrong Item Delivered</option>
+                      <option value="damaged_packaging">Damaged Packaging / Broken Seal</option>
+                      <option value="spoiled_product">Spoiled Product / Quality Defect</option>
+                      <option value="missing_items">Missing Item(s) in Parcel</option>
+                    </select>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Note: Change of mind, opened/eaten items, or customer address issues are not eligible.
+                    </p>
+                  </div>
+
+                  {/* Detailed Description */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1.5">
+                      Detailed Description <span className="text-rose-600">*</span>
+                    </label>
+                    <textarea
+                      value={returnDescription}
+                      onChange={(e) => setReturnDescription(e.target.value)}
+                      rows={3}
+                      placeholder="Please explain the issue with your sweets/parcel (e.g. received wrong sweet, seal was torn in transit, etc.)..."
+                      className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 focus:border-[#071c54] focus:outline-hidden"
+                      required
+                      minLength={10}
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Minimum 10 characters required.
+                    </p>
+                  </div>
+
+                  {/* Photo Proof Upload */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1.5">
+                      Photo Proof <span className="text-rose-600">*</span> (Max 5MB)
+                    </label>
+                    <div className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center space-y-2 hover:border-[#dfb755] transition bg-slate-50/50">
+                      {returnPhoto ? (
+                        <div className="space-y-2">
+                          <img
+                            src={returnPhoto}
+                            alt="Uploaded defect proof"
+                            className="mx-auto max-h-40 rounded-xl object-contain border border-slate-200 bg-white"
+                          />
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-[11px] text-slate-600 font-medium truncate max-w-xs">
+                              {returnPhotoName || "Photo attached"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReturnPhoto("");
+                                setReturnPhotoName("");
+                              }}
+                              className="text-xs text-rose-600 font-bold hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id="return-photo-input"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="return-photo-input"
+                            className="cursor-pointer inline-flex flex-col items-center justify-center space-y-1.5"
+                          >
+                            <span className="text-2xl">📸</span>
+                            <span className="font-bold text-[#071c54] underline hover:text-[#c45c26]">
+                              Click to upload photo proof
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              Attach image of package label, broken seal, or sweet defect (JPG, PNG, WebP ≤ 5MB)
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Error Alert */}
+                  {returnError && (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-rose-700 font-medium">
+                      ⚠️ {returnError}
+                    </div>
+                  )}
+
+                  {/* Policy Summary */}
+                  <div className="rounded-xl bg-amber-50/70 border border-amber-200 p-3 text-[11px] text-slate-600 space-y-1">
+                    <p className="font-bold text-amber-900">Perishable Sweets Guarantee Notice:</p>
+                    <p>
+                      Approved refunds are credited to your original bank/UPI account in <strong>5–7 working days</strong>.
+                      Exchanges are dispatched immediately from our Kalol counter upon photo verification.
+                    </p>
+                  </div>
+
+                  {/* Modal Action Buttons */}
+                  <div className="flex items-center justify-end gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowReturnModal(false)}
+                      disabled={returnSubmitting}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-bold text-slate-600 hover:bg-slate-50 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={returnSubmitting || !returnPhoto || returnDescription.trim().length < 10}
+                      className="rounded-xl bg-[#071c54] hover:bg-[#05143b] text-[#dfb755] px-5 py-2.5 font-bold shadow-md transition disabled:opacity-50"
+                    >
+                      {returnSubmitting ? "Submitting Claim..." : "Submit Claim for Review"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* Need Help / Customer Support Desk Contact */}
           <div className="rounded-3xl border border-[#dfb755]/40 bg-gradient-to-r from-[#dfb755]/15 via-white to-[#dfb755]/10 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -1003,20 +1472,20 @@ export function OrderTrackerClient() {
               <div>
                 <h4 className="font-bold text-sm text-[#0b2f8a]">Need help with this delivery?</h4>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Our Mandvi Flagship counter team is available 7:00 AM – 8:30 PM (All 7 Days).
+                  Our Kalol Flagship counter team is available 8:00 AM – 8:30 PM (All 7 Days).
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5 shrink-0">
               <a
-                href="tel:+919825019760"
+                href="tel:+916352119329"
                 className="rounded-xl bg-[#0b2f8a] text-white px-4 py-2 text-xs font-bold hover:bg-[#071c54] transition shadow-xs flex items-center gap-1.5"
               >
                 <span>📞 Call Store</span>
               </a>
               <a
-                href={`https://wa.me/919825019760?text=${encodeURIComponent(
+                href={`https://wa.me/916352119329?text=${encodeURIComponent(
                   `Namaste Vardayini Sweets, I am inquiring about my Order #${orderData.orderNumber}.`
                 )}`}
                 target="_blank"

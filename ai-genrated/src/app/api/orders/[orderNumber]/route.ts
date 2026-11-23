@@ -106,19 +106,21 @@ export async function GET(_request: Request, context: { params: Promise<{ orderN
     invoiceSummary = inv || null;
   } catch {}
 
-  // Calculate return and cancel eligibility
-  const RETURN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+  // Calculate return and cancel eligibility (Perishable Sweets: 24-Hour SLA)
+  const RETURN_WINDOW_HOURS = 24;
+  const RETURN_WINDOW_MS = RETURN_WINDOW_HOURS * 60 * 60 * 1000;
   const isDelivered = order.status === "delivered";
   const deliveryTime = order.deliveredAt
     ? new Date(order.deliveredAt).getTime()
     : new Date(order.createdAt).getTime();
   const timeSinceDelivery = Date.now() - deliveryTime;
-  const daysSinceDelivery = Math.floor(timeSinceDelivery / (24 * 60 * 60 * 1000));
+  const hoursSinceDelivery = Math.floor(timeSinceDelivery / (3600 * 1000));
   const isReturnEligible =
     isDelivered &&
     timeSinceDelivery <= RETURN_WINDOW_MS &&
     (!order.returnStatus || order.returnStatus === "none");
-  const returnDaysLeft = isDelivered ? Math.max(0, 7 - daysSinceDelivery) : 0;
+  const returnHoursLeft = isDelivered ? Math.max(0, RETURN_WINDOW_HOURS - hoursSinceDelivery) : 0;
+  const returnDaysLeft = returnHoursLeft > 0 ? 1 : 0;
   const isCancelEligible = canCustomerCancel(order.status);
   const { guestTokenHash: _discardHash, ...safeOrder } = order;
 
@@ -137,7 +139,9 @@ export async function GET(_request: Request, context: { params: Promise<{ orderN
     eligibility: {
       canCancel: isCancelEligible,
       canReturn: isReturnEligible,
+      returnHoursLeft,
       returnDaysLeft,
+      returnWindowHours: RETURN_WINDOW_HOURS,
       isDelivered,
     },
   });

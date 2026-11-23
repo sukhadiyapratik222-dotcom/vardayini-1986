@@ -12,6 +12,13 @@ import {
 import { toast } from "@/lib/toast";
 import { getPublicStoreUrl } from "@/lib/store-url";
 
+const STORE_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Kolkata",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 interface OverviewTabProps {
   config: UiConfig | null;
   orders: OrderItem[];
@@ -75,30 +82,49 @@ export function OverviewTab({
     }
   };
 
-  // Compute stats dynamically with fallback to operational defaults
-  const totalOrders = stats?.totalOrders ?? (orders.length || 174);
+  const totalOrders = stats?.totalOrders ?? orders.length;
   const awaitingProcessing =
     stats?.awaitingProcessing ??
-    (orders.filter((o) => o.status === "pending" || o.status === "awaiting").length || 120);
+    orders.filter((o) => o.status === "pending" || o.status === "awaiting").length;
   const processingOrders =
     stats?.processingOrders ??
-    (orders.filter((o) => o.status === "confirmed" || o.status === "processing").length || 31);
+    orders.filter((o) => o.status === "confirmed" || o.status === "processing").length;
   const readyForPickup =
     stats?.readyForPickup ??
-    (orders.filter((o) => o.status === "packed" || o.status === "ready").length || 1);
+    orders.filter((o) => o.status === "packed" || o.status === "ready").length;
   const completedOrders =
     stats?.completedOrders ??
     orders.filter((o) => o.status === "delivered" || o.status === "completed").length;
   const canceledOrders =
     stats?.canceledOrders ??
-    (orders.filter((o) => o.status === "cancelled" || o.status === "canceled").length || 4);
-  const publishedProducts = stats?.publishedProducts ?? (products.length || 76);
-  const publishedCategories = stats?.publishedCategories ?? 18;
-  const reviewsRatings = stats?.reviewsRatings ?? 0;
-  const totalCustomers = stats?.totalCustomers ?? 9;
+    orders.filter((o) => o.status === "cancelled" || o.status === "canceled").length;
+  const publishedProducts = stats?.publishedProducts ?? products.length;
+  const publishedCategories = stats?.publishedCategories ?? "—";
+  const reviewsRatings = stats?.reviewsRatings ?? "—";
+  const totalCustomers = stats?.totalCustomers ?? "—";
   const outOfStock =
     stats?.outOfStock ??
-    (inventory.variants?.filter((v) => v.stock <= 0).length || 0);
+    (inventory.variants.length
+      ? inventory.variants.filter((v) => v.stock <= 0).length
+      : "—");
+
+  const todayKey = STORE_DATE_FORMATTER.format(new Date());
+  const todayOrders = orders.filter((order) => {
+    const createdAt = new Date(order.createdAt);
+    return !Number.isNaN(createdAt.getTime()) && STORE_DATE_FORMATTER.format(createdAt) === todayKey;
+  });
+  const todayRevenue = todayOrders.reduce((total, order) => {
+    return ["cancelled", "canceled"].includes(order.status.toLowerCase())
+      ? total
+      : total + Number(order.total || 0);
+  }, 0);
+  const pendingOrders = orders.filter((order) =>
+    ["pending", "awaiting"].includes(order.status.toLowerCase())
+  ).length;
+  const pendingReturns = orders.filter((o) =>
+    o.returnStatus && ["requested", "under_review"].includes(o.returnStatus.toLowerCase())
+  ).length;
+  const lowStockCount = inventory.lowStock.length;
 
   // The 11 Operational Stat Cards matching the exact layout and color styling
   const statCards = [
@@ -307,6 +333,25 @@ export function OverviewTab({
         </svg>
       ),
     },
+    {
+      id: "pending_returns",
+      label: "PENDING RETURNS",
+      value: pendingReturns,
+      topBorder: "bg-[#e11d48]",
+      iconBg: "bg-[#ffe4e6]",
+      iconColor: "text-[#be123c]",
+      onClick: () => onNavigateTab("returns"),
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.2}
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -364,6 +409,30 @@ export function OverviewTab({
             Refresh
           </button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {[
+          { label: "TODAY'S ORDERS", value: todayOrders.length, color: "text-[#0b2f8a]" },
+          {
+            label: "TODAY'S REVENUE",
+            value: `₹${todayRevenue.toLocaleString("en-IN")}`,
+            color: "text-emerald-700",
+          },
+          { label: "PENDING ORDERS", value: pendingOrders, color: "text-amber-700" },
+          { label: "PENDING RETURNS", value: pendingReturns, color: "text-rose-700" },
+          { label: "LOW STOCK (UNDER 5)", value: lowStockCount, color: "text-amber-600" },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100"
+          >
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">
+              {card.label}
+            </span>
+            <p className={`text-2xl font-extrabold mt-2 ${card.color}`}>{card.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* The 11 Core Operational Dashboard Cards */}

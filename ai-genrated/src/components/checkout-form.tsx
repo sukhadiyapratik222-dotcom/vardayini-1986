@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { INDIAN_STATES } from "@/lib/validation-constants";
 import { AddressSchema, formatZodErrors } from "@/lib/validation";
+import type { CartLine } from "@/lib/cart";
+import { formatInr } from "@/lib/money";
 
 const DELIVERY_SLOTS = [
   "Today, 5:00–7:00 PM",
@@ -104,9 +107,13 @@ interface SavedAddress {
 export function CheckoutForm({
   defaultName,
   defaultPhone,
+  lines,
+  totals,
 }: {
   defaultName: string;
   defaultPhone: string;
+  lines: CartLine[];
+  totals: { total: number; deliveryFee: number };
 }) {
   const router = useRouter();
   const [fulfillmentType, setFulfillmentType] = useState<"pickup" | "delivery">("pickup");
@@ -161,6 +168,7 @@ export function CheckoutForm({
   const [orderOtpError, setOrderOtpError] = useState("");
   const [resendingOrderWhatsapp, setResendingOrderWhatsapp] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [agreedToReturnPolicy, setAgreedToReturnPolicy] = useState(false);
 
   // Countdown timer for Order OTP resend
   useEffect(() => {
@@ -284,6 +292,7 @@ export function CheckoutForm({
   }, [selectedStoreId, pickupDate, fulfillmentType]);
 
   const selectedStore = stores.find((s) => s.id === selectedStoreId) || stores[0];
+  const orderTotal = fulfillmentType === "pickup" ? totals.total - totals.deliveryFee : totals.total;
 
   const clearFieldError = (key: string) => {
     if (fieldErrors[key]) {
@@ -361,6 +370,11 @@ export function CheckoutForm({
         ...prev,
         phone: "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9",
       }));
+      return;
+    }
+
+    if (!agreedToReturnPolicy) {
+      setGlobalError("Please agree to the 24-Hour Perishable Sweets Exchange & Return Policy to proceed.");
       return;
     }
 
@@ -542,7 +556,12 @@ export function CheckoutForm({
   }
 
   return (
-    <>
+    <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <section>
+        <p className="text-xs uppercase tracking-[0.28em] text-[#c45c26]">Checkout</p>
+        <h1 className="mt-1 sm:mt-2 font-[family-name:var(--font-display)] text-xl sm:text-4xl text-[#6b1d1d] font-bold">
+          Where should it arrive?
+        </h1>
       <form onSubmit={onSubmit} noValidate className="mithai-card mt-5 sm:mt-8 space-y-4 sm:space-y-6 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm border border-[#6b1d1d]/10">
       {/* 1. Fulfillment Mode Toggle */}
       <div>
@@ -1063,6 +1082,45 @@ export function CheckoutForm({
         </div>
       </fieldset>
 
+      {/* 24-Hour Perishable Sweets Exchange & Return Policy Agreement */}
+      <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 p-4 space-y-2.5">
+        <div className="flex items-start gap-2.5">
+          <span className="text-base shrink-0">🛡️</span>
+          <div className="text-xs text-slate-700 leading-relaxed">
+            <span className="font-bold text-[#071c54] block mb-0.5">
+              Perishable Sweets 24-Hour Policy Notice:
+            </span>
+            Sweets and farsan are perishable food items made fresh daily. Exchanges or refunds are accepted only for wrong items, damaged packaging, spoiled product, or missing items reported within <strong>24 hours of delivery</strong> with order number and photo proof. Changes of mind or opened/eaten items are not eligible.
+          </div>
+        </div>
+
+        <label className="flex items-start gap-2.5 cursor-pointer pt-1 text-xs font-semibold text-slate-800">
+          <input
+            type="checkbox"
+            checked={agreedToReturnPolicy}
+            onChange={(e) => {
+              setAgreedToReturnPolicy(e.target.checked);
+              if (e.target.checked && globalError?.includes("Policy")) {
+                setGlobalError("");
+              }
+            }}
+            className="mt-0.5 h-4 w-4 rounded border-amber-400 text-[#071c54] focus:ring-[#071c54] accent-[#071c54]"
+            required
+          />
+          <span>
+            I have read and agree to the{" "}
+            <Link
+              href="/return-policy"
+              target="_blank"
+              className="text-[#071c54] underline hover:text-[#c45c26]"
+            >
+              24-Hour Perishable Sweets Exchange &amp; Return Policy
+            </Link>{" "}
+            <span className="text-rose-600">*</span>
+          </span>
+        </label>
+      </div>
+
       {/* Error Banner */}
       {globalError && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs font-medium text-rose-700 flex items-center gap-2">
@@ -1074,7 +1132,7 @@ export function CheckoutForm({
       {/* Submit Action */}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !agreedToReturnPolicy}
         className="btn-primary w-full rounded-full py-4 text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-50 transition"
       >
         {loading
@@ -1084,6 +1142,28 @@ export function CheckoutForm({
           : "Confirm & Place Fresh Order"}
       </button>
     </form>
+      </section>
+
+      <aside className="mithai-card h-fit rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+        <h2 className="font-[family-name:var(--font-display)] text-2xl text-[#6b1d1d]">Order summary</h2>
+        <ul className="mt-4 space-y-3 text-sm">
+          {lines.map((line) => (
+            <li key={line.id} className="flex justify-between gap-3">
+              <span>
+                {line.name} · {line.weight} × {line.quantity}
+              </span>
+              <span>{formatInr(line.lineTotal)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 flex justify-between border-t border-[#6b1d1d]/10 pt-3 font-semibold">
+          <span>Total</span>
+          <span>{formatInr(orderTotal)}</span>
+        </div>
+        <p className="mt-2 text-xs text-[#2a1a12]/55">
+          {fulfillmentType === "pickup" ? "Incl. GST; pickup is free" : "Incl. GST and delivery"}
+        </p>
+      </aside>
 
     {/* 6. Customer Mobile OTP Verification Modal */}
     {showOtpModal && (
@@ -1239,6 +1319,6 @@ export function CheckoutForm({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

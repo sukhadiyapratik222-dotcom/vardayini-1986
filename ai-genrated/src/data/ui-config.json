@@ -1330,5 +1330,43 @@
         "updatedAt": "2026-11-14T20:00:00.000Z"
       }
     ]
+  },
+  "returnPolicy": {
+    "title": "24-Hour Perishable Sweets Exchange & Return Policy",
+    "badge": "Perishable Food Policy",
+    "windowHours": 24,
+    "overview": "Sweets and farsan are perishable food items prepared fresh daily with 100% pure desi cow ghee. Under FSSAI guidelines, exchanges or refunds are accepted exclusively for wrong items, damaged packaging, spoiled product, or missing items reported within 24 hours of delivery with photographic proof.",
+    "eligibleReasons": [
+      {
+        "id": "wrong_item",
+        "title": "Wrong Item Delivered",
+        "description": "Received an item different from the ordered product."
+      },
+      {
+        "id": "damaged_packaging",
+        "title": "Damaged Packaging / Broken Seal",
+        "description": "Transit damage, crushed box, or broken ghee tamper seal upon arrival."
+      },
+      {
+        "id": "spoiled_product",
+        "title": "Spoiled Product / Quality Defect",
+        "description": "Compromised freshness, odor, or spoilage upon immediate delivery."
+      },
+      {
+        "id": "missing_items",
+        "title": "Missing Item(s) in Parcel",
+        "description": "Items billed on invoice but missing from the delivered parcel."
+      }
+    ],
+    "ineligibleReasons": [
+      "Change of mind or preference after receiving fresh sweets",
+      "Opened, tasted, or eaten items beyond reasonable initial inspection",
+      "Delivery delay or failed attempt due to incorrect or unreachable address provided by customer",
+      "Claims reported after 24 hours of delivery timestamp"
+    ],
+    "refundTurnaround": "5-7 working days after approval",
+    "noticeNote": "All claims require order number and photo proof within 24 hours of delivery. Refunds are processed in 5-7 working days upon approval.",
+    "supportPhone": "+91 63521 19329",
+    "supportEmail": "support@vardayinisweets.com"
   }
 }

@@ -8,6 +8,7 @@ import {
   OrderItem,
   OrderStatusHistoryItem,
   UpdateOrderTrackingPayload,
+  ReturnRequestItem,
 } from "@/lib/api";
 import { toast } from "@/lib/toast";
 
@@ -139,6 +140,10 @@ export function OrderDetailModal({
     "status" | "shipping" | "pickup" | "payment" | "notes"
   >("status");
 
+  // Linked Return Request State (Perishable 24H Claim)
+  const [linkedReturn, setLinkedReturn] = useState<ReturnRequestItem | null>(null);
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
+
   const loadOrder = async () => {
     try {
       if (!order) setLoading(true);
@@ -193,6 +198,18 @@ export function OrderDetailModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [orderNumber]);
+
+  useEffect(() => {
+    if (orderNumber) {
+      api
+        .getReturns({ search: orderNumber })
+        .then((res) => {
+          const found = res.items?.find((r) => r.orderNumber === orderNumber);
+          if (found) setLinkedReturn(found);
+        })
+        .catch(() => {});
+    }
+  }, [orderNumber, order?.returnStatus]);
 
   const copyToClipboard = (text: string, type: "id" | "otp" | "tracking") => {
     navigator.clipboard.writeText(text);
@@ -613,57 +630,109 @@ export function OrderDetailModal({
 
               {/* Return / Exchange Customer Request Banner & Actions */}
               {order.returnStatus && order.returnStatus !== "none" && (
-                <div className="p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-300 text-amber-950 shadow-xs space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-300 text-amber-950 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <span className="text-2xl p-2 rounded-xl bg-amber-200/80">🔄</span>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <span className="text-2xl p-2 rounded-xl bg-amber-200/80 shrink-0">🛡️</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-sm uppercase tracking-wide text-amber-950">
-                            Customer Return / Exchange Request
+                            Customer Exchange &amp; Return Claim
                           </h4>
                           <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase ${
                             order.returnStatus === "requested" ? "bg-amber-200 text-amber-900 border border-amber-400" :
+                            order.returnStatus === "under_review" ? "bg-blue-200 text-blue-900 border border-blue-400" :
                             order.returnStatus === "approved" ? "bg-emerald-200 text-emerald-900 border border-emerald-400" :
-                            order.returnStatus === "rejected" ? "bg-rose-200 text-rose-900 border border-rose-400" :
-                            "bg-purple-200 text-purple-900 border border-purple-400"
+                            order.returnStatus === "refunded" ? "bg-teal-200 text-teal-900 border border-teal-400" :
+                            order.returnStatus === "replaced" ? "bg-purple-200 text-purple-900 border border-purple-400" :
+                            "bg-rose-200 text-rose-900 border border-rose-400"
                           }`}>
                             {order.returnStatus}
                           </span>
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                            24h Freshness Policy
+                          </span>
                         </div>
-                        <p className="text-xs text-amber-900/80 mt-1 leading-relaxed">
-                          <strong>Reason / Note:</strong> {order.returnReason || "No specific reason provided by customer."}
+                        <p className="text-xs text-amber-900/90 leading-relaxed">
+                          <strong>Reason:</strong> {linkedReturn?.reasonLabel || order.returnReason || "Exchange / Return requested by customer."}
                         </p>
+                        {linkedReturn?.description && (
+                          <p className="text-xs text-slate-700 bg-white/80 p-2.5 rounded-xl border border-amber-200/60 leading-relaxed">
+                            <strong>Customer Statement:</strong> {linkedReturn.description}
+                          </p>
+                        )}
+                        {linkedReturn?.adminNotes && (
+                          <p className="text-xs text-blue-900 bg-blue-50 p-2.5 rounded-xl border border-blue-200 leading-relaxed">
+                            <strong>Admin Note:</strong> {linkedReturn.adminNotes}
+                          </p>
+                        )}
                       </div>
                     </div>
+
+                    {/* Defect Photo Proof Thumbnail */}
+                    {linkedReturn?.photoUrl && (
+                      <div className="flex flex-col items-center gap-1 shrink-0 self-start">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewPhotoUrl(linkedReturn.photoUrl)}
+                          className="group relative h-16 w-16 rounded-xl overflow-hidden border-2 border-amber-400 shadow-xs cursor-pointer hover:opacity-90"
+                        >
+                          <img
+                            src={linkedReturn.photoUrl}
+                            alt="Photo proof"
+                            className="h-full w-full object-cover"
+                          />
+                          <span className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
+                            🔍
+                          </span>
+                        </button>
+                        <span className="text-[10px] text-amber-900 font-semibold">Photo Proof</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions for return status */}
-                  <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-amber-300/60">
-                    <span className="text-xs font-bold text-amber-900">Manage Request:</span>
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-amber-300/60 text-xs">
+                    <span className="font-bold text-amber-900 mr-1">Status Flow:</span>
                     <button
                       type="button"
                       disabled={isPending}
-                      onClick={() => handleReturnAction("approved")}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                      onClick={() => handleReturnAction("under_review")}
+                      className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                     >
-                      ✓ Approve Reverse Pickup
+                      🔍 Under Review
                     </button>
                     <button
                       type="button"
                       disabled={isPending}
-                      onClick={() => handleReturnAction("rejected")}
-                      className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                      onClick={() => handleReturnAction("approved")}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                     >
-                      ✕ Reject Request
+                      ✓ Approve Claim
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleReturnAction("replaced")}
+                      className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      🔄 Replaced
                     </button>
                     <button
                       type="button"
                       disabled={isPending}
                       onClick={() => handleReturnAction("refunded")}
-                      className="px-3.5 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                     >
-                      💰 Issue / Mark Refund (₹{order.total})
+                      💳 Refunded (₹{order.refundAmount || order.total})
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleReturnAction("rejected")}
+                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      ✕ Reject
                     </button>
                   </div>
                 </div>
@@ -1509,6 +1578,33 @@ export function OrderDetailModal({
           </div>
         </div>
       </div>
+
+      {/* Customer Photo Proof Modal */}
+      {previewPhotoUrl && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
+          <div className="relative max-w-2xl w-full rounded-3xl bg-white p-5 shadow-2xl space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-slate-900">
+                Customer Defect Photo Proof
+              </h4>
+              <button
+                type="button"
+                onClick={() => setPreviewPhotoUrl(null)}
+                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm transition"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center max-h-[70vh]">
+              <img
+                src={previewPhotoUrl}
+                alt="Defect proof"
+                className="max-h-[70vh] w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

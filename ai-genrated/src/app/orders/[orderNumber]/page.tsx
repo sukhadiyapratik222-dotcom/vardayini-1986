@@ -894,6 +894,45 @@ export default async function OrderPage({
         </article>
       </div>
 
+      {/* 24-Hour Perishable Sweets Exchange & Return Policy Card */}
+      <section className="mt-6 rounded-3xl border border-[#dfb755]/40 bg-gradient-to-r from-amber-50 via-white to-amber-50/50 p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="h-10 w-10 rounded-2xl bg-[#071c54] text-[#dfb755] flex items-center justify-center font-bold text-lg shrink-0">
+              🛡️
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm sm:text-base text-[#071c54]">
+                  24-Hour Perishable Sweets Exchange &amp; Return Policy
+                </h3>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-full">
+                  Freshness Guarantee
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+                Sweets and savouries are perishable food items made fresh daily. Exchanges or refunds are accepted only for <strong>wrong items, damaged packaging, spoiled product, or missing items</strong> reported within <strong>24 hours of delivery</strong> with photographic proof. Changes of mind or opened items are not eligible.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+            <Link
+              href="/return-policy"
+              className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 text-xs font-semibold transition"
+            >
+              Read Full Policy
+            </Link>
+            <Link
+              href={`/track?orderId=${encodeURIComponent(order.orderNumber)}`}
+              className="rounded-xl bg-[#071c54] hover:bg-[#05143b] text-[#dfb755] px-4 py-2 text-xs font-bold transition shadow-xs"
+            >
+              Request Claim →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <div className="mt-8 flex items-center justify-between">
         <Link href="/shop" className="text-sm font-semibold text-[#c45c26] hover:underline">
           ← Continue shopping

@@ -46,6 +46,7 @@ import { CulinaryPillarsTab } from "@/components/culinary-pillars-tab";
 import { NewLaunchTab } from "@/components/new-launch-tab";
 import { WeeklySlogansTab } from "@/components/weekly-slogans-tab";
 import { MobileManagementTab } from "@/components/mobile-management-tab";
+import ReturnsTab from "@/components/returns-tab";
 
 export type TabId =
   | "overview"
@@ -58,6 +59,7 @@ export type TabId =
   | "pages"
   | "outlets"
   | "pickups"
+  | "returns"
   | "hero"
   | "announcements"
   | "category-showcase"
@@ -197,8 +199,8 @@ export default function AdminDashboardPage() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [loginEmail, setLoginEmail] = useState("pratik222@gmail.com");
-  const [loginPassword, setLoginPassword] = useState("Pratik@#123");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -512,6 +514,16 @@ export default function AdminDashboardPage() {
             perms.includes("pickups") ||
             perms.includes("orders:view") ||
             perms.includes("orders:manage")
+          );
+
+        // 15B. Returns Desk
+        case "returns":
+          return (
+            perms.includes("orders:view") ||
+            perms.includes("orders:manage") ||
+            perms.includes("orders") ||
+            perms.includes("returns:view") ||
+            perms.includes("returns:manage")
           );
 
         // 16. Customer Reviews
@@ -963,6 +975,12 @@ export default function AdminDashboardPage() {
       badge: "Live",
     },
     {
+      id: "returns",
+      label: "Returns Desk",
+      icon: "🛡️",
+      badge: orders.filter((o) => o.returnStatus && ["requested", "under_review"].includes(o.returnStatus.toLowerCase())).length || undefined,
+    },
+    {
       id: "customers",
       label: "Customer Directory",
       icon: "👥",
@@ -1142,38 +1160,6 @@ export default function AdminDashboardPage() {
                   <div className="flex-1 leading-relaxed">{loginError}</div>
                 </div>
               )}
-
-              {/* Quick Select Super Admin / Store Admin */}
-              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-100 border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail("pratik222@gmail.com");
-                    setLoginPassword("Pratik@#123");
-                  }}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                    loginEmail === "pratik222@gmail.com"
-                      ? "bg-amber-500 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-                  }`}
-                >
-                  <span>👑 Super Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail("admin@vardayini.com");
-                    setLoginPassword("admin123");
-                  }}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                    loginEmail === "admin@vardayini.com"
-                      ? "bg-[#0b2f8a] text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-                  }`}
-                >
-                  <span>🛡️ Store Admin</span>
-                </button>
-              </div>
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-[#182230]">
@@ -2455,6 +2441,14 @@ export default function AdminDashboardPage() {
                   <PickupsTab />
                 ) : (
                   <AccessRestrictedCard moduleName="Store Pickups Management" currentUser={currentUser} />
+                )
+              )}
+
+              {activeTab === "returns" && (
+                isModulePermitted("returns") ? (
+                  <ReturnsTab />
+                ) : (
+                  <AccessRestrictedCard moduleName="Returns & Exchanges Management" currentUser={currentUser} />
                 )
               )}
 

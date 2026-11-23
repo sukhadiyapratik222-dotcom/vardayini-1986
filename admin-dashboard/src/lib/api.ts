@@ -96,6 +96,7 @@ export interface UiConfig {
   newLaunchPage?: NewLaunchPageConfig;
   culinaryPillars?: CulinaryPillarsConfig;
   mobileManagement?: MobileManagementConfig;
+  returnPolicy?: ReturnPolicyConfig;
 }
 
 export interface MobileCustomPage {
@@ -556,8 +557,55 @@ export interface OrderItem {
   trackingUrl?: string | null;
   returnStatus?: string | null;
   returnReason?: string | null;
+  refundStatus?: string | null;
+  refundAmount?: number | null;
+  deliveredAt?: string | null;
   cancelReason?: string | null;
   createdAt: string;
+}
+
+export type ReturnStatus =
+  | "requested"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "replaced"
+  | "refunded";
+
+export interface ReturnRequestItem {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  reason: string;
+  reasonLabel: string;
+  description: string;
+  photoUrl: string;
+  status: ReturnStatus;
+  adminNotes?: string | null;
+  refundAmount: number;
+  requestedAt: string;
+  updatedAt: string;
+  orderTotal?: number;
+  deliveredAt?: string | null;
+  orderStatus?: string;
+  paymentMethod?: string;
+}
+
+export interface ReturnPolicyConfig {
+  title?: string;
+  badge?: string;
+  windowHours?: number;
+  overview?: string;
+  eligibleReasons?: Array<{ id: string; title: string; description: string }>;
+  ineligibleReasons?: string[];
+  claimProcess?: string[];
+  refundTurnaround?: string;
+  noticeNote?: string;
+  supportPhone?: string;
+  supportEmail?: string;
 }
 
 export interface OrderItemDetail {
@@ -884,28 +932,10 @@ export const api = {
   },
   // Operational Metrics Stats
   async getStats(): Promise<DashboardStats> {
-    try {
-      const res = await fetch(`${PROXY_BASE}/api/admin/stats`, {
-        cache: "no-store",
-      });
-      if (res.ok) return await res.json();
-    } catch {
-      // fallback
-    }
-    return {
-      totalOrders: 174,
-      awaitingProcessing: 120,
-      processingOrders: 31,
-      readyForPickup: 1,
-      completedOrders: 0,
-      canceledOrders: 4,
-      publishedProducts: 76,
-      masterProductsCount: 42,
-      publishedCategories: 6,
-      reviewsRatings: 0,
-      totalCustomers: 9,
-      outOfStock: 0,
-    };
+    const res = await fetch(`${PROXY_BASE}/api/admin/stats`, {
+      cache: "no-store",
+    });
+    return handleResponse<DashboardStats>(res, "Failed to load dashboard stats");
   },
 
   // Check storefront connectivity
@@ -1990,6 +2020,35 @@ export const api = {
 
   getAdminSlogansExportUrl(): string {
     return `${PROXY_BASE}/api/admin/slogans/analytics/export`;
+  },
+
+  // Perishable Sweets Returns & Exchanges (24-Hour SLA)
+  async getReturns(params?: { status?: string; search?: string }): Promise<{
+    items: ReturnRequestItem[];
+    total: number;
+    pendingCount: number;
+    counts: Record<string, number>;
+  }> {
+    const query = new URLSearchParams();
+    if (params?.status && params.status !== "all") query.set("status", params.status);
+    if (params?.search) query.set("search", params.search);
+    const qs = query.toString();
+    const res = await fetch(`${PROXY_BASE}/api/admin/returns${qs ? `?${qs}` : ""}`, {
+      cache: "no-store",
+    });
+    return handleResponse(res, "Failed to load returns");
+  },
+
+  async updateReturnStatus(
+    id: number,
+    data: { status: ReturnStatus; adminNotes?: string; refundAmount?: number }
+  ): Promise<{ success: boolean; request: ReturnRequestItem; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/returns/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, "Failed to update return request");
   },
 };
 

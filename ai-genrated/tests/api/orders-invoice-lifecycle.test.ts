@@ -212,7 +212,7 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
   });
 
   describe("POST /api/orders/[orderNumber]/return (7-Day Policy)", () => {
-    it("accepts return/exchange request for delivered order within 7 days", async () => {
+    it("accepts return/exchange request for delivered order within 24 hours (perishable sweets policy)", async () => {
       await loginAs(customerA.id);
 
       const testOrderNumber = `VSM-TEST-DELIV-RECENT-${Date.now()}`;
@@ -220,7 +220,7 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
         orderNumber: testOrderNumber,
         userId: customerA.id,
         status: "delivered",
-        deliveredAt: new Date(Date.now() - 2 * 24 * 3600 * 1000), // 2 days ago (within 7 days)
+        deliveredAt: new Date(Date.now() - 2 * 3600 * 1000), // 2 hours ago (within 24 hours)
         subtotal: 600,
         deliveryFee: 0,
         total: 600,
@@ -234,8 +234,9 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
         url: `/api/orders/${testOrderNumber}/return`,
         body: {
           type: "exchange",
-          reason: "Wrong item received",
+          reason: "wrong_item",
           comments: "Ordered Kaju Katli but received Peda",
+          photo: "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
         },
       });
       const returnRes = await returnOrderRoute(returnReq, {
@@ -246,10 +247,10 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
       const data = await returnRes.json();
       expect(data.success).toBe(true);
       expect(data.order.returnStatus).toBe("requested");
-      expect(data.order.returnReason).toContain("Wrong item received");
+      expect(data.order.returnReason).toContain("Wrong Item Delivered");
     });
 
-    it("rejects return request if more than 7 days have passed since delivery", async () => {
+    it("rejects return request if more than 24 hours have passed since delivery", async () => {
       await loginAs(customerA.id);
 
       const testOrderNumber = `VSM-TEST-DELIV-EXPIRED-${Date.now()}`;
@@ -257,7 +258,7 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
         orderNumber: testOrderNumber,
         userId: customerA.id,
         status: "delivered",
-        deliveredAt: new Date(Date.now() - 10 * 24 * 3600 * 1000), // 10 days ago (> 7 days)
+        deliveredAt: new Date(Date.now() - 48 * 3600 * 1000), // 48 hours ago (> 24 hours)
         subtotal: 600,
         deliveryFee: 0,
         total: 600,
@@ -269,7 +270,11 @@ describe("Order Lifecycle & GST Invoice API Tests", () => {
       const returnReq = buildRequest({
         method: "POST",
         url: `/api/orders/${testOrderNumber}/return`,
-        body: { reason: "Taste not as expected" },
+        body: {
+          reason: "spoiled_product",
+          comments: "Taste not fresh",
+          photo: "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+        },
       });
       const returnRes = await returnOrderRoute(returnReq, {
         params: Promise.resolve({ orderNumber: testOrderNumber }),

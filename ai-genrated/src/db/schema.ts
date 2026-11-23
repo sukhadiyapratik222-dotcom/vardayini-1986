@@ -223,6 +223,26 @@ export const orderStatusHistory = mysqlTable("order_status_history", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const returnRequests = mysqlTable("return_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("order_id")
+    .notNull()
+    .references(() => orders.id),
+  orderNumber: varchar("order_number", { length: 80 }).notNull(),
+  customerName: varchar("customer_name", { length: 160 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 30 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 160 }),
+  reason: varchar("reason", { length: 60 }).notNull(),
+  reasonLabel: varchar("reason_label", { length: 120 }).notNull(),
+  description: text("description").notNull(),
+  photoUrl: text("photo_url").notNull(),
+  status: varchar("status", { length: 40 }).notNull().default("requested"),
+  adminNotes: text("admin_notes"),
+  refundAmount: int("refund_amount").notNull().default(0),
+  requestedAt: timestamp("requested_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const invoiceSequences = mysqlTable("invoice_sequences", {
   year: int("year").primaryKey(),
   lastNumber: int("last_number").notNull().default(0),

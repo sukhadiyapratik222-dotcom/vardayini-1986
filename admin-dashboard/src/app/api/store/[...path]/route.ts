@@ -351,6 +351,140 @@ function insertLocalNotificationFallback(payload: { type?: string; title: string
 }
 
 // -------------------------------------------------------------
+// LOCAL RETURNS & REFUNDS (PERISHABLE SWEETS 24H) FALLBACK
+// -------------------------------------------------------------
+
+function getLocalReturnsFallback(statusParam?: string, searchParam?: string) {
+  const db = getLocalSqliteDb();
+  if (!db) return null;
+  try {
+    let rows: any[] = [];
+    try {
+      rows = db.prepare(`
+        SELECT r.*, o.total as order_total, o.delivered_at, o.status as order_status, o.payment_method
+        FROM return_requests r
+        LEFT JOIN orders o ON r.order_id = o.id
+        ORDER BY r.requested_at DESC
+      `).all();
+    } catch {
+      return { items: [], total: 0, pendingCount: 0, counts: { total: 0, requested: 0, under_review: 0, approved: 0, rejected: 0, replaced: 0, refunded: 0 } };
+    }
+
+    const counts: Record<string, number> = {
+      total: rows.length,
+      requested: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      replaced: 0,
+      refunded: 0,
+    };
+
+    for (const r of rows) {
+      const s = (r.status || "").toLowerCase();
+      if (counts[s] !== undefined) counts[s]++;
+    }
+
+    const pendingCount = (counts.requested || 0) + (counts.under_review || 0);
+
+    let filtered = rows;
+    if (statusParam && statusParam !== "all") {
+      filtered = filtered.filter((r) => (r.status || "").toLowerCase() === statusParam.toLowerCase());
+    }
+    if (searchParam) {
+      const sp = searchParam.toLowerCase();
+      filtered = filtered.filter((r) =>
+        (r.order_number || "").toLowerCase().includes(sp) ||
+        (r.customer_name || "").toLowerCase().includes(sp) ||
+        (r.customer_phone || "").toLowerCase().includes(sp) ||
+        (r.reason || "").toLowerCase().includes(sp) ||
+        (r.reason_label || "").toLowerCase().includes(sp)
+      );
+    }
+
+    const items = filtered.map((r) => ({
+      id: r.id,
+      orderId: r.order_id,
+      orderNumber: r.order_number,
+      customerName: r.customer_name,
+      customerPhone: r.customer_phone,
+      customerEmail: r.customer_email || "",
+      reason: r.reason,
+      reasonLabel: r.reason_label,
+      description: r.description,
+      photoUrl: r.photo_url,
+      status: r.status,
+      adminNotes: r.admin_notes,
+      refundAmount: r.refund_amount || 0,
+      requestedAt: r.requested_at,
+      updatedAt: r.updated_at,
+      orderTotal: r.order_total || 0,
+      deliveredAt: r.delivered_at,
+      orderStatus: r.order_status || "delivered",
+      paymentMethod: r.payment_method || "cod",
+    }));
+
+    return { items, total: items.length, pendingCount, counts };
+  } catch {
+    return null;
+  }
+}
+
+function updateLocalReturnFallback(id: number, payload: any) {
+  const db = getLocalSqliteDb();
+  if (!db || !id) return null;
+  try {
+    const existing: any = db.prepare(`SELECT * FROM return_requests WHERE id = ?`).get(id);
+    if (!existing) return null;
+
+    const newStatus = payload.status ? payload.status.toLowerCase().trim() : existing.status;
+    const adminNotes = payload.adminNotes !== undefined ? payload.adminNotes : existing.admin_notes;
+    const refundAmount = payload.refundAmount !== undefined ? Math.max(0, Math.round(Number(payload.refundAmount))) : existing.refund_amount;
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      UPDATE return_requests
+      SET status = ?, admin_notes = ?, refund_amount = ?, updated_at = ?
+      WHERE id = ?
+    `).run(newStatus, adminNotes, refundAmount, now, id);
+
+    try {
+      if (newStatus === "approved") {
+        db.prepare(`UPDATE orders SET return_status = ?, refund_status = 'approved', refund_amount = ? WHERE id = ?`).run(newStatus, refundAmount > 0 ? refundAmount : 0, existing.order_id);
+      } else if (newStatus === "refunded") {
+        db.prepare(`UPDATE orders SET return_status = ?, refund_status = 'refunded', refund_amount = ? WHERE id = ?`).run(newStatus, refundAmount, existing.order_id);
+      } else {
+        db.prepare(`UPDATE orders SET return_status = ? WHERE id = ?`).run(newStatus, existing.order_id);
+      }
+    } catch {}
+
+    const updated: any = db.prepare(`SELECT * FROM return_requests WHERE id = ?`).get(id);
+    return {
+      success: true,
+      request: {
+        id: updated.id,
+        orderId: updated.order_id,
+        orderNumber: updated.order_number,
+        customerName: updated.customer_name,
+        customerPhone: updated.customer_phone,
+        reason: updated.reason,
+        reasonLabel: updated.reason_label,
+        description: updated.description,
+        photoUrl: updated.photo_url,
+        status: updated.status,
+        adminNotes: updated.admin_notes,
+        refundAmount: updated.refund_amount,
+        requestedAt: updated.requested_at,
+        updatedAt: updated.updated_at,
+      },
+      message: `Return request #${id} updated successfully.`,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// -------------------------------------------------------------
 // LOCAL UI CONFIG (BRANDING, PHONE, REAL STORE INFO) FALLBACK
 // -------------------------------------------------------------
 
@@ -393,6 +527,9 @@ function updateLocalUiConfigFallback(updates: any) {
         }
         if (updates.logo && current.logo) {
           merged.logo = { ...current.logo, ...updates.logo };
+        }
+        if (updates.returnPolicy && current.returnPolicy) {
+          merged.returnPolicy = { ...current.returnPolicy, ...updates.returnPolicy };
         }
         if (merged.storeInfo) {
           if (merged.storeInfo.phone) merged.storeInfo.phone = merged.storeInfo.phone.replace("63531", "63521");
@@ -572,6 +709,26 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
           const res = updateLocalUiConfigFallback(body);
           if (res) return NextResponse.json(res);
         } catch {}
+      }
+    }
+
+    // 7. Returns & Refunds Fallback (Perishable Sweets 24H SLA)
+    if (cleanSubPath === "api/admin/returns" || cleanSubPath.startsWith("api/admin/returns/")) {
+      if (req.method === "GET") {
+        const statusParam = url.searchParams.get("status") || undefined;
+        const searchParam = url.searchParams.get("search") || undefined;
+        const fallback = getLocalReturnsFallback(statusParam, searchParam);
+        if (fallback) return NextResponse.json(fallback);
+      } else if (req.method === "PATCH" || req.method === "PUT") {
+        const parts = cleanSubPath.split("/");
+        const id = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(id)) {
+          try {
+            const body = await req.clone().json();
+            const fallback = updateLocalReturnFallback(id, body);
+            if (fallback) return NextResponse.json(fallback);
+          } catch {}
+        }
       }
     }
 

@@ -335,6 +335,24 @@ function initSqliteTables(sqlite: DatabaseSync) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS return_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      order_number TEXT NOT NULL,
+      customer_name TEXT NOT NULL,
+      customer_phone TEXT NOT NULL,
+      customer_email TEXT DEFAULT '',
+      reason TEXT NOT NULL,
+      reason_label TEXT NOT NULL,
+      description TEXT NOT NULL,
+      photo_url TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'requested',
+      admin_notes TEXT DEFAULT NULL,
+      refund_amount INTEGER NOT NULL DEFAULT 0,
+      requested_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS payments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       order_id INTEGER NOT NULL,

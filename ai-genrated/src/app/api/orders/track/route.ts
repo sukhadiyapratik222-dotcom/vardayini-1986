@@ -265,21 +265,23 @@ export async function GET(request: Request) {
     const isOwner = Boolean(
       (authUser && orderRow.userId && authUser.id === orderRow.userId) ||
       authUser?.role === "admin" ||
-      authUser?.role === "super_admin" ||
-      !orderRow.userId // Guest order viewed with direct link/order number
+      authUser?.role === "super_admin"
     );
 
     // Format address
     const addr = maskAddress(orderRow.addressSnapshot);
 
     // 6. Construct Live Tracking Timeline
-    const createdAtDate = orderRow.createdAt ? new Date(orderRow.createdAt) : new Date();
-    const createdDateStr = createdAtDate.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const recordedCreatedAt = orderRow.createdAt || statusHistory[statusHistory.length - 1]?.createdAt;
+    const createdAtDate = recordedCreatedAt ? new Date(recordedCreatedAt) : null;
+    const createdDateStr = createdAtDate && Number.isFinite(createdAtDate.getTime())
+      ? createdAtDate.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
 
     const status = (orderRow.status || "confirmed").toLowerCase();
     const isCancelled = status === "cancelled";
@@ -474,11 +476,17 @@ export async function GET(request: Request) {
         deliverySlot: orderRow.deliverySlot || "Standard Delivery Slot",
         paymentMethod: orderRow.paymentMethod || "cod",
         paymentStatus: orderRow.paymentStatus || "pending",
-        createdAt: orderRow.createdAt,
+        createdAt: createdAtDate && Number.isFinite(createdAtDate.getTime())
+          ? createdAtDate.toISOString()
+          : null,
         expectedDeliveryDate: orderRow.expectedDeliveryDate,
         deliveredAt: orderRow.deliveredAt,
         cancelledAt: orderRow.cancelledAt,
         cancelReason: orderRow.cancelReason,
+        returnStatus: orderRow.returnStatus || "none",
+        returnReason: orderRow.returnReason || null,
+        refundStatus: orderRow.refundStatus || "none",
+        refundAmount: orderRow.refundAmount || 0,
         // Store Pickup specific payload
         pickupDetails: isPickup
           ? {
@@ -523,7 +531,6 @@ export async function GET(request: Request) {
         },
         timeline,
         currentStepIndex,
-        history: statusHistory,
         items: items.map((it) => ({
           id: it.id,
           productName: it.productName,
