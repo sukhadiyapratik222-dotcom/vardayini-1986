@@ -66,8 +66,10 @@ export function StoreBrandingTab({ config, onRefresh }: StoreBrandingTabProps) {
         setStoreName(config.storeInfo.name ?? "Vardayini Sweet Mart");
         setTagline(config.storeInfo.tagline ?? "Pure Ghee Gujarati Mithai & Live Morning Farsan");
         setEstablished(config.storeInfo.established ?? "1976");
-        setPhone(config.storeInfo.phone ?? "+91 63521 19329");
-        setWhatsapp(config.storeInfo.whatsapp ?? "+91 63521 19329");
+        const cleanPhone = (config.storeInfo.phone ?? "+91 63521 19329").replace("63531", "63521");
+        const cleanWhatsapp = (config.storeInfo.whatsapp ?? "+91 63521 19329").replace("63531", "63521");
+        setPhone(cleanPhone);
+        setWhatsapp(cleanWhatsapp);
         setEmail(config.storeInfo.email ?? "orders@vardayini.com");
         setAddress(config.storeInfo.address ?? "6A, Navjivan Shopping Center, Kalol - 382721");
         setCity(config.storeInfo.city ?? "Kalol, Gujarat");

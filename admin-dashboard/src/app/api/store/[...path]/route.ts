@@ -351,6 +351,62 @@ function insertLocalNotificationFallback(payload: { type?: string; title: string
 }
 
 // -------------------------------------------------------------
+// LOCAL UI CONFIG (BRANDING, PHONE, REAL STORE INFO) FALLBACK
+// -------------------------------------------------------------
+
+function getLocalUiConfigFallback() {
+  const possiblePaths = [
+    path.resolve(process.cwd(), "ai-genrated/src/data/ui-config.json"),
+    path.resolve(process.cwd(), "../ai-genrated/src/data/ui-config.json"),
+    path.resolve(process.cwd(), "src/data/ui-config.json"),
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const raw = fs.readFileSync(p, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (parsed.storeInfo) {
+          if (parsed.storeInfo.phone) parsed.storeInfo.phone = parsed.storeInfo.phone.replace("63531", "63521");
+          if (parsed.storeInfo.whatsapp) parsed.storeInfo.whatsapp = parsed.storeInfo.whatsapp.replace("63531", "63521");
+        }
+        return parsed;
+      } catch {}
+    }
+  }
+  return null;
+}
+
+function updateLocalUiConfigFallback(updates: any) {
+  const possiblePaths = [
+    path.resolve(process.cwd(), "ai-genrated/src/data/ui-config.json"),
+    path.resolve(process.cwd(), "../ai-genrated/src/data/ui-config.json"),
+    path.resolve(process.cwd(), "src/data/ui-config.json"),
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const raw = fs.readFileSync(p, "utf-8");
+        const current = JSON.parse(raw);
+        const merged = { ...current, ...updates };
+        if (updates.storeInfo && current.storeInfo) {
+          merged.storeInfo = { ...current.storeInfo, ...updates.storeInfo };
+        }
+        if (updates.logo && current.logo) {
+          merged.logo = { ...current.logo, ...updates.logo };
+        }
+        if (merged.storeInfo) {
+          if (merged.storeInfo.phone) merged.storeInfo.phone = merged.storeInfo.phone.replace("63531", "63521");
+          if (merged.storeInfo.whatsapp) merged.storeInfo.whatsapp = merged.storeInfo.whatsapp.replace("63531", "63521");
+        }
+        fs.writeFileSync(p, JSON.stringify(merged, null, 2), "utf-8");
+        return { success: true, config: merged };
+      } catch {}
+    }
+  }
+  return null;
+}
+
+// -------------------------------------------------------------
 // FORWARD REQUEST WITH TRANSPARENT LOCAL FALLBACKS
 // -------------------------------------------------------------
 
@@ -502,6 +558,20 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
         } catch {}
       } else if (cleanSubPath === "api/admin/customers") {
         return NextResponse.json({ customers: [] });
+      }
+    }
+
+    // 6. UI Config Fallback (Branding, Phone, Real Store Info)
+    if (cleanSubPath === "api/ui-config") {
+      if (req.method === "GET") {
+        const config = getLocalUiConfigFallback();
+        if (config) return NextResponse.json(config);
+      } else if (req.method === "PUT" || req.method === "POST") {
+        try {
+          const body = await req.clone().json();
+          const res = updateLocalUiConfigFallback(body);
+          if (res) return NextResponse.json(res);
+        } catch {}
       }
     }
 

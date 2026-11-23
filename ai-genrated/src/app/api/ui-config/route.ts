@@ -536,6 +536,14 @@ export async function GET() {
         if (doc?.value && typeof doc.value === "object") {
           data = deepMerge(data, doc.value);
         }
+        if (data.storeInfo) {
+          if (data.storeInfo.phone && data.storeInfo.phone.includes("63531")) {
+            data.storeInfo.phone = data.storeInfo.phone.replace("63531", "63521");
+          }
+          if (data.storeInfo.whatsapp && data.storeInfo.whatsapp.includes("63531")) {
+            data.storeInfo.whatsapp = data.storeInfo.whatsapp.replace("63531", "63521");
+          }
+        }
       }
     } catch (mErr) {
       console.warn("[UI Config] MongoDB read notice:", mErr);
@@ -725,6 +733,14 @@ export async function PUT(req: Request) {
     }
 
     const updated = deepMerge(currentData, normalizedBody);
+    if (updated.storeInfo) {
+      if (updated.storeInfo.phone && updated.storeInfo.phone.includes("63531")) {
+        updated.storeInfo.phone = updated.storeInfo.phone.replace("63531", "63521");
+      }
+      if (updated.storeInfo.whatsapp && updated.storeInfo.whatsapp.includes("63531")) {
+        updated.storeInfo.whatsapp = updated.storeInfo.whatsapp.replace("63531", "63521");
+      }
+    }
 
     try {
       await fs.writeFile(CONFIG_PATH, JSON.stringify(updated, null, 2), "utf-8");

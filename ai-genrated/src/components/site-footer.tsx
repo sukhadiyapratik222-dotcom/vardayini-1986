@@ -111,6 +111,9 @@ export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
         .replace(/navjivan shopping center/gi, "Navjivan Shopping Center")
     : "6A, Navjivan Shopping Center, Kalol - 382721";
 
+  const supportPhone = (uiConfig?.storeInfo?.phone || "+91 63521 19329").replace("63531", "63521");
+  const whatsappPhone = (uiConfig?.storeInfo?.whatsapp || "+91 63521 19329").replace("63531", "63521");
+
   const footerBg = currentTheme === "warm-cream" ? "bg-[#140638]" : "bg-[#071c54]";
 
   return (
@@ -198,32 +201,28 @@ export function SiteFooter({ initialConfig }: SiteFooterProps = {}) {
                   <span>Open {uiConfig?.storeInfo?.hours?.trim() || "8:00 AM – 8:30 PM (All 7 Days)"}</span>
                 </p>
                 <div className="text-xs text-white/85 flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-0.5">
-                  {uiConfig?.storeInfo?.phone && (
-                    <span className="flex items-center gap-1.5">
-                      <span>📞</span>
-                      <span className="text-white/70">Support:</span>
-                      <a
-                        href={`tel:${uiConfig.storeInfo.phone.replace(/[^0-9+]/g, "")}`}
-                        className="text-white font-semibold hover:text-[#dfb755] transition underline underline-offset-2"
-                      >
-                        {uiConfig.storeInfo.phone}
-                      </a>
-                    </span>
-                  )}
-                  {uiConfig?.storeInfo?.whatsapp && (
-                    <span className="flex items-center gap-1.5">
-                      <span>💬</span>
-                      <span className="text-white/70">WhatsApp:</span>
-                      <a
-                        href={`https://wa.me/${uiConfig.storeInfo.whatsapp.replace(/[^0-9]/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-emerald-400 font-semibold hover:underline"
-                      >
-                        {uiConfig.storeInfo.whatsapp}
-                      </a>
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1.5">
+                    <span>📞</span>
+                    <span className="text-white/70">Support:</span>
+                    <a
+                      href={`tel:${supportPhone.replace(/[^0-9+]/g, "")}`}
+                      className="text-white font-semibold hover:text-[#dfb755] transition underline underline-offset-2"
+                    >
+                      {supportPhone}
+                    </a>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span>💬</span>
+                    <span className="text-white/70">WhatsApp:</span>
+                    <a
+                      href={`https://wa.me/${whatsappPhone.replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 font-semibold hover:underline"
+                    >
+                      {whatsappPhone}
+                    </a>
+                  </span>
                 </div>
               </div>
             </div>
