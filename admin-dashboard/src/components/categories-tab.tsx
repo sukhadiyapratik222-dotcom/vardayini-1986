@@ -819,6 +819,146 @@ export function CategoriesTab({
         </div>
       )}
 
+      {/* Catalog & Department Selector Cards (Catalogs First Option) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* 1. All Catalogs Card (First Option) */}
+        <button
+          type="button"
+          onClick={() => {
+            setDepartmentFilter("all");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
+            departmentFilter === "all"
+              ? "bg-purple-50/90 border-2 border-purple-500 shadow-xs ring-2 ring-purple-500/20"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border transition ${
+                departmentFilter === "all"
+                  ? "bg-white border-purple-300 text-purple-600"
+                  : "bg-white border-slate-200 text-slate-700 shadow-2xs"
+              }`}
+            >
+              <div className="grid grid-cols-2 gap-1 p-0.5">
+                <span className={`w-1.5 h-1.5 rounded-[2px] ${departmentFilter === "all" ? "bg-purple-600" : "bg-emerald-600"}`} />
+                <span className={`w-1.5 h-1.5 rounded-[2px] ${departmentFilter === "all" ? "bg-purple-600" : "bg-blue-600"}`} />
+                <span className={`w-1.5 h-1.5 rounded-[2px] ${departmentFilter === "all" ? "bg-purple-600" : "bg-amber-500"}`} />
+                <span className={`w-1.5 h-1.5 rounded-[2px] ${departmentFilter === "all" ? "bg-purple-600" : "bg-rose-500"}`} />
+              </div>
+            </div>
+            <div className="min-w-0">
+              <span className={`text-xs font-bold block truncate ${departmentFilter === "all" ? "text-purple-700 font-extrabold" : "text-slate-800"}`}>
+                All Catalogs
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">All store categories</span>
+            </div>
+          </div>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-mono shrink-0 ${
+              departmentFilter === "all" ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {categories.length}
+          </span>
+        </button>
+
+        {/* 2. Sweets Catalog */}
+        <button
+          type="button"
+          onClick={() => {
+            setDepartmentFilter("Sweets");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
+            departmentFilter === "Sweets"
+              ? "bg-[#dfb755]/15 border-2 border-[#dfb755] shadow-xs ring-2 ring-[#dfb755]/20"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-2xl">🍬</span>
+            <div className="min-w-0">
+              <span className={`text-xs font-bold block truncate ${departmentFilter === "Sweets" ? "text-[#8d6715] font-extrabold" : "text-slate-800"}`}>
+                Sweets
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Mithai & ghee sweets</span>
+            </div>
+          </div>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-mono shrink-0 ${
+              departmentFilter === "Sweets" ? "bg-[#8d6715] text-white" : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {sweetsCount}
+          </span>
+        </button>
+
+        {/* 3. Namkeen & Farsan Catalog */}
+        <button
+          type="button"
+          onClick={() => {
+            setDepartmentFilter("Namkeen");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
+            departmentFilter === "Namkeen"
+              ? "bg-emerald-50 border-2 border-emerald-500 shadow-xs ring-2 ring-emerald-500/20"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-2xl">🥨</span>
+            <div className="min-w-0">
+              <span className={`text-xs font-bold block truncate ${departmentFilter === "Namkeen" ? "text-emerald-800 font-extrabold" : "text-slate-800"}`}>
+                Namkeen
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Snacks & farsan</span>
+            </div>
+          </div>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-mono shrink-0 ${
+              departmentFilter === "Namkeen" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {namkeenCount}
+          </span>
+        </button>
+
+        {/* 4. Bakery Catalog */}
+        <button
+          type="button"
+          onClick={() => {
+            setDepartmentFilter("Bakery");
+            setCurrentPage(1);
+          }}
+          className={`p-3.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer ${
+            departmentFilter === "Bakery"
+              ? "bg-orange-50 border-2 border-orange-500 shadow-xs ring-2 ring-orange-500/20"
+              : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-2xl">🍞</span>
+            <div className="min-w-0">
+              <span className={`text-xs font-bold block truncate ${departmentFilter === "Bakery" ? "text-orange-800 font-extrabold" : "text-slate-800"}`}>
+                Bakery
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Cookies & toasts</span>
+            </div>
+          </div>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-mono shrink-0 ${
+              departmentFilter === "Bakery" ? "bg-orange-600 text-white" : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {bakeryCount}
+          </span>
+        </button>
+      </div>
+
       {/* Department Filter Tabs */}
       <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl text-xs font-medium">
         <button
@@ -827,11 +967,12 @@ export function CategoriesTab({
             setDepartmentFilter("all");
             setCurrentPage(1);
           }}
-          className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer ${
-            departmentFilter === "all" ? "bg-white text-[#0b2f8a] font-bold shadow-xs" : "text-slate-600 hover:text-slate-900"
+          className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+            departmentFilter === "all" ? "bg-white text-purple-700 font-bold shadow-xs border border-purple-200" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          All ({categories.length})
+          <span>📁</span>
+          <span>All Catalogs ({categories.length})</span>
         </button>
         <button
           type="button"
@@ -956,6 +1097,41 @@ export function CategoriesTab({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Active Catalog & Department Status Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-50/90 via-blue-50/50 to-purple-50/30 border border-purple-200/80 text-xs shadow-2xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm">
+            {departmentFilter === "all" ? "📁" : departmentFilter === "Sweets" ? "🍬" : departmentFilter === "Namkeen" ? "🥨" : departmentFilter === "Bakery" ? "🍞" : "⚠️"}
+          </span>
+          <span className="font-semibold text-slate-800">
+            {departmentFilter === "all" ? (
+              <>
+                <strong className="text-purple-700">All Catalogs</strong>: Showing all <strong>{filteredCategories.length}</strong> categories across Sweets, Namkeen & Bakery
+              </>
+            ) : (
+              <>
+                Catalog: <strong className="text-[#0b2f8a]">{departmentFilter}</strong> ({filteredCategories.length} categories)
+              </>
+            )}
+            {searchQuery && <> · matching <em>"{searchQuery}"</em></>}
+          </span>
+        </div>
+
+        {departmentFilter !== "all" && (
+          <button
+            type="button"
+            onClick={() => {
+              setDepartmentFilter("all");
+              setCurrentPage(1);
+            }}
+            className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+          >
+            <span>📁</span>
+            <span>Show All Catalogs ({categories.length})</span>
+          </button>
+        )}
       </div>
 
       {/* Empty State */}

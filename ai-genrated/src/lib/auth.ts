@@ -11,8 +11,7 @@ import { NextResponse } from "next/server";
 const AUTH_COOKIE = "vs_session";
 const CART_COOKIE = "vs_cart";
 const COUPON_COOKIE = "vs_coupon";
-const DEV_SECRET_FALLBACK = "vardayini-dev-secret-change-me";
-const PROD_SECURE_FALLBACK = "vsm_session_jwt_secure_key_2026_vardayini_prod";
+let ephemeralSessionSecret: string | undefined;
 
 function isBuildPhase(): boolean {
   return (
@@ -22,30 +21,24 @@ function isBuildPhase(): boolean {
 }
 
 export function secret(): string {
-  const s = process.env.SESSION_SECRET;
-  const isProd = process.env.NODE_ENV === "production";
-  const missing = !s || s.trim() === "" || s === DEV_SECRET_FALLBACK;
+  const configuredSecret = process.env.SESSION_SECRET?.trim();
+  const isDevFallback =
+    !configuredSecret ||
+    configuredSecret === "vardayini-dev-secret-change-me" ||
+    configuredSecret === "dev-secret-change-in-production";
 
-  // Never crash `next build`: Vercel evaluates these modules with
-  // NODE_ENV=production before runtime env vars are guaranteed to be present.
-  if (missing && (isBuildPhase() || process.env.VERCEL === "1")) {
-    if (!isBuildPhase()) {
-      console.warn(
-        "[auth] SESSION_SECRET is not set on Vercel. Using the built-in fallback. " +
-          "Add SESSION_SECRET in Project Settings -> Environment Variables and redeploy."
-      );
-    }
-    return PROD_SECURE_FALLBACK;
-  }
-
-  if (missing) {
-    if (isProd) {
+  if (process.env.NODE_ENV === "production" && !isBuildPhase()) {
+    if (isDevFallback) {
       throw new Error("SESSION_SECRET must be set and secure in production");
     }
-    return DEV_SECRET_FALLBACK;
+    return configuredSecret;
   }
 
-  return s.trim();
+  if (configuredSecret) return configuredSecret;
+  if (!ephemeralSessionSecret) {
+    ephemeralSessionSecret = randomBytes(32).toString("hex");
+  }
+  return ephemeralSessionSecret;
 }
 
 function sign(payload: string) {
@@ -211,31 +204,10 @@ export async function getAuthUser(req?: Request) {
     }
   }
 
-  if (!user && (data.role || data.userId === 1 || data.email === "pratik222@gmail.com")) {
-    const isSuper = data.role === "super_admin" || data.userId === 1 || data.email === "pratik222@gmail.com";
-    user = {
-      id: data.userId,
-      name: data.name || (isSuper ? "Pratik Sukhadiya (Super Admin)" : `Patron ${String(data.phone || data.userId).slice(-4)}`),
-      email: data.email || (isSuper ? "pratik222@gmail.com" : `${data.userId}@patron.vardayini.com`),
-      phone: data.phone || (isSuper ? "9876543210" : ""),
-      passwordHash: "",
-      role: isSuper ? "super_admin" : (data.role || "customer"),
-      status: "active",
-      mustChangePassword: false,
-      accessType: "full",
-      createdAt: new Date().toISOString(),
-    } as any;
-  }
-
   if (!user) return null;
 
-  if (user.email === "pratik222@gmail.com" || data.email === "pratik222@gmail.com" || data.role === "super_admin") {
-    user.role = "super_admin";
-    user.accessType = "full";
-  }
-
   let permissionsList: string[] = [];
-  if (user.role === "super_admin" || user.email === "pratik222@gmail.com") {
+  if (user.role === "super_admin") {
     permissionsList = ["*"];
   } else {
     try {
@@ -379,39 +351,6 @@ export async function logActivity(options: {
  * Rejects deactivated users or standard admins with 403 Forbidden.
  */
 export async function requireSuperAdmin(req?: Request): Promise<RequireSuperAdminResult> {
-  const adminKey = process.env.ADMIN_API_KEY || "vsm_admin_secret_key_2026_secured";
-  if (req) {
-    const headerKey = req.headers.get("x-admin-key") || req.headers.get("x-api-key");
-    const authHeader = req.headers.get("authorization");
-    const bearerKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
-    const adminRoleHeader = req.headers.get("x-admin-role");
-    const adminEmailHeader = req.headers.get("x-admin-email");
-    const cookieHeader = req.headers.get("cookie") || "";
-
-    if (
-      (adminKey && (headerKey === adminKey || bearerKey === adminKey)) ||
-      adminRoleHeader === "super_admin" ||
-      adminEmailHeader === "pratik222@gmail.com" ||
-      cookieHeader.includes("super_admin") ||
-      cookieHeader.includes("pratik222%40gmail.com")
-    ) {
-      return {
-        user: {
-          id: 1,
-          name: "Pratik Sukhadiya (Super Admin)",
-          email: "pratik222@gmail.com",
-          phone: "9876543210",
-          role: "super_admin",
-          storeId: null,
-          status: "active",
-          mustChangePassword: false,
-          accessType: "full",
-          permissions: ["*"],
-        },
-      };
-    }
-  }
-
   const user = await getAuthUser(req);
   if (!user) {
     return {
@@ -429,7 +368,7 @@ export async function requireSuperAdmin(req?: Request): Promise<RequireSuperAdmi
       ),
     };
   }
-  if (user.role !== "super_admin" && user.email !== "pratik222@gmail.com") {
+  if (user.role !== "super_admin") {
     if (req) {
       logActivity({
         userId: user.id,
@@ -454,7 +393,7 @@ export async function requireSuperAdmin(req?: Request): Promise<RequireSuperAdmi
 
 /**
  * Validates that the request has an active, authenticated admin session.
- * Supports session cookies and service-to-service admin key authorization.
+ * Requires an active signed user session.
  * Checks optional requiredPermission for custom-access admins.
  * Returns { user } if valid admin, or { error: NextResponse } with status 401 or 403.
  */
@@ -462,39 +401,6 @@ export async function requireAdmin(
   req?: Request,
   requiredPermission?: string
 ): Promise<RequireAdminResult> {
-  const adminKey = process.env.ADMIN_API_KEY || "vsm_admin_secret_key_2026_secured";
-  if (req) {
-    const headerKey = req.headers.get("x-admin-key") || req.headers.get("x-api-key");
-    const authHeader = req.headers.get("authorization");
-    const bearerKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
-    const adminRoleHeader = req.headers.get("x-admin-role");
-    const adminEmailHeader = req.headers.get("x-admin-email");
-    const cookieHeader = req.headers.get("cookie") || "";
-
-    if (
-      (adminKey && (headerKey === adminKey || bearerKey === adminKey)) ||
-      adminRoleHeader === "super_admin" ||
-      adminEmailHeader === "pratik222@gmail.com" ||
-      cookieHeader.includes("super_admin") ||
-      cookieHeader.includes("pratik222%40gmail.com")
-    ) {
-      return {
-        user: {
-          id: 1,
-          name: "Pratik Sukhadiya (Super Admin)",
-          email: "pratik222@gmail.com",
-          phone: "9876543210",
-          role: "super_admin",
-          storeId: null,
-          status: "active",
-          mustChangePassword: false,
-          accessType: "full",
-          permissions: ["*"],
-        },
-      };
-    }
-  }
-
   const user = await getAuthUser(req);
   if (!user) {
     return {
@@ -514,7 +420,7 @@ export async function requireAdmin(
     };
   }
 
-  if (user.role === "customer" && user.email !== "pratik222@gmail.com") {
+  if (user.role === "customer") {
     return {
       error: NextResponse.json(
         { error: "Forbidden: Admin access required" },
@@ -524,7 +430,7 @@ export async function requireAdmin(
   }
 
   // Super Admin has unrestricted access to everything
-  if (user.role === "super_admin" || user.email === "pratik222@gmail.com") {
+  if (user.role === "super_admin") {
     return { user };
   }
 
