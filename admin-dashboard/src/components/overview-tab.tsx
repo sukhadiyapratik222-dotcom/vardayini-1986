@@ -25,7 +25,7 @@ interface OverviewTabProps {
   products: ProductItem[];
   inventory: { variants: InventoryItem[]; lowStock: InventoryItem[] };
   stats: DashboardStats | null;
-  isStoreOnline: boolean;
+  isStoreOnline?: boolean;
   onRefresh: () => void;
   onNavigateTab: (tab: string) => void;
 }
@@ -356,61 +356,6 @@ export function OverviewTab({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Status Notification */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-[#0b2f8a]/10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-3.5 w-3.5">
-            <span
-              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isStoreOnline ? "bg-emerald-400" : "bg-rose-500"
-                }`}
-            ></span>
-            <span
-              className={`relative inline-flex rounded-full h-3.5 w-3.5 ${isStoreOnline ? "bg-emerald-500" : "bg-rose-500"
-                }`}
-            ></span>
-          </span>
-          <div>
-            <h2 className="text-sm font-bold text-[#182230]">
-              Storefront Status:{" "}
-              <span className={isStoreOnline ? "text-emerald-700" : "text-rose-600"}>
-                {isStoreOnline ? "Online & Synchronized (Port 9449)" : "Connecting..."}
-              </span>
-            </h2>
-            <p className="text-xs text-[#5e6d82]">
-              Karigar admin controls running on{" "}
-              <span className="text-[#0b2f8a] font-mono font-semibold">
-                http://localhost:3001
-              </span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <a
-            href={getPublicStoreUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold btn-primary shadow-sm"
-          >
-            <span>Visit Customer Store</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
-          </a>
-          <button
-            onClick={onRefresh}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-[#0b2f8a]/5 text-[#182230] border border-[#0b2f8a]/15 shadow-sm transition"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "TODAY'S ORDERS", value: todayOrders.length, color: "text-[#0b2f8a]" },

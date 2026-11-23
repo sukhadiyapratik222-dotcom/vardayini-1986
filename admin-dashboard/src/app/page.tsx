@@ -50,6 +50,7 @@ import ReturnsTab from "@/components/returns-tab";
 
 export type TabId =
   | "overview"
+  | "settings"
   | "mobile-management"
   | "weekly-slogans"
   | "festivals"
@@ -333,14 +334,17 @@ export default function AdminDashboardPage() {
             perms.includes("reports:view")
           );
 
-        // 2. Change Logo & Identity
+        // 2. Change Logo & Identity / Store Settings
         case "branding":
+        case "settings":
           return (
             perms.includes("branding:view") ||
             perms.includes("branding:manage") ||
             perms.includes("branding") ||
             perms.includes("settings:manage") ||
-            perms.includes("settings")
+            perms.includes("settings") ||
+            currentUser?.role === "admin" ||
+            currentUser?.role === "super_admin"
           );
 
         // 3. Outlets & Stores
@@ -613,7 +617,8 @@ export default function AdminDashboardPage() {
 
       switch (tab) {
         case "branding":
-          return perms.includes("branding:manage") || perms.includes("settings:manage");
+        case "settings":
+          return perms.includes("branding:manage") || perms.includes("settings:manage") || currentUser.role === "admin" || currentUser.role === "super_admin";
         case "outlets":
           return perms.includes("outlets:manage") || perms.includes("stores:manage");
         case "hero":
@@ -1046,7 +1051,13 @@ export default function AdminDashboardPage() {
     ...otherPages,
     ...storeOperations,
     ...marketingAndApps,
-  ], [unreadNotificationCount, homeSections, shopSections, otherPages, storeOperations, marketingAndApps]);
+    {
+      id: "settings",
+      label: "Store Settings",
+      icon: "⚙️",
+      badge: isStoreOnline ? "Online" : "Offline",
+    },
+  ], [unreadNotificationCount, homeSections, shopSections, otherPages, storeOperations, marketingAndApps, isStoreOnline]);
 
   const reportMenuItems: { id: TabId; label: string }[] = [
     { id: "report-sales", label: "Sales Report" },
@@ -1741,6 +1752,36 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
               )}
+
+              {/* SECTION: Store Settings & System Configuration */}
+              <div className="space-y-1 pt-2 border-t border-[#0b2f8a]/10">
+                <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-[#5e6d82] uppercase flex items-center justify-between">
+                  <span>⚙️ Settings &amp; System</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("settings")}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                    activeTab === "settings"
+                      ? "bg-gradient-to-r from-[#0b2f8a] to-[#071c54] text-white shadow-md shadow-[#0b2f8a]/20"
+                      : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-[#0b2f8a]/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-base">⚙️</span>
+                    <span>Store Settings</span>
+                  </div>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      isStoreOnline
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-rose-100 text-rose-700"
+                    }`}
+                  >
+                    {isStoreOnline ? "Online" : "Offline"}
+                  </span>
+                </button>
+              </div>
             </nav>
           </div>
 
@@ -1845,6 +1886,12 @@ export default function AdminDashboardPage() {
                     <span className="text-[#00681c] font-bold">
                       {reportMenuItems.find((m) => m.id === activeTab)?.label}
                     </span>
+                  </>
+                ) : activeTab === "settings" ? (
+                  <>
+                    <span className="text-[#5e6d82] font-semibold">Settings</span>
+                    <span>/</span>
+                    <span className="text-[#0b2f8a] font-bold">Store Settings</span>
                   </>
                 ) : (
                   <span className="text-[#0b2f8a] font-bold capitalize">
@@ -2389,11 +2436,15 @@ export default function AdminDashboardPage() {
                 )
               )}
 
-              {activeTab === "branding" && (
+              {(activeTab === "branding" || activeTab === "settings") && (
                 isModulePermitted("branding") ? (
-                  <StoreBrandingTab config={config} onRefresh={loadData} />
+                  <StoreBrandingTab
+                    config={config}
+                    isStoreOnline={isStoreOnline}
+                    onRefresh={loadData}
+                  />
                 ) : (
-                  <AccessRestrictedCard moduleName="Store Branding & Identity" currentUser={currentUser} />
+                  <AccessRestrictedCard moduleName="Store Settings & Identity" currentUser={currentUser} />
                 )
               )}
 
