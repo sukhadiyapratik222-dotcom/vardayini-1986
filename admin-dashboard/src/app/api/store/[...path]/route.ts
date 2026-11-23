@@ -236,7 +236,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
             const items = data.products || data.items || [];
             return NextResponse.json({ items });
           }
-        } catch {}
+        } catch { }
       } else if (cleanSubPath === "api/admin/inventory") {
         try {
           const fallbackRes = await fetch(`${storeApiBase}/api/products`, { headers, cache: "no-store" });
@@ -256,7 +256,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
               lowStock: variants.filter((v: any) => v.stock <= 20),
             });
           }
-        } catch {}
+        } catch { }
       } else if (cleanSubPath === "api/admin/notifications") {
         if (req.method === "GET") {
           const fallback = getLocalNotificationsFallback();
@@ -280,7 +280,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
             const body = await req.json();
             const res = insertLocalNotificationFallback(body);
             if (res) return NextResponse.json({ success: true, message: "Notification created." });
-          } catch {}
+          } catch { }
         }
       } else if (cleanSubPath === "api/admin/customers") {
         return NextResponse.json({ customers: [] });
@@ -331,7 +331,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
           const body = await req.json();
           const res = insertLocalNotificationFallback(body);
           if (res) return NextResponse.json({ success: true, message: "Notification created." });
-        } catch {}
+        } catch { }
       }
     }
     return NextResponse.json(
@@ -339,7 +339,7 @@ async function forwardRequest(req: NextRequest, ctx: RouteContext) {
         error: "Store service unavailable",
         message: isConnRefused
           ? `Storefront service at ${storeApiBase} is unreachable. ` +
-            `Ensure the storefront deployment is running and STORE_API_URL is correct.`
+          `Ensure the storefront deployment is running and STORE_API_URL is correct.`
           : (error instanceof Error ? error.message : "Proxy fetch error"),
       },
       { status: 502 }

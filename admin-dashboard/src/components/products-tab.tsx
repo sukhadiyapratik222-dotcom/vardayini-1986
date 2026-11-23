@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ProductItem, InventoryItem, CategoryItem, UiConfig, VariantItem, api } from "@/lib/api";
 import { toast } from "@/lib/toast";
 import { ImagePickerField } from "@/components/image-picker-field";
@@ -22,7 +22,7 @@ export function getDepartmentForCategory(categoryNameOrSlug: string, categoryId?
   if (categoryId === 23 || categoryId === 24) {
     return "Bakery";
   }
-  if (categoryId && [9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(categoryId)) {
+  if (categoryId && [9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37].includes(categoryId)) {
     return "Namkeen";
   }
   if (categoryId && [1, 2, 3, 4, 5, 6, 7, 8, 10].includes(categoryId)) {
@@ -31,10 +31,25 @@ export function getDepartmentForCategory(categoryNameOrSlug: string, categoryId?
 
   const s = (categoryNameOrSlug || "").toLowerCase();
 
+  // Bakery keywords & slugs (checked first to prevent false namkeen/sweets matching)
+  if (
+    s.includes("bakery") ||
+    s.includes("biscuit") ||
+    s.includes("cookie") ||
+    s.includes("toast") ||
+    s.includes("khari") ||
+    s.includes("cake") ||
+    s.includes("rusk") ||
+    s.includes("nankhatai")
+  ) {
+    return "Bakery";
+  }
+
   // Namkeen keywords & slugs
   if (
     s.includes("namkeen") ||
     s.includes("farsan") ||
+    s.includes("farshan") ||
     s.includes("snack") ||
     s.includes("gathiya") ||
     s.includes("sev") ||
@@ -50,19 +65,6 @@ export function getDepartmentForCategory(categoryNameOrSlug: string, categoryId?
     s.includes("roasted")
   ) {
     return "Namkeen";
-  }
-
-  // Bakery keywords & slugs
-  if (
-    s.includes("bakery") ||
-    s.includes("biscuit") ||
-    s.includes("cookie") ||
-    s.includes("toast") ||
-    s.includes("khari") ||
-    s.includes("cake") ||
-    s.includes("rusk")
-  ) {
-    return "Bakery";
   }
 
   // Everything else defaults to Sweets (Kaju, Mawa, Penda, Sugarless, Ghee, Bengali, Dryfruit, Festival Specials, etc.)
@@ -160,6 +162,25 @@ export function ProductsTab({
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [saving, setSaving] = useState(false);
+
+  // Searchable Category Combobox State
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setIsCategoryDropdownOpen(false);
+      }
+    }
+    if (isCategoryDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCategoryDropdownOpen]);
 
   useEffect(() => {
     if (initialStockFilter) {
@@ -528,8 +549,15 @@ export function ProductsTab({
       const dept = getDepartmentForCategory(item.name, item.id);
       const targetGroup = groups.find((g) => g.group === dept);
       if (targetGroup) {
-        targetGroup.items.push(item);
+        if (!targetGroup.items.some((existing) => existing.name.toLowerCase() === item.name.toLowerCase())) {
+          targetGroup.items.push(item);
+        }
       }
+    }
+
+    // Sort items alphabetically within each group
+    for (const g of groups) {
+      g.items.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return groups;
@@ -559,7 +587,7 @@ export function ProductsTab({
         (p.variants && p.variants.some((v) => v.packName?.toLowerCase().includes(search.toLowerCase()) || v.weight?.toLowerCase().includes(search.toLowerCase())));
 
       let matchesDept = true;
-      if (departmentFilter !== "all") {
+      if (departmentFilter !== "all" && categoryFilter === "all") {
         matchesDept = getDepartmentForCategory(p.categoryName || "", p.categoryId) === departmentFilter;
       }
 
@@ -977,30 +1005,165 @@ export function ProductsTab({
             </select>
           </div>
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-4 py-2.5 text-[#182230] focus:border-[#0b2f8a] outline-none shadow-sm min-w-[200px]"
-          >
-            <option value="all">All Specific Categories ({filtered.length})</option>
-            {displayedCategoryGroups
-              .filter((grp) => departmentFilter === "all" || departmentFilter === grp.group)
-              .map((grp) => (
-                <optgroup key={grp.group} label={`${grp.icon} ${grp.group}`}>
-                  {grp.items.map((cat) => {
-                    const count = products.filter((p) => p.categoryName?.toLowerCase() === cat.name.toLowerCase()).length;
+          {/* Custom Searchable Category Combobox */}
+          <div className="relative min-w-[240px]" ref={categoryDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+              className={`w-full flex items-center justify-between gap-2 text-xs rounded-xl bg-white border px-3.5 py-2.5 text-[#182230] outline-none shadow-sm transition cursor-pointer ${
+                categoryFilter !== "all"
+                  ? "border-purple-500 bg-purple-50/40 ring-1 ring-purple-500/30 text-purple-900 font-bold"
+                  : "border-[#0b2f8a]/15 hover:border-[#0b2f8a]/35"
+              }`}
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <span>{categoryFilter !== "all" ? "🏷️" : "📁"}</span>
+                <span className="truncate">
+                  {categoryFilter === "all" ? "All Categories" : categoryFilter}
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
+                  {categoryFilter === "all"
+                    ? products.length
+                    : products.filter((p) => p.categoryName?.toLowerCase() === categoryFilter.toLowerCase()).length}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {categoryFilter !== "all" && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCategoryFilter("all");
+                      setCurrentPage(1);
+                    }}
+                    title="Clear category filter"
+                    className="w-4 h-4 rounded-full bg-purple-200 hover:bg-purple-300 text-purple-800 flex items-center justify-center text-[10px] font-bold"
+                  >
+                    ✕
+                  </span>
+                )}
+                <span className={`text-[10px] text-slate-400 transition-transform ${isCategoryDropdownOpen ? "rotate-180" : ""}`}>
+                  ▼
+                </span>
+              </div>
+            </button>
+
+            {isCategoryDropdownOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-2 space-y-2">
+                {/* Search input inside dropdown */}
+                <div className="relative px-1 pt-1">
+                  <input
+                    type="text"
+                    placeholder="Search all 22+ categories..."
+                    value={categorySearchQuery}
+                    onChange={(e) => setCategorySearchQuery(e.target.value)}
+                    className="w-full text-xs rounded-xl bg-slate-50 border border-slate-200 px-3 py-1.5 outline-none focus:border-purple-500 focus:bg-white transition"
+                    autoFocus
+                  />
+                  {categorySearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCategorySearchQuery("")}
+                      className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Option: All Categories */}
+                {!categorySearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryFilter("all");
+                      setIsCategoryDropdownOpen(false);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      categoryFilter === "all"
+                        ? "bg-purple-600 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>✨</span>
+                      <span>All Categories ({products.length})</span>
+                    </span>
+                    {categoryFilter === "all" && <span>✓</span>}
+                  </button>
+                )}
+
+                {/* Scrollable list grouped by Sweets, Namkeen, Bakery */}
+                <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 divide-y divide-slate-100">
+                  {displayedCategoryGroups.map((grp) => {
+                    const matchedItems = grp.items.filter((item) =>
+                      item.name.toLowerCase().includes(categorySearchQuery.toLowerCase())
+                    );
+                    if (matchedItems.length === 0) return null;
+
+                    const deptTotal = products.filter(
+                      (p) => getDepartmentForCategory(p.categoryName || "", p.categoryId) === grp.group
+                    ).length;
+
                     return (
-                      <option key={cat.id || cat.name} value={cat.name}>
-                        {cat.name} ({count})
-                      </option>
+                      <div key={grp.group} className="pt-2 first:pt-0 space-y-1">
+                        <div className="flex items-center justify-between px-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                          <span className="flex items-center gap-1.5">
+                            <span>{grp.icon}</span>
+                            <span>{grp.group}</span>
+                          </span>
+                          <span className="font-mono text-slate-400">{deptTotal} items</span>
+                        </div>
+
+                        <div className="space-y-0.5">
+                          {matchedItems.map((cat) => {
+                            const count = products.filter(
+                              (p) => p.categoryName?.toLowerCase() === cat.name.toLowerCase()
+                            ).length;
+                            const isSelected = categoryFilter.toLowerCase() === cat.name.toLowerCase();
+
+                            return (
+                              <button
+                                key={cat.id || cat.name}
+                                type="button"
+                                onClick={() => {
+                                  setCategoryFilter(cat.name);
+                                  setDepartmentFilter(grp.group);
+                                  setIsCategoryDropdownOpen(false);
+                                  setCategorySearchQuery("");
+                                  setCurrentPage(1);
+                                }}
+                                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer text-left ${
+                                  isSelected
+                                    ? "bg-purple-50 text-purple-700 font-bold border border-purple-200"
+                                    : "text-slate-700 hover:bg-slate-50 font-medium"
+                                }`}
+                              >
+                                <span className="truncate">{cat.name}</span>
+                                <span
+                                  className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-mono shrink-0 ${
+                                    isSelected
+                                      ? "bg-purple-600 text-white font-bold"
+                                      : count > 0
+                                      ? "bg-slate-100 text-slate-600 font-bold"
+                                      : "bg-slate-50 text-slate-300"
+                                  }`}
+                                >
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
-                </optgroup>
-              ))}
-          </select>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Dual Filter Row: Status (Active/Inactive) & Stock Filter */}
@@ -1128,6 +1291,49 @@ export function ProductsTab({
           </div>
         </div>
       </div>
+
+      {/* Active Filter Notice Bar */}
+      {(categoryFilter !== "all" || departmentFilter !== "all" || search.trim() !== "" || stockFilter !== "all" || statusFilter !== "all") && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 rounded-2xl bg-purple-50/90 border border-purple-200/80 text-xs text-purple-950 font-medium shadow-2xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm">🔍</span>
+            <span>
+              Showing <strong className="font-mono text-purple-700 font-bold">{filtered.length}</strong> of <strong className="font-mono font-bold">{products.length}</strong> products
+              {departmentFilter !== "all" && (
+                <> in <strong>{departmentFilter}</strong></>
+              )}
+              {categoryFilter !== "all" && (
+                <> · Category: <span className="font-bold underline text-purple-800">{categoryFilter}</span></>
+              )}
+              {search.trim() && (
+                <> · Matching: <em className="text-slate-700">"{search}"</em></>
+              )}
+              {stockFilter !== "all" && (
+                <> · Stock: <span className="font-semibold capitalize">{stockFilter.replace("_", " ")}</span></>
+              )}
+              {statusFilter !== "all" && (
+                <> · Status: <span className="font-semibold capitalize">{statusFilter}</span></>
+              )}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCategoryFilter("all");
+              setDepartmentFilter("all");
+              setSearch("");
+              setStatusFilter("all");
+              setStockFilter("all");
+              setCurrentPage(1);
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+          >
+            <span>✕</span>
+            <span>Clear Filters (Show All {products.length})</span>
+          </button>
+        </div>
+      )}
 
       {/* Products & Pricing Table */}
       <div className="rounded-2xl bg-white border border-[#0b2f8a]/10 overflow-hidden shadow-sm">

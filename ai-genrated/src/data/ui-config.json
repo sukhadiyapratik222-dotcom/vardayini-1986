@@ -64,7 +64,7 @@
     "name": "Vardayini Sweet Mart",
     "tagline": "Pure Ghee Gujarati Mithai & Live Morning Farsan",
     "established": "1976",
-    "phone": "+91 63531 19329",
+    "phone": "+91 63521 19329",
     "whatsapp": "+91 63521 19329",
     "email": "orders@vardayini.com",
     "address": "6A, Navjivan Shopping Center, Kalol - 382721",
@@ -1060,33 +1060,33 @@
     "filterMode": "curated"
   },
   "culinaryPillars": {
-    "enabled": true,
+    "enabled": false,
     "badge": "The Culinary Experience",
     "title": "Elevating the Sweet Tradition",
     "pillars": [
       {
         "id": "pillar-1",
-        "icon": "🧈",
         "title": "100% Shuddh Desi Ghee",
-        "description": "Simmered in slow copper kadhais with pure Gir cow & buffalo bilona ghee."
+        "description": "Simmered in slow copper kadhais with pure Gir cow & buffalo bilona ghee.",
+        "icon": "🧈"
       },
       {
         "id": "pillar-2",
-        "icon": "🌅",
         "title": "Dawn Preparation",
-        "description": "Freshly rolled at sunrise and dispatched warm every single morning."
+        "description": "Freshly rolled at sunrise and dispatched warm every single morning.",
+        "icon": "🌅"
       },
       {
         "id": "pillar-3",
-        "icon": "📦",
         "title": "Vacuum Sealed",
-        "description": "Tin and gold packaging preserving crispy layers, aroma, and moisture."
+        "description": "Tin and gold packaging preserving crispy layers, aroma, and moisture.",
+        "icon": "📦"
       },
       {
         "id": "pillar-4",
-        "icon": "⚡",
         "title": "Gujarat Express Network",
-        "description": "Same-day doorstep delivery in Kalol, Gandhinagar, and across Gujarat."
+        "description": "Same-day doorstep delivery in Kalol, Gandhinagar, and across Gujarat.",
+        "icon": "⚡"
       }
     ]
   },

@@ -29,7 +29,7 @@ export const SELLER_DETAILS: SellerDetails = {
   stateCode: "24",
   pincode: "382721",
   gstin: "24AAACV1234F1Z5",
-  phone: "+91 63531 19329",
+  phone: "+91 63521 19329",
   email: "billing@vardayinisweets.com",
   fssaiNumber: "10719024000123",
 };

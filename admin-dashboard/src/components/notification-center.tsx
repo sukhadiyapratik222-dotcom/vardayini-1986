@@ -391,7 +391,7 @@ export function NotificationCenter({
     let meta: Record<string, any> = {};
     try {
       if (item.data) meta = JSON.parse(item.data);
-    } catch {}
+    } catch { }
 
     if ((item.type === "order_created" || item.type === "order_cancelled") && onNavigateTab) {
       setIsOpen(false);
@@ -415,13 +415,12 @@ export function NotificationCenter({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative flex items-center justify-center p-2 rounded-xl transition duration-200 select-none ${
-          isOpen
-            ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20"
-            : unreadCount > 0
+        className={`relative flex items-center justify-center p-2 rounded-xl transition duration-200 select-none ${isOpen
+          ? "bg-[#0b2f8a] text-white shadow-md shadow-[#0b2f8a]/20"
+          : unreadCount > 0
             ? "bg-amber-50 text-[#0b2f8a] border border-amber-300 hover:bg-amber-100 hover:border-amber-400 shadow-sm"
             : "bg-white text-[#5e6d82] border border-slate-200 hover:text-[#0b2f8a] hover:bg-slate-50"
-        } ${buttonClassName}`}
+          } ${buttonClassName}`}
         title={`Notifications (${unreadCount} unread)`}
         aria-label="Open notifications"
       >
@@ -463,9 +462,8 @@ export function NotificationCenter({
               <button
                 type="button"
                 onClick={handleToggleSound}
-                className={`p-1.5 rounded-lg text-xs transition ${
-                  soundEnabled ? "bg-white/20 text-white" : "bg-white/10 text-white/40"
-                }`}
+                className={`p-1.5 rounded-lg text-xs transition ${soundEnabled ? "bg-white/20 text-white" : "bg-white/10 text-white/40"
+                  }`}
                 title={soundEnabled ? "Chime sound enabled (click to mute)" : "Chime sound muted (click to unmute)"}
               >
                 {soundEnabled ? "🔊" : "🔇"}
@@ -543,22 +541,20 @@ export function NotificationCenter({
             <button
               type="button"
               onClick={() => setActiveFilter("all")}
-              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition ${
-                activeFilter === "all"
-                  ? "bg-[#0b2f8a] text-white"
-                  : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-slate-200/60"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition ${activeFilter === "all"
+                ? "bg-[#0b2f8a] text-white"
+                : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-slate-200/60"
+                }`}
             >
               All ({notifications.length})
             </button>
             <button
               type="button"
               onClick={() => setActiveFilter("orders")}
-              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition ${
-                activeFilter === "orders"
-                  ? "bg-[#0b2f8a] text-white"
-                  : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-slate-200/60"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition ${activeFilter === "orders"
+                ? "bg-[#0b2f8a] text-white"
+                : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-slate-200/60"
+                }`}
             >
               <span>Orders 🛍️</span>
               <span className="text-[9px] opacity-75">
@@ -568,11 +564,10 @@ export function NotificationCenter({
             <button
               type="button"
               onClick={() => setActiveFilter("logins")}
-              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition ${
-                activeFilter === "logins"
-                  ? "bg-[#0b2f8a] text-white"
-                  : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-slate-200/60"
-              }`}
+              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition ${activeFilter === "logins"
+                ? "bg-[#0b2f8a] text-white"
+                : "text-[#5e6d82] hover:text-[#0b2f8a] hover:bg-slate-200/60"
+                }`}
             >
               <span>Logins 👤</span>
               <span className="text-[9px] opacity-75">
@@ -601,31 +596,29 @@ export function NotificationCenter({
                 let meta: Record<string, any> = {};
                 try {
                   if (item.data) meta = JSON.parse(item.data);
-                } catch {}
+                } catch { }
 
                 return (
                   <div
                     key={item.id}
                     onClick={() => handleNotificationClick(item)}
-                    className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors duration-150 select-none group relative ${
-                      !item.isRead
-                        ? isCancelled
-                          ? "bg-rose-50/60 hover:bg-rose-100/70 border-l-4 border-rose-500"
-                          : "bg-amber-50/50 hover:bg-amber-100/60 border-l-4 border-amber-500"
-                        : "bg-white hover:bg-slate-50"
-                    }`}
+                    className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors duration-150 select-none group relative ${!item.isRead
+                      ? isCancelled
+                        ? "bg-rose-50/60 hover:bg-rose-100/70 border-l-4 border-rose-500"
+                        : "bg-amber-50/50 hover:bg-amber-100/60 border-l-4 border-amber-500"
+                      : "bg-white hover:bg-slate-50"
+                      }`}
                   >
                     {/* Icon Badge */}
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base shadow-sm ${
-                        isCancelled
-                          ? "bg-rose-100 text-rose-800 border border-rose-300/60"
-                          : isOrder
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base shadow-sm ${isCancelled
+                        ? "bg-rose-100 text-rose-800 border border-rose-300/60"
+                        : isOrder
                           ? "bg-emerald-100 text-emerald-800 border border-emerald-300/60"
                           : isRegister
-                          ? "bg-purple-100 text-purple-800 border border-purple-300/60"
-                          : "bg-blue-100 text-blue-800 border border-blue-300/60"
-                      }`}
+                            ? "bg-purple-100 text-purple-800 border border-purple-300/60"
+                            : "bg-blue-100 text-blue-800 border border-blue-300/60"
+                        }`}
                     >
                       {isCancelled ? "🛑" : isOrder ? "🛍️" : isRegister ? "🌟" : "👤"}
                     </div>
@@ -634,9 +627,8 @@ export function NotificationCenter({
                     <div className="flex-1 min-w-0 pr-6">
                       <div className="flex items-center justify-between gap-1">
                         <h4
-                          className={`text-xs truncate ${
-                            !item.isRead ? "font-bold text-slate-900" : "font-semibold text-slate-700"
-                          }`}
+                          className={`text-xs truncate ${!item.isRead ? "font-bold text-slate-900" : "font-semibold text-slate-700"
+                            }`}
                         >
                           {item.title}
                         </h4>

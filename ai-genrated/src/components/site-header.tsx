@@ -233,7 +233,7 @@ export function SiteHeader({ initialConfig }: SiteHeaderProps = {}) {
     storeInfo: {
       city: "Kalol, Gujarat",
       established: "1976",
-      phone: "+91 63531 19329",
+      phone: "+91 63521 19329",
     },
   };
 

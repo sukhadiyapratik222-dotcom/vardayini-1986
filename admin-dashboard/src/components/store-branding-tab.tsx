@@ -39,14 +39,14 @@ export function StoreBrandingTab({ config, onRefresh }: StoreBrandingTabProps) {
     config?.storeInfo?.tagline ?? "Pure Ghee Gujarati Mithai & Live Morning Farsan"
   );
   const [established, setEstablished] = useState(config?.storeInfo?.established ?? "1976");
-  const [phone, setPhone] = useState(config?.storeInfo?.phone ?? "+91 98250 12345");
-  const [whatsapp, setWhatsapp] = useState(config?.storeInfo?.whatsapp ?? "+91 98250 12345");
+  const [phone, setPhone] = useState(config?.storeInfo?.phone ?? "+91 63521 19329");
+  const [whatsapp, setWhatsapp] = useState(config?.storeInfo?.whatsapp ?? "+91 63521 19329");
   const [email, setEmail] = useState(config?.storeInfo?.email ?? "orders@vardayini.com");
   const [address, setAddress] = useState(
-    config?.storeInfo?.address ?? "Opp. Swaminarayan Temple, Station Road, Anand, Gujarat 388001"
+    config?.storeInfo?.address ?? "6A, Navjivan Shopping Center, Kalol - 382721"
   );
-  const [city, setCity] = useState(config?.storeInfo?.city ?? "Anand, Gujarat");
-  const [hours, setHours] = useState(config?.storeInfo?.hours ?? "7:00 AM – 10:30 PM (All 7 Days)");
+  const [city, setCity] = useState(config?.storeInfo?.city ?? "Kalol, Gujarat");
+  const [hours, setHours] = useState(config?.storeInfo?.hours ?? "8:00 AM – 8:30 PM (All 7 Days)");
 
   const [saving, setSaving] = useState(false);
 
@@ -61,6 +61,17 @@ export function StoreBrandingTab({ config, onRefresh }: StoreBrandingTabProps) {
         setLogoImageUrl(config.logo.imageUrl ?? "/images/brand-logo.png");
         setBrandName(config.logo.brandName ?? "VARDAYINI");
         setBrandSubtitle(config.logo.brandSubtitle ?? `Sweet Mart · ${config.storeInfo?.established || "1976"}`);
+      }
+      if (config?.storeInfo) {
+        setStoreName(config.storeInfo.name ?? "Vardayini Sweet Mart");
+        setTagline(config.storeInfo.tagline ?? "Pure Ghee Gujarati Mithai & Live Morning Farsan");
+        setEstablished(config.storeInfo.established ?? "1976");
+        setPhone(config.storeInfo.phone ?? "+91 63521 19329");
+        setWhatsapp(config.storeInfo.whatsapp ?? "+91 63521 19329");
+        setEmail(config.storeInfo.email ?? "orders@vardayini.com");
+        setAddress(config.storeInfo.address ?? "6A, Navjivan Shopping Center, Kalol - 382721");
+        setCity(config.storeInfo.city ?? "Kalol, Gujarat");
+        setHours(config.storeInfo.hours ?? "8:00 AM – 8:30 PM (All 7 Days)");
       }
     }, 0);
     return () => clearTimeout(timer);
