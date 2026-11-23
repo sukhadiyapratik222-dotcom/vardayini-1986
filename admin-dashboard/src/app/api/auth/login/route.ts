@@ -41,53 +41,6 @@ export async function POST(req: Request) {
 
       console.warn(`[Dashboard Auth] Storefront service at ${storeUrl} is unreachable:`, fetchErr);
 
-      // Check fallback admin credentials if store service is offline
-      const isDev = process.env.NODE_ENV !== "production";
-      const isSuperAdminCandidate =
-        isDev &&
-        email === "pratik222@gmail.com" &&
-        password === "Pratik@#123";
-      const isAdminCandidate =
-        isSuperAdminCandidate ||
-        (isDev &&
-        email === "admin@vardayini.com" &&
-        (password === "admin123" || password === "Admin@2024"));
-
-      if (isAdminCandidate) {
-        // Allow admin login even if storefront is offline, using fallback admin session
-        const sessionToken = isSuperAdminCandidate
-          ? `vsm_fallback_super_admin_${Date.now()}`
-          : `vsm_fallback_admin_${Date.now()}`;
-        const cookieStore = await cookies();
-        cookieStore.set("vsm_admin_session", sessionToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return NextResponse.json({
-          success: true,
-          offlineMode: true,
-          user: isSuperAdminCandidate
-            ? {
-                id: 1,
-                name: "Pratik Sukhadiya (Super Admin)",
-                email: "pratik222@gmail.com",
-                phone: "9876543210",
-                role: "super_admin",
-              }
-            : {
-                id: 2,
-                name: "Vardayini Admin",
-                email: "admin@vardayini.com",
-                phone: "9000000000",
-                role: "admin",
-              },
-        });
-      }
-
       return NextResponse.json(
         {
           error: isConnRefused
@@ -107,52 +60,6 @@ export async function POST(req: Request) {
     }
 
     if (!res.ok) {
-      const isDev = process.env.NODE_ENV !== "production";
-      const isSuperAdminCandidate =
-        isDev &&
-        email === "pratik222@gmail.com" &&
-        password === "Pratik@#123";
-      const isAdminCandidate =
-        isSuperAdminCandidate ||
-        (isDev &&
-        email === "admin@vardayini.com" &&
-        (password === "admin123" || password === "Admin@2024"));
-
-      if (isAdminCandidate && (res.status >= 500 || res.status === 404)) {
-        console.warn(`[Dashboard Auth] Storefront returned ${res.status}. Falling back to dev admin session.`);
-        const sessionToken = isSuperAdminCandidate
-          ? `vsm_fallback_super_admin_${Date.now()}`
-          : `vsm_fallback_admin_${Date.now()}`;
-        const cookieStore = await cookies();
-        cookieStore.set("vsm_admin_session", sessionToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return NextResponse.json({
-          success: true,
-          offlineMode: true,
-          user: isSuperAdminCandidate
-            ? {
-                id: 1,
-                name: "Pratik Sukhadiya (Super Admin)",
-                email: "pratik222@gmail.com",
-                phone: "9876543210",
-                role: "super_admin",
-              }
-            : {
-                id: 2,
-                name: "Vardayini Admin",
-                email: "admin@vardayini.com",
-                phone: "9000000000",
-                role: "admin",
-              },
-        });
-      }
-
       const errorMsg =
         data?.error ||
         data?.message ||
@@ -160,17 +67,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: errorMsg }, { status: res.status });
     }
 
-    const cleanEmail = String(email || "").trim().toLowerCase();
     if (!data?.user) {
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
-
-    if (cleanEmail === "pratik222@gmail.com" || data.user.email === "pratik222@gmail.com") {
-      data.user.role = "super_admin";
-      data.user.name = data.user.name || "Pratik Sukhadiya (Super Admin)";
-      if (!data.user.permissions || data.user.permissions.length === 0) {
-        data.user.permissions = ["*"];
-      }
     }
 
     if (data.user.role !== "admin" && data.user.role !== "super_admin") {
@@ -208,9 +106,10 @@ export async function POST(req: Request) {
     }
 
     if (!sessionToken) {
-      // Fallback session token if confirmed admin
-      const isSuper = data?.user?.role === "super_admin";
-      sessionToken = isSuper ? `admin_session_super_admin_${Date.now()}` : `admin_session_${Date.now()}`;
+      return NextResponse.json(
+        { error: "Storefront did not issue an authenticated session." },
+        { status: 502 }
+      );
     }
 
     const cookieStore = await cookies();

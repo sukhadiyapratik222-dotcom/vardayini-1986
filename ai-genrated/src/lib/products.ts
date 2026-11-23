@@ -1,6 +1,6 @@
 import { and, desc, eq, like, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, products, productVariants, reviews } from "@/db/schema";
+import { categories, products, productVariants, reviews, wishlistItems } from "@/db/schema";
 import { unitPrice } from "@/lib/money";
 import { ensureSeeded, PRODUCT_CATALOG } from "@/db/seed";
 
@@ -151,6 +151,18 @@ export async function listProducts(opts: {
     byProduct.set(variant.productId, list);
   }
 
+  let wishlistMap = new Map<number, number>();
+  try {
+    const wCounts = await db
+      .select({
+        productId: wishlistItems.productId,
+        count: sql<number>`count(*)`,
+      })
+      .from(wishlistItems)
+      .groupBy(wishlistItems.productId);
+    wishlistMap = new Map(wCounts.map((w) => [w.productId, Number(w.count)]));
+  } catch {}
+
   let result = rows.map((row) => {
     const rawList = byProduct.get(row.id) ?? [];
     const list = rawList
@@ -184,6 +196,7 @@ export async function listProducts(opts: {
       ...row,
       imageUrl: resolvedImageUrl,
       variants: effectiveVariants,
+      wishlistCount: wishlistMap.get(row.id) || 0,
       fromPrice: preferred ? unitPrice(preferred.price, preferred.discountedPrice) : 350,
       comparePrice: preferred && preferred.discountedPrice && preferred.price > preferred.discountedPrice ? preferred.price : null,
     };

@@ -27,6 +27,26 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
     targetRole: "admin" | "customer";
   } | null>(null);
 
+  // Points Adjustment state
+  const [pointsModalTarget, setPointsModalTarget] = useState<CustomerItem | null>(null);
+  const [pointsDelta, setPointsDelta] = useState<number>(50);
+  const [pointsReason, setPointsReason] = useState<string>("");
+  const [isAdjustingPoints, setIsAdjustingPoints] = useState<boolean>(false);
+
+  // Customer Returns modal state
+  const [returnsModalTarget, setReturnsModalTarget] = useState<CustomerItem | null>(null);
+  const [customerReturns, setCustomerReturns] = useState<any[]>([]);
+  const [isLoadingReturns, setIsLoadingReturns] = useState<boolean>(false);
+
+  // Sweet Rewards Rules modal state
+  const [isRewardsModalOpen, setIsRewardsModalOpen] = useState<boolean>(false);
+  const [rewardsPointsRate, setRewardsPointsRate] = useState<number>(1);
+  const [rewardsRupeeValue, setRewardsRupeeValue] = useState<number>(0.1);
+  const [silverSpend, setSilverSpend] = useState<number>(1500);
+  const [goldSpend, setGoldSpend] = useState<number>(5000);
+  const [platinumSpend, setPlatinumSpend] = useState<number>(12000);
+  const [isSavingRewards, setIsSavingRewards] = useState<boolean>(false);
+
   const isSuperAdminUser = currentUser?.role === "super_admin";
 
   // Summary statistics
@@ -119,6 +139,111 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
     setExpandedAddresses((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleOpenReturns = async (customer: CustomerItem) => {
+    setReturnsModalTarget(customer);
+    setIsLoadingReturns(true);
+    try {
+      const data = await api.getCustomerReturns(customer.id);
+      setCustomerReturns(data || []);
+    } catch {
+      toast.error("Failed to load customer returns.");
+    } finally {
+      setIsLoadingReturns(false);
+    }
+  };
+
+  const handleSavePoints = async () => {
+    if (!pointsModalTarget) return;
+    if (!pointsDelta || isNaN(pointsDelta)) {
+      toast.error("Please enter a valid points adjustment amount.");
+      return;
+    }
+    if (!pointsReason.trim()) {
+      toast.error("Please specify a reason for this audit adjustment.");
+      return;
+    }
+    setIsAdjustingPoints(true);
+    try {
+      const res = await api.adjustCustomerPoints(pointsModalTarget.id, pointsDelta, pointsReason.trim());
+      if (res.success) {
+        toast.success(res.message || "Points successfully adjusted.");
+        setPointsModalTarget(null);
+        setPointsReason("");
+        await onRefresh();
+      } else {
+        toast.error(res.message || "Failed to adjust points.");
+      }
+    } catch {
+      toast.error("Error adjusting points.");
+    } finally {
+      setIsAdjustingPoints(false);
+    }
+  };
+
+  const handleOpenRewardsModal = async () => {
+    setIsRewardsModalOpen(true);
+    try {
+      const config = await api.getUiConfig();
+      if (config.loyaltyRewards) {
+        const lr = config.loyaltyRewards;
+        setRewardsPointsRate(lr.pointsPerTenRupees ?? 1);
+        setRewardsRupeeValue(lr.rupeeValuePerPoint ?? 0.1);
+        const s = lr.tiers?.find((t) => t.id === "silver");
+        const g = lr.tiers?.find((t) => t.id === "gold");
+        const p = lr.tiers?.find((t) => t.id === "platinum");
+        if (s) setSilverSpend(s.minSpend);
+        if (g) setGoldSpend(g.minSpend);
+        if (p) setPlatinumSpend(p.minSpend);
+      }
+    } catch {}
+  };
+
+  const handleSaveRewardsConfig = async () => {
+    setIsSavingRewards(true);
+    try {
+      const config = await api.getUiConfig();
+      const currentLoyalty = config.loyaltyRewards || {
+        pointsPerTenRupees: 1,
+        rupeeValuePerPoint: 0.1,
+        welcomeBonus: 50,
+        tiers: [
+          { id: "silver", name: "Silver Patron", badge: "✨ Silver", minSpend: 1500, perk: "5% festive discount" },
+          { id: "gold", name: "Gold Connoisseur", badge: "👑 Gold", minSpend: 5000, perk: "Free express delivery on ₹499+" },
+          { id: "platinum", name: "Platinum Royal Club", badge: "💎 Platinum", minSpend: 12000, perk: "Early festival access & halwai gift" },
+        ],
+        perks: [
+          { id: "free_delivery", title: "Free Delivery on Gold", description: "Complimentary express delivery on orders over ₹499", requiredTier: "gold", icon: "🚚" },
+          { id: "birthday_discount", title: "Birthday Gift Discount", description: "Exclusive 15% discount voucher during your birthday week", requiredTier: "silver", icon: "🎁" },
+          { id: "festival_early_access", title: "Early Festival Access", description: "48-hour advance pre-booking for Diwali & Rakhi bhattis", requiredTier: "platinum", icon: "🪔" },
+        ],
+      };
+
+      const updatedTiers = (currentLoyalty.tiers || []).map((t) => {
+        if (t.id === "silver") return { ...t, minSpend: Number(silverSpend) };
+        if (t.id === "gold") return { ...t, minSpend: Number(goldSpend) };
+        if (t.id === "platinum") return { ...t, minSpend: Number(platinumSpend) };
+        return t;
+      });
+
+      const updatedLoyalty = {
+        ...currentLoyalty,
+        pointsPerTenRupees: Number(rewardsPointsRate),
+        rupeeValuePerPoint: Number(rewardsRupeeValue),
+        welcomeBonus: currentLoyalty.welcomeBonus ?? 50,
+        tiers: updatedTiers,
+      };
+
+      await api.updateUiConfig({ loyaltyRewards: updatedLoyalty });
+      toast.success("Sweet Rewards rules & tier thresholds updated successfully.");
+      setIsRewardsModalOpen(false);
+      await onRefresh();
+    } catch {
+      toast.error("Failed to update rewards rules.");
+    } finally {
+      setIsSavingRewards(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner / Heading */}
@@ -132,13 +257,22 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onRefresh()}
-          className="self-start md:self-auto rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition flex items-center gap-1.5"
-        >
-          <span>🔄</span> Refresh Directory
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={handleOpenRewardsModal}
+            className="rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-900 shadow-sm transition flex items-center gap-1.5"
+          >
+            <span>👑</span> Sweet Rewards Rules & Tiers
+          </button>
+          <button
+            type="button"
+            onClick={() => onRefresh()}
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition flex items-center gap-1.5"
+          >
+            <span>🔄</span> Refresh Directory
+          </button>
+        </div>
       </div>
 
       {/* Super Admin Status Banner */}
@@ -286,9 +420,11 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
               <tr>
                 <th className="py-3.5 px-4">Patron / Email</th>
                 <th className="py-3.5 px-4">Role / Access</th>
+                <th className="py-3.5 px-4">Points & Tier</th>
                 <th className="py-3.5 px-4">Mobile Contact</th>
                 <th className="py-3.5 px-4">Saved Delivery Locations</th>
                 <th className="py-3.5 px-4 text-center">Orders Placed</th>
+                <th className="py-3.5 px-4 text-center">Returns</th>
                 <th className="py-3.5 px-4">Lifetime Spend</th>
                 <th className="py-3.5 px-4">Joined Date</th>
                 <th className="py-3.5 px-4 text-right">Account Actions</th>
@@ -297,7 +433,7 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={10} className="py-12 text-center text-slate-400">
                     <p className="text-sm font-semibold">No accounts found</p>
                     <p className="text-xs mt-1">Try modifying your search or filter criteria.</p>
                   </td>
@@ -354,6 +490,54 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
                             👤 Customer
                           </span>
                         )}
+                      </td>
+
+                      {/* Points & Tier */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                customer.tier === "Platinum Royal Club"
+                                  ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                  : customer.tier === "Gold Connoisseur"
+                                  ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                  : customer.tier === "Silver Patron"
+                                  ? "bg-slate-200 text-slate-800 border border-slate-300"
+                                  : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                              }`}
+                            >
+                              {customer.tier === "Platinum Royal Club"
+                                ? "💎 Platinum"
+                                : customer.tier === "Gold Connoisseur"
+                                ? "👑 Gold"
+                                : customer.tier === "Silver Patron"
+                                ? "✨ Silver"
+                                : "🌿 Member"}
+                            </span>
+                            <div className="text-[11px] font-mono text-slate-700 mt-0.5 flex items-center gap-1">
+                              <span className="font-bold text-[#6b1d1d]">{customer.points ?? 0}</span>
+                              <span className="text-slate-400">pts</span>
+                              {(customer.bonusPoints ?? 0) > 0 && (
+                                <span className="text-[9px] text-amber-600 bg-amber-50 px-1 rounded font-sans">
+                                  +{customer.bonusPoints}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPointsModalTarget(customer);
+                              setPointsDelta(50);
+                              setPointsReason("Goodwill sweet rewards credit");
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-[#0b2f8a] hover:bg-slate-100 transition cursor-pointer"
+                            title="Adjust reward points"
+                          >
+                            ✏️
+                          </button>
+                        </div>
                       </td>
 
                       {/* Phone */}
@@ -416,6 +600,23 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
                         <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
                           {customer.totalOrders}
                         </span>
+                      </td>
+
+                      {/* Returns */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        {(customer.returnRequestsCount ?? 0) > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReturns(customer)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300 transition cursor-pointer"
+                            title="View customer return claims"
+                          >
+                            <span>📦</span>
+                            <span>{customer.returnRequestsCount} Claims</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 font-mono text-[11px]">0</span>
+                        )}
                       </td>
 
                       {/* Lifetime Spend */}
@@ -624,6 +825,325 @@ export function CustomersTab({ customers, onRefresh, currentUser }: CustomersTab
               >
                 <span>🗑️</span>
                 <span>{isDeletingId !== null ? "Deleting..." : "Delete Account"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Points Adjustment Modal */}
+      {pointsModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                👑
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900">
+                  Adjust Customer Reward Points
+                </h3>
+                <p className="text-xs text-slate-500">Mithai Rewards & Loyalty Program</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Customer:</span>
+                <span className="font-bold text-slate-900">{pointsModalTarget.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Current Balance:</span>
+                <span className="font-bold text-[#6b1d1d] font-mono">{pointsModalTarget.points ?? 0} pts</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Loyalty Tier:</span>
+                <span className="font-bold text-amber-700">{pointsModalTarget.tier || "Member"}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Points to Add / Deduct (+/-)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={pointsDelta}
+                    onChange={(e) => setPointsDelta(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono focus:border-[#0b2f8a] focus:ring-2 focus:ring-[#0b2f8a]/20 outline-none"
+                    placeholder="e.g. 50 or -20"
+                  />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setPointsDelta(50)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                    >
+                      +50
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPointsDelta(100)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                    >
+                      +100
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  New estimated balance: <strong className="font-mono text-slate-800">{Math.max(0, (pointsModalTarget.points ?? 0) + pointsDelta)} pts</strong>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Audit Reason (Required)
+                </label>
+                <input
+                  type="text"
+                  value={pointsReason}
+                  onChange={(e) => setPointsReason(e.target.value)}
+                  placeholder="e.g. Festival goodwill credit, order issue compensation"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:border-[#0b2f8a] focus:ring-2 focus:ring-[#0b2f8a]/20 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setPointsModalTarget(null)}
+                disabled={isAdjustingPoints}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePoints}
+                disabled={isAdjustingPoints || !pointsReason.trim()}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0b2f8a] hover:bg-[#082266] transition shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {isAdjustingPoints ? "Updating..." : "Save Points Adjustment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Returns Modal */}
+      {returnsModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                  📦
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">
+                    Return Claims: {returnsModalTarget.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono">{returnsModalTarget.email} • {returnsModalTarget.phone}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReturnsModalTarget(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {isLoadingReturns ? (
+                <div className="py-12 text-center text-slate-400 text-xs">
+                  Loading return claims...
+                </div>
+              ) : customerReturns.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-xs">
+                  No return requests recorded for this customer.
+                </div>
+              ) : (
+                customerReturns.map((ret: any) => (
+                  <div
+                    key={ret.id}
+                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-[#0b2f8a]">#{ret.orderNumber}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 uppercase">
+                          {ret.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-400">
+                        {new Date(ret.createdAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+
+                    <p className="text-slate-800">
+                      <strong>Reason:</strong> {ret.reasonLabel || ret.reason}
+                    </p>
+                    {ret.description && (
+                      <p className="text-slate-600 italic bg-white p-2.5 rounded-xl border border-slate-200/60">
+                        "{ret.description}"
+                      </p>
+                    )}
+
+                    {ret.photoUrl && (
+                      <div className="pt-1">
+                        <span className="text-[11px] font-bold text-slate-500 block mb-1">Attached Photo Proof:</span>
+                        <a href={ret.photoUrl} target="_blank" rel="noreferrer">
+                          <img
+                            src={ret.photoUrl}
+                            alt="Damage proof"
+                            className="w-24 h-24 object-cover rounded-xl border border-slate-200 hover:opacity-90 transition"
+                          />
+                        </a>
+                      </div>
+                    )}
+
+                    {ret.adminNotes && (
+                      <div className="p-2 bg-amber-50 rounded-xl border border-amber-200/60 text-[11px] text-amber-900">
+                        <strong>Admin Notes:</strong> {ret.adminNotes}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center justify-end border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setReturnsModalTarget(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sweet Rewards Configuration Modal */}
+      {isRewardsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                👑
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900">
+                  Sweet Rewards Rules & Tier Thresholds
+                </h3>
+                <p className="text-xs text-slate-500">Configure points earn rates and tier milestones</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Points per ₹10 Spent
+                  </label>
+                  <input
+                    type="number"
+                    min={0.1}
+                    step={0.1}
+                    value={rewardsPointsRate}
+                    onChange={(e) => setRewardsPointsRate(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-sm focus:border-[#0b2f8a] outline-none"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">e.g. 1 = 1 pt per ₹10</p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Rupee Value per Point (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={rewardsRupeeValue}
+                    onChange={(e) => setRewardsRupeeValue(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-sm focus:border-[#0b2f8a] outline-none"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">e.g. 0.1 = 10 pts = ₹1</p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <span className="block font-bold text-slate-800">
+                  Tier Qualification Thresholds (Spend in ₹)
+                </span>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-slate-700 flex items-center gap-1">
+                      <span>✨</span> Silver Patron
+                    </span>
+                    <input
+                      type="number"
+                      value={silverSpend}
+                      onChange={(e) => setSilverSpend(Number(e.target.value))}
+                      className="w-32 px-3 py-1.5 rounded-xl border border-slate-300 font-mono text-xs focus:border-[#0b2f8a] outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      <span>👑</span> Gold Connoisseur
+                    </span>
+                    <input
+                      type="number"
+                      value={goldSpend}
+                      onChange={(e) => setGoldSpend(Number(e.target.value))}
+                      className="w-32 px-3 py-1.5 rounded-xl border border-slate-300 font-mono text-xs focus:border-[#0b2f8a] outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-purple-800 flex items-center gap-1">
+                      <span>💎</span> Platinum Royal Club
+                    </span>
+                    <input
+                      type="number"
+                      value={platinumSpend}
+                      onChange={(e) => setPlatinumSpend(Number(e.target.value))}
+                      className="w-32 px-3 py-1.5 rounded-xl border border-slate-300 font-mono text-xs focus:border-[#0b2f8a] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsRewardsModalOpen(false)}
+                disabled={isSavingRewards}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveRewardsConfig}
+                disabled={isSavingRewards}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0b2f8a] hover:bg-[#082266] transition shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {isSavingRewards ? "Saving Rules..." : "Save Reward Rules"}
               </button>
             </div>
           </div>

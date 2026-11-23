@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import nodemailer from "nodemailer";
+import { secret } from "@/lib/auth";
 
 export interface EmailOtpRecord {
   email: string;
@@ -250,9 +251,9 @@ export function signSessionJwt(email: string, extra?: Record<string, any>): stri
     })
   ).toString("base64url");
 
-  const secret = process.env.SESSION_SECRET || process.env.JWT_SECRET || "vsm_session_jwt_secure_key_2026_vardayini_prod";
+  const signingSecret = process.env.JWT_SECRET?.trim() || secret();
   const signature = crypto
-    .createHmac("sha256", secret)
+    .createHmac("sha256", signingSecret)
     .update(`${header}.${payload}`)
     .digest("base64url");
 

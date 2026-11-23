@@ -1,74 +1,44 @@
-import { createHmac } from "crypto";
-
-const secret = process.env.SESSION_SECRET || "vsm_session_jwt_secure_key_2026_vardayini_prod";
-
-function createToken(userId: number) {
-  const payload = JSON.stringify({ userId, exp: Date.now() + 1000 * 60 * 60 * 24 * 14 });
-  const sig = createHmac("sha256", secret).update(payload).digest("hex");
-  return Buffer.from(payload).toString("base64url") + "." + sig;
-}
-
 async function main() {
-  const token = createToken(2); // user id 2 = admin@vardayini.com
-  console.log("Generated token for admin@vardayini.com (id: 2)");
+  const baseUrl = "http://127.0.0.1:9449";
+  const anonymousOrders = await fetch(`${baseUrl}/api/orders`);
+  if (![401, 403].includes(anonymousOrders.status)) {
+    throw new Error(`Anonymous /api/orders request was not rejected (${anonymousOrders.status}).`);
+  }
+  console.log("Anonymous /api/orders request rejected.");
 
-  // Test 1: GET /api/orders with session cookie
-  console.log("\n1. Testing GET /api/orders with cookie vs_session...");
-  const res1 = await fetch("http://127.0.0.1:9449/api/orders", {
-    headers: {
-      cookie: `vs_session=${token}`,
-    },
-  });
-  console.log(`Status: ${res1.status} ${res1.statusText}`);
-  if (res1.ok) {
-    const data = await res1.json();
-    console.log(`✓ Orders endpoint succeeded! Found ${Array.isArray(data) ? data.length : "valid"} orders.`);
-  } else {
-    console.log(`✗ Error:`, await res1.text());
+  const anonymousCustomers = await fetch(`${baseUrl}/api/admin/customers`);
+  if (![401, 403].includes(anonymousCustomers.status)) {
+    throw new Error(`Anonymous /api/admin/customers request was not rejected (${anonymousCustomers.status}).`);
+  }
+  console.log("Anonymous /api/admin/customers request rejected.");
+
+  const email = process.env.ADMIN_EMAIL || "admin@vardayini.com";
+  const password = process.env.ADMIN_PASSWORD || process.env.ADMIN_SEED_PASSWORD;
+  if (!password) {
+    throw new Error("Set ADMIN_PASSWORD or ADMIN_SEED_PASSWORD to run authenticated endpoint checks.");
   }
 
-  // Test 2: GET /api/admin/customers with session cookie
-  console.log("\n2. Testing GET /api/admin/customers with cookie vs_session...");
-  const res2 = await fetch("http://127.0.0.1:9449/api/admin/customers", {
-    headers: {
-      cookie: `vs_session=${token}`,
-    },
+  const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email, password }),
   });
-  console.log(`Status: ${res2.status} ${res2.statusText}`);
-  if (res2.ok) {
-    const data = await res2.json();
-    console.log(`✓ Customers endpoint succeeded! Found ${Array.isArray(data) ? data.length : "valid"} customers.`);
-  } else {
-    console.log(`✗ Error:`, await res2.text());
+  const login = await loginResponse.json();
+  if (!loginResponse.ok || typeof login.token !== "string") {
+    throw new Error(`Admin login failed (${loginResponse.status}).`);
   }
 
-  // Test 3: GET /api/orders via x-admin-key (service-to-service)
-  console.log("\n3. Testing GET /api/orders with x-admin-key...");
-  const res3 = await fetch("http://127.0.0.1:9449/api/orders", {
-    headers: {
-      "x-admin-key": "vsm_admin_secret_key_2026_secured",
-    },
-  });
-  console.log(`Status: ${res3.status} ${res3.statusText}`);
-  if (res3.ok) {
-    console.log(`✓ Service-to-service orders succeeded!`);
-  } else {
-    console.log(`✗ Error:`, await res3.text());
-  }
-
-  // Test 4: GET /api/admin/customers via x-admin-key
-  console.log("\n4. Testing GET /api/admin/customers with x-admin-key...");
-  const res4 = await fetch("http://127.0.0.1:9449/api/admin/customers", {
-    headers: {
-      "x-admin-key": "vsm_admin_secret_key_2026_secured",
-    },
-  });
-  console.log(`Status: ${res4.status} ${res4.statusText}`);
-  if (res4.ok) {
-    console.log(`✓ Service-to-service customers succeeded!`);
-  } else {
-    console.log(`✗ Error:`, await res4.text());
+  const headers = { cookie: `vs_session=${login.token}` };
+  for (const endpoint of ["/api/orders", "/api/admin/customers"]) {
+    const response = await fetch(`${baseUrl}${endpoint}`, { headers });
+    if (!response.ok) {
+      throw new Error(`Authenticated ${endpoint} request failed (${response.status}).`);
+    }
+    console.log(`Authenticated ${endpoint} request succeeded.`);
   }
 }
 
-main().catch(console.error);
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});

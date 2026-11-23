@@ -159,6 +159,10 @@ describe("Checkout Lifecycle, Concurrency & Order State Transitions", () => {
       expect(statuses).toContain(200);
       expect(statuses).toContain(400);
 
+      const placedOrder = await (resA.status === 200 ? resA : resB).json();
+      expect(placedOrder.order.status).toBe("pending");
+      expect(placedOrder.order.createdAt).toBeTruthy();
+
       // Stock must never drop below 0
       const [finalVariant] = await db
         .select()

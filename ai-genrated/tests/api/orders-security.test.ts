@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as listOrders } from "@/app/api/orders/route";
+import { GET as trackOrder } from "@/app/api/orders/track/route";
 import {
   GET as getOrder,
   POST as cancelOrder,
@@ -15,7 +16,7 @@ import {
   mockCookieStore,
 } from "../helpers";
 import { db } from "@/db";
-import { orders, orderItems, wishlistItems, users } from "@/db/schema";
+import { orders, orderItems, orderStatusHistory, wishlistItems, users } from "@/db/schema";
 import { ensureSeeded } from "@/db/seed";
 import { eq } from "drizzle-orm";
 
@@ -58,6 +59,51 @@ describe("Security Tests: Orders, Wishlist & Review Permissions", () => {
       const req = buildRequest({ method: "GET", url: "/api/orders" });
       const res = await listOrders(req);
       expect(res.status).toBe(401);
+    });
+  });
+
+  describe("GET /api/orders/track Guest Data", () => {
+    it("masks guest contact and pickup OTP and omits internal status notes", async () => {
+      const orderNumber = `TEST-GUEST-TRACK-${Date.now()}`;
+      const pickupOtp = "981234";
+      const [inserted] = await db
+        .insert(orders)
+        .values({
+          orderNumber,
+          userId: null,
+          guestName: "Guest Visitor",
+          guestPhone: "9998887776",
+          status: "pending",
+          fulfillmentType: "pickup",
+          pickupOtp,
+          subtotal: 300,
+          discount: 0,
+          deliveryFee: 0,
+          tax: 15,
+          total: 315,
+          addressSnapshot: JSON.stringify({ line1: "Guest street" }),
+          deliverySlot: "Store Pickup",
+          paymentMethod: "cod",
+          paymentStatus: "pending",
+        });
+
+      await db.insert(orderStatusHistory).values({
+        orderId: (inserted as any).insertId,
+        status: "pending",
+        note: `Internal pickup OTP: ${pickupOtp}`,
+      });
+
+      const req = buildRequest({
+        url: `/api/orders/track?orderId=${orderNumber}`,
+      });
+      const res = await trackOrder(req);
+      expect(res.status).toBe(200);
+      const { order } = await res.json();
+
+      expect(order.recipient.name).not.toBe("Guest Visitor");
+      expect(order.recipient.phone).not.toBe("9998887776");
+      expect(order.pickupDetails.pickupOtp).toBe("******");
+      expect(order.history).toBeUndefined();
     });
   });
 

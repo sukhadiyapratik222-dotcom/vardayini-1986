@@ -243,8 +243,8 @@ export async function GET(request: NextRequest) {
     const q = searchParam.toLowerCase();
     filtered = filtered.filter((o) => {
       const numMatch = o.orderNumber?.toLowerCase().includes(q);
-      const nameMatch = (o.userName || o.guestName || "").toLowerCase().includes(q);
-      const phoneMatch = (o.userPhone || o.guestPhone || "").toLowerCase().includes(q);
+      const nameMatch = (o.guestName || o.userName || "").toLowerCase().includes(q);
+      const phoneMatch = (o.guestPhone || o.userPhone || "").toLowerCase().includes(q);
       const storeMatch = (o.storeName || "").toLowerCase().includes(q);
       return numMatch || nameMatch || phoneMatch || storeMatch;
     });
@@ -297,8 +297,8 @@ export async function GET(request: NextRequest) {
       } catch {}
     }
 
-    const finalName = o.userName || o.guestName || snapshotName || "Customer";
-    const finalPhone = o.userPhone || o.guestPhone || snapshotPhone || "-";
+    const finalName = o.guestName || snapshotName || o.userName || "Customer";
+    const finalPhone = o.guestPhone || snapshotPhone || o.userPhone || "-";
 
     return {
       ...o,

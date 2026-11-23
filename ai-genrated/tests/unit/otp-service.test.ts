@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   generate4DigitOTP,
   generate6DigitOTP,
@@ -114,6 +114,57 @@ describe("Fast2SMS OTP Service - Vardayini Sweet Mart", () => {
       expect(prev.status).toBe("Superseded");
       expect(latest.status).toBe("Pending");
       expect(latest.otp_code).toBe(second.otp);
+    });
+
+    it("does not expose a simulated OTP in production when SMS is unconfigured", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("FAST2SMS_API_KEY", "");
+      try {
+        const result = await sendOTP("9876543211", "order");
+        expect(result.success).toBe(false);
+        expect(result.otpSent).toBe(false);
+        expect(result.otp).toBeUndefined();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("does not return the OTP after a live SMS dispatch", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("FAST2SMS_API_KEY", "test-fast2sms-key");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(JSON.stringify({ return: true }), { status: 200 }))
+      );
+      try {
+        const result = await sendOTP("9876543212", "order");
+        expect(result.success).toBe(true);
+        expect(result.otp).toBeUndefined();
+        expect(result.otpProof).toBeDefined();
+      } finally {
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("does not return a usable OTP when live SMS dispatch fails", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("FAST2SMS_API_KEY", "test-fast2sms-key");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ return: false, message: "provider unavailable" }), { status: 200 })
+        )
+      );
+      try {
+        const result = await sendOTP("9876543213", "order");
+        expect(result.success).toBe(false);
+        expect(result.otp).toBeUndefined();
+        expect(result.otpProof).toBeUndefined();
+      } finally {
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
+      }
     });
   });
 
@@ -250,6 +301,38 @@ describe("Fast2SMS OTP Service - Vardayini Sweet Mart", () => {
       const waRes = await resendWhatsAppOTP(nonExistentPhone, "login");
       expect(waRes.success).toBe(false);
       expect(waRes.error).toContain("OTP expired or not found. Request a new one.");
+    });
+
+    it("does not simulate a WhatsApp OTP resend in production", async () => {
+      const phone = "9876543214";
+      expect((await sendOTP(phone, "login")).success).toBe(true);
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("WHATSAPP_API_KEY", "");
+      vi.stubEnv("MSG91_AUTH_KEY", "");
+      try {
+        const result = await resendWhatsAppOTP(phone, "login");
+        expect(result.success).toBe(false);
+        expect(result.otp).toBeUndefined();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("does not return an OTP after a live WhatsApp dispatch", async () => {
+      const phone = "9876543215";
+      expect((await sendOTP(phone, "login")).success).toBe(true);
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("WHATSAPP_API_KEY", "test-whatsapp-key");
+      vi.stubEnv("WHATSAPP_API_URL", "https://api.example.test/whatsapp");
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+      try {
+        const result = await resendWhatsAppOTP(phone, "login");
+        expect(result.success).toBe(true);
+        expect(result.otp).toBeUndefined();
+      } finally {
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
+      }
     });
   });
 });

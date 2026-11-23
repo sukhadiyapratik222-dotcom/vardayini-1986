@@ -97,6 +97,31 @@ export interface UiConfig {
   culinaryPillars?: CulinaryPillarsConfig;
   mobileManagement?: MobileManagementConfig;
   returnPolicy?: ReturnPolicyConfig;
+  loyaltyRewards?: LoyaltyRewardsConfig;
+}
+
+export interface LoyaltyTierConfig {
+  id: string;
+  name: string;
+  badge: string;
+  minSpend: number;
+  perk: string;
+}
+
+export interface LoyaltyPerkConfig {
+  id: string;
+  title: string;
+  description: string;
+  requiredTier: string;
+  icon: string;
+}
+
+export interface LoyaltyRewardsConfig {
+  pointsPerTenRupees: number;
+  rupeeValuePerPoint: number;
+  welcomeBonus: number;
+  tiers: LoyaltyTierConfig[];
+  perks: LoyaltyPerkConfig[];
 }
 
 export interface MobileCustomPage {
@@ -525,6 +550,7 @@ export interface ProductItem {
   isDefault?: boolean;
   isVariantActive?: boolean;
   variants?: VariantItem[];
+  wishlistCount?: number;
 }
 
 export interface OrderItem {
@@ -1330,6 +1356,38 @@ export const api = {
       res,
       "Failed to update customer role"
     );
+  },
+
+  async adjustCustomerPoints(
+    id: number,
+    pointsDelta: number,
+    reason: string
+  ): Promise<{ success: boolean; newPoints: number; message: string }> {
+    const res = await fetch(`${PROXY_BASE}/api/admin/customers/${id}/points`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pointsDelta, reason }),
+    });
+    return handleResponse<{ success: boolean; newPoints: number; message: string }>(
+      res,
+      "Failed to adjust customer points"
+    );
+  },
+
+  async getCustomerReturns(id: number): Promise<any[]> {
+    try {
+      const res = await fetch(`${PROXY_BASE}/api/admin/customers/${id}/returns`, {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.returns || [];
+      }
+      return [];
+    } catch (err) {
+      console.warn("[Dashboard] Customer returns load notice:", err);
+      return [];
+    }
   },
 
   // Admin Notifications
@@ -2254,6 +2312,11 @@ export interface CustomerItem {
   totalOrders: number;
   totalSpent: number;
   lastOrder?: string | null;
+  points?: number;
+  bonusPoints?: number;
+  tier?: string;
+  avatarUrl?: string | null;
+  returnRequestsCount?: number;
 }
 
 export interface PermissionOption {

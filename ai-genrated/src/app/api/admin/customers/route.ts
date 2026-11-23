@@ -5,6 +5,7 @@ import {
   addresses,
   cartItems,
   orders,
+  returnRequests,
   reviews,
   users,
   wishlistItems,
@@ -59,9 +60,25 @@ export async function GET(request: Request) {
       }
     }
 
-    // 2. Fetch all addresses and orders to aggregate customer stats
+    // 2. Fetch all addresses, orders, and returns to aggregate customer stats
     const allAddresses = await db.select().from(addresses);
     const allOrders = await db.select().from(orders);
+    const allReturns = await db.select().from(returnRequests);
+
+    let loyaltyConfig: any = null;
+    try {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const cfgPath = path.resolve(process.cwd(), "src/data/ui-config.json");
+      if (fs.existsSync(cfgPath)) {
+        loyaltyConfig = JSON.parse(fs.readFileSync(cfgPath, "utf-8")).loyaltyRewards;
+      }
+    } catch {}
+
+    const silverMin = loyaltyConfig?.tiers?.find((t: any) => t.id === "silver")?.minSpend || 1500;
+    const goldMin = loyaltyConfig?.tiers?.find((t: any) => t.id === "gold")?.minSpend || 5000;
+    const platMin = loyaltyConfig?.tiers?.find((t: any) => t.id === "platinum")?.minSpend || 12000;
+    const ptsMultiplier = loyaltyConfig?.pointsPerTenRupees || 1;
 
     const customerList = allUsers.map((u) => {
       let userAddresses = allAddresses.filter((a) => a.userId === u.id);
@@ -123,7 +140,28 @@ export async function GET(request: Request) {
         }
       }
 
-      const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const totalSpent = userOrders.reduce((sum, o) => {
+        return ["cancelled", "canceled"].includes((o.status || "").toLowerCase())
+          ? sum
+          : sum + (o.total || 0);
+      }, 0);
+
+      const userReturns = allReturns.filter(
+        (r) =>
+          (u.phone && r.customerPhone === u.phone) ||
+          (u.email && r.customerEmail && r.customerEmail.toLowerCase() === u.email.toLowerCase()) ||
+          userOrders.some((o) => o.id === r.orderId)
+      );
+
+      const earnedPoints = Math.floor((totalSpent / 10) * ptsMultiplier);
+      const bonusPoints = (u as any).bonusPoints ?? (u as any).bonus_points ?? 0;
+      const totalPoints = earnedPoints + bonusPoints;
+
+      let tier = "Member";
+      if (totalSpent >= platMin) tier = "Platinum";
+      else if (totalSpent >= goldMin) tier = "Gold";
+      else if (totalSpent >= silverMin) tier = "Silver";
+
       const lastOrder =
         userOrders.length > 0
           ? userOrders.sort(
@@ -143,6 +181,11 @@ export async function GET(request: Request) {
         totalOrders: userOrders.length,
         totalSpent,
         lastOrder,
+        points: totalPoints,
+        bonusPoints,
+        tier,
+        avatarUrl: (u as any).avatarUrl || null,
+        returnRequestsCount: userReturns.length,
       };
     });
 

@@ -1001,15 +1001,16 @@ async function seedInternal() {
         role: "admin" | "customer" | "super_admin";
       }> = [];
 
-      // Super Admin: always created with full access
-      const superAdminHash = await bcrypt.hash("Pratik@#123", 10);
-      usersToInsert.push({
-        name: "Pratik Sukhadiya (Super Admin)",
-        email: "pratik222@gmail.com",
-        phone: "9876543210",
-        passwordHash: superAdminHash,
-        role: "super_admin",
-      });
+      const superAdminSeedPassword = process.env.SUPER_ADMIN_PASSWORD?.trim();
+      if (superAdminSeedPassword) {
+        usersToInsert.push({
+          name: "Pratik Sukhadiya (Super Admin)",
+          email: "pratik222@gmail.com",
+          phone: "9876543210",
+          passwordHash: await bcrypt.hash(superAdminSeedPassword, 10),
+          role: "super_admin",
+        });
+      }
 
       if (!isProd || allowDemo) {
         const passwordHash = await bcrypt.hash("sweet123", 10);
@@ -1022,14 +1023,8 @@ async function seedInternal() {
         });
       }
 
-      // Admin user: read from env in production, fallback in dev. Skip in production if unset.
-      let adminPassword = adminSeedPassword;
-      if (!adminPassword && !isProd) {
-        adminPassword = "admin123";
-      }
-
-      if (adminPassword) {
-        const adminHash = await bcrypt.hash(adminPassword, 10);
+      if (adminSeedPassword) {
+        const adminHash = await bcrypt.hash(adminSeedPassword, 10);
         usersToInsert.push({
           name: "Vardayini Admin",
           email: "admin@vardayini.com",
@@ -1044,43 +1039,42 @@ async function seedInternal() {
       }
     }
 
-    // Always ensure the Super Admin exists with role = "super_admin" and password Pratik@#123
+    // Seed privileged accounts only when an operator provides an initial password.
     const superAdminEmail = "pratik222@gmail.com";
     const [existingSuperAdmin] = await db
       .select()
       .from(users)
       .where(eq(users.email, superAdminEmail))
       .limit(1);
-
-    const superAdminPasswordHash = await bcrypt.hash("Pratik@#123", 10);
-    if (!existingSuperAdmin) {
+    const superAdminSeedPassword = process.env.SUPER_ADMIN_PASSWORD?.trim();
+    if (!existingSuperAdmin && superAdminSeedPassword) {
       await db.insert(users).values({
         name: "Pratik Sukhadiya (Super Admin)",
         email: superAdminEmail,
         phone: "9876543210",
-        passwordHash: superAdminPasswordHash,
+        passwordHash: await bcrypt.hash(superAdminSeedPassword, 10),
         role: "super_admin",
       });
-    } else if (existingSuperAdmin.role !== "super_admin") {
+    } else if (existingSuperAdmin && superAdminSeedPassword && existingSuperAdmin.role !== "super_admin") {
       await db
         .update(users)
         .set({
           role: "super_admin",
-          passwordHash: superAdminPasswordHash,
+          passwordHash: await bcrypt.hash(superAdminSeedPassword, 10),
           name: "Pratik Sukhadiya (Super Admin)",
         })
         .where(eq(users.id, existingSuperAdmin.id));
     }
 
-    // Always ensure the dedicated admin user exists with role = "admin"
-    const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim() || "admin123";
+    // Seed the dedicated admin account only when an initial password is configured.
+    const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim();
     const [existingAdmin] = await db
       .select()
       .from(users)
       .where(eq(users.email, "admin@vardayini.com"))
       .limit(1);
 
-    if (!existingAdmin) {
+    if (!existingAdmin && adminSeedPassword) {
       const adminHash = await bcrypt.hash(adminSeedPassword, 10);
       await db.insert(users).values({
         name: "Vardayini Admin",
@@ -1090,7 +1084,11 @@ async function seedInternal() {
         role: "admin",
         accessType: "full",
       });
-    } else if (existingAdmin.role !== "admin" || existingAdmin.accessType !== "full") {
+    } else if (
+      existingAdmin &&
+      adminSeedPassword &&
+      (existingAdmin.role !== "admin" || existingAdmin.accessType !== "full")
+    ) {
       const adminHash = await bcrypt.hash(adminSeedPassword, 10);
       await db
         .update(users)

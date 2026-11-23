@@ -27,7 +27,6 @@ export async function GET() {
       NEXT_PUBLIC_STORE_API: publicStoreUrl
         ? { set: true, value: publicStoreUrl }
         : { set: false, hint: "Set NEXT_PUBLIC_STORE_API and redeploy (build-time value)" },
-      ADMIN_API_KEY: Boolean(process.env.ADMIN_API_KEY || process.env.STORE_ADMIN_KEY),
     },
   };
 

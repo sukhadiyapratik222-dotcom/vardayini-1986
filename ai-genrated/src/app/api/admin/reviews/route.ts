@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-key",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
 export async function OPTIONS() {

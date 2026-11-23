@@ -183,6 +183,9 @@ function initSqliteTables(sqlite: DatabaseSync) {
       two_factor_enabled INTEGER NOT NULL DEFAULT 0,
       two_factor_secret TEXT DEFAULT NULL,
       two_factor_method TEXT NOT NULL DEFAULT 'totp',
+      avatar_url TEXT DEFAULT NULL,
+      bonus_points INTEGER NOT NULL DEFAULT 0,
+      preferences TEXT DEFAULT NULL,
       last_login_at TEXT DEFAULT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -957,6 +960,15 @@ function initSqliteTables(sqlite: DatabaseSync) {
       }
       if (!uCols.some((c: any) => c.name === "last_login_at")) {
         sqlite.exec("ALTER TABLE users ADD COLUMN last_login_at TEXT DEFAULT NULL");
+      }
+      if (!uCols.some((c: any) => c.name === "avatar_url")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT NULL");
+      }
+      if (!uCols.some((c: any) => c.name === "bonus_points")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN bonus_points INTEGER NOT NULL DEFAULT 0");
+      }
+      if (!uCols.some((c: any) => c.name === "preferences")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT NULL");
       }
     } catch (uMigErr) {
       console.warn("[Users RBAC Migration Notice]", uMigErr);

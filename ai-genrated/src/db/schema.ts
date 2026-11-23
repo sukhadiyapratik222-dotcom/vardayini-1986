@@ -24,6 +24,9 @@ export const users = mysqlTable("users", {
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorSecret: text("two_factor_secret"),
   twoFactorMethod: varchar("two_factor_method", { length: 20 }).notNull().default("totp"),
+  avatarUrl: text("avatar_url"),
+  bonusPoints: int("bonus_points").notNull().default(0),
+  preferences: text("preferences"),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

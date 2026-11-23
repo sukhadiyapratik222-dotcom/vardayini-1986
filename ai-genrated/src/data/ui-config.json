@@ -1368,5 +1368,56 @@
     "noticeNote": "All claims require order number and photo proof within 24 hours of delivery. Refunds are processed in 5-7 working days upon approval.",
     "supportPhone": "+91 63521 19329",
     "supportEmail": "support@vardayinisweets.com"
+  },
+  "loyaltyRewards": {
+    "pointsPerTenRupees": 1,
+    "rupeeValuePerPoint": 0.1,
+    "welcomeBonus": 50,
+    "tiers": [
+      {
+        "id": "silver",
+        "name": "Silver Patron",
+        "badge": "✨ Silver",
+        "minSpend": 1500,
+        "perk": "5% festive discount & priority bhatti updates"
+      },
+      {
+        "id": "gold",
+        "name": "Gold Connoisseur",
+        "badge": "👑 Gold",
+        "minSpend": 5000,
+        "perk": "Free express delivery across Kalol on orders above ₹499"
+      },
+      {
+        "id": "platinum",
+        "name": "Platinum Royal Club",
+        "badge": "💎 Platinum",
+        "minSpend": 12000,
+        "perk": "Complimentary halwai hamper on Diwali & early pre-booking access"
+      }
+    ],
+    "perks": [
+      {
+        "id": "free_delivery",
+        "title": "Free Delivery on Gold",
+        "description": "Complimentary express delivery on orders over ₹499 across Kalol & nearby hubs",
+        "requiredTier": "gold",
+        "icon": "🚚"
+      },
+      {
+        "id": "birthday_discount",
+        "title": "Birthday Gift Discount",
+        "description": "Exclusive 15% discount voucher during your festive & birthday celebration week",
+        "requiredTier": "silver",
+        "icon": "🎁"
+      },
+      {
+        "id": "festival_early_access",
+        "title": "Early Festival Access",
+        "description": "48-hour advance pre-booking for Diwali, Raksha Bandhan & Holi specialty bhattis",
+        "requiredTier": "platinum",
+        "icon": "🪔"
+      }
+    ]
   }
 }

@@ -110,8 +110,8 @@ export async function GET(request: Request) {
           snapshotPhone = parsed?.phone || "";
         } catch {}
       }
-      const finalName = r.userName || r.guestName || snapshotName || "Guest Customer";
-      const finalPhone = r.userPhone || r.guestPhone || snapshotPhone || "-";
+      const finalName = r.guestName || snapshotName || r.userName || "Guest Customer";
+      const finalPhone = r.guestPhone || snapshotPhone || r.userPhone || "-";
       return {
         ...r,
         customerName: finalName,
@@ -577,6 +577,7 @@ export async function POST(request: Request) {
         }
 
         // Step 6: Insert order
+        const orderCreatedAt = new Date();
         const [insertOrdRes] = await tx
           .insert(orders)
           .values({
@@ -586,7 +587,7 @@ export async function POST(request: Request) {
             guestPhone: phone || user?.phone || null,
             sessionId: guestSessionId,
             guestTokenHash,
-            status: "confirmed",
+            status: "pending",
             subtotal: totals.subtotal,
             discount: totals.discount,
             deliveryFee: effectiveDeliveryFee,
@@ -613,6 +614,7 @@ export async function POST(request: Request) {
             pickupVerifiedBy: null,
             paymentMethod,
             paymentStatus: "pending",
+            createdAt: orderCreatedAt,
           });
 
         if (user?.id && line1) {
@@ -646,7 +648,7 @@ export async function POST(request: Request) {
           guestPhone: phone || user?.phone || null,
           sessionId: guestSessionId,
           guestTokenHash,
-          status: "confirmed",
+          status: "pending",
           subtotal: totals.subtotal,
           discount: totals.discount,
           deliveryFee: effectiveDeliveryFee,
@@ -673,17 +675,17 @@ export async function POST(request: Request) {
           pickupVerifiedBy: null,
           paymentMethod,
           paymentStatus: "pending",
-          createdAt: new Date(),
+          createdAt: orderCreatedAt,
         };
 
         // Step 6b: Record initial status in orderStatusHistory
         await tx.insert(orderStatusHistory).values({
           orderId: ord.id,
-          status: "confirmed",
+          status: "pending",
           changedBy: user?.name ? `User #${user.id}` : "Customer",
           note: fulfillmentType === "pickup"
-            ? `Order confirmed for store pickup at ${pickupStore.name} on ${pickupDate} (${pickupSlot}). Verification OTP: ${pickupOtp}`
-            : `Order confirmed for fresh home delivery (${deliverySlot}).`,
+            ? `Order placed for store pickup at ${pickupStore.name} on ${pickupDate} (${pickupSlot}).`
+            : `Order placed for fresh home delivery (${deliverySlot}).`,
         });
 
         // Step 7: Insert order items with variantId & tax breakdown

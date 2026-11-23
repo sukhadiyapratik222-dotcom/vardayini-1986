@@ -12,6 +12,7 @@ export default async function ShopPage({
   searchParams: Promise<{
     category?: string;
     group?: string;
+    q?: string;
     search?: string;
     sort?: string;
     tag?: string;
@@ -22,6 +23,7 @@ export default async function ShopPage({
   }>;
 }) {
   const params = await searchParams;
+  const search = params.search || params.q;
 
   const minPrice = params.minPrice ? Number(params.minPrice) : undefined;
   const maxPrice = params.maxPrice ? Number(params.maxPrice) : undefined;
@@ -32,7 +34,7 @@ export default async function ShopPage({
     listProducts({
       category: params.category,
       group: params.group,
-      search: params.search,
+      search,
       sort: params.sort,
       tag: params.tag,
     }),
@@ -101,7 +103,7 @@ export default async function ShopPage({
     const q = new URLSearchParams({
       ...(params.category ? { category: params.category } : {}),
       ...(params.group ? { group: params.group } : {}),
-      ...(params.search ? { search: params.search } : {}),
+      ...(search ? { search } : {}),
       ...(params.sort ? { sort: params.sort } : {}),
       ...(params.minPrice ? { minPrice: params.minPrice } : {}),
       ...(params.maxPrice ? { maxPrice: params.maxPrice } : {}),
@@ -111,8 +113,8 @@ export default async function ShopPage({
     return `/shop?${q.toString()}`;
   };
 
-  const heading = params.search
-    ? `Results for “${params.search}”`
+  const heading = search
+    ? `Results for “${search}”`
     : activeCategoryObj
       ? activeCategoryObj.name
       : activeGroup && CATEGORY_GROUPS[activeGroup]
@@ -178,7 +180,7 @@ export default async function ShopPage({
           <div className="relative w-full sm:w-auto flex-1 sm:flex-initial min-w-0">
             <input
               name="search"
-              defaultValue={params.search}
+              defaultValue={search}
               placeholder="Search sweets & farsan..."
               className="w-full rounded-xl border border-[#0b2f8a]/15 bg-white px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-[#182230] shadow-2xs outline-none focus:border-[#0b2f8a]"
             />
@@ -221,7 +223,7 @@ export default async function ShopPage({
         {/* Right Column: Active Chips, Showing Bar & Product Grid */}
         <div className="flex-1 min-w-0 w-full space-y-6">
           {/* Active Filter Chips Bar */}
-          {(params.category || activeGroup || minPrice !== undefined || maxPrice !== undefined || params.search) && (
+          {(params.category || activeGroup || minPrice !== undefined || maxPrice !== undefined || search) && (
             <div className="p-3.5 rounded-2xl bg-white border border-[#0b2f8a]/10 shadow-2xs flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-slate-500 mr-1">Active Filters:</span>
 
@@ -250,7 +252,7 @@ export default async function ShopPage({
                   href={`/shop?${new URLSearchParams({
                     ...(params.category ? { category: params.category } : {}),
                     ...(params.group ? { group: params.group } : {}),
-                    ...(params.search ? { search: params.search } : {}),
+                    ...(search ? { search } : {}),
                     ...(params.sort ? { sort: params.sort } : {}),
                     ...(params.limit ? { limit: params.limit } : {}),
                   }).toString()}`}
@@ -264,9 +266,9 @@ export default async function ShopPage({
                 </Link>
               )}
 
-              {params.search && (
+              {search && (
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
-                  Search: &ldquo;{params.search}&rdquo;
+                  Search: &ldquo;{search}&rdquo;
                 </span>
               )}
 

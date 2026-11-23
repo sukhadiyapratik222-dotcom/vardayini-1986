@@ -1,31 +1,42 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { desc, eq, or, sql } from "drizzle-orm";
 import { db, ensureDbMigrations } from "@/db";
-import { addresses, orderItems, orders, users } from "@/db/schema";
+import { addresses, categories, orderItems, orders, products, productVariants, returnRequests, users, wishlistItems } from "@/db/schema";
 import { getAuthUser } from "@/lib/auth";
-import { formatInr } from "@/lib/money";
-import { LogoutButton } from "@/components/logout-button";
 import { ensureSeeded } from "@/db/seed";
-import { AccountAddressManager, AddressItem } from "@/components/account-address-manager";
-import { AccountProfileManager } from "@/components/account-profile-manager";
-import { AccountSecurityManager } from "@/components/account-security-manager";
-import { AccountReorderButton } from "@/components/account-reorder-button";
-import { MithaiPointsInfoButton } from "@/components/mithai-points-info-button";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { CustomerAccountPortal } from "@/components/customer-account-portal";
+import { AddressItem } from "@/components/account-address-manager";
+import fs from "node:fs";
+import path from "node:path";
 
 export const dynamic = "force-dynamic";
 
-function parseAddressSnapshot(raw: string | null | undefined): string {
-  if (!raw) return "Standard Dispatch (Kalol Hub)";
+const RETURN_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function getLoyaltyConfig() {
   try {
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object") {
-      const parts = [parsed.line1, parsed.city, parsed.state, parsed.pincode].filter(Boolean);
-      if (parts.length > 0) return parts.join(", ");
+    const configPath = path.resolve(process.cwd(), "src/data/ui-config.json");
+    if (fs.existsSync(configPath)) {
+      const data = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      if (data.loyaltyRewards) return data.loyaltyRewards;
     }
   } catch {}
-  return raw;
+  return {
+    pointsPerTenRupees: 1,
+    rupeeValuePerPoint: 0.1,
+    welcomeBonus: 50,
+    tiers: [
+      { id: "silver", name: "Silver Patron", badge: "✨ Silver", minSpend: 1500, perk: "5% festive discount" },
+      { id: "gold", name: "Gold Connoisseur", badge: "👑 Gold", minSpend: 5000, perk: "Free express delivery on ₹499+" },
+      { id: "platinum", name: "Platinum Royal Club", badge: "💎 Platinum", minSpend: 12000, perk: "Early festival access & halwai gift" },
+    ],
+    perks: [
+      { id: "free_delivery", title: "Free Delivery on Gold", description: "Complimentary express delivery on orders over ₹499", requiredTier: "gold", icon: "🚚" },
+      { id: "birthday_discount", title: "Birthday Gift Discount", description: "Exclusive 15% discount voucher during your birthday week", requiredTier: "silver", icon: "🎁" },
+      { id: "festival_early_access", title: "Early Festival Access", description: "48-hour advance pre-booking for Diwali & Rakhi bhattis", requiredTier: "platinum", icon: "🪔" },
+    ],
+  };
 }
 
 export default async function AccountPage() {
@@ -35,11 +46,13 @@ export default async function AccountPage() {
   if (!authUser) redirect("/login");
 
   // Fetch full user profile details from database
-  const [userProfile] = await db
+  const [dbUser] = await db
     .select()
     .from(users)
     .where(eq(users.id, authUser.id))
     .limit(1);
+
+  if (!dbUser) redirect("/login");
 
   // Link any past guest orders placed with this phone number to the user account
   if (authUser.phone) {
@@ -75,10 +88,13 @@ export default async function AccountPage() {
       id: orders.id,
       orderNumber: orders.orderNumber,
       userId: orders.userId,
+      guestName: orders.guestName,
+      guestPhone: orders.guestPhone,
       status: orders.status,
       subtotal: orders.subtotal,
       discount: orders.discount,
       deliveryFee: orders.deliveryFee,
+      tax: orders.tax,
       total: orders.total,
       couponCode: orders.couponCode,
       addressSnapshot: orders.addressSnapshot,
@@ -86,6 +102,14 @@ export default async function AccountPage() {
       fulfillmentType: orders.fulfillmentType,
       paymentMethod: orders.paymentMethod,
       paymentStatus: orders.paymentStatus,
+      expectedDeliveryDate: orders.expectedDeliveryDate,
+      deliveredAt: orders.deliveredAt,
+      cancelledAt: orders.cancelledAt,
+      cancelReason: orders.cancelReason,
+      returnReason: orders.returnReason,
+      returnStatus: orders.returnStatus,
+      refundStatus: orders.refundStatus,
+      refundAmount: orders.refundAmount,
       createdAt: orders.createdAt,
     })
     .from(orders)
@@ -96,8 +120,9 @@ export default async function AccountPage() {
     )
     .orderBy(desc(orders.createdAt));
 
-  // Fetch items for past orders to enable one-click Reorder
   const orderIds = userOrders.map((o) => o.id);
+
+  // Fetch items for all orders
   const allOrderItems =
     orderIds.length > 0
       ? await db
@@ -108,357 +133,318 @@ export default async function AccountPage() {
             variantWeight: orderItems.variantWeight,
             unitPrice: orderItems.unitPrice,
             quantity: orderItems.quantity,
+            imageUrl: orderItems.imageUrl,
             variantId: orderItems.variantId,
           })
           .from(orderItems)
           .where(sql`${orderItems.orderId} IN ${orderIds}`)
       : [];
 
-  const itemsByOrderId = new Map<number, typeof allOrderItems>();
+  const itemsByOrder = new Map<number, typeof allOrderItems>();
   for (const it of allOrderItems) {
-    const list = itemsByOrderId.get(it.orderId) || [];
-    list.push(it);
-    itemsByOrderId.set(it.orderId, list);
+    if (!itemsByOrder.has(it.orderId)) itemsByOrder.set(it.orderId, []);
+    itemsByOrder.get(it.orderId)!.push(it);
   }
 
-  const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-  const rewardPoints = Math.floor(totalSpent / 20); // 1 Mithai Point per ₹20 spent (₹1,000 = 50 pts)
-  const pointsRupeeValue = Math.floor(rewardPoints / 10); // 1,000 Points = ₹100 discount (10 pts = ₹1)
+  // Fetch return requests for these orders
+  const returns =
+    orderIds.length > 0
+      ? await db
+          .select({
+            id: returnRequests.id,
+            orderId: returnRequests.orderId,
+            orderNumber: returnRequests.orderNumber,
+            reason: returnRequests.reason,
+            reasonLabel: returnRequests.reasonLabel,
+            description: returnRequests.description,
+            status: returnRequests.status,
+            photoUrl: returnRequests.photoUrl,
+            adminNotes: returnRequests.adminNotes,
+            createdAt: returnRequests.requestedAt,
+          })
+          .from(returnRequests)
+          .where(sql`${returnRequests.orderId} IN ${orderIds}`)
+      : [];
 
-  const tierName =
-    totalSpent >= 5000
-      ? "👑 Vardayini Gold Connoisseur"
-      : totalSpent >= 1500
-      ? "✨ Vardayini Silver Patron"
-      : totalSpent > 0
-      ? "🌟 Royal Mithai Member"
-      : "🌿 Welcome Member";
+  const returnsByOrder = new Map<number, (typeof returns)[0]>();
+  for (const r of returns) {
+    returnsByOrder.set(r.orderId, r);
+  }
 
-  const memberSince = userProfile?.createdAt
-    ? new Date(userProfile.createdAt).toLocaleDateString("en-IN", {
-        month: "long",
-        year: "numeric",
-      })
-    : "September 2026";
+  const now = Date.now();
 
-  const hasPassword = Boolean(userProfile?.passwordHash && userProfile.passwordHash.length > 5);
+  const enrichedOrders = userOrders.map((ord) => {
+    const items = itemsByOrder.get(ord.id) || [];
+    const returnReq = returnsByOrder.get(ord.id) || null;
+
+    // Determine 24h return window
+    const deliveryTime = ord.deliveredAt ? new Date(ord.deliveredAt).getTime() : 0;
+    const isDelivered = (ord.status || "").toLowerCase() === "delivered";
+    const within24h = isDelivered && deliveryTime > 0 && now - deliveryTime <= RETURN_WINDOW_MS;
+    const canReturn = within24h && !returnReq;
+
+    // Timeline calculation
+    const isCancelled = ["cancelled", "canceled"].includes((ord.status || "").toLowerCase());
+    const isConfirmed = ["confirmed", "processing", "packed", "shipped", "out_for_delivery", "delivered"].includes(
+      (ord.status || "").toLowerCase()
+    );
+    const isPacked = ["packed", "shipped", "out_for_delivery", "delivered"].includes(
+      (ord.status || "").toLowerCase()
+    );
+    const isOutForDelivery = ["out_for_delivery", "delivered"].includes(
+      (ord.status || "").toLowerCase()
+    );
+
+    const ordDateStr = new Date(ord.createdAt).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    });
+    const deliveryDateStr = ord.deliveredAt
+      ? new Date(ord.deliveredAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+      : ord.expectedDeliveryDate
+      ? new Date(ord.expectedDeliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+      : "Estimated 24-48 hrs";
+
+    const timeline = isCancelled
+      ? [
+          { key: "ordered", label: "Ordered", icon: "📝", date: ordDateStr, isCompleted: true, isCurrent: false },
+          { key: "cancelled", label: "Cancelled", icon: "❌", date: ord.cancelledAt ? new Date(ord.cancelledAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Cancelled", isCompleted: true, isCurrent: true },
+        ]
+      : [
+          { key: "ordered", label: "Ordered", icon: "📝", date: ordDateStr, isCompleted: true, isCurrent: !isConfirmed },
+          { key: "packed", label: "Packed", icon: "📦", date: isPacked ? "Bhatti Packed" : "Pending", isCompleted: isPacked, isCurrent: isConfirmed && !isPacked },
+          { key: "out_for_delivery", label: "Out for Delivery", icon: "🚚", date: isOutForDelivery ? "Dispatched" : "Scheduled", isCompleted: isOutForDelivery, isCurrent: isPacked && !isOutForDelivery },
+          { key: "delivered", label: "Delivered", icon: "✅", date: isDelivered ? deliveryDateStr : `Est: ${deliveryDateStr}`, isCompleted: isDelivered, isCurrent: isOutForDelivery && !isDelivered },
+        ];
+
+    const statusColors: Record<string, string> = {
+      pending: "text-amber-800 bg-amber-50 border-amber-200",
+      confirmed: "text-blue-800 bg-blue-50 border-blue-200",
+      packed: "text-indigo-800 bg-indigo-50 border-indigo-200",
+      shipped: "text-purple-800 bg-purple-50 border-purple-200",
+      out_for_delivery: "text-orange-800 bg-orange-50 border-orange-200",
+      delivered: "text-emerald-800 bg-emerald-50 border-emerald-200",
+      cancelled: "text-rose-800 bg-rose-50 border-rose-200",
+      canceled: "text-rose-800 bg-rose-50 border-rose-200",
+    };
+
+    const statusBadge = {
+      label: (ord.status || "Pending").replace(/_/g, " ").toUpperCase(),
+      color: statusColors[(ord.status || "").toLowerCase()] || "text-slate-800 bg-slate-50 border-slate-200",
+    };
+
+    return {
+      ...ord,
+      items,
+      timeline,
+      canReturn,
+      returnRequest: returnReq,
+      statusBadge,
+      invoiceUrl: `/orders/${ord.orderNumber}/invoice`,
+      trackUrl: `/orders/${ord.orderNumber}#tracking`,
+    };
+  });
+
+  // Fetch Wishlist Items
+  const wishlistRows = await db
+    .select({
+      id: wishlistItems.id,
+      productId: products.id,
+      name: products.name,
+      slug: products.slug,
+      imageUrl: products.imageUrl,
+      categoryName: categories.name,
+      categorySlug: categories.slug,
+    })
+    .from(wishlistItems)
+    .innerJoin(products, eq(wishlistItems.productId, products.id))
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(eq(wishlistItems.userId, authUser.id))
+    .orderBy(desc(wishlistItems.createdAt));
+
+  const pVariants = await db.select().from(productVariants);
+  const variantsByProduct = new Map<number, typeof pVariants>();
+  for (const v of pVariants) {
+    if (!variantsByProduct.has(v.productId)) variantsByProduct.set(v.productId, []);
+    variantsByProduct.get(v.productId)!.push(v);
+  }
+
+  const enrichedWishlist = wishlistRows.map((item) => {
+    const list = variantsByProduct.get(item.productId) || [];
+    const defaultVariant = list.find((v) => v.isDefault) || list[0] || null;
+    const price = defaultVariant ? defaultVariant.price : 350;
+    const discountedPrice = defaultVariant ? defaultVariant.discountedPrice : null;
+    const stock = defaultVariant ? defaultVariant.stock : 50;
+    const variantId = defaultVariant ? defaultVariant.id : null;
+    const weight = defaultVariant ? defaultVariant.weight : "500g";
+
+    let stockBadge = "In Stock";
+    let stockBadgeColor = "text-emerald-700 bg-emerald-50 border-emerald-200";
+    if (stock <= 0) {
+      stockBadge = "Out of Stock";
+      stockBadgeColor = "text-rose-700 bg-rose-50 border-rose-200";
+    } else if (stock <= 2) {
+      stockBadge = `Only ${stock} Left`;
+      stockBadgeColor = "text-amber-700 bg-amber-50 border-amber-200";
+    } else if (stock <= 5) {
+      stockBadge = "Low Stock";
+      stockBadgeColor = "text-amber-700 bg-amber-50 border-amber-200";
+    }
+
+    return {
+      ...item,
+      variantId,
+      weight,
+      price,
+      discountedPrice,
+      stock,
+      stockBadge,
+      stockBadgeColor,
+    };
+  });
+
+  // Aggregate user stats & rewards
+  const completedOrders = userOrders.filter(
+    (o) => o.status === "delivered" || o.status === "confirmed" || o.status === "packed"
+  ).length;
+  const totalOrders = userOrders.length;
+  const totalSpent = userOrders.reduce((sum, o) => {
+    return ["cancelled", "canceled"].includes((o.status || "").toLowerCase())
+      ? sum
+      : sum + (o.total || 0);
+  }, 0);
+
+  const activeReturnsCount = returns.filter((r) =>
+    ["requested", "under_review"].includes(r.status.toLowerCase())
+  ).length;
+
+  const loyaltyConfig = getLoyaltyConfig();
+  const pointsPerTenRupees = loyaltyConfig.pointsPerTenRupees ?? 1;
+  const rupeeValuePerPoint = loyaltyConfig.rupeeValuePerPoint ?? 0.1;
+
+  const earnedPoints = Math.floor((totalSpent / 10) * pointsPerTenRupees);
+  const bonusPoints = (dbUser as any).bonusPoints ?? 0;
+  const totalPoints = earnedPoints + bonusPoints;
+  const pointsRupeeValue = Math.floor(totalPoints * rupeeValuePerPoint);
+
+  const silverTier = loyaltyConfig.tiers.find((t: any) => t.id === "silver") || { minSpend: 1500, name: "Silver Patron", badge: "✨ Silver" };
+  const goldTier = loyaltyConfig.tiers.find((t: any) => t.id === "gold") || { minSpend: 5000, name: "Gold Connoisseur", badge: "👑 Gold" };
+  const platinumTier = loyaltyConfig.tiers.find((t: any) => t.id === "platinum") || { minSpend: 12000, name: "Platinum Royal Club", badge: "💎 Platinum" };
+
+  let currentTier = {
+    id: "member",
+    name: "Royal Mithai Member",
+    badge: "🌿 Member",
+    level: 0,
+  };
+  let nextTier: { id: string; name: string; minSpend: number; neededSpend: number; progressPercent: number } | null = null;
+
+  if (totalSpent >= platinumTier.minSpend) {
+    currentTier = { id: "platinum", name: platinumTier.name, badge: platinumTier.badge, level: 3 };
+    nextTier = null;
+  } else if (totalSpent >= goldTier.minSpend) {
+    currentTier = { id: "gold", name: goldTier.name, badge: goldTier.badge, level: 2 };
+    const needed = Math.max(0, platinumTier.minSpend - totalSpent);
+    const range = platinumTier.minSpend - goldTier.minSpend;
+    const progress = Math.min(100, Math.floor(((totalSpent - goldTier.minSpend) / range) * 100));
+    nextTier = { id: "platinum", name: platinumTier.name, minSpend: platinumTier.minSpend, neededSpend: needed, progressPercent: progress };
+  } else if (totalSpent >= silverTier.minSpend) {
+    currentTier = { id: "silver", name: silverTier.name, badge: silverTier.badge, level: 1 };
+    const needed = Math.max(0, goldTier.minSpend - totalSpent);
+    const range = goldTier.minSpend - silverTier.minSpend;
+    const progress = Math.min(100, Math.floor(((totalSpent - silverTier.minSpend) / range) * 100));
+    nextTier = { id: "gold", name: goldTier.name, minSpend: goldTier.minSpend, neededSpend: needed, progressPercent: progress };
+  } else {
+    const needed = Math.max(0, silverTier.minSpend - totalSpent);
+    const progress = Math.min(100, Math.floor((totalSpent / silverTier.minSpend) * 100));
+    nextTier = { id: "silver", name: silverTier.name, minSpend: silverTier.minSpend, neededSpend: needed, progressPercent: progress };
+  }
+
+  const perks = (loyaltyConfig.perks || []).map((p: any) => {
+    let isUnlocked = false;
+    if (p.requiredTier === "silver" && currentTier.level >= 1) isUnlocked = true;
+    if (p.requiredTier === "gold" && currentTier.level >= 2) isUnlocked = true;
+    if (p.requiredTier === "platinum" && currentTier.level >= 3) isUnlocked = true;
+    return {
+      ...p,
+      isUnlocked,
+      status: isUnlocked ? "Active" : "Locked",
+    };
+  });
+
+  // Parse preferences
+  let preferences = {
+    preferredTimeSlot: "evening",
+    giftWrapping: false,
+    dietaryPreference: "all",
+    orderNotifications: true,
+    offersNewsletter: true,
+    savedPaymentMethods: [
+      {
+        id: "pm_upi_default",
+        type: "upi",
+        label: "HDFC Bank UPI",
+        masked: "su••••@okhdfcbank",
+        isDefault: true,
+      },
+    ],
+  };
+  if ((dbUser as any).preferences) {
+    try {
+      const parsed = typeof (dbUser as any).preferences === "string"
+        ? JSON.parse((dbUser as any).preferences)
+        : (dbUser as any).preferences;
+      preferences = { ...preferences, ...parsed };
+    } catch {}
+  }
+
+  const memberSince = dbUser.createdAt
+    ? new Date(dbUser.createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+    : "Sep 2026";
+
+  const customerId = `VSM-CUST-${String(dbUser.id).padStart(4, "0")}`;
+
+  const initialUser = {
+    id: dbUser.id,
+    name: dbUser.name,
+    email: dbUser.email,
+    phone: dbUser.phone || "",
+    role: dbUser.role || "customer",
+    status: dbUser.status || "active",
+    avatarUrl: (dbUser as any).avatarUrl || null,
+    customerId,
+    memberSince,
+    stats: {
+      completedOrders,
+      totalOrders,
+      totalSpent,
+      savedAddressesCount: userAddresses.length,
+      activeReturnsCount,
+    },
+    rewards: {
+      points: totalPoints,
+      earnedPoints,
+      bonusPoints,
+      rupeeValue: pointsRupeeValue,
+      tier: currentTier,
+      nextTier,
+      perks,
+    },
+    preferences,
+  };
+
+  const hasPassword = Boolean(dbUser.passwordHash && dbUser.passwordHash.length > 5);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 space-y-8">
+    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <Breadcrumbs items={[{ label: "My Account" }]} />
-
-      {/* 1. Profile Header Card */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b2f8a] via-[#09256e] to-[#06184a] text-white p-6 sm:p-8 shadow-xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#dfb755]/20 via-transparent to-transparent pointer-events-none" />
-
-        <div className="relative">
-          <div className="flex items-center justify-end gap-3 mb-2">
-            {(authUser.role === "admin" || authUser.role === "super_admin") && (
-              <a
-                href="http://localhost:3001"
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-[#dfb755] px-4 py-2 text-xs font-bold text-[#0b2f8a] shadow-sm hover:bg-[#c99f3b] transition flex items-center gap-1.5"
-              >
-                <span>{authUser.role === "super_admin" ? "👑 Admin Desk (3001) →" : "Admin Desk (3001) →"}</span>
-              </a>
-            )}
-            <LogoutButton />
-          </div>
-
-          <AccountProfileManager
-            initialProfile={{
-              id: authUser.id,
-              name: userProfile?.name || authUser.name,
-              email: userProfile?.email || authUser.email,
-              phone: userProfile?.phone || authUser.phone,
-              role: authUser.role,
-              memberSince,
-            }}
-          />
-        </div>
-
-        {/* Profile Statistics Bar */}
-        <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center sm:text-left">
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-white/60">Orders Placed</p>
-            <p className="text-2xl font-bold text-white mt-0.5 font-mono">{userOrders.length}</p>
-          </div>
-
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-white/60">Lifetime Spend</p>
-            <p className="text-2xl font-bold text-[#dfb755] mt-0.5">{formatInr(totalSpent)}</p>
-          </div>
-
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-white/60">Mithai Points</p>
-            <p className="text-2xl font-bold text-amber-300 mt-0.5 font-mono">
-              {rewardPoints} <span className="text-xs font-normal text-white/70">pts (₹{pointsRupeeValue})</span>
-            </p>
-          </div>
-
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-white/60">Saved Addresses</p>
-            <p className="text-2xl font-bold text-emerald-300 mt-0.5 font-mono">{userAddresses.length}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Vardayini Royal Loyalty & Rewards Banner Card */}
-      <section className="relative overflow-hidden rounded-3xl border border-[#dfb755]/30 bg-gradient-to-r from-[#fff9ea] via-[#fdf6e2] to-[#fffdf7] p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-[#dfb755]/20 text-[#6b1d1d] border border-[#dfb755]/40">
-                {tierName}
-              </span>
-              <span className="text-xs text-[#2a1a12]/60 font-medium">Kalol Flagship Patron Club</span>
-            </div>
-            <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#6b1d1d]">
-              Mithai Rewards Balance: <span className="text-[#0b2f8a]">{rewardPoints} Points</span>
-            </h3>
-            <p className="text-xs text-[#2a1a12]/75 max-w-xl leading-relaxed">
-              Earn 1 Mithai Point for every ₹20 spent. Redemption rate: <strong className="text-[#6b1d1d] font-bold">1,000 Points = ₹100 Discount</strong>.
-            </p>
-            <p className="text-xs text-[#2a1a12]/90 max-w-xl leading-relaxed font-medium mt-1">
-              Your current balance is worth approx. <strong className="text-[#6b1d1d] font-bold">₹{pointsRupeeValue}</strong> in sweet discounts!
-            </p>
-          </div>
-
-          <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            <MithaiPointsInfoButton />
-            <Link
-              href="/shop"
-              className="rounded-full bg-[#0b2f8a] hover:bg-[#082266] text-white text-xs font-bold px-5 py-2.5 text-center transition shadow-xs"
-            >
-              Order Sweets & Earn Points →
-            </Link>
-          </div>
-        </div>
-
-        {/* Member Perks Strip */}
-        <div className="mt-5 pt-4 border-t border-[#dfb755]/20 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-[#2a1a12]/80">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🚚</span>
-            <span>Free Express Delivery across Kalol on orders above ₹499</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-base">🍯</span>
-            <span>100% Shuddh Desi Ghee & Daily Fresh Bhatti Guarantee</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-base">🎁</span>
-            <span>Priority Festive Pre-Booking & Fresh Halwai Hampers</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Orders History & One-Click Reorder */}
-      <section className="bg-white/90 rounded-3xl border border-[#2a1a12]/10 p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[#6b1d1d]">
-              Order History & Deliveries
-            </h2>
-            <p className="text-xs text-[#2a1a12]/70 mt-0.5">
-              Review destination addresses, live tracking, and reorder your favourite sweets with one click
-            </p>
-          </div>
-          <Link
-            href="/shop"
-            className="text-xs font-semibold text-[#c45c26] hover:underline flex items-center gap-1"
-          >
-            Order More Mithai →
-          </Link>
-        </div>
-
-        <div className="space-y-4">
-          {userOrders.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-[#2a1a12]/20 p-8 text-center bg-white/40">
-              <p className="text-sm font-medium text-[#2a1a12]/70">No orders placed yet.</p>
-              <p className="text-xs text-[#2a1a12]/50 mt-1">
-                Explore our festive Kaju Katli, Mawa Pedas, and Gujarati Farsan boxes!
-              </p>
-              <Link
-                href="/shop"
-                className="mt-4 inline-block rounded-full bg-[#c45c26] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#a64a1b] transition"
-              >
-                Browse Mithai Store
-              </Link>
-            </div>
-          ) : (
-            userOrders.map((order) => {
-              const formattedAddress = parseAddressSnapshot(order.addressSnapshot);
-              const items = itemsByOrderId.get(order.id) || [];
-
-              return (
-                <div
-                  key={order.id}
-                  className="rounded-3xl border border-[#2a1a12]/10 bg-white p-5 shadow-sm hover:border-[#c45c26]/30 transition space-y-4"
-                >
-                  {/* Order Top Bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2a1a12]/8 pb-3">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <span className="font-mono font-bold text-sm text-[#0b2f8a]">
-                        #{order.orderNumber}
-                      </span>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          order.status === "confirmed" || order.status === "delivered"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : order.status === "cancelled"
-                            ? "bg-rose-50 text-rose-700 border border-rose-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#2a1a12]/5 text-[#2a1a12]/70">
-                        {order.fulfillmentType === "pickup" ? "🛍️ Kalol Store Pickup" : "🏠 Express Delivery"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-[#2a1a12]/60">
-                      <span>
-                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
-                      <span>•</span>
-                      <span className="font-bold text-base text-[#6b1d1d]">
-                        {formatInr(order.total)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Sweets items ordered preview */}
-                  {items.length > 0 && (
-                    <div className="bg-[#faf8f5] rounded-2xl p-3 border border-[#2a1a12]/5">
-                      <p className="text-[10px] uppercase font-bold text-[#6b1d1d] tracking-wider mb-1.5 flex items-center gap-1">
-                        <span>🍯</span> Sweets in this Order:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {items.map((it) => (
-                          <span
-                            key={it.id}
-                            className="inline-flex items-center gap-1 rounded-xl bg-white border border-[#2a1a12]/10 px-2.5 py-1 text-xs text-[#2a1a12]/90 font-medium"
-                          >
-                            <span>{it.productName}</span>
-                            <span className="text-[#2a1a12]/50 text-[11px]">({it.variantWeight})</span>
-                            <span className="font-bold text-[#c45c26]">×{it.quantity}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Delivery Location & Slot Snapshot */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-[#fcfbf9] rounded-2xl p-3 border border-[#2a1a12]/5">
-                      <p className="text-[10px] uppercase font-bold text-[#c45c26] tracking-wider flex items-center gap-1">
-                        📍 {order.fulfillmentType === "pickup" ? "Pickup Store" : "Delivery Address"}
-                      </p>
-                      <p className="mt-1 font-medium text-[#2a1a12] leading-snug">
-                        {order.fulfillmentType === "pickup"
-                          ? "Vardayini Sweet Mart — Kalol Flagship Store (Near Navjivan, Kalol)"
-                          : formattedAddress}
-                      </p>
-                    </div>
-
-                    <div className="bg-[#fcfbf9] rounded-2xl p-3 border border-[#2a1a12]/5 flex flex-col justify-between">
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-[#2a1a12]/60 tracking-wider">
-                          🕒 Time Slot & Payment
-                        </p>
-                        <p className="mt-1 text-[#2a1a12] font-medium">
-                          {order.deliverySlot || "Standard Express Slot"}
-                        </p>
-                      </div>
-                      <p className="text-[11px] text-[#2a1a12]/60 mt-1 capitalize">
-                        Payment: {order.paymentMethod} ({order.paymentStatus})
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Actions Toolbar: Reorder, Invoice, Tracking */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#2a1a12]/5">
-                    <div>
-                      {items.length > 0 && (
-                        <AccountReorderButton
-                          items={items}
-                          orderNumber={order.orderNumber}
-                        />
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <Link
-                        href={`/orders/${order.orderNumber}`}
-                        className="text-xs font-semibold text-[#0b2f8a] hover:underline flex items-center gap-1"
-                      >
-                        <span>📄</span>
-                        <span>View Invoice</span>
-                      </Link>
-                      <span>•</span>
-                      <Link
-                        href={`/orders/${order.orderNumber}#tracking`}
-                        className="text-xs font-semibold text-[#c45c26] hover:underline flex items-center gap-1"
-                      >
-                        <span>📍</span>
-                        <span>Track Live →</span>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      {/* 4. Saved Delivery Addresses */}
-      <section className="bg-white/90 rounded-3xl border border-[#2a1a12]/10 p-6 sm:p-8 shadow-sm">
-        <AccountAddressManager
-          initialAddresses={userAddresses}
-          userPhone={authUser.phone}
-          userName={authUser.name}
-        />
-      </section>
-
-      {/* 5. Account Security & Password */}
-      <section>
-        <AccountSecurityManager hasPassword={hasPassword} />
-      </section>
-
-      {/* 6. Helpdesk & Traditional Halwai Support */}
-      <section className="rounded-3xl border border-[#2a1a12]/10 bg-[#faf8f5] p-6 text-xs text-[#2a1a12]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <p className="font-bold text-sm text-[#6b1d1d] flex items-center gap-1.5">
-            <span>🏪</span> Vardayini Sweet Mart — Kalol Flagship Desk
-          </p>
-          <p className="mt-0.5">
-            Need urgent assistance, bulk wedding orders, or custom corporate gift hampers? Reach out to our master halwais.
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center gap-3 font-medium">
-          <a
-            href="tel:+918866169447"
-            className="rounded-full border border-[#2a1a12]/20 bg-white px-3.5 py-1.5 text-xs text-[#6b1d1d] font-bold hover:bg-[#6b1d1d] hover:text-white transition"
-          >
-            📞 +91 88661 69447
-          </a>
-          <a
-            href="https://wa.me/918866169447"
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs text-white font-bold hover:bg-emerald-700 transition"
-          >
-            💬 WhatsApp Support
-          </a>
-        </div>
-      </section>
+      <CustomerAccountPortal
+        initialUser={initialUser}
+        initialOrders={enrichedOrders}
+        initialWishlist={enrichedWishlist}
+        initialAddresses={userAddresses}
+        hasPassword={hasPassword}
+      />
     </main>
   );
 }

@@ -35,6 +35,13 @@ const ALL_STATUSES = [
   "cancelled",
 ];
 
+const STORE_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Kolkata",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 /** Parse the JSON address snapshot into a human-readable string */
 function parseAddress(raw: string | null | undefined): string {
   return formatAddressSnapshot(raw);
@@ -346,6 +353,9 @@ function DeleteConfirmModal({ orderNumber, onClose, onDeleted }: DeleteConfirmPr
 export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<OrderItem | null>(null);
@@ -367,11 +377,29 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
-      if (filter === "all") return true;
-      if (filter === "returns") return o.returnStatus && o.returnStatus !== "none";
-      return o.status === filter;
+      if (filter === "returns" && (!o.returnStatus || o.returnStatus === "none")) return false;
+      if (filter !== "all" && filter !== "returns" && o.status !== filter) return false;
+
+      const query = searchTerm.trim().toLowerCase();
+      const searchableText = [
+        o.orderNumber,
+        getOrderCustomerName(o),
+        getOrderCustomerPhone(o),
+        o.userEmail || "",
+      ].join(" ").toLowerCase();
+      if (query && !searchableText.includes(query)) return false;
+
+      if (startDate || endDate) {
+        const createdAt = new Date(o.createdAt);
+        if (Number.isNaN(createdAt.getTime())) return false;
+        const orderDate = STORE_DATE_FORMATTER.format(createdAt);
+        if (startDate && orderDate < startDate) return false;
+        if (endDate && orderDate > endDate) return false;
+      }
+
+      return true;
     });
-  }, [orders, filter]);
+  }, [orders, filter, searchTerm, startDate, endDate]);
 
   const paginatedOrders = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -433,12 +461,65 @@ export function OrdersTab({ orders, onRefresh }: OrdersTabProps) {
               </option>
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
+              <option value="preparing">Preparing</option>
+              <option value="ready_for_pickup">Ready for pickup</option>
+              <option value="picked_up">Picked up</option>
               <option value="packed">Packed</option>
               <option value="shipped">Shipped</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3 p-4 rounded-2xl bg-white border border-[#0b2f8a]/10 shadow-sm">
+          <label className="flex-1">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-[#5e6d82] mb-1">
+              Search orders
+            </span>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              placeholder="Order number, customer, phone, or email"
+              className="w-full text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-3 py-2 text-[#182230] focus:border-[#0b2f8a] outline-none"
+            />
+          </label>
+          <label>
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-[#5e6d82] mb-1">
+              From date
+            </span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+              className="w-full text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-3 py-2 text-[#182230] focus:border-[#0b2f8a] outline-none"
+            />
+          </label>
+          <label>
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-[#5e6d82] mb-1">
+              To date
+            </span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+              className="w-full text-xs rounded-xl bg-white border border-[#0b2f8a]/15 px-3 py-2 text-[#182230] focus:border-[#0b2f8a] outline-none"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm("");
+              setStartDate("");
+              setEndDate("");
+              setCurrentPage(1);
+            }}
+            disabled={!searchTerm && !startDate && !endDate}
+            className="text-xs rounded-xl border border-[#0b2f8a]/15 px-3 py-2 text-[#0b2f8a] hover:bg-[#0b2f8a]/5 disabled:opacity-40"
+          >
+            Clear
+          </button>
         </div>
 
         <div className="rounded-2xl bg-white border border-[#0b2f8a]/10 overflow-hidden shadow-sm">

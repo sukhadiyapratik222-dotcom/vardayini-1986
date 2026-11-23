@@ -58,13 +58,7 @@ export async function POST(request: Request) {
 
     // 4. Account Lockout Check (5 failed attempts -> 5 min lockout)
     const lockStatus = globalAccountLockoutManager.isLocked(userLockKey);
-    const isSuperAdminCandidate =
-      (email === "pratik222@gmail.com" || cleanPhone === "9876543210") &&
-      password === "Pratik@#123";
-    const isAdminCandidate =
-      isSuperAdminCandidate ||
-      (email === "admin@vardayini.com" && (password === "admin123" || password === "Admin@2024"));
-    if (lockStatus.locked && !isAdminCandidate) {
+    if (lockStatus.locked) {
       return Response.json(
         {
           error: `Account temporarily locked due to multiple failed attempts. Please retry in ${Math.ceil(
@@ -188,37 +182,6 @@ export async function POST(request: Request) {
         }
       } catch (mongoLoginErr) {
         console.warn("[Store Auth] MongoDB login sync check notice:", mongoLoginErr);
-      }
-    }
-
-    // Fallback for admin and super admin credentials
-    if (!isMatch && isAdminCandidate) {
-      isMatch = true;
-      const targetRole = isSuperAdminCandidate ? "super_admin" : "admin";
-      const targetName = isSuperAdminCandidate ? "Pratik Sukhadiya (Super Admin)" : "Vardayini Admin";
-      const targetPhone = isSuperAdminCandidate ? "9876543210" : "9000000000";
-      const newHash = await bcrypt.hash(password, 10);
-      if (user) {
-        await db
-          .update(users)
-          .set({ passwordHash: newHash, role: targetRole, name: targetName, accessType: "full" })
-          .where(eq(users.id, user.id));
-        user.role = targetRole;
-        user.name = targetName;
-        user.accessType = "full";
-      } else {
-        const [inserted] = await db
-          .insert(users)
-          .values({
-            name: targetName,
-            email,
-            phone: targetPhone,
-            passwordHash: newHash,
-            role: targetRole,
-            accessType: "full",
-          });
-        const [targetU] = await db.select().from(users).where(eq(users.id, inserted.insertId));
-        user = targetU;
       }
     }
 

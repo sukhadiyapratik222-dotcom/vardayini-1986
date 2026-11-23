@@ -1403,12 +1403,23 @@ export function ProductsTab({
                         </button>
                         <div>
                           <p className="font-bold text-[#182230] max-w-xs leading-snug">{item.name}</p>
-                          <p className="text-[10px] text-[#5e6d82] font-mono mt-0.5">{primaryVariant?.sku || item.sku}</p>
-                          {item.isFeatured && (
-                            <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#fbf3db] text-[#b89130] border border-[#dfb755]/30">
-                              ★ Featured
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="text-[10px] text-[#5e6d82] font-mono">{primaryVariant?.sku || item.sku}</span>
+                            {item.isFeatured && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#fbf3db] text-[#b89130] border border-[#dfb755]/30">
+                                ★ Featured
+                              </span>
+                            )}
+                            {(item.wishlistCount ?? 0) > 0 && (
+                              <span
+                                title={`${item.wishlistCount} patrons saved this in their wishlist`}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-50 text-rose-600 border border-rose-200"
+                              >
+                                <span>❤️</span>
+                                <span>{item.wishlistCount} wishlist</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as getAdminProducts } from "@/app/api/admin/products/route";
 import { GET as getAdminInventory } from "@/app/api/admin/inventory/route";
+import { GET as getAdminOrders } from "@/app/api/orders/route";
 import { PUT as updateAdminOrder } from "@/app/api/admin/orders/[orderNumber]/route";
 import { PUT as updateUiConfig } from "@/app/api/ui-config/route";
 import { buildRequest, loginAs, logout, getTestFixtures, mockCookieStore } from "../helpers";
@@ -34,6 +35,19 @@ describe("Security Tests: Admin Routes Authorization", () => {
   describe("GET /api/admin/products", () => {
     it("returns 401 or 403 for anonymous request", async () => {
       const req = buildRequest({ method: "GET", url: "/api/admin/products" });
+      const res = await getAdminProducts(req);
+      expect([401, 403]).toContain(res.status);
+    });
+
+    it("does not accept caller-supplied admin identity headers", async () => {
+      const req = buildRequest({
+        method: "GET",
+        url: "/api/admin/products",
+        headers: {
+          "x-admin-role": "super_admin",
+          cookie: "session=super_admin",
+        },
+      });
       const res = await getAdminProducts(req);
       expect([401, 403]).toContain(res.status);
     });
@@ -93,6 +107,30 @@ describe("Security Tests: Admin Routes Authorization", () => {
       });
       const res = await getAdminInventory(req);
       expect([401, 403]).toContain(res.status);
+    });
+  });
+
+  describe("GET /api/orders as admin", () => {
+    it("prefers order recipient details over the user's profile details", async () => {
+      await db
+        .update(orders)
+        .set({
+          userId: customerId,
+          guestName: "Checkout Recipient",
+          guestPhone: "9876500101",
+          addressSnapshot: JSON.stringify({ name: "Checkout Recipient", phone: "9876500101" }),
+        })
+        .where(eq(orders.orderNumber, sampleOrderNumber));
+
+      await loginAs(adminId);
+      const req = buildRequest({ method: "GET", url: "/api/orders" });
+      const res = await getAdminOrders(req);
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      const order = data.orders.find((item: { orderNumber: string }) => item.orderNumber === sampleOrderNumber);
+      expect(order.customerName).toBe("Checkout Recipient");
+      expect(order.customerPhone).toBe("9876500101");
     });
   });
 

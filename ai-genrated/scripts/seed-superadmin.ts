@@ -1,26 +1,26 @@
 import { ensureDbMigrations } from "../src/db";
-import { forceReseed } from "../src/db/seed";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 
 async function main() {
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD?.trim();
+  if (!superAdminPassword) {
+    throw new Error("Set SUPER_ADMIN_PASSWORD before running the super-admin seeder.");
+  }
+
   console.log("1. Running ensureDbMigrations()...");
   await ensureDbMigrations();
   console.log("ensureDbMigrations completed.");
 
-  console.log("2. Running forceReseed()...");
-  await forceReseed();
-  console.log("forceReseed completed.");
-
-  // Direct check and guarantee in MySQL
   const conn = await mysql.createConnection({
-    host: "127.0.0.1",
-    user: "root",
-    password: "",
-    database: "vardayini_sweets",
+    host: process.env.MYSQL_HOST || "127.0.0.1",
+    user: process.env.MYSQL_USER || "root",
+    password: process.env.MYSQL_PASSWORD || "",
+    database: process.env.MYSQL_DATABASE || "vardayini_sweets",
+    port: Number(process.env.MYSQL_PORT) || 3306,
   });
 
-  const superAdminHash = await bcrypt.hash("Pratik@#123", 10);
+  const superAdminHash = await bcrypt.hash(superAdminPassword, 10);
   await conn.query(
     `INSERT INTO users (name, email, phone, password_hash, role)
      VALUES (?, ?, ?, ?, ?)
@@ -37,16 +37,12 @@ async function main() {
     ]
   );
 
-  const [allUsers] = await conn.query("SELECT id, name, email, role, phone FROM users");
-  console.log("\n--- USERS IN MYSQL (vardayini_sweets) ---");
-  console.table(allUsers);
-
-  // Test bcrypt comparison
   const [pratik] = (await conn.query("SELECT password_hash FROM users WHERE email = ?", [
     "pratik222@gmail.com",
   ])) as any;
-  const isMatch = await bcrypt.compare("Pratik@#123", pratik[0].password_hash);
-  console.log("Super Admin password check (Pratik@#123):", isMatch ? "VALID MATCH ✓" : "FAILED ✗");
+  const isMatch = await bcrypt.compare(superAdminPassword, pratik[0].password_hash);
+  if (!isMatch) throw new Error("Super-admin password verification failed.");
+  console.log("Super-admin account configured and password hash verified.");
 
   await conn.end();
   process.exit(0);

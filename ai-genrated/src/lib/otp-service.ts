@@ -16,6 +16,7 @@
 import crypto from "node:crypto";
 import { getSqliteDb } from "@/db";
 import { normalizeIndianPhone, AccountLockoutManager, SlidingWindowRateLimiter } from "@/lib/security";
+import { secret } from "@/lib/auth";
 
 export type OtpTrigger = "register" | "login" | "order" | "pickup_verification" | string;
 
@@ -97,8 +98,7 @@ export function createOtpProof(
   trigger: string,
   expiresAtMs: number
 ): string {
-  const secretKey =
-    process.env.SESSION_SECRET || "vsm_session_jwt_secure_key_2026_vardayini_prod";
+  const secretKey = secret();
   const data = `${phone}:${otp}:${trigger}:${expiresAtMs}`;
   const hmac = crypto.createHmac("sha256", secretKey).update(data).digest("hex");
   return `${expiresAtMs}.${hmac}`;
@@ -122,8 +122,7 @@ export function verifyOtpProof(
     if (!Number.isFinite(expiresAtMs) || Date.now() > expiresAtMs) {
       return false; // Expired
     }
-    const secretKey =
-      process.env.SESSION_SECRET || "vsm_session_jwt_secure_key_2026_vardayini_prod";
+    const secretKey = secret();
     const expectedData = `${phone}:${otp}:${trigger}:${expiresAtMs}`;
     const expectedHmac = crypto.createHmac("sha256", secretKey).update(expectedData).digest("hex");
     const a = Buffer.from(hmac);
@@ -210,12 +209,19 @@ export async function sendOTP(
     };
   }
 
+  const apiKey = (process.env.FAST2SMS_API_KEY || "").trim();
+  const isSimulation = !apiKey || apiKey === "YOUR_FAST2SMS_API_KEY";
+  if (isSimulation && process.env.NODE_ENV === "production") {
+    return {
+      success: false,
+      otpSent: false,
+      error: "SMS verification is not configured. Please contact the store.",
+    };
+  }
+
   const otpLength = options?.length || 4;
   const otp = otpLength === 6 ? generate6DigitOTP() : generate4DigitOTP();
   const message = formatOtpMessage(otp, trigger);
-
-  const apiKey = (process.env.FAST2SMS_API_KEY || "").trim();
-  const isSimulation = !apiKey || apiKey === "YOUR_FAST2SMS_API_KEY";
 
   const expiresAtMs = Date.now() + OTP_EXPIRATION_MS;
   const expiresAt = new Date(expiresAtMs).toISOString();
@@ -325,7 +331,6 @@ export async function sendOTP(
         otpSent: true,
         isSimulated: false,
         message: "OTP sent successfully to your mobile number.",
-        otp: otp,
         expiresAt,
         otpProof,
       };
@@ -343,27 +348,18 @@ export async function sendOTP(
         `).run(cleanPhone, `%${otp}%`);
       } catch {}
 
-      // Resilient fallback: Return simulated OTP so testers and customers aren't locked out
       return {
-        success: true,
+        success: false,
         otpSent: false,
-        isSimulated: true,
-        message: `SMS gateway notice: ${errMsg}. Test OTP provided for authentication.`,
-        otp: otp,
-        expiresAt,
-        otpProof,
+        error: `SMS gateway could not deliver the code: ${errMsg}`,
       };
     }
   } catch (networkError: any) {
     console.error("[Fast2SMS Network Error]:", networkError);
     return {
-      success: true,
+      success: false,
       otpSent: false,
-      isSimulated: true,
-      message: "SMS gateway unreachable. Test OTP generated for authentication.",
-      otp: otp,
-      expiresAt,
-      otpProof,
+      error: "SMS gateway is unreachable. Please try again.",
     };
   }
 }
@@ -616,6 +612,12 @@ export async function resendWhatsAppOTP(
     const otpProof = createOtpProof(cleanPhone, activeOtp, trigger, expiresAtMs);
     const waApiKey = (process.env.WHATSAPP_API_KEY || process.env.MSG91_AUTH_KEY || "").trim();
     const isSimulation = !waApiKey || waApiKey === "YOUR_API_KEY";
+    if (isSimulation && process.env.NODE_ENV === "production") {
+      return {
+        success: false,
+        error: "WhatsApp verification is not configured. Please try SMS instead.",
+      };
+    }
     const waMessage = `${activeOtp} is your Vardayini Sweet Mart verification code via WhatsApp. Valid for 5 minutes. Do not share.`;
 
     // Record WhatsApp dispatch in SQLite logs
@@ -655,7 +657,7 @@ export async function resendWhatsAppOTP(
     // Live dispatch via WhatsApp API
     const waUrl = process.env.WHATSAPP_API_URL || "https://api.your-provider.com/whatsapp";
     try {
-      await fetch(waUrl, {
+      const response = await fetch(waUrl, {
         method: "POST",
         headers: {
           "authorization": waApiKey,
@@ -669,14 +671,23 @@ export async function resendWhatsAppOTP(
         }),
         signal: AbortSignal.timeout(8000),
       });
+      if (!response.ok) {
+        return {
+          success: false,
+          error: "WhatsApp gateway could not deliver the code. Please try SMS instead.",
+        };
+      }
     } catch (netErr) {
       console.warn("[WhatsApp Live Dispatch Warning]:", netErr);
+      return {
+        success: false,
+        error: "WhatsApp gateway is unreachable. Please try SMS instead.",
+      };
     }
 
     return {
       success: true,
       message: "WhatsApp OTP resent successfully.",
-      otp: activeOtp,
       otpProof,
     };
   } catch (err: any) {

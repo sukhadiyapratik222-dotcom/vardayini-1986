@@ -38,5 +38,5 @@ If `code` is not recognized, in VS Code open the command palette and run **Shell
 ## Demo logins
 
 - Customer: `aanya@vardayini.com` / `sweet123`
-- Admin: `admin@vardayini.com` / `admin123`
+- Admin: `admin@vardayini.com` / configure `ADMIN_SEED_PASSWORD` for a new database
 - Coupons: `FESTIVE10`, `MITHAI50`, `FREEDEL`
